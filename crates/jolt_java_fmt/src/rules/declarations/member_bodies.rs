@@ -6,14 +6,16 @@ use super::{
     format_annotation_interface_declaration, format_block, format_class_declaration,
     format_compact_constructor_declaration, format_constructor_declaration,
     format_dangling_comments, format_enum_declaration, format_field_declaration,
-    format_interface_declaration, format_method_declaration, format_record_declaration,
-    format_removed_comments, format_token_with_comments, formatter_ignore_content_range,
-    formatter_ignore_run_doc, has_removed_comments, join_member_docs,
+    format_interface_declaration, format_line_start_block, format_method_declaration,
+    format_record_declaration, format_removed_comments, format_token_with_comments,
+    formatter_ignore_content_range, formatter_ignore_run_doc, has_removed_comments,
+    join_member_docs,
 };
 use crate::helpers::blocks::BodyContent;
 use crate::helpers::comments::format_token_removal;
 use crate::helpers::recovery::{
-    JavaFormatField, format_malformed, resolve_optional_field, resolve_required_field,
+    JavaFormatField, format_malformed, present_token, resolve_optional_field,
+    resolve_required_field,
 };
 use jolt_fmt_ir::{BodyItemSeparator, DocBuilder};
 use jolt_java_syntax::{AnnotationInterfaceBodyMemberList, JavaSyntaxListPart, JavaSyntaxView};
@@ -123,16 +125,6 @@ fn recovered_member_body<'source>(
         ]
     );
     BodyContent::new(contents, true, true)
-}
-
-fn present_token<'source>(
-    field: jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-) -> Option<JavaSyntaxToken<'source>> {
-    match field {
-        jolt_java_syntax::JavaSyntaxField::Present(token) => Some(token),
-        jolt_java_syntax::JavaSyntaxField::Missing(_)
-        | jolt_java_syntax::JavaSyntaxField::Malformed(_) => None,
-    }
 }
 
 pub(super) fn format_class_member_body<'source>(
@@ -446,7 +438,7 @@ impl<'source> FormattedMember<'source> {
                 let body = crate::helpers::recovery::format_required_field(
                     value.body(),
                     doc,
-                    |body, doc| format_block(&body, doc),
+                    |body, doc| format_line_start_block(&body, doc),
                 );
                 Self::formatted(MemberCategory::Initializer, starts_after_blank_line, body)
             }

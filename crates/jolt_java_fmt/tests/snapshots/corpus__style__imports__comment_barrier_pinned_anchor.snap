@@ -1,0 +1,15 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+import z.Zed;
+/*hunt*/
+import m.Middle;
+import a.Alpha;
+
+class C {
+}
+
+diagnostics:
+(none)

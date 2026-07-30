@@ -3,6 +3,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::{Debug, Display, Write as _};
 use std::fs;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
@@ -572,12 +573,21 @@ pub struct StructurePolicy<K: 'static> {
     /// `NormalizationOwner` grants; a child carrying recovery keeps its position, so
     /// moving it past a sortable neighbour still fails.
     pub unordered_nodes: &'static [K],
-    /// Nodes whose keyword tokens are order-insensitive while their child nodes keep
-    /// their relative order, covering `ReorderReason::Modifiers`. Sorted keywords are
-    /// emitted ahead of the nodes so that moving a keyword across an annotation is
-    /// tolerated, but a swap of two repeated annotations still fails: reflection
-    /// exposes repeatable annotations in declaration order.
+    /// Nodes whose keyword tokens are order-insensitive, covering
+    /// `ReorderReason::Modifiers`. Sorted keywords are emitted ahead of the child
+    /// nodes so that moving a keyword across an annotation is tolerated. Child
+    /// nodes keep their relative order except for the kinds
+    /// `unordered_keywords_ordered_children` lists.
     pub unordered_keywords: &'static [K],
+    /// Child kinds of an `unordered_keywords` node that may cross the node's
+    /// other children but keep declaration order among themselves, covering an
+    /// annotation the formatter moves across a node-shaped modifier like
+    /// `non-sealed`. Canonicalization is a stable partition that emits these
+    /// children ahead of the rest, never a sort by rendering, so a swap of two
+    /// of them -- repeated annotations, which reflection exposes in declaration
+    /// order -- still fails. A child carrying recovery stays with the node's
+    /// other children, mirroring the authorization `NormalizationOwner` grants.
+    pub unordered_keywords_ordered_children: &'static [K],
     /// Child kinds the formatter may reorder among their own positions inside an
     /// otherwise order-sensitive parent, covering `ReorderReason::Imports` where
     /// imports share a list with other declarations. As with `unordered_nodes`, a
@@ -819,6 +829,10 @@ where
 
     let mut keywords: Vec<String> = Vec::new();
     let mut slots: Vec<String> = Vec::new();
+    // Parallel to `slots` in `unordered_keywords` mode, where only node
+    // children reach `slots`: whether the child joins the declaration-order
+    // partition (`unordered_keywords_ordered_children`).
+    let mut slot_ordered: Vec<bool> = Vec::new();
     let mut reorderable: Vec<usize> = Vec::new();
     for index in 0..node.slot_count() {
         match node.slot_at(index) {
@@ -839,6 +853,13 @@ where
                 if canonicalizable {
                     reorderable.push(slots.len());
                 }
+                slot_ordered.push(
+                    unordered_keywords
+                        && is_canonicalizable_child(
+                            child,
+                            policy.unordered_keywords_ordered_children,
+                        ),
+                );
                 slots.push(rendered);
             }
             Some(SyntaxSlot::Token(token)) => {
@@ -864,6 +885,16 @@ where
 
     if unordered_keywords {
         keywords.sort_unstable();
+        // A listed child may cross the node's other children but keeps
+        // declaration order among its own kind, so canonicalize with a stable
+        // partition rather than a sort by rendering: two of them swapping
+        // places still changes the fingerprint.
+        let mut partitioned: Vec<(bool, String)> = slot_ordered.into_iter().zip(slots).collect();
+        partitioned.sort_by_key(|&(ordered, _)| !ordered);
+        slots = partitioned
+            .into_iter()
+            .map(|(_, rendered)| rendered)
+            .collect();
         keywords.append(&mut slots);
         slots = keywords;
     } else if reorderable.len() > 1 {
@@ -908,7 +939,15 @@ pub trait CorpusLanguage {
     /// Human-readable language name used in harness assertion messages.
     fn language_name(&self) -> &'static str;
 
-    /// End offsets of the represented source tokens, in source order.
+    /// End offsets of the represented source tokens, in source order, keeping
+    /// only the positions where trivia may legally attach.
+    ///
+    /// A position inside a string literal is excluded: text inserted there is
+    /// literal content, not a comment, so probing it tests nothing about comment
+    /// handling while producing malformed source that can drive the parser into
+    /// an allocation large enough to abort the process -- which no in-process
+    /// check can recover from. Excluding those positions is what keeps the sweep
+    /// bounded by construction.
     fn token_end_offsets(&self, source: &str) -> Vec<usize>;
 
     /// Parses one fixture source into owned conservation facts.
@@ -917,10 +956,617 @@ pub trait CorpusLanguage {
     /// Formats `source`, panicking on halt/block like the corpus tests expect.
     fn format(&self, source: &str, label: &str) -> String;
 
+    /// Formats `source` at `options`, reporting a halt or block instead of
+    /// panicking. The corpus sweep records those as failures rather than
+    /// aborting the run, and needs the width to vary.
+    ///
+    /// # Errors
+    ///
+    /// Returns the reason the formatter halted or refused the source.
+    fn try_format(&self, source: &str, options: &FormatOptions) -> Result<String, String>;
+
     /// True when a fixture at `relative` is expected to carry parser
     /// diagnostics, routing it through the audit path instead of the format
     /// snapshot path.
     fn expects_parser_diagnostics(&self, relative: &str) -> bool;
+}
+
+/// Which trivia slot a probe insertion lands in.
+///
+/// This follows from the lines the insertion occupies, and it is what decides
+/// which formatter path the probe reaches. Text that stays on the boundary's own
+/// line becomes trailing trivia of the token before it; text on a line of its
+/// own becomes leading trivia of the token after it. A sweep of only the first
+/// kind therefore cannot observe a leading-comment bug at all, however many
+/// boundaries it covers.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ProbePosition {
+    /// Trailing trivia of the token before the boundary.
+    Trailing,
+    /// Leading trivia of the token after the boundary.
+    Leading,
+}
+
+/// One shape of comment the conservation sweep injects at a token boundary.
+pub struct ProbeShape {
+    /// Category prefix, and the name `<path>:<name><n>` uses to replay a probe.
+    pub name: &'static str,
+    /// Text inserted at the boundary.
+    pub insert: &'static str,
+    /// The trivia slot the insertion lands in.
+    pub position: ProbePosition,
+    /// Distinguishes this shape's sampled boundaries from the other shapes'.
+    pub seed: usize,
+}
+
+/// The comment shapes the conservation sweep injects at token boundaries.
+///
+/// Both [`ProbePosition`] variants appear, in both comment spellings, because
+/// only a line comment forces the line that follows it.
+pub const PROBE_SHAPES: &[ProbeShape] = &[
+    ProbeShape {
+        name: "comment",
+        insert: " /*hunt*/ ",
+        position: ProbePosition::Trailing,
+        seed: 2_654_435_761,
+    },
+    ProbeShape {
+        name: "linecomment",
+        insert: " //hunt\n",
+        position: ProbePosition::Trailing,
+        seed: 2_246_822_519,
+    },
+    ProbeShape {
+        name: "ownline",
+        insert: "\n/*hunt*/\n",
+        position: ProbePosition::Leading,
+        seed: 40_503,
+    },
+    ProbeShape {
+        name: "ownlinecomment",
+        insert: "\n//hunt\n",
+        position: ProbePosition::Leading,
+        seed: 374_761_393,
+    },
+];
+
+/// What a corpus sweep run needs beyond its [`CorpusLanguage`].
+pub struct CorpusSweep<'a> {
+    /// Directories under `tools/import/.imports` to walk.
+    pub suites: &'a [&'a str],
+    /// File extensions to sweep.
+    pub extensions: &'a [&'a str],
+    /// Paths to skip, matched as a suffix.
+    pub skip_suffixes: &'a [&'a str],
+    /// Directory under `target/hunt` for the report and repros.
+    pub out_dir: &'a str,
+    /// Failure categories this corpus is already known to produce.
+    pub known_open: &'a [&'a str],
+}
+
+/// Runs the conservation sweep over an imported corpus and writes a bounded
+/// report, returning the process exit code.
+///
+/// Exits non-zero when a failure category is outside `known_open`, or when a
+/// `known_open` entry no longer fires: a stale entry would let the bug it
+/// records be forgotten.
+///
+/// # Panics
+///
+/// Panics if the output directory cannot be created or the report cannot be
+/// written.
+pub fn run_corpus_sweep<L: CorpusLanguage + Sync>(
+    lang: &L,
+    repo_root: &Path,
+    sweep: &CorpusSweep<'_>,
+) -> i32 {
+    // Panics are caught per file and recorded; keep the output readable.
+    std::panic::set_hook(Box::new(|_| {}));
+
+    let imports = repo_root.join("tools/import/.imports");
+    let mut files = Vec::new();
+    for suite in sweep.suites {
+        collect_corpus_files(&imports.join(suite), sweep.extensions, &mut files);
+    }
+    files.sort();
+    files.retain(|path| {
+        !sweep
+            .skip_suffixes
+            .iter()
+            .any(|suffix| path.ends_with(suffix))
+    });
+
+    let out_dir = repo_root.join("target/hunt").join(sweep.out_dir);
+    let _ = fs::remove_dir_all(&out_dir);
+    fs::create_dir_all(&out_dir).expect("create hunt output directory");
+
+    let threads = std::thread::available_parallelism().map_or(4, usize::from);
+    let chunk_size = files.len().div_ceil(threads).max(1);
+    let files: &[PathBuf] = &files;
+    let (mut findings, mut slow) = std::thread::scope(|scope| {
+        let handles: Vec<_> = files
+            .chunks(chunk_size)
+            .map(|chunk| {
+                scope.spawn(move || {
+                    let mut findings = SweepFindings::default();
+                    let mut slow = Vec::new();
+                    for path in chunk {
+                        let started = std::time::Instant::now();
+                        for failure in sweep_file(lang, path) {
+                            findings.push(path, failure);
+                        }
+                        let elapsed = started.elapsed().as_millis();
+                        if elapsed > 1000 {
+                            slow.push((path.clone(), elapsed));
+                        }
+                    }
+                    (findings, slow)
+                })
+            })
+            .collect();
+        let mut all = SweepFindings::default();
+        let mut all_slow = Vec::new();
+        for handle in handles {
+            let (findings, slow) = handle.join().expect("sweep worker panicked");
+            all.merge(findings);
+            all_slow.extend(slow);
+        }
+        (all, all_slow)
+    });
+
+    slow.sort_by_key(|(_, ms)| std::cmp::Reverse(*ms));
+    let mut report = render_sweep_report(&mut findings, &slow, &out_dir);
+
+    let verdict = check_known_open(
+        findings.counts().keys().map(String::as_str),
+        sweep.known_open,
+    );
+    let rendered = verdict.render(sweep.known_open.len());
+    report.push_str(&rendered);
+    fs::write(out_dir.join("report.txt"), &report).expect("write report");
+    println!(
+        "checked {} files, {} failures: {:?}",
+        files.len(),
+        findings.total(),
+        findings.counts()
+    );
+    println!("report: {}", out_dir.join("report.txt").display());
+    print!("{rendered}");
+    i32::from(!verdict.is_clean())
+}
+
+/// Writes one repro file per retained sample and renders the report body: the
+/// samples, what the per-key cap elided, the totals, and the slowest files.
+fn render_sweep_report(
+    findings: &mut SweepFindings,
+    slow: &[(PathBuf, u128)],
+    out_dir: &Path,
+) -> String {
+    let mut report = String::new();
+    for (path, failure) in findings.samples() {
+        let repro_dir = out_dir.join(failure.summary_key().replace(':', "-"));
+        fs::create_dir_all(&repro_dir).expect("create repro directory");
+        if let Ok(source) = fs::read_to_string(path) {
+            let name = path.file_name().expect("corpus file name");
+            fs::write(
+                repro_dir.join(name),
+                format!(
+                    "// repro from: {} ({})\n{source}",
+                    path.display(),
+                    failure.category
+                ),
+            )
+            .expect("write repro");
+        }
+        writeln!(
+            report,
+            "[{}] {}\n    {}",
+            failure.category,
+            path.display(),
+            failure.detail.replace('\n', "\n    ")
+        )
+        .expect("writing to a String cannot fail");
+    }
+    for (key, count) in findings.counts().clone() {
+        let elided = findings.elided(&key);
+        if elided > 0 {
+            writeln!(
+                report,
+                "\nelided {elided} further [{key}] sample(s) of {count} (cap {MAX_SAMPLES_PER_KEY} per key)",
+            )
+            .expect("writing to a String cannot fail");
+        }
+    }
+    writeln!(report, "\nsummary: {:?}", findings.counts())
+        .expect("writing to a String cannot fail");
+    for (path, ms) in slow.iter().take(20) {
+        writeln!(report, "slow: {ms}ms {}", path.display())
+            .expect("writing to a String cannot fail");
+    }
+    report
+}
+
+fn collect_corpus_files(dir: &Path, extensions: &[&str], files: &mut Vec<PathBuf>) {
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_corpus_files(&path, extensions, files);
+        } else if path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .is_some_and(|extension| extensions.contains(&extension))
+        {
+            files.push(path);
+        }
+    }
+}
+
+/// Sweeps one corpus file, turning a panic into a `panic` category rather than
+/// aborting the whole run.
+fn sweep_file<L: CorpusLanguage>(lang: &L, path: &Path) -> Vec<SweepFailure> {
+    let source = match fs::read_to_string(path) {
+        Ok(source) => source,
+        Err(error) => {
+            return vec![SweepFailure {
+                category: "read-error".to_owned(),
+                detail: error.to_string(),
+            }];
+        }
+    };
+    catch_unwind(AssertUnwindSafe(|| sweep_source(lang, &source))).unwrap_or_else(|payload| {
+        let message = payload
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| payload.downcast_ref::<&str>().copied())
+            .unwrap_or("<non-string panic>");
+        vec![SweepFailure {
+            category: "panic".to_owned(),
+            detail: message.to_owned(),
+        }]
+    })
+}
+
+/// Compares a sweep's failure categories against the ones already known to be
+/// open, so the sweep is a real signal while carrying existing debt.
+///
+/// A category absent from `known_open` is a regression the sweep must fail on. A
+/// `known_open` entry that no longer fires is stale and must be deleted, which
+/// also keeps the list from quietly outliving the bug it records.
+pub struct KnownOpenVerdict {
+    /// Categories that fired and are not in `known_open`.
+    pub unexpected: Vec<String>,
+    /// `known_open` entries that did not fire.
+    pub stale: Vec<String>,
+}
+
+impl KnownOpenVerdict {
+    /// True when the sweep matched the known-open list exactly.
+    #[must_use]
+    pub fn is_clean(&self) -> bool {
+        self.unexpected.is_empty() && self.stale.is_empty()
+    }
+
+    /// Renders the verdict so a new failure category, or one that has been fixed
+    /// without pruning the list, is the thing that stands out.
+    #[must_use]
+    pub fn render(&self, known_open: usize) -> String {
+        if self.is_clean() {
+            return format!("\nsweep matches the {known_open} known-open categories\n");
+        }
+        let mut rendered = String::new();
+        if !self.unexpected.is_empty() {
+            let _ = writeln!(
+                rendered,
+                "\nREGRESSION: {} failure category/categories outside the known-open list: {:?}",
+                self.unexpected.len(),
+                self.unexpected
+            );
+        }
+        if !self.stale.is_empty() {
+            let _ = writeln!(
+                rendered,
+                "\nFIXED: {} known-open entry/entries no longer fire and must be deleted: {:?}",
+                self.stale.len(),
+                self.stale
+            );
+        }
+        rendered
+    }
+}
+
+/// Splits `observed` failure categories against `known_open`.
+#[must_use]
+pub fn check_known_open<'a>(
+    observed: impl IntoIterator<Item = &'a str>,
+    known_open: &[&str],
+) -> KnownOpenVerdict {
+    let observed: HashSet<&str> = observed.into_iter().collect();
+    KnownOpenVerdict {
+        unexpected: observed
+            .iter()
+            .filter(|category| !known_open.contains(*category))
+            .map(|category| (*category).to_owned())
+            .collect(),
+        stale: known_open
+            .iter()
+            .filter(|category| !observed.contains(*category))
+            .map(|category| (*category).to_owned())
+            .collect(),
+    }
+}
+
+/// Boundary count up to which a shape probes every boundary rather than
+/// sampling. Above it the sweep would cost more than the corpus size warrants.
+pub const SWEEP_EXHAUSTIVE_BOUNDARY_LIMIT: usize = 120;
+
+/// Boundaries each shape samples in a file above that limit.
+pub const SWEEP_SAMPLED_PROBES: usize = 3;
+
+/// The line widths the sweep formats every file at.
+pub const SWEEP_WIDTHS: &[u16] = &[40, 80, 120];
+
+/// The boundary indices `shape` probes in a file with `boundaries` token
+/// boundaries, in probe order.
+///
+/// Both the sweep and the single-file replay read placement from here, so a
+/// reported `<path>:<shape><n>` always names the boundary the sweep used.
+#[must_use]
+pub fn probe_boundaries(shape: &ProbeShape, source: &str, boundaries: usize) -> Vec<usize> {
+    if boundaries == 0 {
+        return Vec::new();
+    }
+    if boundaries <= SWEEP_EXHAUSTIVE_BOUNDARY_LIMIT {
+        return (0..boundaries).collect();
+    }
+    (0..SWEEP_SAMPLED_PROBES)
+        .map(|probe| {
+            (probe + 1).wrapping_mul(shape.seed.wrapping_mul(source.len() + 17)) % boundaries
+        })
+        .collect()
+}
+
+/// Looks a probe shape up by the name a `<path>:<shape><n>` argument carries,
+/// returning the shape and the probe index.
+#[must_use]
+pub fn parse_probe_argument(probe: &str) -> Option<(&'static ProbeShape, usize)> {
+    // Longest name first, so `ownlinecomment` is not read as `ownline` with a
+    // number that fails to parse.
+    let mut shapes: Vec<&ProbeShape> = PROBE_SHAPES.iter().collect();
+    shapes.sort_by_key(|shape| std::cmp::Reverse(shape.name.len()));
+    shapes.into_iter().find_map(|shape| {
+        let index = probe.strip_prefix(shape.name)?.parse().ok()?;
+        Some((shape, index))
+    })
+}
+
+/// One failure the conservation sweep found, labelled by probe and check.
+pub struct SweepFailure {
+    /// `<probe label>:<check>`, e.g. `ownline12:not-idempotent`.
+    pub category: String,
+    /// Human-readable evidence, empty when the category says everything.
+    pub detail: String,
+}
+
+impl SweepFailure {
+    /// The category with the probe index stripped, so `ownline12:not-idempotent`
+    /// and `ownline37:not-idempotent` share one summary key.
+    #[must_use]
+    pub fn summary_key(&self) -> String {
+        let (probe, check) = self
+            .category
+            .split_once(':')
+            .unwrap_or((self.category.as_str(), ""));
+        let shape = probe.trim_end_matches(|character: char| character.is_ascii_digit());
+        format!("{shape}:{check}")
+    }
+}
+
+/// Samples kept per summary key, in the report and on disk.
+///
+/// A check that fails on a large share of the corpus would otherwise bury the
+/// report under near-identical entries, and holding every failure's evidence --
+/// two full formatted outputs for a non-idempotence -- exhausts memory well
+/// before the sweep finishes. Counting is unbounded; retention is not. The
+/// elided totals are reported rather than silently dropped.
+pub const MAX_SAMPLES_PER_KEY: usize = 20;
+
+/// Failure counts for a whole sweep, with a bounded sample of evidence.
+#[derive(Default)]
+pub struct SweepFindings {
+    /// Total failures per summary key, uncapped.
+    counts: BTreeMap<String, usize>,
+    /// Retained samples per summary key, capped at [`MAX_SAMPLES_PER_KEY`].
+    samples: Vec<(PathBuf, SweepFailure)>,
+    retained: BTreeMap<String, usize>,
+}
+
+impl SweepFindings {
+    /// Counts `failure`, keeping its evidence only while under the per-key cap.
+    pub fn push(&mut self, path: &Path, failure: SweepFailure) {
+        let key = failure.summary_key();
+        *self.counts.entry(key.clone()).or_default() += 1;
+        let retained = self.retained.entry(key).or_default();
+        if *retained < MAX_SAMPLES_PER_KEY {
+            *retained += 1;
+            self.samples.push((path.to_path_buf(), failure));
+        }
+    }
+
+    /// Folds another sweep's findings in, re-applying the per-key cap.
+    pub fn merge(&mut self, other: Self) {
+        for (key, count) in other.counts {
+            *self.counts.entry(key).or_default() += count;
+        }
+        for (path, failure) in other.samples {
+            let key = failure.summary_key();
+            let retained = self.retained.entry(key).or_default();
+            if *retained < MAX_SAMPLES_PER_KEY {
+                *retained += 1;
+                self.samples.push((path, failure));
+            }
+        }
+    }
+
+    /// Total failures across every key.
+    #[must_use]
+    pub fn total(&self) -> usize {
+        self.counts.values().sum()
+    }
+
+    /// Failure counts per summary key.
+    #[must_use]
+    pub fn counts(&self) -> &BTreeMap<String, usize> {
+        &self.counts
+    }
+
+    /// The retained samples, sorted by category then path.
+    #[must_use]
+    pub fn samples(&mut self) -> &[(PathBuf, SweepFailure)] {
+        self.samples
+            .sort_by(|(left_path, left), (right_path, right)| {
+                (&left.category, left_path).cmp(&(&right.category, right_path))
+            });
+        &self.samples
+    }
+
+    /// How many failures of `key` were counted but not retained.
+    #[must_use]
+    pub fn elided(&self, key: &str) -> usize {
+        self.counts
+            .get(key)
+            .copied()
+            .unwrap_or_default()
+            .saturating_sub(self.retained.get(key).copied().unwrap_or_default())
+    }
+}
+
+/// Runs every sweep check on `source` at every [`SWEEP_WIDTHS`] width, then at
+/// the default width with each [`PROBE_SHAPES`] probe injected.
+#[must_use]
+pub fn sweep_source<L: CorpusLanguage>(lang: &L, source: &str) -> Vec<SweepFailure> {
+    let mut failures = Vec::new();
+    for &width in SWEEP_WIDTHS {
+        let options = FormatOptions {
+            line_width: width,
+            ..FormatOptions::default()
+        };
+        failures.extend(sweep_variant(lang, source, &options, &format!("w{width}")));
+    }
+
+    let boundaries = lang.token_end_offsets(source);
+    let options = FormatOptions::default();
+    let source_parses_cleanly = lang.parse_facts(source).diagnostics.is_empty();
+    for shape in PROBE_SHAPES {
+        for (probe, &boundary) in probe_boundaries(shape, source, boundaries.len())
+            .iter()
+            .enumerate()
+        {
+            let probed = probed_source(source, boundaries[boundary], shape);
+            // A boundary offset can fall inside a string literal, where the
+            // insertion is content rather than trivia: it breaks the literal
+            // instead of modelling a comment. Such a probe tests nothing this
+            // sweep is about, and the malformed source it produces can drive the
+            // formatter into allocations large enough to abort the whole run,
+            // which no in-process check can recover from. Require a probe to
+            // keep clean source clean, so the sweep stays bounded by
+            // construction rather than by luck.
+            if source_parses_cleanly && !lang.parse_facts(&probed).diagnostics.is_empty() {
+                continue;
+            }
+            failures.extend(sweep_variant(
+                lang,
+                &probed,
+                &options,
+                &format!("{}{probe}", shape.name),
+            ));
+        }
+    }
+    failures
+}
+
+/// Inserts `shape` at the byte offset `boundary`.
+#[must_use]
+pub fn probed_source(source: &str, boundary: usize, shape: &ProbeShape) -> String {
+    let mut probed = String::with_capacity(source.len() + shape.insert.len());
+    probed.push_str(&source[..boundary]);
+    probed.push_str(shape.insert);
+    probed.push_str(&source[boundary..]);
+    probed
+}
+
+/// Checks one already-probed source at one width: clean reparse, diagnostic and
+/// structure and comment conservation, and idempotence.
+#[must_use]
+pub fn sweep_variant<L: CorpusLanguage>(
+    lang: &L,
+    source: &str,
+    options: &FormatOptions,
+    label: &str,
+) -> Vec<SweepFailure> {
+    let mut failures = Vec::new();
+    let mut fail = |check: &str, detail: String| {
+        failures.push(SweepFailure {
+            category: format!("{label}:{check}"),
+            detail,
+        });
+    };
+
+    let input = lang.parse_facts(source);
+    if !input.has_tree {
+        fail("no-tree", format!("diagnostics: {:?}", input.diagnostics));
+        return failures;
+    }
+    let clean_input = input.diagnostics.is_empty();
+
+    let formatted = match lang.try_format(source, options) {
+        Ok(formatted) => formatted,
+        Err(detail) => {
+            fail("format-blocked", detail);
+            return failures;
+        }
+    };
+    let after = lang.parse_facts(&formatted);
+    if !after.has_tree {
+        fail("reparse-no-tree", String::new());
+        return failures;
+    }
+    if clean_input && !after.diagnostics.is_empty() {
+        fail(
+            "reparse-dirty",
+            format!("formatted output diagnostics: {:?}", after.diagnostics),
+        );
+    }
+    if !clean_input
+        && diagnostic_inventory(&input.diagnostics) != diagnostic_inventory(&after.diagnostics)
+    {
+        fail("diag-inventory-changed", String::new());
+    }
+    if clean_input && input.structure != after.structure {
+        fail("structure-changed", String::new());
+    }
+    if input.comment_inventory != after.comment_inventory {
+        fail(
+            "comments-changed",
+            format!(
+                "expected: {:?}\nactual: {:?}",
+                input.comment_inventory, after.comment_inventory
+            ),
+        );
+    }
+    match lang.try_format(&formatted, options) {
+        Ok(repeated) if repeated != formatted => {
+            fail(
+                "not-idempotent",
+                format!("--- first\n{formatted}\n--- second\n{repeated}"),
+            );
+        }
+        Err(detail) => fail("reformat-blocked", detail),
+        Ok(_) => {}
+    }
+    failures
 }
 
 /// Drives the shared formatter corpus loop over `files`.

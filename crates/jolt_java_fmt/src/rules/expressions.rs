@@ -11,13 +11,13 @@ use jolt_java_syntax::{
 
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
-    format_leading_comments, format_separator_with_comments, format_token,
-    format_token_after_relocated_leading_comments, format_token_with_comments,
+    format_construct_leading_comments, format_leading_comments, format_separator_with_comments,
+    format_token, format_token_after_relocated_leading_comments, format_token_with_comments,
     format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
     trailing_comments_force_line,
 };
 use crate::helpers::lists::{
-    CommaListItem, braced_comma_list_with_trailing_separator, delimited_comma_list,
+    CommaListItem, braced_comma_list_with_open_leading, delimited_comma_list,
 };
 use crate::helpers::recovery::format_malformed;
 use crate::rules::annotations::format_annotation;

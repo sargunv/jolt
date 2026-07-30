@@ -1,0 +1,237 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// A comment leading a body's open brace sits between the header and the brace,
+// so it stays inline there. The reparse reads it as a trailing comment of the
+// header's last token, which inlines it too, so the first pass is already the
+// fixpoint.
+class LeadingCommentsBeforeBodyBraces
+/* leads a class body brace */
+{
+  int field;
+
+  LeadingCommentsBeforeBodyBraces()
+  /* leads a constructor body brace */
+  {
+    field = 0;
+  }
+
+  void method()
+  /* leads a method body brace */
+  {
+    field = 1;
+  }
+
+  Object anonymous = new Object()
+  /* leads an anonymous class body brace */
+  {
+    int inner;
+  };
+}
+
+interface LeadingCommentBeforeInterfaceBrace
+/* leads an interface body brace */
+{
+}
+
+enum LeadingCommentBeforeEnumBrace
+/* leads an enum body brace */
+{
+  CONSTANT
+  /* leads an enum constant body brace */
+  {
+    int inner;
+  };
+}
+
+record LeadingCommentBeforeRecordBrace(int value)
+/* leads a record body brace */
+{
+}
+
+@interface LeadingCommentBeforeAnnotationBrace
+/* leads an annotation interface body brace */
+{
+}
+
+// A line comment there ends its own line, so the brace keeps the next line on
+// both passes.
+class LineCommentBeforeClassBrace
+// leads a class body brace and ends its line
+{
+  int field;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 251..256 leading=[LineComment "// A comment leading a body's open brace sits between the header and the brace,", Newline "\n", LineComment "// so it stays inline there. The reparse reads it as a trailing comment of the", Newline "\n", LineComment "// header's last token, which inlines it too, so the first pass is already the", Newline "\n", LineComment "// fixpoint.", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LeadingCommentsBeforeBodyBraces" @ 257..288
+      ClassBody
+        LBrace "{" @ 320..321 leading=[Newline "\n", BlockComment "/* leads a class body brace */", Newline "\n"]
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 324..327 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "field" @ 328..333
+            Semicolon ";" @ 333..334
+          ConstructorDeclaration
+            Identifier "LeadingCommentsBeforeBodyBraces" @ 338..369 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+            LParen "(" @ 369..370
+            RParen ")" @ 370..371
+            ConstructorBody
+              LBrace "{" @ 413..414 leading=[Newline "\n", Whitespace "  ", BlockComment "/* leads a constructor body brace */", Newline "\n", Whitespace "  "]
+              ConstructorBodyEntryList
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "field" @ 419..424 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Assign "=" @ 425..426 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "0" @ 427..428
+                    Semicolon ";" @ 428..429
+              RBrace "}" @ 432..433 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 437..441 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "method" @ 442..448
+            LParen "(" @ 448..449
+            RParen ")" @ 449..450
+            Block
+              LBrace "{" @ 487..488 leading=[Newline "\n", Whitespace "  ", BlockComment "/* leads a method body brace */", Newline "\n", Whitespace "  "]
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    AssignmentExpression
+                      NameExpression
+                        Identifier "field" @ 493..498 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      Assign "=" @ 499..500 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "1" @ 501..502
+                    Semicolon ";" @ 502..503
+              RBrace "}" @ 506..507 leading=[Newline "\n", Whitespace "  "]
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "Object" @ 511..517 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "anonymous" @ 518..527 trailing=[Whitespace " "]
+                Assign "=" @ 528..529 trailing=[Whitespace " "]
+                VariableInitializer
+                  ObjectCreationExpression
+                    NewKw "new" @ 530..533 trailing=[Whitespace " "]
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 534..540
+                    ArgumentList
+                      LParen "(" @ 540..541
+                      ExpressionList
+                      RParen ")" @ 541..542
+                    ClassBody
+                      LBrace "{" @ 589..590 leading=[Newline "\n", Whitespace "  ", BlockComment "/* leads an anonymous class body brace */", Newline "\n", Whitespace "  "]
+                      ClassBodyMemberList
+                        FieldDeclaration
+                          PrimitiveType
+                            AnnotationList
+                            IntKw "int" @ 595..598 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "inner" @ 599..604
+                          Semicolon ";" @ 604..605
+                      RBrace "}" @ 608..609 leading=[Newline "\n", Whitespace "  "]
+            Semicolon ";" @ 609..610
+        RBrace "}" @ 611..612 leading=[Newline "\n"]
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 614..623 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LeadingCommentBeforeInterfaceBrace" @ 624..658
+      InterfaceBody
+        LBrace "{" @ 695..696 leading=[Newline "\n", BlockComment "/* leads an interface body brace */", Newline "\n"]
+        InterfaceBodyMemberList
+        RBrace "}" @ 697..698 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 700..704 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LeadingCommentBeforeEnumBrace" @ 705..734
+      EnumBody
+        LBrace "{" @ 766..767 leading=[Newline "\n", BlockComment "/* leads an enum body brace */", Newline "\n"]
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "CONSTANT" @ 770..778 leading=[Newline "\n", Whitespace "  "]
+            ClassBody
+              LBrace "{" @ 823..824 leading=[Newline "\n", Whitespace "  ", BlockComment "/* leads an enum constant body brace */", Newline "\n", Whitespace "  "]
+              ClassBodyMemberList
+                FieldDeclaration
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 829..832 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  VariableDeclaratorList
+                    VariableDeclarator
+                      Identifier "inner" @ 833..838
+                  Semicolon ";" @ 838..839
+              RBrace "}" @ 842..843 leading=[Newline "\n", Whitespace "  "]
+        Semicolon ";" @ 843..844
+        ClassBodyMemberList
+        RBrace "}" @ 845..846 leading=[Newline "\n"]
+    RecordDeclaration
+      Identifier "record" @ 848..854 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LeadingCommentBeforeRecordBrace" @ 855..886
+      LParen "(" @ 886..887
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 887..890 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "value" @ 891..896
+      RParen ")" @ 896..897
+      RecordBody
+        LBrace "{" @ 930..931 leading=[Newline "\n", BlockComment "/* leads a record body brace */", Newline "\n"]
+        RecordBodyMemberList
+        RBrace "}" @ 932..933 leading=[Newline "\n"]
+    AnnotationInterfaceDeclaration
+      At "@" @ 935..936 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 936..945 trailing=[Whitespace " "]
+      Identifier "LeadingCommentBeforeAnnotationBrace" @ 946..981
+      AnnotationInterfaceBody
+        LBrace "{" @ 1029..1030 leading=[Newline "\n", BlockComment "/* leads an annotation interface body brace */", Newline "\n"]
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+        RBrace "}" @ 1031..1032 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 1129..1134 leading=[Newline "\n", Newline "\n", LineComment "// A line comment there ends its own line, so the brace keeps the next line on", Newline "\n", LineComment "// both passes.", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LineCommentBeforeClassBrace" @ 1135..1162
+      ClassBody
+        LBrace "{" @ 1209..1210 leading=[Newline "\n", LineComment "// leads a class body brace and ends its line", Newline "\n"]
+        ClassBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 1213..1216 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "field" @ 1217..1222
+            Semicolon ";" @ 1222..1223
+        RBrace "}" @ 1224..1225 leading=[Newline "\n"]
+  Eof "" @ 1226..1226 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

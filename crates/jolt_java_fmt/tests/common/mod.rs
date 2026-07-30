@@ -1,11 +1,12 @@
 // Shared by several test binaries, each of which uses a different part.
 #![allow(dead_code)]
 
-use jolt_fmt_ir::FormatOptions;
+use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
 use jolt_java_fmt::format_source_to_sink;
 use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxView, parse_compilation_unit};
 use jolt_test_support::{
-    CorpusLanguage, CorpusParseFacts, StructurePolicy, corpus_parse_facts, format_source_or_panic,
+    CorpusLanguage, CorpusParseFacts, StringSink, StructurePolicy, corpus_parse_facts,
+    format_source_or_panic,
 };
 
 /// The only tree edits the Java formatter is allowed to make: it sorts imports and
@@ -28,6 +29,9 @@ pub(crate) const STRUCTURE_POLICY: StructurePolicy<JavaSyntaxKind> = StructurePo
     // just `final` plus annotations, so it has no keyword order to canonicalize, and the
     // formatter preserves whichever spelling the source used.
     unordered_keywords: &[JavaSyntaxKind::ModifierList],
+    // Annotations keep declaration order among themselves but may cross the
+    // node-shaped `non-sealed` modifier when the formatter sorts the list.
+    unordered_keywords_ordered_children: &[JavaSyntaxKind::Annotation],
     reorderable_children: &[JavaSyntaxKind::ImportDeclaration],
     // `BlockStatementList` and `BlockStatement` are the list plumbing that brace
     // promotion interposes; neither owns a brace, so eliding them cannot hide a lost
@@ -90,6 +94,17 @@ impl CorpusLanguage for JavaCorpus {
             &FormatOptions::default(),
             label,
         )
+    }
+
+    fn try_format(&self, source: &str, options: &FormatOptions) -> Result<String, String> {
+        let mut sink = StringSink::default();
+        match format_source_to_sink(source, options, &mut sink) {
+            FormatSinkResult::Complete => Ok(sink.into_string()),
+            FormatSinkResult::Halted => Err("formatter halted".to_owned()),
+            FormatSinkResult::Blocked { diagnostic } => {
+                Err(format!("formatter blocked: {}", diagnostic.message))
+            }
+        }
     }
 
     fn expects_parser_diagnostics(&self, relative: &str) -> bool {

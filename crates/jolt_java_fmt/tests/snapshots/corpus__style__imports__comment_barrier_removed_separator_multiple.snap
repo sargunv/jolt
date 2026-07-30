@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+/*hunt*/
+import one.last;
+import aaa.Bbb;
+
+import static java.utils.*;
+
+class C {
+}
+
+diagnostics:
+(none)

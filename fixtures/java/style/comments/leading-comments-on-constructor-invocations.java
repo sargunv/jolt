@@ -1,4 +1,6 @@
 class LeadingCommentsOnConstructorInvocations {
+  LeadingCommentsOnConstructorInvocations enclosing;
+
   LeadingCommentsOnConstructorInvocations() {
     // leads a bare invocation
     this(0);
@@ -45,6 +47,25 @@ class LeadingCommentsOnConstructorInvocations {
       outer. // trails the qualifier dot
       // sits between the qualifier dot and the explicit type arguments
       <String>super("value", 0);
+    }
+
+    Inner(LeadingCommentsOnConstructorInvocations outer, Object value) { /* dangles before a qualified invocation */
+      outer.super(0);
+    }
+
+    Inner(LeadingCommentsOnConstructorInvocations outer, Object first, Object second) { /* dangles before a dotted qualified invocation */
+      outer.enclosing.super(0);
+    }
+
+    Inner(LeadingCommentsOnConstructorInvocations outer, Object first, Object second, Object third) { /* dangles before a qualified invocation with type arguments */
+      outer.<String>super("value", 0);
+    }
+  }
+
+  static class Dotted extends Base {
+    Dotted(LeadingCommentsOnConstructorInvocations outer) {
+      /* leads a qualified invocation */
+      outer.super(0);
     }
   }
 

@@ -152,6 +152,30 @@ mod tests {
         }
     }
 
+    // Regression: flat operator chains nest as deeply as the source is long,
+    // and recursive layout overflowed an 8MB main-thread stack at ~10-12k
+    // terms. Operator spines are walked iteratively now. Test threads run with
+    // much smaller stacks than 8MB, so a chain this size fails loudly if
+    // layout recursion proportional to chain length ever returns, while still
+    // formatting in well under a second.
+    #[test]
+    fn long_flat_operator_chain_formats_without_stack_overflow() {
+        for (ty, operator) in [("int", "+"), ("boolean", "&&")] {
+            let terms = vec!["a"; 20_000].join(&format!(" {operator} "));
+            let source = format!("class C {{ {ty} x = {terms}; }}\n");
+            let mut sink = StringSink::default();
+            let result = format_source_to_sink(&source, &FormatOptions::default(), &mut sink);
+
+            assert!(matches!(result, FormatSinkResult::Complete), "{result:?}");
+            let formatted = sink.into_string();
+            assert_eq!(
+                formatted.matches(operator).count(),
+                20_000 - 1,
+                "{formatted}"
+            );
+        }
+    }
+
     #[test]
     fn malformed_expression_preserves_composite_operator_components() {
         let mut sink = StringSink::default();

@@ -35,7 +35,7 @@ mod simple;
 mod switches;
 mod try_resources;
 
-pub(crate) use blocks::{format_block, format_block_statement_item};
+pub(crate) use blocks::{format_block, format_block_statement_item, format_line_start_block};
 use control_flow::{
     format_do_statement, format_for_statement, format_if_statement, format_synchronized_statement,
     format_while_statement,
@@ -55,7 +55,7 @@ fn format_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match statement {
-        Statement::Block(block) => format_block(block, doc),
+        Statement::Block(block) => format_line_start_block(block, doc),
         Statement::EmptyStatement(statement) => format_empty_statement(statement, doc),
         Statement::LabeledStatement(statement) => format_labeled_statement(statement, doc),
         Statement::ExpressionStatement(statement) => format_expression_statement(statement, doc),

@@ -1,0 +1,47 @@
+val fromWhen = when (a) {
+    1 ->
+        init(b)
+    2 ->
+        constructor(c)
+    else -> g()
+}
+
+val fromInitializer =
+    init(b)
+
+val fromConstructorInitializer =
+    constructor(b)
+
+fun branches(c: Boolean) {
+    if (c)
+        init(b)
+    else
+        constructor(d)
+    while (c)
+        init(e)
+}
+
+val fromLambda = {
+    init(b)
+}
+
+class MemberCalls(val key: Key) {
+    // `init` is a class-member head only when a block follows it, so a call is
+    // unambiguous even in member position, where a sibling member could start.
+    val fromMemberInitializer =
+        init(key)
+
+    fun fromMemberBody() =
+        init(key)
+
+    init {
+        init(key)
+    }
+
+    // `constructor(` is what a secondary constructor declaration looks like too,
+    // so in member position it stays a declaration head and a call spelled that
+    // way is not represented. Calls reach the expression positions above, where
+    // no class member can begin. Deliberate: the two readings are genuinely
+    // ambiguous here, and the declaration is overwhelmingly the likelier intent.
+    constructor() : this(DefaultKey)
+}

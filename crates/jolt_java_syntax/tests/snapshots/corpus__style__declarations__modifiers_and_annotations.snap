@@ -7,6 +7,7 @@ input:
 flags={1,2}) @Generated("tool") @Deprecated final public class User { @FieldAnno(name="id", values={1,2}) private final String id; @FieldOnly String unqualified; public @Nonnull String name(){ return id; } @Action @Checked public @Nullable void reset(){} @Override String raw(){ return id; } }
 strictfp sealed public class Base permits Open {}
 strictfp non-sealed public class Open extends Base {}
+non-sealed @Deprecated class AnnotatedOpen extends Base {}
 final /* stable */ public class CommentedModifier { volatile /* shared */ public int value; }
 
 syntax:
@@ -247,26 +248,51 @@ CompilationUnit
         RBrace "}" @ 437..438
     ClassDeclaration
       ModifierList
-        FinalKw "final" @ 439..444 leading=[Newline "\n"] trailing=[Whitespace " ", BlockComment "/* stable */", Whitespace " "]
-        PublicKw "public" @ 458..464 trailing=[Whitespace " "]
-      ClassKw "class" @ 465..470 trailing=[Whitespace " "]
-      Identifier "CommentedModifier" @ 471..488 trailing=[Whitespace " "]
+        NonSealedModifier
+          Identifier "non" @ 439..442 leading=[Newline "\n"]
+          Minus "-" @ 442..443
+          Identifier "sealed" @ 443..449 trailing=[Whitespace " "]
+        Annotation
+          At "@" @ 450..451
+          Name
+            Identifier "Deprecated" @ 451..461 trailing=[Whitespace " "]
+      ClassKw "class" @ 462..467 trailing=[Whitespace " "]
+      Identifier "AnnotatedOpen" @ 468..481 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 482..489 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Base" @ 490..494 trailing=[Whitespace " "]
       ClassBody
-        LBrace "{" @ 489..490 trailing=[Whitespace " "]
+        LBrace "{" @ 495..496
+        ClassBodyMemberList
+        RBrace "}" @ 496..497
+    ClassDeclaration
+      ModifierList
+        FinalKw "final" @ 498..503 leading=[Newline "\n"] trailing=[Whitespace " ", BlockComment "/* stable */", Whitespace " "]
+        PublicKw "public" @ 517..523 trailing=[Whitespace " "]
+      ClassKw "class" @ 524..529 trailing=[Whitespace " "]
+      Identifier "CommentedModifier" @ 530..547 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 548..549 trailing=[Whitespace " "]
         ClassBodyMemberList
           FieldDeclaration
             ModifierList
-              VolatileKw "volatile" @ 491..499 trailing=[Whitespace " ", BlockComment "/* shared */", Whitespace " "]
-              PublicKw "public" @ 513..519 trailing=[Whitespace " "]
+              VolatileKw "volatile" @ 550..558 trailing=[Whitespace " ", BlockComment "/* shared */", Whitespace " "]
+              PublicKw "public" @ 572..578 trailing=[Whitespace " "]
             PrimitiveType
               AnnotationList
-              IntKw "int" @ 520..523 trailing=[Whitespace " "]
+              IntKw "int" @ 579..582 trailing=[Whitespace " "]
             VariableDeclaratorList
               VariableDeclarator
-                Identifier "value" @ 524..529
-            Semicolon ";" @ 529..530 trailing=[Whitespace " "]
-        RBrace "}" @ 531..532
-  Eof "" @ 533..533 leading=[Newline "\n"]
+                Identifier "value" @ 583..588
+            Semicolon ";" @ 588..589 trailing=[Whitespace " "]
+        RBrace "}" @ 590..591
+  Eof "" @ 592..592 leading=[Newline "\n"]
 
 diagnostics:
   (none)

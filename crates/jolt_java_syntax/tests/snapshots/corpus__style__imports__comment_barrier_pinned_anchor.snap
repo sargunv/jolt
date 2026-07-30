@@ -1,0 +1,65 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import z.Zed;
+/*hunt*/
+import m.Middle;
+import a.Alpha;
+class C {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "z" @ 7..8
+        Dot "." @ 8..9
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Zed" @ 9..12
+      Semicolon ";" @ 12..13
+    ImportDeclaration
+      ImportKw "import" @ 23..29 leading=[Newline "\n", BlockComment "/*hunt*/", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "m" @ 30..31
+        Dot "." @ 31..32
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Middle" @ 32..38
+      Semicolon ";" @ 38..39
+    ImportDeclaration
+      ImportKw "import" @ 40..46 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "a" @ 47..48
+        Dot "." @ 48..49
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Alpha" @ 49..54
+      Semicolon ";" @ 54..55
+    ClassDeclaration
+      ClassKw "class" @ 56..61 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "C" @ 62..63 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 64..65
+        ClassBodyMemberList
+        RBrace "}" @ 65..66
+  Eof "" @ 67..67 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

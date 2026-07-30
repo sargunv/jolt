@@ -6,7 +6,7 @@ impl Parser<'_> {
     pub(super) fn parse_statement_tail(&mut self) {
         if self.at(K::ValKw) || self.at(K::VarKw) {
             let local = self.start();
-            self.parse_property_tail(true);
+            self.parse_property_tail(true, false);
             self.complete(local, K::LocalDeclaration);
         } else if matches!(self.current_kind(), K::Semicolon | K::DoubleSemicolon) {
             let empty = self.start();

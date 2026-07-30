@@ -14,7 +14,8 @@ use crate::helpers::comments::{
 };
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_optional_field, format_required_field,
-    resolve_list_part, resolve_optional_field, resolve_required_delimiter, resolve_required_field,
+    present_token, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
+    resolve_required_field,
 };
 use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
 use jolt_java_syntax::NormalizedToken;
@@ -492,14 +493,4 @@ fn format_enum_constant_annotations<'source>(
             docs.push(hard_line);
         }
     })
-}
-
-fn present_token<'source>(
-    field: jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-) -> Option<JavaSyntaxToken<'source>> {
-    match field {
-        jolt_java_syntax::JavaSyntaxField::Present(token) => Some(token),
-        jolt_java_syntax::JavaSyntaxField::Missing(_)
-        | jolt_java_syntax::JavaSyntaxField::Malformed(_) => None,
-    }
 }

@@ -8,8 +8,18 @@ use crate::helpers::comments::{
 use crate::helpers::recovery::{format_optional_field, format_required_field};
 use crate::rules::names::{NameSortKey, format_name};
 
+/// One import in a compilation unit's sorting batch, with the comments a
+/// removed redundant separator directly ahead of it carried. Those comments
+/// read as this import's own leading trivia, so they anchor a sorting run
+/// exactly as if the separator had never been written.
+pub(crate) struct ImportBatchEntry<'source> {
+    pub(crate) declaration: ImportDeclaration<'source>,
+    pub(crate) salvaged_leading: Option<Doc<'source>>,
+    pub(crate) blank_before: bool,
+}
+
 pub(crate) fn format_imports<'source>(
-    imports: &[ImportDeclaration<'source>],
+    imports: Vec<ImportBatchEntry<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     if imports.is_empty() {
@@ -18,16 +28,30 @@ pub(crate) fn format_imports<'source>(
 
     let mut sections = Vec::new();
     let mut pending = PendingImports::default();
-    for declaration in imports.iter().copied() {
-        let blank_before = declaration.starts_after_blank_line();
-        let Some(import) = FormattedImport::new(declaration) else {
+    for entry in imports {
+        let blank_before = entry.blank_before;
+        let declaration = entry.declaration;
+        let Some(mut import) = FormattedImport::new(declaration) else {
             pending.flush(&mut sections, doc);
+            // The import cannot prove it is sortable, so the salvaged comments
+            // stay a barrier ahead of it instead of traveling. They lead the
+            // import directly, so only the first of the two sections takes the
+            // blank line the source put ahead of the pair; giving it to both
+            // would invent a blank line between the comments and the import they
+            // describe.
+            let salvaged = entry.salvaged_leading.map(|salvaged| {
+                sections.push(ImportSection {
+                    doc: salvaged,
+                    blank_before,
+                });
+            });
             sections.push(ImportSection {
                 doc: format_import_in_place(&declaration, doc),
-                blank_before,
+                blank_before: blank_before && salvaged.is_none(),
             });
             continue;
         };
+        import.salvaged_leading = entry.salvaged_leading;
         pending.push(import, blank_before);
     }
     pending.flush(&mut sections, doc);
@@ -59,93 +83,145 @@ fn join_import_sections<'source>(
     })
 }
 
-/// One batch of imports between unsortable barriers: a list of runs, where
-/// each import carrying leading comments starts the run below it. Key
-/// sorting happens within a run, so it never crosses a comment (comments
-/// travel with their import), while the normal/static regroup is global to
-/// the batch — a later import may land above an earlier comment through the
-/// regroup, but nothing above a comment ever moves below it. That ordering
-/// is a fixpoint, so formatting is idempotent regardless of the source's
-/// import order.
+/// One batch of imports between unsortable barriers: a normal group and a
+/// static group, each a list of runs. An import carrying leading comments
+/// anchors the run below it within its own group only; the other group sorts
+/// as if the comment were not there. Carried comments are the import's own
+/// leading trivia and the comments salvaged from a removed redundant
+/// separator directly ahead of it; both anchor the same way, so deleting
+/// that separator by hand cannot change the order a later pass computes. The
+/// anchor holds the boundary position its comment dictates and never joins
+/// the key sort, so sorting never carries a comment across another import of
+/// its group; only the normal/static regroup, which is global to the batch,
+/// may move an import past a comment. Every other import key-sorts within
+/// its run. That ordering is a fixpoint, so formatting is idempotent
+/// regardless of the source's import order.
 #[derive(Default)]
 struct PendingImports<'source> {
-    runs: Vec<ImportRun<'source>>,
+    normal: GroupRuns<'source>,
+    static_: GroupRuns<'source>,
     first_blank_before: bool,
 }
 
-struct ImportRun<'source> {
-    normal: Vec<FormattedImport<'source>>,
-    static_: Vec<FormattedImport<'source>>,
+/// The runs of one group (normal or static), split at that group's anchors.
+#[derive(Default)]
+struct GroupRuns<'source> {
+    runs: Vec<GroupRun<'source>>,
+}
+
+struct GroupRun<'source> {
+    /// The comment-carrying import that started this run, if any. It prints
+    /// ahead of the run's sorted imports instead of joining the sort.
+    anchor: Option<FormattedImport<'source>>,
+    imports: Vec<FormattedImport<'source>>,
     blank_before: bool,
 }
 
-impl<'source> PendingImports<'source> {
+impl<'source> GroupRun<'source> {
+    fn has_imports(&self) -> bool {
+        self.anchor.is_some() || !self.imports.is_empty()
+    }
+
+    /// The run's imports in emission order: the anchor first, then the
+    /// key-sorted rest.
+    fn into_imports(self) -> Vec<FormattedImport<'source>> {
+        let mut items = Vec::with_capacity(self.imports.len() + 1);
+        if let Some(anchor) = self.anchor {
+            items.push(anchor);
+        }
+        items.extend(self.imports);
+        items
+    }
+}
+
+impl<'source> GroupRuns<'source> {
     fn push(&mut self, import: FormattedImport<'source>, blank_before: bool) {
         if self.runs.is_empty() {
-            self.first_blank_before = blank_before;
+            self.runs.push(GroupRun {
+                anchor: None,
+                imports: Vec::new(),
+                blank_before,
+            });
         }
-        let starts_run = self.runs.is_empty()
-            || import
-                .import
-                .first_token()
-                .is_some_and(|token| !token.leading_comments().is_empty());
-        if starts_run {
-            self.runs.push(ImportRun {
-                normal: Vec::new(),
-                static_: Vec::new(),
+        if import.carries_comments() && self.runs.last().is_some_and(GroupRun::has_imports) {
+            self.runs.push(GroupRun {
+                anchor: None,
+                imports: Vec::new(),
                 blank_before,
             });
         }
         let run = self.runs.last_mut().expect("a run always exists");
-        if import.is_static {
-            run.static_.push(import);
+        if import.carries_comments() {
+            run.anchor = Some(import);
         } else {
-            run.normal.push(import);
+            run.imports.push(import);
+        }
+    }
+
+    /// Emits the group's sections in run order and reports whether any were
+    /// emitted. The first section of the batch takes `first_blank`; the
+    /// group's own first section additionally takes `first_blank_before`
+    /// (the static group's owned blank line) when it does not open the batch.
+    fn flush(
+        &mut self,
+        sections: &mut Vec<ImportSection<'source>>,
+        doc: &mut DocBuilder<'source>,
+        first_section: bool,
+        first_blank: bool,
+        first_blank_before: bool,
+    ) -> bool {
+        // Each batch has `r <= represented tokens`. Stable sorting therefore
+        // costs O(r log r) time and O(r) scratch, with no layout search or
+        // cloning of parser-owned source or syntax buffers.
+        let mut emitted = false;
+        for run in std::mem::take(&mut self.runs) {
+            let blank_before = run.blank_before;
+            let mut imports = run.imports;
+            imports.sort_by(|left, right| left.key.cmp(&right.key));
+            let imports = GroupRun {
+                anchor: run.anchor,
+                imports,
+                blank_before,
+            }
+            .into_imports();
+            sections.push(ImportSection {
+                doc: format_import_list(imports, doc),
+                blank_before: if emitted {
+                    blank_before
+                } else if first_section {
+                    first_blank
+                } else {
+                    first_blank_before || blank_before
+                },
+            });
+            emitted = true;
+        }
+        emitted
+    }
+}
+
+impl<'source> PendingImports<'source> {
+    fn push(&mut self, import: FormattedImport<'source>, blank_before: bool) {
+        if self.normal.runs.is_empty() && self.static_.runs.is_empty() {
+            self.first_blank_before = blank_before;
+        }
+        if import.is_static {
+            self.static_.push(import, blank_before);
+        } else {
+            self.normal.push(import, blank_before);
         }
     }
 
     fn flush(&mut self, sections: &mut Vec<ImportSection<'source>>, doc: &mut DocBuilder<'source>) {
-        let mut runs = std::mem::take(&mut self.runs);
-        if runs.is_empty() {
+        if self.normal.runs.is_empty() && self.static_.runs.is_empty() {
             return;
         }
-        // Each batch has `r <= represented tokens`. Stable sorting therefore
-        // costs O(r log r) time and O(r) scratch, with no layout search or
-        // cloning of parser-owned source or syntax buffers.
-        for run in &mut runs {
-            run.normal.sort_by(|left, right| left.key.cmp(&right.key));
-            run.static_.sort_by(|left, right| left.key.cmp(&right.key));
-        }
-        let has_normals = runs.iter().any(|run| !run.normal.is_empty());
         let first_blank = self.first_blank_before;
-        let mut first = true;
-        for run in &mut runs {
-            let normal = std::mem::take(&mut run.normal);
-            if normal.is_empty() {
-                continue;
-            }
-            sections.push(ImportSection {
-                doc: format_import_list(normal, doc),
-                blank_before: if first { first_blank } else { run.blank_before },
-            });
-            first = false;
-        }
-        let mut first_static = true;
-        for run in &mut runs {
-            let blank_before = (first_static && has_normals) || run.blank_before;
-            first_static = false;
-            let static_ = std::mem::take(&mut run.static_);
-            if static_.is_empty() {
-                continue;
-            }
-            // Grouping static imports apart is this formatter's own split, so
-            // it owns the blank line that marks it.
-            sections.push(ImportSection {
-                doc: format_import_list(static_, doc),
-                blank_before: if first { first_blank } else { blank_before },
-            });
-            first = false;
-        }
+        let has_normals = self.normal.flush(sections, doc, true, first_blank, false);
+        // Grouping static imports apart is this formatter's own split, so it
+        // owns the blank line that marks it.
+        self.static_
+            .flush(sections, doc, !has_normals, first_blank, true);
     }
 }
 
@@ -170,6 +246,7 @@ struct FormattedImport<'source> {
     reorder: ReorderClaim<'source>,
     key: NameSortKey<'source>,
     is_static: bool,
+    salvaged_leading: Option<Doc<'source>>,
 }
 
 impl<'source> FormattedImport<'source> {
@@ -207,67 +284,105 @@ impl<'source> FormattedImport<'source> {
             reorder,
             key,
             is_static,
+            salvaged_leading: None,
         })
+    }
+
+    /// Whether this import carries leading comments — its own leading trivia
+    /// or comments salvaged from a removed redundant separator directly ahead
+    /// of it — and therefore anchors a sorting run.
+    fn carries_comments(&self) -> bool {
+        self.salvaged_leading.is_some()
+            || self
+                .import
+                .first_token()
+                .is_some_and(|token| !token.leading_comments().is_empty())
     }
 
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        let formatted = self.format_with_relocated_boundary_comments(doc);
-        doc.reordered_source(formatted, self.reorder)
+        let Self {
+            import,
+            reorder,
+            salvaged_leading,
+            ..
+        } = self;
+        let formatted = format_with_relocated_boundary_comments(&import, salvaged_leading, doc);
+        doc.reordered_source(formatted, reorder)
     }
+}
 
-    /// Relocates boundary comments together with an import that has proved it
-    /// is recovery-free and therefore eligible for sorting.
-    fn format_with_relocated_boundary_comments(
-        &self,
-        doc: &mut DocBuilder<'source>,
-    ) -> Doc<'source> {
-        let first = self.import.first_token();
-        let last = self.import.last_token();
-        let leading = doc.concat_list(|comments| {
-            if let Some(token) = first.as_ref() {
-                for comment in token.leading_comments() {
-                    if !comments.is_empty() {
-                        let line = comments.hard_line();
-                        comments.push(line);
-                    }
-                    let formatted = format_comment(comments, &comment);
-                    comments.push(formatted);
+/// Relocates boundary comments together with an import that has proved it is
+/// recovery-free and therefore eligible for sorting. Salvaged leading
+/// comments come from a removed redundant separator directly ahead of the
+/// import and print ahead of its own leading comments, matching the trivia
+/// the import would carry had the separator never been written.
+fn format_with_relocated_boundary_comments<'source>(
+    import: &ImportDeclaration<'source>,
+    salvaged_leading: Option<Doc<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let first = import.first_token();
+    let last = import.last_token();
+    let leading = doc.concat_list(|comments| {
+        if let Some(token) = first.as_ref() {
+            for comment in token.leading_comments() {
+                if !comments.is_empty() {
+                    let line = comments.hard_line();
+                    comments.push(line);
                 }
+                let formatted = format_comment(comments, &comment);
+                comments.push(formatted);
             }
-        });
-        let keyword = format_required_field(self.import.import_keyword(), doc, |token, doc| {
+        }
+    });
+    let keyword = format_required_field(import.import_keyword(), doc, |token, doc| {
+        doc_concat!(
+            doc,
+            [
+                format_token_after_relocated_leading_comments(
+                    doc,
+                    &token,
+                    TrailingTrivia::Preserve,
+                ),
+                doc.space(),
+            ]
+        )
+    });
+    let semicolon = format_required_field(import.semicolon(), doc, |token, doc| {
+        format_token_before_relocated_trailing_comments(doc, &token, LeadingTrivia::Preserve)
+    });
+    let body = format_import_fields(import, keyword, semicolon, doc);
+    let trailing = doc.concat_list(|comments| {
+        if let Some(token) = last.as_ref() {
+            for comment in token.trailing_comments() {
+                let space = comments.space();
+                comments.push(space);
+                let formatted = format_comment(comments, &comment);
+                comments.push(formatted);
+            }
+        }
+    });
+    let has_leading_comments = first.is_some_and(|token| !token.leading_comments().is_empty());
+    match (salvaged_leading, has_leading_comments) {
+        (Some(salvaged), true) => {
             doc_concat!(
                 doc,
                 [
-                    format_token_after_relocated_leading_comments(
-                        doc,
-                        &token,
-                        TrailingTrivia::Preserve,
-                    ),
-                    doc.space(),
+                    salvaged,
+                    doc.hard_line(),
+                    leading,
+                    doc.hard_line(),
+                    body,
+                    trailing
                 ]
             )
-        });
-        let semicolon = format_required_field(self.import.semicolon(), doc, |token, doc| {
-            format_token_before_relocated_trailing_comments(doc, &token, LeadingTrivia::Preserve)
-        });
-        let body = format_import_fields(&self.import, keyword, semicolon, doc);
-        let trailing = doc.concat_list(|comments| {
-            if let Some(token) = last.as_ref() {
-                for comment in token.trailing_comments() {
-                    let space = comments.space();
-                    comments.push(space);
-                    let formatted = format_comment(comments, &comment);
-                    comments.push(formatted);
-                }
-            }
-        });
-        if first.is_some_and(|token| !token.leading_comments().is_empty()) {
-            doc_concat!(doc, [leading, doc.hard_line(), body, trailing])
-        } else {
-            doc_concat!(doc, [body, trailing])
         }
+        (Some(salvaged), false) => {
+            doc_concat!(doc, [salvaged, doc.hard_line(), body, trailing])
+        }
+        (None, true) => doc_concat!(doc, [leading, doc.hard_line(), body, trailing]),
+        (None, false) => doc_concat!(doc, [body, trailing]),
     }
 }
 

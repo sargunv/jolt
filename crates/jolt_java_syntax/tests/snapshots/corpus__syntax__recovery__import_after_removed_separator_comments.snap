@@ -1,0 +1,80 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package p;
+
+import z.Zeta;
+
+// Rides on a redundant separator that is removed, so it reads as the leading
+// trivia of the import that follows. That import carries recovery and cannot
+// prove it is sortable, so the comments stay a barrier ahead of it rather than
+// travelling with it -- but they still lead it directly, so no blank line is
+// invented between them, matching the sortable path.
+;
+
+import a.;
+
+// Same, with the separator's comments and the import already adjacent.
+;
+import b.;
+
+class ImportAfterRemovedSeparatorComments {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+      Name
+        Identifier "p" @ 8..9
+      Semicolon ";" @ 9..10
+    ImportDeclaration
+      ImportKw "import" @ 12..18 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "z" @ 19..20
+        Dot "." @ 20..21
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Zeta" @ 21..25
+      Semicolon ";" @ 25..26
+    EmptyDeclaration
+      Semicolon ";" @ 396..397 leading=[Newline "\n", Newline "\n", LineComment "// Rides on a redundant separator that is removed, so it reads as the leading", Newline "\n", LineComment "// trivia of the import that follows. That import carries recovery and cannot", Newline "\n", LineComment "// prove it is sortable, so the comments stay a barrier ahead of it rather than", Newline "\n", LineComment "// travelling with it -- but they still lead it directly, so no blank line is", Newline "\n", LineComment "// invented between them, matching the sortable path.", Newline "\n"]
+    ImportDeclaration
+      ImportKw "import" @ 399..405 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "a" @ 406..407
+      BogusImportSuffix
+        Dot "." @ 407..408
+      Semicolon ";" @ 408..409
+    EmptyDeclaration
+      Semicolon ";" @ 483..484 leading=[Newline "\n", Newline "\n", LineComment "// Same, with the separator's comments and the import already adjacent.", Newline "\n"]
+    ImportDeclaration
+      ImportKw "import" @ 485..491 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "b" @ 492..493
+      BogusImportSuffix
+        Dot "." @ 493..494
+      Semicolon ";" @ 494..495
+    ClassDeclaration
+      ClassKw "class" @ 497..502 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ImportAfterRemovedSeparatorComments" @ 503..538 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 539..540
+        ClassBodyMemberList
+        RBrace "}" @ 540..541
+  Eof "" @ 542..542 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=407..408 message="unexpected token in import declaration"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=493..494 message="unexpected token in import declaration"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(407), end: TextSize(408) }) message=unexpected token in import declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(493), end: TextSize(494) }) message=unexpected token in import declaration

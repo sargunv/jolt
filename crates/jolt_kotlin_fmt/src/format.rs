@@ -113,6 +113,23 @@ mod tests {
 
     use super::format_source_to_sink;
 
+    // Regression: flat operator chains nest as deeply as the source is long,
+    // and recursive layout overflowed an 8MB main-thread stack on long chains.
+    // The binary spine is walked iteratively now. Test threads run with much
+    // smaller stacks than 8MB, so a chain this size fails loudly if layout
+    // recursion proportional to chain length ever returns, while still
+    // formatting in well under a second.
+    #[test]
+    fn long_flat_operator_chain_formats_without_stack_overflow() {
+        let source = format!("val x = {}\n", vec!["a"; 20_000].join(" + "));
+        let mut sink = StringSink::default();
+        let result = format_source_to_sink(&source, &FormatOptions::default(), &mut sink);
+
+        assert!(matches!(result, FormatSinkResult::Complete), "{result:?}");
+        let formatted = sink.into_string();
+        assert_eq!(formatted.matches('+').count(), 20_000 - 1, "{formatted}");
+    }
+
     #[test]
     fn formats_represented_tree_with_parse_diagnostics() {
         let mut sink = StringSink::default();

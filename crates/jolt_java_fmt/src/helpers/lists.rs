@@ -68,9 +68,29 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     items: impl IntoIterator<Item = CommaListItem<'source>>,
     trailing_comma: Option<SynthesisClaim<'source>>,
 ) -> Doc<'source> {
+    braced_comma_list_with_open_leading(
+        doc,
+        open,
+        close,
+        items,
+        trailing_comma,
+        LeadingTrivia::Preserve,
+    )
+}
+
+/// Same, but the caller says whether it already emitted the open delimiter's
+/// leading comments.
+pub(crate) fn braced_comma_list_with_open_leading<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
+    items: impl IntoIterator<Item = CommaListItem<'source>>,
+    trailing_comma: Option<SynthesisClaim<'source>>,
+    open_leading: LeadingTrivia,
+) -> Doc<'source> {
     let mut items = items.into_iter().peekable();
     if items.peek().is_none() {
-        return empty_delimited_list(doc, open, close, LeadingTrivia::Preserve);
+        return empty_delimited_list(doc, open, close, open_leading);
     }
 
     let (items_doc, has_source_trailing_separator) =
@@ -81,7 +101,7 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     let contents = doc_concat!(
         doc,
         [
-            format_open_delimiter(doc, open, LeadingTrivia::Preserve),
+            format_open_delimiter(doc, open, open_leading),
             doc_indent!(doc, doc_concat!(doc, [open_spacing, items_doc])),
             doc.line_boundary(),
             format_close_delimiter(doc, close),

@@ -1,0 +1,176 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+non- // JOLT-TRIVIA:non-sealed-minus-line-top-level
+sealed interface TopLevel {}
+
+class NonSealedCrevices {
+  non- // JOLT-TRIVIA:non-sealed-minus-line
+  sealed interface Member {}
+
+  non // JOLT-TRIVIA:non-sealed-non-line
+  - sealed class MemberClass {}
+
+  non /* JOLT-TRIVIA:non-sealed-non-block */ - sealed interface BlockBetween {}
+
+  non- /* JOLT-TRIVIA:non-sealed-minus-block */ sealed interface BlockAfterMinus {}
+}
+
+// The same comment is the previous token's trailing trivia when the source keeps
+// it on that token's line and the next token's leading trivia when the source
+// gives it a line of its own. Both readings have to render identically, or the
+// two flip-flop across passes, so these repeat the cases above with the comment
+// moved onto its own line.
+class NonSealedOwnLineCrevices {
+  non-
+  // JOLT-TRIVIA:non-sealed-own-line-before-sealed
+  sealed interface LineBeforeSealed {}
+
+  non
+  // JOLT-TRIVIA:non-sealed-own-line-before-minus
+  - sealed class LineBeforeMinus {}
+
+  non-
+  /* JOLT-TRIVIA:non-sealed-own-block-before-sealed */
+  sealed interface BlockBeforeSealed {}
+
+  non
+  /* JOLT-TRIVIA:non-sealed-own-block-before-minus */
+  - sealed interface BlockBeforeMinus {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    InterfaceDeclaration
+      ModifierList
+        NonSealedModifier
+          Identifier "non" @ 0..3
+          Minus "-" @ 3..4 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:non-sealed-minus-line-top-level"]
+          Identifier "sealed" @ 52..58 leading=[Newline "\n"] trailing=[Whitespace " "]
+      InterfaceKw "interface" @ 59..68 trailing=[Whitespace " "]
+      Identifier "TopLevel" @ 69..77 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 78..79
+        InterfaceBodyMemberList
+        RBrace "}" @ 79..80
+    ClassDeclaration
+      ClassKw "class" @ 82..87 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "NonSealedCrevices" @ 88..105 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 106..107
+        ClassBodyMemberList
+          InterfaceDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 110..113 leading=[Newline "\n", Whitespace "  "]
+                Minus "-" @ 113..114 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:non-sealed-minus-line"]
+                Identifier "sealed" @ 154..160 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            InterfaceKw "interface" @ 161..170 trailing=[Whitespace " "]
+            Identifier "Member" @ 171..177 trailing=[Whitespace " "]
+            InterfaceBody
+              LBrace "{" @ 178..179
+              InterfaceBodyMemberList
+              RBrace "}" @ 179..180
+          ClassDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 184..187 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:non-sealed-non-line"]
+                Minus "-" @ 225..226 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                Identifier "sealed" @ 227..233 trailing=[Whitespace " "]
+            ClassKw "class" @ 234..239 trailing=[Whitespace " "]
+            Identifier "MemberClass" @ 240..251 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 252..253
+              ClassBodyMemberList
+              RBrace "}" @ 253..254
+          InterfaceDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 258..261 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:non-sealed-non-block */", Whitespace " "]
+                Minus "-" @ 301..302 trailing=[Whitespace " "]
+                Identifier "sealed" @ 303..309 trailing=[Whitespace " "]
+            InterfaceKw "interface" @ 310..319 trailing=[Whitespace " "]
+            Identifier "BlockBetween" @ 320..332 trailing=[Whitespace " "]
+            InterfaceBody
+              LBrace "{" @ 333..334
+              InterfaceBodyMemberList
+              RBrace "}" @ 334..335
+          InterfaceDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 339..342 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                Minus "-" @ 342..343 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:non-sealed-minus-block */", Whitespace " "]
+                Identifier "sealed" @ 385..391 trailing=[Whitespace " "]
+            InterfaceKw "interface" @ 392..401 trailing=[Whitespace " "]
+            Identifier "BlockAfterMinus" @ 402..417 trailing=[Whitespace " "]
+            InterfaceBody
+              LBrace "{" @ 418..419
+              InterfaceBodyMemberList
+              RBrace "}" @ 419..420
+        RBrace "}" @ 421..422 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 774..779 leading=[Newline "\n", Newline "\n", LineComment "// The same comment is the previous token's trailing trivia when the source keeps", Newline "\n", LineComment "// it on that token's line and the next token's leading trivia when the source", Newline "\n", LineComment "// gives it a line of its own. Both readings have to render identically, or the", Newline "\n", LineComment "// two flip-flop across passes, so these repeat the cases above with the comment", Newline "\n", LineComment "// moved onto its own line.", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "NonSealedOwnLineCrevices" @ 780..804 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 805..806
+        ClassBodyMemberList
+          InterfaceDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 809..812 leading=[Newline "\n", Whitespace "  "]
+                Minus "-" @ 812..813
+                Identifier "sealed" @ 867..873 leading=[Newline "\n", Whitespace "  ", LineComment "// JOLT-TRIVIA:non-sealed-own-line-before-sealed", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            InterfaceKw "interface" @ 874..883 trailing=[Whitespace " "]
+            Identifier "LineBeforeSealed" @ 884..900 trailing=[Whitespace " "]
+            InterfaceBody
+              LBrace "{" @ 901..902
+              InterfaceBodyMemberList
+              RBrace "}" @ 902..903
+          ClassDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 907..910 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                Minus "-" @ 963..964 leading=[Newline "\n", Whitespace "  ", LineComment "// JOLT-TRIVIA:non-sealed-own-line-before-minus", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                Identifier "sealed" @ 965..971 trailing=[Whitespace " "]
+            ClassKw "class" @ 972..977 trailing=[Whitespace " "]
+            Identifier "LineBeforeMinus" @ 978..993 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 994..995
+              ClassBodyMemberList
+              RBrace "}" @ 995..996
+          InterfaceDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 1000..1003 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                Minus "-" @ 1003..1004
+                Identifier "sealed" @ 1062..1068 leading=[Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:non-sealed-own-block-before-sealed */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            InterfaceKw "interface" @ 1069..1078 trailing=[Whitespace " "]
+            Identifier "BlockBeforeSealed" @ 1079..1096 trailing=[Whitespace " "]
+            InterfaceBody
+              LBrace "{" @ 1097..1098
+              InterfaceBodyMemberList
+              RBrace "}" @ 1098..1099
+          InterfaceDeclaration
+            ModifierList
+              NonSealedModifier
+                Identifier "non" @ 1103..1106 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                Minus "-" @ 1163..1164 leading=[Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:non-sealed-own-block-before-minus */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                Identifier "sealed" @ 1165..1171 trailing=[Whitespace " "]
+            InterfaceKw "interface" @ 1172..1181 trailing=[Whitespace " "]
+            Identifier "BlockBeforeMinus" @ 1182..1198 trailing=[Whitespace " "]
+            InterfaceBody
+              LBrace "{" @ 1199..1200
+              InterfaceBodyMemberList
+              RBrace "}" @ 1200..1201
+        RBrace "}" @ 1202..1203 leading=[Newline "\n"]
+  Eof "" @ 1204..1204 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

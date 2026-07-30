@@ -1,0 +1,190 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// A destructuring entry begins with an optional `val`/`var` and a name, so a
+// literal there is something no entry can consume: `parse_name` reports the
+// missing name without advancing. The entry loop has to take the token itself or
+// it never advances -- unbounded in a release build, where the debug assertion
+// that guards the loop is compiled out.
+fun literalEntries() {
+  val (1, 2) = pair
+}
+
+fun mixedEntries() {
+  val (first, 2, third) = triple
+}
+
+fun trailingLiteralEntry() {
+  val (first, 2) = pair
+}
+
+fun bracketedLiteralEntries() {
+  val [1, 2] = pair
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 358..361 leading=[LineComment "// A destructuring entry begins with an optional `val`/`var` and a name, so a", Newline "\n", LineComment "// literal there is something no entry can consume: `parse_name` reports the", Newline "\n", LineComment "// missing name without advancing. The entry loop has to take the token itself or", Newline "\n", LineComment "// it never advances -- unbounded in a release build, where the debug assertion", Newline "\n", LineComment "// that guards the loop is compiled out.", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "literalEntries" @ 362..376
+      ValueParameterList
+        LParen "(" @ 376..377
+        ValueParameterSeparatedList
+        RParen ")" @ 377..378 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 379..380
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 383..386 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              DestructuringDeclaration
+                LParen "(" @ 387..388
+                DestructuringEntrySeparatedList
+                  BogusDestructuringEntry
+                    IntegerLiteral "1" @ 388..389
+                  Comma "," @ 389..390 trailing=[Whitespace " "]
+                  BogusDestructuringEntry
+                    IntegerLiteral "2" @ 391..392
+                RParen ")" @ 392..393 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 394..395 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "pair" @ 396..400
+              PropertyBodyMemberList
+          RBrace "}" @ 401..402 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 404..407 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "mixedEntries" @ 408..420
+      ValueParameterList
+        LParen "(" @ 420..421
+        ValueParameterSeparatedList
+        RParen ")" @ 421..422 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 423..424
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 427..430 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              DestructuringDeclaration
+                LParen "(" @ 431..432
+                DestructuringEntrySeparatedList
+                  DestructuringEntry
+                    Name
+                      Identifier "first" @ 432..437
+                  Comma "," @ 437..438 trailing=[Whitespace " "]
+                  BogusDestructuringEntry
+                    IntegerLiteral "2" @ 439..440
+                  Comma "," @ 440..441 trailing=[Whitespace " "]
+                  DestructuringEntry
+                    Name
+                      Identifier "third" @ 442..447
+                RParen ")" @ 447..448 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 449..450 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "triple" @ 451..457
+              PropertyBodyMemberList
+          RBrace "}" @ 458..459 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 461..464 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "trailingLiteralEntry" @ 465..485
+      ValueParameterList
+        LParen "(" @ 485..486
+        ValueParameterSeparatedList
+        RParen ")" @ 486..487 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 488..489
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 492..495 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              DestructuringDeclaration
+                LParen "(" @ 496..497
+                DestructuringEntrySeparatedList
+                  DestructuringEntry
+                    Name
+                      Identifier "first" @ 497..502
+                  Comma "," @ 502..503 trailing=[Whitespace " "]
+                  BogusDestructuringEntry
+                    IntegerLiteral "2" @ 504..505
+                RParen ")" @ 505..506 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 507..508 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "pair" @ 509..513
+              PropertyBodyMemberList
+          RBrace "}" @ 514..515 leading=[Newline "\n"]
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 517..520 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "bracketedLiteralEntries" @ 521..544
+      ValueParameterList
+        LParen "(" @ 544..545
+        ValueParameterSeparatedList
+        RParen ")" @ 545..546 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 547..548
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 551..554 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              DestructuringDeclaration
+                LBracket "[" @ 555..556
+                DestructuringEntrySeparatedList
+                  BogusDestructuringEntry
+                    IntegerLiteral "1" @ 556..557
+                  Comma "," @ 557..558 trailing=[Whitespace " "]
+                  BogusDestructuringEntry
+                    IntegerLiteral "2" @ 559..560
+                RBracket "]" @ 560..561 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 562..563 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "pair" @ 564..568
+              PropertyBodyMemberList
+          RBrace "}" @ 569..570 leading=[Newline "\n"]
+  Eof "" @ 571..571 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=388..389 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=391..392 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=439..440 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=504..505 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=556..557 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=559..560 message="expected destructuring entry"
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(388), end: TextSize(389) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(391), end: TextSize(392) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(439), end: TextSize(440) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(504), end: TextSize(505) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(556), end: TextSize(557) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(559), end: TextSize(560) }) message=expected destructuring entry

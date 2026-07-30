@@ -1,0 +1,52 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+// A comment leading a body's open brace sits between the header and the brace,
+// so it stays inline there. The reparse reads it as a trailing comment of the
+// header's last token, which inlines it too, so the first pass is already the
+// fixpoint.
+class LeadingCommentsBeforeBodyBraces /* leads a class body brace */ {
+  int field;
+
+  LeadingCommentsBeforeBodyBraces() /* leads a constructor body brace */ {
+    field = 0;
+  }
+
+  void method() /* leads a method body brace */ {
+    field = 1;
+  }
+
+  Object anonymous =
+    new Object() /* leads an anonymous class body brace */ {
+      int inner;
+    };
+}
+
+interface LeadingCommentBeforeInterfaceBrace /* leads an interface body brace */ {
+}
+
+enum LeadingCommentBeforeEnumBrace /* leads an enum body brace */ {
+  CONSTANT /* leads an enum constant body brace */ {
+    int inner;
+  };
+}
+
+record LeadingCommentBeforeRecordBrace(
+  int value
+) /* leads a record body brace */ {
+}
+
+@interface LeadingCommentBeforeAnnotationBrace /* leads an annotation interface body brace */ {
+}
+
+// A line comment there ends its own line, so the brace keeps the next line on
+// both passes.
+class LineCommentBeforeClassBrace // leads a class body brace and ends its line
+{
+  int field;
+}
+
+diagnostics:
+(none)

@@ -36,6 +36,10 @@ public sealed strictfp class Base permits Open {
 public non-sealed strictfp class Open extends Base {
 }
 
+@Deprecated
+non-sealed class AnnotatedOpen extends Base {
+}
+
 final /* stable */ public class CommentedModifier {
   volatile /* shared */ public int value;
 }

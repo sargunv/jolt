@@ -1,0 +1,58 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import static java.utils.*;; /*hunt*/ ;
+import one.last;
+class C {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      StaticKw "static" @ 7..13 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 14..18
+        Dot "." @ 18..19
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "utils" @ 19..24
+      Dot "." @ 24..25
+      Star "*" @ 25..26
+      Semicolon ";" @ 26..27
+    EmptyDeclaration
+      Semicolon ";" @ 27..28 trailing=[Whitespace " ", BlockComment "/*hunt*/", Whitespace " "]
+    EmptyDeclaration
+      Semicolon ";" @ 38..39
+    ImportDeclaration
+      ImportKw "import" @ 40..46 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "one" @ 47..50
+        Dot "." @ 50..51
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "last" @ 51..55
+      Semicolon ";" @ 55..56
+    ClassDeclaration
+      ClassKw "class" @ 57..62 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "C" @ 63..64 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 65..66
+        ClassBodyMemberList
+        RBrace "}" @ 66..67
+  Eof "" @ 68..68 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

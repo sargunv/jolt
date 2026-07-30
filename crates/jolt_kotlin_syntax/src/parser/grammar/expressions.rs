@@ -86,7 +86,7 @@ impl Parser<'_> {
         }
 
         while expression_start_kind(self.current_kind())
-            && !self.at_expression_rhs_declaration_boundary()
+            && !self.at_expression_rhs_declaration_boundary(true)
         {
             let combined = self.precede(expression);
             let diagnostic = self.pending_unexpected("unexpected token in expression");
@@ -136,7 +136,8 @@ impl Parser<'_> {
 
         let assignment = self.precede(lhs);
         self.bump();
-        if self.at_expression_boundary(stops) || self.at_expression_rhs_declaration_boundary() {
+        if self.at_expression_boundary(stops) || self.at_expression_rhs_declaration_boundary(false)
+        {
             let rhs = self.start();
             let diagnostic = self.pending_expected("expected expression after operator");
 
@@ -187,7 +188,7 @@ impl Parser<'_> {
                 self.bump();
                 if self.at_expression_boundary(stops)
                     || !expression_start_kind(self.current_kind())
-                        && self.at_expression_rhs_declaration_boundary()
+                        && self.at_expression_rhs_declaration_boundary(false)
                 {
                     let rhs = self.start();
                     let diagnostic = self.pending_expected("expected expression after operator");
@@ -251,7 +252,7 @@ impl Parser<'_> {
                         || consumed_outside
                             && self.newline_before_current()
                             && !is_expression_continuation(current)
-                        || self.at_expression_rhs_declaration_boundary())
+                        || self.at_expression_rhs_declaration_boundary(true))
             {
                 break;
             }
@@ -694,7 +695,7 @@ impl Parser<'_> {
         self.parse_optional_typed_label_reference();
         if !self.at_semicolon_boundary()
             && !self.at_expression_boundary(stops.with_kind(K::RBrace))
-            && !self.at_expression_rhs_declaration_boundary()
+            && !self.at_expression_rhs_declaration_boundary(false)
         {
             if keyword == K::ReturnKw {
                 self.parse_expression_until(stops.with_kind(K::RBrace));
@@ -718,7 +719,7 @@ impl Parser<'_> {
         // it the way it ends a `return`, `break`, or `continue`.
         if self.at_statement_terminator()
             || self.at_expression_boundary(stops.with_kind(K::RBrace))
-            || self.at_expression_rhs_declaration_boundary()
+            || self.at_expression_rhs_declaration_boundary(false)
         {
             self.complete_missing_expression("expected expression after 'throw'");
         } else {
@@ -779,8 +780,31 @@ impl Parser<'_> {
         self.at_eof() || stops.contains(self.current_kind(), self.position())
     }
 
-    pub(in crate::parser::grammar) fn at_expression_rhs_declaration_boundary(&mut self) -> bool {
-        if !self.newline_before_current() || !self.at_declaration_start(true) {
+    /// Whether a line-start declaration head ends the expression being parsed.
+    ///
+    /// `allow_class_members` decides whether the heads only a class body admits
+    /// -- `constructor(`, `init {`, `companion object` -- count. Two kinds of
+    /// caller pass it, and they mean different things by it:
+    ///
+    /// - A declaration's right-hand side (a property initializer, an expression
+    ///   body, an accessor body) passes whether that declaration is itself a
+    ///   class member. Only there can a sibling class member legitimately follow,
+    ///   so only there may one of those heads end the expression.
+    /// - A nested expression position passes `false`, because a class member
+    ///   cannot begin inside an expression; a recovery or token-skipping loop
+    ///   passes `true`, because stopping early there only declines to consume
+    ///   tokens it would have wrapped in recovery, which is always the safe
+    ///   direction.
+    ///
+    /// The three class-member heads are contextual keywords, which lex as
+    /// identifiers and so start an expression. A caller that already requires the
+    /// current token not to start an expression therefore cannot be affected by
+    /// this argument.
+    pub(in crate::parser::grammar) fn at_expression_rhs_declaration_boundary(
+        &mut self,
+        allow_class_members: bool,
+    ) -> bool {
+        if !self.newline_before_current() || !self.at_declaration_start(allow_class_members) {
             return false;
         }
         if !self.at(K::FunKw) {

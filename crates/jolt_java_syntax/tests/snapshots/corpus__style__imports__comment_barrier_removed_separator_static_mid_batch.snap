@@ -1,0 +1,105 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import static something.Different;
+import static java.utils.*;; /*hunt*/ ;
+import static abc.def.Something;
+import static abc.def;
+import static one.last;
+class C {}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      StaticKw "static" @ 7..13 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "something" @ 14..23
+        Dot "." @ 23..24
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Different" @ 24..33
+      Semicolon ";" @ 33..34
+    ImportDeclaration
+      ImportKw "import" @ 35..41 leading=[Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 42..48 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 49..53
+        Dot "." @ 53..54
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "utils" @ 54..59
+      Dot "." @ 59..60
+      Star "*" @ 60..61
+      Semicolon ";" @ 61..62
+    EmptyDeclaration
+      Semicolon ";" @ 62..63 trailing=[Whitespace " ", BlockComment "/*hunt*/", Whitespace " "]
+    EmptyDeclaration
+      Semicolon ";" @ 73..74
+    ImportDeclaration
+      ImportKw "import" @ 75..81 leading=[Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 82..88 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "abc" @ 89..92
+        Dot "." @ 92..93
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "def" @ 93..96
+          Dot "." @ 96..97
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Something" @ 97..106
+      Semicolon ";" @ 106..107
+    ImportDeclaration
+      ImportKw "import" @ 108..114 leading=[Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 115..121 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "abc" @ 122..125
+        Dot "." @ 125..126
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "def" @ 126..129
+      Semicolon ";" @ 129..130
+    ImportDeclaration
+      ImportKw "import" @ 131..137 leading=[Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 138..144 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "one" @ 145..148
+        Dot "." @ 148..149
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "last" @ 149..153
+      Semicolon ";" @ 153..154
+    ClassDeclaration
+      ClassKw "class" @ 155..160 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "C" @ 161..162 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 163..164
+        ClassBodyMemberList
+        RBrace "}" @ 164..165
+  Eof "" @ 166..166 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
