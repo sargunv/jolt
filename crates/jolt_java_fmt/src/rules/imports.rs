@@ -33,17 +33,21 @@ pub(crate) fn format_imports<'source>(
         let declaration = entry.declaration;
         let Some(mut import) = FormattedImport::new(declaration) else {
             pending.flush(&mut sections, doc);
-            if let Some(salvaged) = entry.salvaged_leading {
-                // The import cannot prove it is sortable, so the salvaged
-                // comments stay a barrier ahead of it instead of traveling.
+            // The import cannot prove it is sortable, so the salvaged comments
+            // stay a barrier ahead of it instead of traveling. They lead the
+            // import directly, so only the first of the two sections takes the
+            // blank line the source put ahead of the pair; giving it to both
+            // would invent a blank line between the comments and the import they
+            // describe.
+            let salvaged = entry.salvaged_leading.map(|salvaged| {
                 sections.push(ImportSection {
                     doc: salvaged,
                     blank_before,
                 });
-            }
+            });
             sections.push(ImportSection {
                 doc: format_import_in_place(&declaration, doc),
-                blank_before,
+                blank_before: blank_before && salvaged.is_none(),
             });
             continue;
         };
