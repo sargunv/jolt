@@ -2,9 +2,9 @@ use jolt_fmt_ir::{Doc, DocBuilder, LayoutDoc};
 use jolt_java_syntax::{JavaSyntaxField, JavaSyntaxKind, JavaSyntaxToken, NonSealedModifier};
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, comment_forces_line, format_token,
-    format_token_after_relocated_leading_comments, token_has_comments,
-    trailing_comments_force_line,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line, format_token,
+    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
+    token_has_comments, trailing_comments_force_line,
 };
 use crate::helpers::recovery::format_required_field;
 
@@ -221,43 +221,81 @@ fn format_modifier_entry<'source>(
         }
         ModifierEntry::Malformed(layout) => layout.doc(),
         ModifierEntry::NonSealed(non_sealed) => doc.concat_list(|docs| {
-            // `non-sealed` is three tokens with trivia allowed between them, so
-            // each internal token owns the break its trailing comments force;
-            // the enclosing modifier list only sees the last token.
+            // `non-sealed` is three tokens with trivia allowed between them. A
+            // comment in either crevice can be read as the previous token's
+            // trailing trivia or the next token's leading trivia depending only
+            // on which line the source put it on, and both readings have to
+            // render the same or the two readings flip-flop across passes. So
+            // the separator covers both sides, and an internal token's leading
+            // comments stay inline rather than taking a line of their own.
             let non = non_sealed.non_keyword();
-            let non_separator = non_sealed_separator(docs, &non);
-            let non = format_required_field(non, docs, |token, docs| {
+            let minus = non_sealed.minus();
+            let sealed = non_sealed.sealed_keyword();
+            let non_separator = non_sealed_separator(docs, &non, &minus);
+            let minus_separator = non_sealed_separator(docs, &minus, &sealed);
+
+            let formatted_non = format_required_field(non, docs, |token, docs| {
                 format_modifier_token(docs, &token, leading_comments)
             });
-            docs.push(non);
+            docs.push(formatted_non);
             docs.push(non_separator);
-            let minus = non_sealed.minus();
-            let minus_separator = non_sealed_separator(docs, &minus);
-            let minus = format_required_field(minus, docs, |token, docs| {
-                format_modifier_token(docs, &token, LeadingComments::Preserve)
+            let formatted_minus = format_required_field(minus, docs, |token, docs| {
+                format_non_sealed_internal_token(docs, &token)
             });
-            docs.push(minus);
+            docs.push(formatted_minus);
             docs.push(minus_separator);
-            let sealed = format_required_field(non_sealed.sealed_keyword(), docs, |token, docs| {
-                format_modifier_token(docs, &token, LeadingComments::Preserve)
+            let formatted_sealed = format_required_field(sealed, docs, |token, docs| {
+                format_non_sealed_internal_token(docs, &token)
             });
-            docs.push(sealed);
+            docs.push(formatted_sealed);
         }),
     }
 }
 
-/// Separates two tokens inside `non-sealed` when the first has trailing
-/// comments: a line comment must end its line before the next token, and any
-/// other trailing comment still needs whitespace before it.
+/// Separates two tokens inside `non-sealed` when a comment sits between them,
+/// whichever token owns it.
+///
+/// A line comment must end its line before the next token, or that token is
+/// swallowed into the comment. Any other comment there still needs whitespace so
+/// the tokens stay separate. With no comment on either side the tokens are
+/// adjacent, spelling `non-sealed`.
 fn non_sealed_separator<'source>(
     doc: &mut DocBuilder<'source>,
-    field: &JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+    before: &JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+    after: &JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    match field.as_ref() {
-        JavaSyntaxField::Present(token) if trailing_comments_force_line(token) => doc.hard_line(),
-        JavaSyntaxField::Present(token) if !token.trailing_comments().is_empty() => doc.space(),
-        _ => Doc::nil(),
+    let trailing = match before.as_ref() {
+        JavaSyntaxField::Present(token) => {
+            if trailing_comments_force_line(token) {
+                return doc.hard_line();
+            }
+            !token.trailing_comments().is_empty()
+        }
+        _ => false,
+    };
+    let leading = matches!(after.as_ref(), JavaSyntaxField::Present(token) if !token.leading_comments().is_empty());
+    if trailing || leading {
+        doc.space()
+    } else {
+        Doc::nil()
     }
+}
+
+/// Formats `non-sealed`'s `-` or `sealed`, keeping any leading comments inline.
+///
+/// The separator ahead of the token already supplies the space, and only a line
+/// comment ends the line, so the reparse reads the comment back as the previous
+/// token's trailing trivia and renders it identically.
+fn format_non_sealed_internal_token<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: &JavaSyntaxToken<'source>,
+) -> Doc<'source> {
+    format_token_with_inline_leading_comments(
+        doc,
+        token,
+        InlineLeadingTrivia::BeforeToken,
+        TrailingTrivia::BeforeLineBreak,
+    )
 }
 
 fn format_modifier_token<'source>(
