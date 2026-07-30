@@ -31,6 +31,8 @@ val fromLambda = {
 }
 
 class MemberCalls(val key: Key) {
+    // `init` is a class-member head only when a block follows it, so a call is
+    // unambiguous even in member position, where a sibling member could start.
     val fromMemberInitializer =
         init(key)
 
@@ -41,6 +43,11 @@ class MemberCalls(val key: Key) {
         init(key)
     }
 
+    // `constructor(` is what a secondary constructor declaration looks like too,
+    // so in member position it stays a declaration head and a call spelled that
+    // way is not represented. Calls reach the expression positions above, where
+    // no class member can begin. Deliberate: the two readings are genuinely
+    // ambiguous here, and the declaration is overwhelmingly the likelier intent.
     constructor() : this(DefaultKey)
 }
 
@@ -312,102 +319,102 @@ KotlinFile
             PropertyDeclaration
               ModifierList
               ModifierList
-              ValKw "val" @ 381..384 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ValKw "val" @ 541..544 leading=[Newline "\n", Whitespace "    ", LineComment "// `init` is a class-member head only when a block follows it, so a call is", Newline "\n", Whitespace "    ", LineComment "// unambiguous even in member position, where a sibling member could start.", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Name
-                Identifier "fromMemberInitializer" @ 385..406 trailing=[Whitespace " "]
+                Identifier "fromMemberInitializer" @ 545..566 trailing=[Whitespace " "]
               PropertyInitializer
-                Assign "=" @ 407..408
+                Assign "=" @ 567..568
                 CallExpression
                   NameExpression
-                    Identifier "init" @ 417..421 leading=[Newline "\n", Whitespace "        "]
+                    Identifier "init" @ 577..581 leading=[Newline "\n", Whitespace "        "]
                   TypeArgumentListList
                   ValueArgumentList
-                    LParen "(" @ 421..422
+                    LParen "(" @ 581..582
                     ValueArgumentEntryList
                       ValueArgument
                         ValueArgumentPrefixList
                         NameExpression
-                          Identifier "key" @ 422..425
-                    RParen ")" @ 425..426
+                          Identifier "key" @ 582..585
+                    RParen ")" @ 585..586
                   LambdaExpressionList
               PropertyBodyMemberList
           ClassMemberDeclaration
             FunctionDeclaration
               ModifierList
               ModifierList
-              FunKw "fun" @ 432..435 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              FunKw "fun" @ 592..595 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               ModifierList
               Name
-                Identifier "fromMemberBody" @ 436..450
+                Identifier "fromMemberBody" @ 596..610
               ValueParameterList
-                LParen "(" @ 450..451
+                LParen "(" @ 610..611
                 ValueParameterSeparatedList
-                RParen ")" @ 451..452 trailing=[Whitespace " "]
+                RParen ")" @ 611..612 trailing=[Whitespace " "]
               ExpressionBody
-                Assign "=" @ 453..454
+                Assign "=" @ 613..614
                 CallExpression
                   NameExpression
-                    Identifier "init" @ 463..467 leading=[Newline "\n", Whitespace "        "]
+                    Identifier "init" @ 623..627 leading=[Newline "\n", Whitespace "        "]
                   TypeArgumentListList
                   ValueArgumentList
-                    LParen "(" @ 467..468
+                    LParen "(" @ 627..628
                     ValueArgumentEntryList
                       ValueArgument
                         ValueArgumentPrefixList
                         NameExpression
-                          Identifier "key" @ 468..471
-                    RParen ")" @ 471..472
+                          Identifier "key" @ 628..631
+                    RParen ")" @ 631..632
                   LambdaExpressionList
           ClassMemberDeclaration
             InitializerBlock
-              Identifier "init" @ 478..482 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "init" @ 638..642 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
               Block
-                LBrace "{" @ 483..484
+                LBrace "{" @ 643..644
                 BlockItemList
                   Statement
                     ExpressionStatement
                       CallExpression
                         NameExpression
-                          Identifier "init" @ 493..497 leading=[Newline "\n", Whitespace "        "]
+                          Identifier "init" @ 653..657 leading=[Newline "\n", Whitespace "        "]
                         TypeArgumentListList
                         ValueArgumentList
-                          LParen "(" @ 497..498
+                          LParen "(" @ 657..658
                           ValueArgumentEntryList
                             ValueArgument
                               ValueArgumentPrefixList
                               NameExpression
-                                Identifier "key" @ 498..501
-                          RParen ")" @ 501..502
+                                Identifier "key" @ 658..661
+                          RParen ")" @ 661..662
                         LambdaExpressionList
                     TerminatorList
-                RBrace "}" @ 507..508 leading=[Newline "\n", Whitespace "    "]
+                RBrace "}" @ 667..668 leading=[Newline "\n", Whitespace "    "]
           ClassMemberDeclaration
             SecondaryConstructor
               ModifierList
               ModifierList
-              Identifier "constructor" @ 514..525 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+              Identifier "constructor" @ 1077..1088 leading=[Newline "\n", Newline "\n", Whitespace "    ", LineComment "// `constructor(` is what a secondary constructor declaration looks like too,", Newline "\n", Whitespace "    ", LineComment "// so in member position it stays a declaration head and a call spelled that", Newline "\n", Whitespace "    ", LineComment "// way is not represented. Calls reach the expression positions above, where", Newline "\n", Whitespace "    ", LineComment "// no class member can begin. Deliberate: the two readings are genuinely", Newline "\n", Whitespace "    ", LineComment "// ambiguous here, and the declaration is overwhelmingly the likelier intent.", Newline "\n", Whitespace "    "]
               ValueParameterList
-                LParen "(" @ 525..526
+                LParen "(" @ 1088..1089
                 ValueParameterSeparatedList
-                RParen ")" @ 526..527 trailing=[Whitespace " "]
+                RParen ")" @ 1089..1090 trailing=[Whitespace " "]
               ConstructorDelegation
-                Colon ":" @ 528..529 trailing=[Whitespace " "]
+                Colon ":" @ 1091..1092 trailing=[Whitespace " "]
                 ConstructorDelegationCall
                   CallExpression
                     ThisExpression
-                      ThisKw "this" @ 530..534
+                      ThisKw "this" @ 1093..1097
                     TypeArgumentListList
                     ValueArgumentList
-                      LParen "(" @ 534..535
+                      LParen "(" @ 1097..1098
                       ValueArgumentEntryList
                         ValueArgument
                           ValueArgumentPrefixList
                           NameExpression
-                            Identifier "DefaultKey" @ 535..545
-                      RParen ")" @ 545..546
+                            Identifier "DefaultKey" @ 1098..1108
+                      RParen ")" @ 1108..1109
                     LambdaExpressionList
-        RBrace "}" @ 547..548 leading=[Newline "\n"]
-  Eof "" @ 549..549 leading=[Newline "\n"]
+        RBrace "}" @ 1110..1111 leading=[Newline "\n"]
+  Eof "" @ 1112..1112 leading=[Newline "\n"]
 
 diagnostics:
   (none)

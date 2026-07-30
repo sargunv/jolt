@@ -780,6 +780,26 @@ impl Parser<'_> {
         self.at_eof() || stops.contains(self.current_kind(), self.position())
     }
 
+    /// Whether a line-start declaration head ends the expression being parsed.
+    ///
+    /// `allow_class_members` decides whether the heads only a class body admits
+    /// -- `constructor(`, `init {`, `companion object` -- count. Two kinds of
+    /// caller pass it, and they mean different things by it:
+    ///
+    /// - A declaration's right-hand side (a property initializer, an expression
+    ///   body, an accessor body) passes whether that declaration is itself a
+    ///   class member. Only there can a sibling class member legitimately follow,
+    ///   so only there may one of those heads end the expression.
+    /// - A nested expression position passes `false`, because a class member
+    ///   cannot begin inside an expression; a recovery or token-skipping loop
+    ///   passes `true`, because stopping early there only declines to consume
+    ///   tokens it would have wrapped in recovery, which is always the safe
+    ///   direction.
+    ///
+    /// The three class-member heads are contextual keywords, which lex as
+    /// identifiers and so start an expression. A caller that already requires the
+    /// current token not to start an expression therefore cannot be affected by
+    /// this argument.
     pub(in crate::parser::grammar) fn at_expression_rhs_declaration_boundary(
         &mut self,
         allow_class_members: bool,
