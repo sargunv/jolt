@@ -57,6 +57,7 @@ run = "cargo run --release -p jolt_java_fmt --example jhunt"
 description = "Sweep the imported Kotlin corpora for formatter bugs"
 run = "cargo run --release -p jolt_kotlin_fmt --example khunt"
 
+
 [tasks.build]
 depends = ["build:jolt", "build:dprint-plugin"]
 

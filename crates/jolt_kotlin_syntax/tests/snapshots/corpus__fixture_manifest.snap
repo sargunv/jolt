@@ -275,6 +275,7 @@ syntax/recovery/control-flow-missing-children.kt
 syntax/recovery/declaration-tails.kt
 syntax/recovery/declarations.kt
 syntax/recovery/definitely-non-nullable-bang.kt
+syntax/recovery/destructuring-entry-without-name.kt
 syntax/recovery/destructuring.kt
 syntax/recovery/else-without-branch.kt
 syntax/recovery/explicit-backing-field.kt

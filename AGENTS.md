@@ -14,12 +14,19 @@ Fast, opinionated JVM and Kotlin Multiplatform project tooling.
 - `mise run test --update`: run tests with `INSTA_UPDATE=always`.
 - `mise run jolt ...`: run the Jolt CLI from local source.
 - `mise run hunt`: sweep the imported corpora (tools/import/.imports) for
-  formatter bugs: formats every file at several line widths and with block
-  comments injected at token boundaries, checking idempotence, reparse validity,
-  and structure/comment conservation. Runs in release mode (~5 s); too slow in
-  debug for the normal test suite. Reports land in `target/hunt/`. The
-  `jcheck`/`kcheck` examples re-run one file (or one probe position, e.g.
-  `.../File.java:comment12`) for repros.
+  formatter bugs. Formats every file at several line widths, and with a comment
+  injected at token boundaries in each shape of `PROBE_SHAPES` — on the
+  boundary's own line, so it lands in the previous token's trailing trivia, and
+  on a line of its own, so it lands in the next token's leading trivia — then
+  checks reparse validity, structure/comment conservation, and idempotence.
+  Positions inside a string literal are excluded, since text there is content
+  rather than trivia. Runs in release mode; too slow in debug for the normal
+  test suite. Reports land in `target/hunt/`, capped per failure category. Exits
+  non-zero when a failure category is not in that language's `KNOWN_OPEN` list,
+  and when a `KNOWN_OPEN` entry stops firing and should be deleted, so the sweep
+  is a signal while carrying the debt it already has. The `jcheck`/`kcheck`
+  examples re-run one file, or one probe position for a repro, e.g.
+  `.../File.java:ownline12`.
 - `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
   plugin.
 - `mise x google-java-format -- google-java-format ...`: run the

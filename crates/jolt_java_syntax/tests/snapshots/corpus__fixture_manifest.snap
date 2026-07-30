@@ -13,6 +13,7 @@ style/comments/content-shapes.java
 style/comments/dangling-comment-blank-lines.java
 style/comments/enum-trailing-comma-comments.java
 style/comments/leading-comment-blank-lines.java
+style/comments/leading-comments-before-body-braces.java
 style/comments/leading-comments-before-cast-and-block.java
 style/comments/leading-comments-before-initializer-blocks.java
 style/comments/leading-comments-before-nested-array-initializers.java
@@ -424,6 +425,7 @@ syntax/recovery/expressions.java
 syntax/recovery/formatter-ignore-constructor-missing-open-paren.java
 syntax/recovery/formatter-ignore-module-missing-open.java
 syntax/recovery/header-clauses.java
+syntax/recovery/import-after-removed-separator-comments.java
 syntax/recovery/import-and-module-directives.java
 syntax/recovery/import-trailing-tokens.java
 syntax/recovery/incomplete-module-directive.java
