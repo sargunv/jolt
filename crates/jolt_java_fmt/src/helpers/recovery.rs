@@ -44,6 +44,17 @@ pub(crate) fn resolve_required_delimiter<'source>(
     jolt_fmt_ir::resolve_required_delimiter(field, doc, &mut JavaLexicalSafety)
 }
 
+/// The token a field holds, for rules that only need to read its trivia and
+/// leave recovery to whoever formats the field.
+pub(crate) fn present_token<'source>(
+    field: JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+) -> Option<JavaSyntaxToken<'source>> {
+    match field {
+        JavaSyntaxField::Present(token) => Some(token),
+        JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => None,
+    }
+}
+
 pub(crate) fn resolve_list_part<'source, T>(
     part: JavaSyntaxListPart<'source, T>,
     doc: &mut DocBuilder<'source>,

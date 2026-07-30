@@ -78,26 +78,9 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     )
 }
 
-/// Same, but the open delimiter's leading comments were already emitted by the
-/// enclosing construct.
-pub(crate) fn braced_comma_list_without_open_leading_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: JavaFormatDelimiter<'source>,
-    close: JavaFormatDelimiter<'source>,
-    items: impl IntoIterator<Item = CommaListItem<'source>>,
-    trailing_comma: Option<SynthesisClaim<'source>>,
-) -> Doc<'source> {
-    braced_comma_list_with_open_leading(
-        doc,
-        open,
-        close,
-        items,
-        trailing_comma,
-        LeadingTrivia::SuppressAlreadyHandled,
-    )
-}
-
-fn braced_comma_list_with_open_leading<'source>(
+/// Same, but the caller says whether it already emitted the open delimiter's
+/// leading comments.
+pub(crate) fn braced_comma_list_with_open_leading<'source>(
     doc: &mut DocBuilder<'source>,
     open: JavaFormatDelimiter<'source>,
     close: JavaFormatDelimiter<'source>,

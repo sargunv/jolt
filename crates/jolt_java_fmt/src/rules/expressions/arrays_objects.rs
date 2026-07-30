@@ -2,18 +2,17 @@ use super::calls::format_argument_list;
 use super::{
     ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer, CommaListItem, DimExpression,
     Doc, InlineLeadingTrivia, JavaSyntaxToken, LeadingTrivia, ObjectCreationExpression,
-    TrailingTrivia, VariableInitializerValue, braced_comma_list_with_trailing_separator,
-    braced_comma_list_without_open_leading_comments, comment_forces_line,
-    format_anonymous_class_body, format_array_dimensions, format_construct_leading_comments,
-    format_expression, format_token, format_token_with_comments,
+    TrailingTrivia, VariableInitializerValue, braced_comma_list_with_open_leading,
+    comment_forces_line, format_anonymous_class_body, format_array_dimensions,
+    format_construct_leading_comments, format_expression, format_token, format_token_with_comments,
     format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
     format_type, format_type_argument_list, trailing_comments_force_line,
 };
 use crate::helpers::lists::syntax_comma_list_items;
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_malformed,
-    format_optional_field, format_required_field, resolve_list_part, resolve_required_delimiter,
-    resolve_required_field,
+    format_optional_field, format_required_field, present_token, resolve_list_part,
+    resolve_required_delimiter, resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{ArrayCreationTypeSyntax, ObjectCreationTypeSyntax};
@@ -317,7 +316,7 @@ fn format_line_start_array_initializer<'source>(
     initializer: &ArrayInitializer<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let open = present_delimiter_token(initializer.open_brace());
+    let open = present_token(initializer.open_brace());
     let leading = format_construct_leading_comments(doc, open.as_ref());
     let initializer = format_array_initializer_with_open_leading(
         initializer,
@@ -335,31 +334,14 @@ fn format_array_initializer_with_open_leading<'source>(
     let open = resolve_required_delimiter(initializer.open_brace(), doc);
     let close = resolve_required_delimiter(initializer.close_brace(), doc);
     let items = array_initializer_items(initializer, doc);
-    match open_leading {
-        LeadingTrivia::Preserve => braced_comma_list_with_trailing_separator(
-            doc,
-            open,
-            close,
-            items,
-            initializer.trailing_comma_claim(),
-        ),
-        LeadingTrivia::SuppressAlreadyHandled => braced_comma_list_without_open_leading_comments(
-            doc,
-            open,
-            close,
-            items,
-            initializer.trailing_comma_claim(),
-        ),
-    }
-}
-
-fn present_delimiter_token<'source>(
-    field: jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-) -> Option<JavaSyntaxToken<'source>> {
-    match field {
-        jolt_java_syntax::JavaSyntaxField::Present(token) => Some(token),
-        _ => None,
-    }
+    braced_comma_list_with_open_leading(
+        doc,
+        open,
+        close,
+        items,
+        initializer.trailing_comma_claim(),
+        open_leading,
+    )
 }
 
 fn array_initializer_items<'source, 'fmt>(

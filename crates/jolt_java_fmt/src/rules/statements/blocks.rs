@@ -11,7 +11,9 @@ use crate::helpers::comments::{
     format_token_after_relocated_leading_comments, format_token_removal,
     format_token_with_inline_leading_comments, has_removed_comments,
 };
-use crate::helpers::recovery::{JavaFormatField, format_malformed, resolve_required_field};
+use crate::helpers::recovery::{
+    JavaFormatField, format_malformed, present_token, resolve_required_field,
+};
 use jolt_fmt_ir::DocBuilder;
 use jolt_fmt_ir::formatter_ignore::FormatterIgnoreRun;
 use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxView, LocalTypeDeclarationSyntax};
@@ -32,7 +34,7 @@ pub(crate) fn format_line_start_block<'source>(
     block: &Block<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let open = present_block_token(block.open_brace());
+    let open = present_token(block.open_brace());
     let leading = format_construct_leading_comments(doc, open.as_ref());
     let block = format_block_with_open_leading(block, OpenBraceLeading::Suppress, doc);
     doc_concat!(doc, [leading, block])
@@ -107,8 +109,8 @@ fn format_block_statements_body<'source>(
         }
     };
     let entries = statements.parts().collect::<Vec<_>>();
-    let open = present_block_token(block.open_brace());
-    let close = present_block_token(block.close_brace());
+    let open = present_token(block.open_brace());
+    let close = present_token(block.close_brace());
     let container = formatter_ignore_content_range(statements.text_range(), open, close);
     let runs = doc.formatter_ignore_runs(
         container,
@@ -136,15 +138,6 @@ fn format_block_statements_body<'source>(
         Doc::nil()
     };
     BodyContent::new(contents, present, visible)
-}
-
-fn present_block_token<'source>(
-    field: jolt_java_syntax::JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
-) -> Option<JavaSyntaxToken<'source>> {
-    match field {
-        jolt_java_syntax::JavaSyntaxField::Present(token) => Some(token),
-        _ => None,
-    }
 }
 
 fn format_block_statement_items_with_ignored<'source>(
