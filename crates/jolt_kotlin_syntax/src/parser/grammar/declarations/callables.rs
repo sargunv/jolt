@@ -589,6 +589,23 @@ impl Parser<'_> {
                 continue;
             }
             let entry = self.start();
+            if !self.at(K::ValKw) && !self.at(K::VarKw) && !self.at_identifier_like() {
+                // An entry begins with an optional `val`/`var` and a name, so
+                // nothing in one would consume the current token -- a literal in
+                // a destructuring position reaches here. Take the token into a
+                // bogus entry rather than building an entry around a name that
+                // cannot be parsed, or the loop never advances: unbounded in a
+                // release build, where the assertion below is compiled out. The
+                // loop condition already excludes `Eof` and the closing
+                // delimiter, so the bump cannot run past the end.
+                let diagnostic = self.pending_unexpected("expected destructuring entry");
+
+                self.bump();
+                self.complete_recovery(entry, K::BogusDestructuringEntry, [diagnostic]);
+                expect_entry = false;
+                debug_assert!(self.position() > before);
+                continue;
+            }
             if self.at(K::ValKw) || self.at(K::VarKw) {
                 self.bump();
             }
