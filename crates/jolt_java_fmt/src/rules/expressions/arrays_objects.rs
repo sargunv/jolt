@@ -247,10 +247,12 @@ fn format_open_bracket<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match open {
-        JavaFormatDelimiter::Source(open) => format_token(
+        // The bracket is glued to the array or type before it, so its leading
+        // comments take the previous token's trailing form.
+        JavaFormatDelimiter::Source(open) => format_token_with_inline_leading_comments(
             doc,
             open,
-            LeadingTrivia::Preserve,
+            InlineLeadingTrivia::AfterPreviousToken,
             TrailingTrivia::RelocatedToEnclosingContext,
         ),
         JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),

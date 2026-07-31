@@ -32,20 +32,28 @@ pub(super) fn format_parenthesized_expression<'source>(
         // The inner expression is glued to the open paren, so its first
         // token's leading comments take the paren's trailing form: emitted
         // here, with the inner's own leading trivia suppressed to claim them
-        // once.
-        let comments = inner.first_token().map_or_else(Doc::nil, |token| {
+        // once. The relocation registry also covers variants the leading
+        // mode does not reach, such as a bogus inner expression.
+        let first_token = inner.first_token();
+        let comments = first_token.map_or_else(Doc::nil, |token| {
             format_leading_comments_before_group(
                 doc,
                 &token,
                 InlineLeadingTrivia::AfterPreviousToken,
             )
         });
-        let inner = format_expression_with_leading_and_context(
-            doc,
-            &inner,
-            LeadingTrivia::SuppressAlreadyHandled,
-            context,
-        );
+        let format = |doc: &mut DocBuilder<'source>| {
+            format_expression_with_leading_and_context(
+                doc,
+                &inner,
+                LeadingTrivia::SuppressAlreadyHandled,
+                context,
+            )
+        };
+        let inner = match first_token {
+            Some(token) => doc.with_relocated_leading_trivia(&token, format),
+            None => format(doc),
+        };
         doc.concat([comments, inner])
     });
     let close = format_required_field(expression.close_paren(), doc, |token, doc| {

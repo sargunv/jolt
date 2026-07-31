@@ -33,6 +33,14 @@ return currentEstimate;
 int sum(int x) {
 return x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x;
 }
+int postfix(int count) {
+count
+// leads the postfix operator
+++;
+return count
+/* leads the postfix operator */
+--;
+}
 }
 
 syntax:
@@ -709,8 +717,42 @@ CompilationUnit
                         Identifier "x" @ 1202..1203
                     Semicolon ";" @ 1203..1204
               RBrace "}" @ 1205..1206 leading=[Newline "\n"]
-        RBrace "}" @ 1207..1208 leading=[Newline "\n"]
-  Eof "" @ 1209..1209 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 1207..1210 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "postfix" @ 1211..1218
+            LParen "(" @ 1218..1219
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 1219..1222 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "count" @ 1223..1228
+            RParen ")" @ 1228..1229 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1230..1231
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    PostfixExpression
+                      NameExpression
+                        Identifier "count" @ 1232..1237 leading=[Newline "\n"]
+                      PlusPlus "++" @ 1268..1270 leading=[Newline "\n", LineComment "// leads the postfix operator", Newline "\n"]
+                    Semicolon ";" @ 1270..1271
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 1272..1278 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    PostfixExpression
+                      NameExpression
+                        Identifier "count" @ 1279..1284
+                      MinusMinus "--" @ 1318..1320 leading=[Newline "\n", BlockComment "/* leads the postfix operator */", Newline "\n"]
+                    Semicolon ";" @ 1320..1321
+              RBrace "}" @ 1322..1323 leading=[Newline "\n"]
+        RBrace "}" @ 1324..1325 leading=[Newline "\n"]
+  Eof "" @ 1326..1326 leading=[Newline "\n"]
 
 diagnostics:
   (none)

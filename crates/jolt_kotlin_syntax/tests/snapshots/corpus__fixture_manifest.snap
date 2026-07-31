@@ -300,6 +300,7 @@ syntax/recovery/normalization/malformed-statement-normalization-barrier.kt
 syntax/recovery/normalization.kt
 syntax/recovery/normalizes-package-import-spacing.kt
 syntax/recovery/object-delegation.kt
+syntax/recovery/parenthesized-bogus-inner-leading-comment.kt
 syntax/recovery/preserves-file-annotation-preamble.kt
 syntax/recovery/program.kt
 syntax/recovery/property-body-recovered-gap.kt

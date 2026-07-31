@@ -7,4 +7,9 @@ Example() {
 int after=3;
 }
 Example(int a,int b){}
+Example(String name) {
+  // @formatter:off
+  this( name,0 );
+  // trailing comment owned by the unterminated region
+}
 }

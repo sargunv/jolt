@@ -38,6 +38,11 @@ String[] localLabels() {
 String[] labels = {"a very long local label that forces the initializer to break across lines","another very long local label that keeps each item on its own line","a third long local label for the trailing comma policy"};
 return labels;
 }
+int bracketLeadingComment(int[] values) {
+return values
+// leads the index bracket
+[0];
+}
 }
 
 syntax:
@@ -562,8 +567,44 @@ CompilationUnit
                       Identifier "labels" @ 1125..1131
                     Semicolon ";" @ 1131..1132
               RBrace "}" @ 1133..1134 leading=[Newline "\n"]
-        RBrace "}" @ 1135..1136 leading=[Newline "\n"]
-  Eof "" @ 1137..1137 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 1135..1138 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "bracketLeadingComment" @ 1139..1160
+            LParen "(" @ 1160..1161
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ArrayType
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 1161..1164
+                  ArrayDimensions
+                    ArrayDimension
+                      AnnotationList
+                      LBracket "[" @ 1164..1165
+                      RBracket "]" @ 1165..1166 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "values" @ 1167..1173
+            RParen ")" @ 1173..1174 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 1175..1176
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 1177..1183 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    ArrayAccessExpression
+                      NameExpression
+                        Identifier "values" @ 1184..1190
+                      LBracket "[" @ 1218..1219 leading=[Newline "\n", LineComment "// leads the index bracket", Newline "\n"]
+                      LiteralExpression
+                        IntegerLiteral "0" @ 1219..1220
+                      RBracket "]" @ 1220..1221
+                    Semicolon ";" @ 1221..1222
+              RBrace "}" @ 1223..1224 leading=[Newline "\n"]
+        RBrace "}" @ 1225..1226 leading=[Newline "\n"]
+  Eof "" @ 1227..1227 leading=[Newline "\n"]
 
 diagnostics:
   (none)

@@ -413,9 +413,12 @@ pub fn format_token_body<'source, L: Language>(
     doc: &mut DocBuilder<'source>,
     token: &SyntaxToken<'source, L>,
     token_doc: Doc<'source>,
-    leading: LeadingTrivia,
+    mut leading: LeadingTrivia,
     mut trailing: TrailingTrivia,
 ) -> Doc<'source> {
+    if doc.relocates_leading_trivia(token) {
+        leading = LeadingTrivia::SuppressAlreadyHandled;
+    }
     if doc.relocates_trailing_trivia(token) {
         trailing = TrailingTrivia::RelocatedToEnclosingContext;
     }
@@ -456,6 +459,9 @@ pub fn format_token_with_inline_leading_comments<'source, L: Language>(
     placement: InlineLeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
+    if doc.relocates_leading_trivia(token) {
+        return format_token_after_relocated_leading_comments(doc, token, trailing);
+    }
     let leading = match placement {
         InlineLeadingTrivia::AfterPreviousToken => {
             format_inline_leading_comments_after_previous(doc, token)

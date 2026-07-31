@@ -2,4 +2,38 @@ class Example {
 boolean disjoint(Rectangle bounds) {
 return !(bounds.getLeft() > getRight() || bounds.getRight() < getLeft() || bounds.getTop() > getBottom() || bounds.getBottom() < getTop());
 }
+boolean parenthesizedOperand(boolean flag) {
+return !
+// leads a parenthesized operand
+(flag);
+}
+boolean castOperand(boolean flag) {
+return !
+/* leads a cast operand */
+(Boolean) flag;
+}
+boolean nestedUnaryOperand(boolean flag) {
+return !
+// leads a nested unary operand
+!flag;
+}
+int literalOperand() {
+return -
+/* leads a literal operand */
+1;
+}
+int invocationOperand() {
+return -
+// leads an invocation operand
+count();
+}
+int fieldOperand() {
+return -
+/* leads a field access operand */
+this.value;
+}
+int value;
+int count() {
+return 0;
+}
 }

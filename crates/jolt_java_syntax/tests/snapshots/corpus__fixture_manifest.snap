@@ -110,6 +110,7 @@ style/modules/case-sensitive-sorting.java
 style/modules/comment-barrier.java
 style/modules/directive-ordering.java
 style/modules/formatter-ignore-directives.java
+style/modules/formatter-ignore-unterminated-directives.java
 style/modules/name-list-comments.java
 style/modules/qualified-names.java
 style/modules/sorted-directive-comments.java

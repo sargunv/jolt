@@ -120,11 +120,16 @@ pub fn format_malformed_core<'source, L: Language>(
         return Doc::nil();
     };
 
+    // An enclosing construct that relocated the first token's leading trivia
+    // owns those comments; the core emits only the source it still owns.
+    let leading_relocated = core
+        .first_token()
+        .is_some_and(|token| doc.relocates_leading_trivia(&token));
     let leading_comments = core
         .first_token()
         .into_iter()
         .flat_map(|token| token.leading_comments())
-        .filter(|comment| !core.contains(comment.text_range()));
+        .filter(|comment| !leading_relocated && !core.contains(comment.text_range()));
     let has_leading_comments = leading_comments.clone().next().is_some();
     let leading = format_leading_comment_list(doc, leading_comments);
 

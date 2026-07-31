@@ -1,0 +1,43 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module raw {
+  requires alpha;
+  // @formatter:off
+  requires beta;
+  // trailing comment owned by the unterminated region
+}
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      Name
+        Identifier "raw" @ 7..10 trailing=[Whitespace " "]
+      LBrace "{" @ 11..12
+      ModuleDirectiveList
+        RequiresDirective
+          Identifier "requires" @ 15..23 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          RequiresModifierList
+          Name
+            Identifier "alpha" @ 24..29
+          Semicolon ";" @ 29..30
+        RequiresDirective
+          Identifier "requires" @ 53..61 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          RequiresModifierList
+          Name
+            Identifier "beta" @ 62..66
+          Semicolon ";" @ 66..67
+      RBrace "}" @ 123..124 leading=[Newline "\n", Whitespace "  ", LineComment "// trailing comment owned by the unterminated region", Newline "\n"]
+  Eof "" @ 125..125 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

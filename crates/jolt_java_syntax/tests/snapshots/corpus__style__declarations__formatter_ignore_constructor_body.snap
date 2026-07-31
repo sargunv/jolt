@@ -12,6 +12,11 @@ Example() {
 int after=3;
 }
 Example(int a,int b){}
+Example(String name) {
+  // @formatter:off
+  this( name,0 );
+  // trailing comment owned by the unterminated region
+}
 }
 
 syntax:
@@ -100,8 +105,39 @@ CompilationUnit
               LBrace "{" @ 132..133
               ConstructorBodyEntryList
               RBrace "}" @ 133..134
-        RBrace "}" @ 135..136 leading=[Newline "\n"]
-  Eof "" @ 137..137 leading=[Newline "\n"]
+          ConstructorDeclaration
+            Identifier "Example" @ 135..142 leading=[Newline "\n"]
+            LParen "(" @ 142..143
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 143..149 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "name" @ 150..154
+            RParen ")" @ 154..155 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 156..157
+              ConstructorBodyEntryList
+                ConstructorInvocation
+                  ThisKw "this" @ 180..184 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
+                  ArgumentList
+                    LParen "(" @ 184..185 trailing=[Whitespace " "]
+                    ExpressionList
+                      NameExpression
+                        Identifier "name" @ 186..190
+                      Comma "," @ 190..191
+                      LiteralExpression
+                        IntegerLiteral "0" @ 191..192 trailing=[Whitespace " "]
+                    RParen ")" @ 193..194
+                  Semicolon ";" @ 194..195
+              RBrace "}" @ 251..252 leading=[Newline "\n", Whitespace "  ", LineComment "// trailing comment owned by the unterminated region", Newline "\n"]
+        RBrace "}" @ 253..254 leading=[Newline "\n"]
+  Eof "" @ 255..255 leading=[Newline "\n"]
 
 diagnostics:
   (none)
