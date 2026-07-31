@@ -5,7 +5,8 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_terminator_list, format_token, token_has_comments,
+    LeadingTrivia, TrailingTrivia, format_line_start_construct, format_terminator_list,
+    format_token, token_has_comments,
 };
 use crate::helpers::recovery::{
     format_malformed, format_missing, format_optional_field, format_required_field,
@@ -257,6 +258,17 @@ impl<'source> FormattedImport<'source> {
 }
 
 fn format_import<'source>(
+    doc: &mut DocBuilder<'source>,
+    import: &ImportDirective<'source>,
+) -> Doc<'source> {
+    // An import directive begins its own line, so its first token's leading
+    // comments keep lines of their own.
+    format_line_start_construct(doc, import.first_token(), |doc| {
+        format_import_at_line_start(doc, import)
+    })
+}
+
+fn format_import_at_line_start<'source>(
     doc: &mut DocBuilder<'source>,
     import: &ImportDirective<'source>,
 ) -> Doc<'source> {

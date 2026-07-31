@@ -11,6 +11,10 @@ use crate::{Doc, DocBuilder};
 
 /// Whether leading comments on a token are emitted with the token or already
 /// handled by an enclosing construct.
+///
+/// Preserved comments are placed by line-start knowledge: a token registered
+/// with `DocBuilder::with_line_start_leading` keeps them on lines of their
+/// own, and any other token keeps them inline beside it.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LeadingTrivia {
     Preserve,

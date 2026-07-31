@@ -1,0 +1,65 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun <T
+class C
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      TypeParameterList
+        Lt "<" @ 4..5
+        TypeParameterSeparatedList
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "T" @ 5..6
+            TypeReference
+              BogusType
+          TypeParameter
+            ModifierList
+            Name
+            TypeReference
+              BogusType
+          BogusTypeParameter
+            ClassKw "class" @ 7..12 leading=[Newline "\n"] trailing=[Whitespace " "]
+          TypeParameter
+            ModifierList
+            Name
+              Identifier "C" @ 13..14
+      ModifierList
+      BogusCallableDeclarationName
+      ValueParameterList
+  Eof "" @ 15..15 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=7..12 message="expected ':' before type parameter bound"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=7..12 message="expected type"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=7..12 message="expected ',' between type parameters"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=7..12 message="expected name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=7..12 message="expected ':' before type parameter bound"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=7..12 message="expected type"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=7..12 message="expected type parameter"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..15 message="expected '>' after type parameters"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..15 message="expected function name"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..15 message="expected value parameter list"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(12) }) message=expected ':' before type parameter bound
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(12) }) message=expected type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(12) }) message=expected ',' between type parameters
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(12) }) message=expected name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(12) }) message=expected ':' before type parameter bound
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(12) }) message=expected type
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(12) }) message=expected type parameter
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(15) }) message=expected '>' after type parameters
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(15) }) message=expected function name
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(15) }) message=expected value parameter list

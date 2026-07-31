@@ -3,7 +3,7 @@ source: crates/jolt_kotlin_syntax/tests/corpus.rs
 expression: snapshot
 ---
 input:
-@ /*a*/ Anno
+@Anno /*a*/
 class SigilComment
 
 @file /*b*/ :JvmName("X")
@@ -31,315 +31,315 @@ syntax:
 KotlinFile
   AnnotationList
     Annotation
-      At "@" @ 0..1 trailing=[Whitespace " ", BlockComment "/*a*/", Whitespace " "]
+      At "@" @ 0..1
       QualifiedName
         QualifiedNameSegmentList
           Name
-            Identifier "Anno" @ 8..12
+            Identifier "Anno" @ 1..5 trailing=[Whitespace " ", BlockComment "/*a*/"]
   KotlinFileItemList
     ClassDeclaration
       ModifierList
       ModifierList
-      ClassKw "class" @ 13..18 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 12..17 leading=[Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "SigilComment" @ 19..31
+        Identifier "SigilComment" @ 18..30
     PropertyDeclaration
       ModifierList
         Annotation
-          At "@" @ 33..34 leading=[Newline "\n", Newline "\n"]
+          At "@" @ 32..33 leading=[Newline "\n", Newline "\n"]
           AnnotationUseSiteTarget
-            Identifier "file" @ 34..38 trailing=[Whitespace " ", BlockComment "/*b*/", Whitespace " "]
-            Colon ":" @ 45..46
+            Identifier "file" @ 33..37 trailing=[Whitespace " ", BlockComment "/*b*/", Whitespace " "]
+            Colon ":" @ 44..45
           QualifiedName
             QualifiedNameSegmentList
               Name
-                Identifier "JvmName" @ 46..53
+                Identifier "JvmName" @ 45..52
           AnnotationArgumentList
-            LParen "(" @ 53..54
+            LParen "(" @ 52..53
             ValueArgumentSeparatedList
               ValueArgument
                 ValueArgumentPrefixList
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 54..55
+                      OpenQuote "\"" @ 53..54
                     StringTemplateEntry
-                      RegularStringPart "X" @ 55..56
-                  ClosingQuote "\"" @ 56..57
-            RParen ")" @ 57..58
+                      RegularStringPart "X" @ 54..55
+                  ClosingQuote "\"" @ 55..56
+            RParen ")" @ 56..57
         Annotation
-          At "@" @ 60..61 leading=[Newline "\n", Newline "\n"]
+          At "@" @ 59..60 leading=[Newline "\n", Newline "\n"]
           AnnotationUseSiteTarget
-            Identifier "file" @ 61..65
-            Colon ":" @ 65..66 trailing=[Whitespace " ", BlockComment "/*c*/", Whitespace " "]
+            Identifier "file" @ 60..64
+            Colon ":" @ 64..65 trailing=[Whitespace " ", BlockComment "/*c*/", Whitespace " "]
           QualifiedName
             QualifiedNameSegmentList
               Name
-                Identifier "JvmName" @ 73..80
+                Identifier "JvmName" @ 72..79
           AnnotationArgumentList
-            LParen "(" @ 80..81
+            LParen "(" @ 79..80
             ValueArgumentSeparatedList
               ValueArgument
                 ValueArgumentPrefixList
                 StringTemplateExpression
                   StringTemplateEntryList
                     StringTemplateEntry
-                      OpenQuote "\"" @ 81..82
+                      OpenQuote "\"" @ 80..81
                     StringTemplateEntry
-                      RegularStringPart "Y" @ 82..83
-                  ClosingQuote "\"" @ 83..84
-            RParen ")" @ 84..85
+                      RegularStringPart "Y" @ 81..82
+                  ClosingQuote "\"" @ 82..83
+            RParen ")" @ 83..84
       ModifierList
-      ValKw "val" @ 87..90 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ValKw "val" @ 86..89 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "objectExpression" @ 91..107 trailing=[Whitespace " "]
+        Identifier "objectExpression" @ 90..106 trailing=[Whitespace " "]
       PropertyInitializer
-        Assign "=" @ 108..109 trailing=[Whitespace " "]
+        Assign "=" @ 107..108 trailing=[Whitespace " "]
         ObjectExpression
-          ObjectKw "object" @ 110..116 trailing=[Whitespace " ", BlockComment "/*d*/", Whitespace " "]
+          ObjectKw "object" @ 109..115 trailing=[Whitespace " ", BlockComment "/*d*/", Whitespace " "]
           DelegationClause
-            Colon ":" @ 123..124 trailing=[Whitespace " "]
+            Colon ":" @ 122..123 trailing=[Whitespace " "]
             DelegationSpecifierSeparatedList
               DelegationSpecifier
                 TypeReference
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        Identifier "B" @ 125..126
+                        Identifier "B" @ 124..125
                 ValueArgumentList
-                  LParen "(" @ 126..127
+                  LParen "(" @ 125..126
                   ValueArgumentEntryList
-                  RParen ")" @ 127..128 trailing=[Whitespace " "]
+                  RParen ")" @ 126..127 trailing=[Whitespace " "]
           ClassBody
-            LBrace "{" @ 129..130
+            LBrace "{" @ 128..129
             ClassMemberList
-            RBrace "}" @ 130..131
+            RBrace "}" @ 129..130
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
       ModifierList
-      ValKw "val" @ 133..136 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ValKw "val" @ 132..135 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "suspendType" @ 137..148
-      Colon ":" @ 148..149 trailing=[Whitespace " "]
+        Identifier "suspendType" @ 136..147
+      Colon ":" @ 147..148 trailing=[Whitespace " "]
       TypeReference
         FunctionType
           SuspendedFunctionType
-            Identifier "suspend" @ 150..157 trailing=[Whitespace " ", BlockComment "/*e*/", Whitespace " "]
+            Identifier "suspend" @ 149..156 trailing=[Whitespace " ", BlockComment "/*e*/", Whitespace " "]
             FunctionType
               ArrowFunctionType
                 ParenthesizedType
                   AnnotationList
-                  LParen "(" @ 164..165
+                  LParen "(" @ 163..164
                   ParenthesizedTypeEntryList
-                  RParen ")" @ 165..166 trailing=[Whitespace " "]
-                Arrow "->" @ 167..169 trailing=[Whitespace " "]
+                  RParen ")" @ 164..165 trailing=[Whitespace " "]
+                Arrow "->" @ 166..168 trailing=[Whitespace " "]
                 UserType
                   UserTypeSegmentList
                     UserTypeSegment
-                      Identifier "Unit" @ 170..174 trailing=[Whitespace " "]
+                      Identifier "Unit" @ 169..173 trailing=[Whitespace " "]
       PropertyInitializer
-        Assign "=" @ 175..176 trailing=[Whitespace " "]
+        Assign "=" @ 174..175 trailing=[Whitespace " "]
         LambdaExpression
           LambdaBody
-            LBrace "{" @ 177..178
+            LBrace "{" @ 176..177
             LambdaBodyItemList
-            RBrace "}" @ 178..179
+            RBrace "}" @ 177..178
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
       ModifierList
-      ValKw "val" @ 181..184 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ValKw "val" @ 180..183 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "anonymous" @ 185..194 trailing=[Whitespace " "]
+        Identifier "anonymous" @ 184..193 trailing=[Whitespace " "]
       PropertyInitializer
-        Assign "=" @ 195..196 trailing=[Whitespace " "]
+        Assign "=" @ 194..195 trailing=[Whitespace " "]
         AnonymousFunctionExpression
-          FunKw "fun" @ 197..200 trailing=[Whitespace " ", BlockComment "/*f*/", Whitespace " "]
+          FunKw "fun" @ 196..199 trailing=[Whitespace " ", BlockComment "/*f*/", Whitespace " "]
           ValueParameterList
-            LParen "(" @ 207..208
+            LParen "(" @ 206..207
             ValueParameterSeparatedList
               ValueParameter
                 ModifierList
                 Name
-                  Identifier "x" @ 208..209
-                Colon ":" @ 209..210 trailing=[Whitespace " "]
+                  Identifier "x" @ 207..208
+                Colon ":" @ 208..209 trailing=[Whitespace " "]
                 TypeReference
                   UserType
                     UserTypeSegmentList
                       UserTypeSegment
-                        Identifier "Int" @ 211..214
-            RParen ")" @ 214..215 trailing=[Whitespace " "]
+                        Identifier "Int" @ 210..213
+            RParen ")" @ 213..214 trailing=[Whitespace " "]
           ExpressionBody
-            Assign "=" @ 216..217 trailing=[Whitespace " "]
+            Assign "=" @ 215..216 trailing=[Whitespace " "]
             NameExpression
-              Identifier "x" @ 218..219
+              Identifier "x" @ 217..218
       PropertyBodyMemberList
     PropertyDeclaration
       ModifierList
       ModifierList
-      ValKw "val" @ 221..224 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ValKw "val" @ 220..223 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "receiverAnonymous" @ 225..242 trailing=[Whitespace " "]
+        Identifier "receiverAnonymous" @ 224..241 trailing=[Whitespace " "]
       PropertyInitializer
-        Assign "=" @ 243..244 trailing=[Whitespace " "]
+        Assign "=" @ 242..243 trailing=[Whitespace " "]
         AnonymousFunctionExpression
-          FunKw "fun" @ 245..248 trailing=[Whitespace " "]
+          FunKw "fun" @ 244..247 trailing=[Whitespace " "]
           TypeReference
             UserType
               UserTypeSegmentList
                 UserTypeSegment
-                  Identifier "Int" @ 249..252
-          Dot "." @ 252..253 trailing=[Whitespace " ", BlockComment "/*g*/", Whitespace " "]
+                  Identifier "Int" @ 248..251
+          Dot "." @ 251..252 trailing=[Whitespace " ", BlockComment "/*g*/", Whitespace " "]
           ValueParameterList
-            LParen "(" @ 260..261
+            LParen "(" @ 259..260
             ValueParameterSeparatedList
-            RParen ")" @ 261..262
-          Colon ":" @ 262..263 trailing=[Whitespace " "]
+            RParen ")" @ 260..261
+          Colon ":" @ 261..262 trailing=[Whitespace " "]
           TypeReference
             UserType
               UserTypeSegmentList
                 UserTypeSegment
-                  Identifier "Int" @ 264..267 trailing=[Whitespace " "]
+                  Identifier "Int" @ 263..266 trailing=[Whitespace " "]
           ExpressionBody
-            Assign "=" @ 268..269 trailing=[Whitespace " "]
+            Assign "=" @ 267..268 trailing=[Whitespace " "]
             ThisExpression
-              ThisKw "this" @ 270..274
+              ThisKw "this" @ 269..273
       PropertyBodyMemberList
     FunctionDeclaration
       ModifierList
       ModifierList
-      FunKw "fun" @ 276..279 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      FunKw "fun" @ 275..278 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       Name
-        Identifier "labeled" @ 280..287
+        Identifier "labeled" @ 279..286
       ValueParameterList
-        LParen "(" @ 287..288
+        LParen "(" @ 286..287
         ValueParameterSeparatedList
-        RParen ")" @ 288..289 trailing=[Whitespace " "]
+        RParen ")" @ 287..288 trailing=[Whitespace " "]
       BlockBody
         Block
-          LBrace "{" @ 290..291 trailing=[Whitespace " "]
+          LBrace "{" @ 289..290 trailing=[Whitespace " "]
           BlockItemList
             Statement
               ExpressionStatement
                 NameExpression
-                  Identifier "l" @ 292..293
-                  At "@" @ 293..294 trailing=[Whitespace " ", BlockComment "/*h*/", Whitespace " "]
+                  Identifier "l" @ 291..292
+                  At "@" @ 292..293 trailing=[Whitespace " ", BlockComment "/*h*/", Whitespace " "]
                   LambdaExpression
                     LambdaBody
-                      LBrace "{" @ 301..302 trailing=[Whitespace " "]
+                      LBrace "{" @ 300..301 trailing=[Whitespace " "]
                       LambdaBodyItemList
                         Statement
                           ExpressionStatement
                             CallExpression
                               NameExpression
-                                Identifier "g" @ 303..304
+                                Identifier "g" @ 302..303
                               TypeArgumentListList
                               ValueArgumentList
-                                LParen "(" @ 304..305
+                                LParen "(" @ 303..304
                                 ValueArgumentEntryList
-                                RParen ")" @ 305..306 trailing=[Whitespace " "]
+                                RParen ")" @ 304..305 trailing=[Whitespace " "]
                               LambdaExpressionList
                           TerminatorList
-                      RBrace "}" @ 307..308 trailing=[Whitespace " "]
+                      RBrace "}" @ 306..307 trailing=[Whitespace " "]
               TerminatorList
-          RBrace "}" @ 309..310
+          RBrace "}" @ 308..309
     FunctionDeclaration
       ModifierList
       ModifierList
-      FunKw "fun" @ 312..315 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      FunKw "fun" @ 311..314 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       ModifierList
       Name
-        Identifier "spread" @ 316..322
+        Identifier "spread" @ 315..321
       ValueParameterList
-        LParen "(" @ 322..323
+        LParen "(" @ 321..322
         ValueParameterSeparatedList
           ValueParameter
             ModifierList
             Name
-              Identifier "a" @ 323..324
-            Colon ":" @ 324..325 trailing=[Whitespace " "]
+              Identifier "a" @ 322..323
+            Colon ":" @ 323..324 trailing=[Whitespace " "]
             TypeReference
               UserType
                 UserTypeSegmentList
                   UserTypeSegment
-                    Identifier "A" @ 326..327
-        RParen ")" @ 327..328 trailing=[Whitespace " "]
+                    Identifier "A" @ 325..326
+        RParen ")" @ 326..327 trailing=[Whitespace " "]
       BlockBody
         Block
-          LBrace "{" @ 329..330 trailing=[Whitespace " "]
+          LBrace "{" @ 328..329 trailing=[Whitespace " "]
           BlockItemList
             Statement
               ExpressionStatement
                 CallExpression
                   NameExpression
-                    Identifier "g" @ 331..332
+                    Identifier "g" @ 330..331
                   TypeArgumentListList
                   ValueArgumentList
-                    LParen "(" @ 332..333
+                    LParen "(" @ 331..332
                     ValueArgumentEntryList
                       ValueArgument
                         ValueArgumentPrefixList
                           ValueArgumentPrefix
-                            Star "*" @ 333..334 trailing=[Whitespace " ", BlockComment "/*i*/", Whitespace " "]
+                            Star "*" @ 332..333 trailing=[Whitespace " ", BlockComment "/*i*/", Whitespace " "]
                         NameExpression
-                          Identifier "a" @ 341..342
-                    RParen ")" @ 342..343 trailing=[Whitespace " "]
+                          Identifier "a" @ 340..341
+                    RParen ")" @ 341..342 trailing=[Whitespace " "]
                   LambdaExpressionList
               TerminatorList
-          RBrace "}" @ 344..345
+          RBrace "}" @ 343..344
     ClassDeclaration
       ModifierList
       ModifierList
-      ClassKw "class" @ 347..352 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 346..351 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "Variance" @ 353..361
+        Identifier "Variance" @ 352..360
       TypeParameterList
-        Lt "<" @ 361..362
+        Lt "<" @ 360..361
         TypeParameterSeparatedList
           TypeParameter
             ModifierList
-            InKw "in" @ 362..364 trailing=[Whitespace " ", BlockComment "/*j*/", Whitespace " "]
+            InKw "in" @ 361..363 trailing=[Whitespace " ", BlockComment "/*j*/", Whitespace " "]
             Name
-              Identifier "A" @ 371..372
-        Gt ">" @ 372..373
+              Identifier "A" @ 370..371
+        Gt ">" @ 371..372
     PropertyDeclaration
       ModifierList
       ModifierList
-      ValKw "val" @ 375..378 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ValKw "val" @ 374..377 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Name
-        Identifier "projection" @ 379..389
-      Colon ":" @ 389..390 trailing=[Whitespace " "]
+        Identifier "projection" @ 378..388
+      Colon ":" @ 388..389 trailing=[Whitespace " "]
       TypeReference
         UserType
           UserTypeSegmentList
             UserTypeSegment
-              Identifier "List" @ 391..395
+              Identifier "List" @ 390..394
               TypeArgumentList
-                Lt "<" @ 395..396
+                Lt "<" @ 394..395
                 TypeProjectionSeparatedList
                   TypeProjection
-                    Identifier "out" @ 396..399 trailing=[Whitespace " ", BlockComment "/*k*/", Whitespace " "]
+                    Identifier "out" @ 395..398 trailing=[Whitespace " ", BlockComment "/*k*/", Whitespace " "]
                     TypeReference
                       UserType
                         UserTypeSegmentList
                           UserTypeSegment
-                            Identifier "Any" @ 406..409
-                Gt ">" @ 409..410 trailing=[Whitespace " "]
+                            Identifier "Any" @ 405..408
+                Gt ">" @ 408..409 trailing=[Whitespace " "]
       PropertyInitializer
-        Assign "=" @ 411..412 trailing=[Whitespace " "]
+        Assign "=" @ 410..411 trailing=[Whitespace " "]
         CallExpression
           NameExpression
-            Identifier "f" @ 413..414
+            Identifier "f" @ 412..413
           TypeArgumentListList
           ValueArgumentList
-            LParen "(" @ 414..415
+            LParen "(" @ 413..414
             ValueArgumentEntryList
-            RParen ")" @ 415..416
+            RParen ")" @ 414..415
           LambdaExpressionList
       PropertyBodyMemberList
-  Eof "" @ 417..417 leading=[Newline "\n"]
+  Eof "" @ 416..416 leading=[Newline "\n"]
 
 diagnostics:
   (none)

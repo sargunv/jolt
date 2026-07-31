@@ -11,9 +11,9 @@ use crate::helpers::blocks::{BodyItem, join_body_items, source_braced_body};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block,
     comments_from_tokens, format_comment, format_construct_leading_comments,
-    format_dangling_comments, format_removed_comments, format_separator_with_comments,
-    format_token, format_token_after_construct_leading_comments, format_token_with_comments,
-    has_removed_comments,
+    format_dangling_comments, format_line_start_construct, format_removed_comments,
+    format_separator_with_comments, format_token, format_token_after_construct_leading_comments,
+    format_token_with_comments, has_removed_comments,
 };
 use crate::helpers::lists::{
     CommaListItem, attach_comma_separator, comma_list, delimited_comma_list,
@@ -28,7 +28,7 @@ use crate::rules::expressions::{format_argument_list, format_expression};
 use crate::rules::modifiers::{format_modifier_prefix, format_typed_modifier_prefix};
 use crate::rules::names::{format_name, format_name_without_leading_comments};
 use crate::rules::statements::{
-    format_block, format_block_statement_item, format_line_start_block, format_statement_semicolon,
+    format_block, format_block_statement_item, format_statement_semicolon,
 };
 use crate::rules::types::{
     LeadingComments as TypeLeadingComments, format_array_dimensions, format_type,
@@ -40,8 +40,9 @@ use crate::rules::variables::{
     format_record_component,
 };
 use jolt_fmt_ir::formatter_ignore::{
-    FormatterIgnoreItemRange, FormatterIgnoreSplice, for_each_formatter_ignore_splice,
-    formatter_ignore_content_range, formatter_ignore_run_doc, is_formatter_control_marker,
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
+    for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
+    formatter_ignore_runs_claim_boundary_comment, is_formatter_control_marker,
 };
 
 mod callables;

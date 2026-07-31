@@ -10,12 +10,13 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_removed_separator, format_token,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, format_glued_token,
+    format_leading_comments_before_group, format_removed_separator, format_token,
     trailing_comments_force_line,
 };
 use crate::helpers::lists::{
     CommaListItem, attach_comma_separator, comma_list_item_range, delimited_comma_list,
-    physical_comma_list_items,
+    delimited_physical_comma_list_items,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
@@ -26,7 +27,7 @@ use crate::rules::annotations::format_annotation_syntax_with_leading;
 use crate::rules::expressions::{
     format_expression, format_inline_value_expression, format_value_argument_list,
 };
-use crate::rules::names::format_name;
+use crate::rules::names::{format_name, format_name_with_leading};
 use crate::rules::statements::format_block;
 use crate::rules::types::{
     format_bogus_list_entry, format_type_constraint_list, format_type_parameter_list,
@@ -610,9 +611,22 @@ fn format_callable_name<'source>(
         format_type_reference(doc, &receiver)
     });
     let dot = format_required_field(name.dot(), doc, |dot, doc| {
-        format_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
+        format_glued_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
     });
-    let name = format_required_field(name.name(), doc, |name, doc| format_name(doc, &name));
+    let name = format_required_field(name.name(), doc, |name, doc| {
+        // The name is glued to its receiver's dot, so its first token's
+        // leading comments take the previous token's trailing form: emitted
+        // here, with the name's own first token suppressed to claim them once.
+        let leading = name.first_token().map_or_else(Doc::nil, |token| {
+            format_leading_comments_before_group(
+                doc,
+                &token,
+                InlineLeadingTrivia::AfterPreviousToken,
+            )
+        });
+        let name = format_name_with_leading(doc, &name, LeadingTrivia::SuppressAlreadyHandled);
+        doc.concat([leading, name])
+    });
     let missing_dot_separator = if has_dot { Doc::nil() } else { doc.space() };
     doc.concat([receiver, dot, missing_dot_separator, name])
 }
@@ -690,7 +704,7 @@ fn format_context_parameter_clause<'source>(
     let close = resolve_required_delimiter(clause.close_paren(), doc);
     let items = match resolve_required_field(clause.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, parameter| {
+            delimited_physical_comma_list_items(doc, entries.parts(), |doc, parameter| {
                 CommaListItem::visible(match parameter {
                     ContextParameterListEntry::ContextParameter(parameter) => {
                         format_context_parameter(doc, &parameter)
@@ -720,7 +734,12 @@ fn format_context_parameter<'source>(
     let has_assign = matches!(parameter.assign(), KotlinSyntaxField::Present(_));
     let name = format_optional_field(parameter.name(), doc, |name, doc| format_name(doc, &name));
     let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {
-        keyword_token(doc, colon)
+        format_glued_token(
+            doc,
+            &colon,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
     });
     let separation = if has_type && (has_name || has_colon) {
         doc.space()
@@ -841,7 +860,7 @@ pub(crate) fn format_type_annotation<'source>(
     ty: KotlinSyntaxField<'source, TypeReference<'source>>,
 ) -> Doc<'source> {
     let colon = format_optional_field(colon, doc, |colon, doc| {
-        format_token(
+        format_glued_token(
             doc,
             &colon,
             LeadingTrivia::Preserve,

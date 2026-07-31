@@ -7,8 +7,8 @@ use jolt_kotlin_syntax::{
 mod blocks;
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, comment_forces_line, format_terminator_list, format_token,
-    format_trailing_comment_list_before_line_break,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, format_line_start_construct,
+    format_terminator_list, format_token, format_trailing_comment_list_before_line_break,
 };
 use crate::helpers::recovery::{format_malformed, format_required_field};
 use crate::rules::expressions::{format_expression, format_expression_without_leading};
@@ -73,6 +73,18 @@ pub(crate) struct BodyBoundaryDoc<'source> {
 /// therefore relocates the complete trailing run out of the nested layout, then
 /// emits only comments not already owned by the successor.
 pub(crate) fn format_block_item_at_body_boundary<'source>(
+    doc: &mut DocBuilder<'source>,
+    item: &BlockItem<'source>,
+    successor: Option<&jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,
+) -> BodyBoundaryDoc<'source> {
+    // A block item in a body begins its own line, so its first token's
+    // leading comments keep lines of their own.
+    format_line_start_construct(doc, item.first_token(), |doc| {
+        format_block_item_at_body_boundary_at_line_start(doc, item, successor)
+    })
+}
+
+fn format_block_item_at_body_boundary_at_line_start<'source>(
     doc: &mut DocBuilder<'source>,
     item: &BlockItem<'source>,
     successor: Option<&jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,

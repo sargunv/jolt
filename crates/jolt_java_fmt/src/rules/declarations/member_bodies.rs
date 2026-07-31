@@ -1,20 +1,20 @@
 use super::{
     AnnotationInterfaceBodyMember, ClassBody, ClassBodyMember, Doc, FormattedMember,
-    FormatterIgnoreItemRange, FormatterIgnoreSplice, InterfaceBody, InterfaceBodyMember,
-    JavaSyntaxToken, MemberCategory, RecordBody, comments_from_tokens,
+    FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice, InterfaceBody,
+    InterfaceBodyMember, JavaSyntaxToken, MemberCategory, RecordBody, comments_from_tokens,
     for_each_formatter_ignore_splice, format_annotation_element_declaration,
     format_annotation_interface_declaration, format_block, format_class_declaration,
     format_compact_constructor_declaration, format_constructor_declaration,
     format_dangling_comments, format_enum_declaration, format_field_declaration,
-    format_interface_declaration, format_line_start_block, format_method_declaration,
-    format_record_declaration, format_removed_comments, format_token_with_comments,
-    formatter_ignore_content_range, formatter_ignore_run_doc, has_removed_comments,
+    format_interface_declaration, format_method_declaration, format_record_declaration,
+    format_removed_comments, format_token_with_comments, formatter_ignore_content_range,
+    formatter_ignore_run_doc, formatter_ignore_runs_claim_boundary_comment, has_removed_comments,
     join_member_docs,
 };
 use crate::helpers::blocks::BodyContent;
-use crate::helpers::comments::format_token_removal;
+use crate::helpers::comments::{format_line_start_construct, format_token_removal};
 use crate::helpers::recovery::{
-    JavaFormatField, format_malformed, present_token, resolve_optional_field,
+    JavaFormatField, field_is_claim_only, format_malformed, present_token, resolve_optional_field,
     resolve_required_field,
 };
 use jolt_fmt_ir::{BodyItemSeparator, DocBuilder};
@@ -30,11 +30,19 @@ macro_rules! standard_member_body {
             let open = present_token(body.open_brace());
             let close = present_token(body.close_brace());
             let open_comments = format_body_open_dangling_comments(open, doc);
-            let close_comments = format_body_close_dangling_comments(close, doc);
-            let members = match resolve_required_field(body.members(), doc) {
+            let members_field = body.members();
+            let unterminated_tail = close.is_none() && field_is_claim_only(&members_field);
+            let members = match resolve_required_field(members_field, doc) {
                 JavaFormatField::Present(members) => members,
                 JavaFormatField::Malformed(malformed) => {
-                    return recovered_member_body(open_comments, malformed, close_comments, doc);
+                    let close_comments = format_body_close_dangling_comments(close, &[], doc);
+                    return recovered_member_body(
+                        open_comments,
+                        malformed,
+                        close_comments,
+                        unterminated_tail,
+                        doc,
+                    );
                 }
             };
             let container = formatter_ignore_content_range(members.text_range(), open, close);
@@ -42,7 +50,8 @@ macro_rules! standard_member_body {
                 container,
                 members.parts(),
                 open_comments,
-                close_comments,
+                close,
+                close.is_none(),
                 family_ignore_range,
                 $category,
                 $format,
@@ -78,23 +87,45 @@ pub(super) fn format_annotation_interface_body<'source>(
     let open = present_token(body.open_brace());
     let close = present_token(body.close_brace());
     let open_comments = format_body_open_dangling_comments(open, doc);
-    let close_comments = format_body_close_dangling_comments(close, doc);
-    let elements = match resolve_optional_field(body.elements(), doc) {
+    let elements_field = body.elements();
+    let elements_tail = close.is_none() && field_is_claim_only(&elements_field);
+    let elements = match resolve_optional_field(elements_field, doc) {
         JavaFormatField::Present(elements) => elements,
         JavaFormatField::Malformed(malformed) => {
-            return recovered_member_body(open_comments, malformed, close_comments, doc);
+            let close_comments = format_body_close_dangling_comments(close, &[], doc);
+            return recovered_member_body(
+                open_comments,
+                malformed,
+                close_comments,
+                elements_tail,
+                doc,
+            );
         }
     };
     let Some(elements) = elements else {
-        return combine_comment_members(doc, open_comments, close_comments)
-            .map(|member| member.doc)
-            .into();
+        let close_comments = format_body_close_dangling_comments(close, &[], doc);
+        let member = combine_comment_members(doc, open_comments, close_comments);
+        // An element-less body that never closes holds only salvaged comments,
+        // so they take the unterminated-tail placement as well.
+        return match (close.is_none(), member) {
+            (true, Some(member)) => BodyContent::new(doc.root_margin(member.doc), true, true),
+            (_, member) => member.map(|member| member.doc).into(),
+        };
     };
+    let declarations_field = elements.declarations();
+    let declarations_tail = close.is_none() && field_is_claim_only(&declarations_field);
     let declarations: AnnotationInterfaceBodyMemberList<'source> =
-        match resolve_required_field(elements.declarations(), doc) {
+        match resolve_required_field(declarations_field, doc) {
             JavaFormatField::Present(declarations) => declarations,
             JavaFormatField::Malformed(malformed) => {
-                return recovered_member_body(open_comments, malformed, close_comments, doc);
+                let close_comments = format_body_close_dangling_comments(close, &[], doc);
+                return recovered_member_body(
+                    open_comments,
+                    malformed,
+                    close_comments,
+                    declarations_tail,
+                    doc,
+                );
             }
         };
     let container = formatter_ignore_content_range(declarations.text_range(), open, close);
@@ -102,7 +133,8 @@ pub(super) fn format_annotation_interface_body<'source>(
         container,
         declarations.parts(),
         open_comments,
-        close_comments,
+        close,
+        close.is_none(),
         family_ignore_range,
         annotation_member_category,
         FormattedMember::from_annotation_member,
@@ -114,12 +146,19 @@ fn recovered_member_body<'source>(
     open: Option<FormattedMember<'source>>,
     malformed: Doc<'source>,
     close: Option<FormattedMember<'source>>,
+    unterminated_tail: bool,
     doc: &mut DocBuilder<'source>,
 ) -> BodyContent<'source> {
+    // Salvaged open-brace comments that are the tail of a body that never
+    // closes take the unterminated-tail placement.
+    let open = match (unterminated_tail, open) {
+        (true, Some(member)) => doc.root_margin(member.doc),
+        (_, open) => open.map_or_else(Doc::nil, |member| member.doc),
+    };
     let contents = doc_concat!(
         doc,
         [
-            open.map_or_else(Doc::nil, |member| member.doc),
+            open,
             malformed,
             close.map_or_else(Doc::nil, |member| member.doc)
         ]
@@ -131,14 +170,16 @@ pub(super) fn format_class_member_body<'source>(
     container: TextRange,
     members: impl IntoIterator<Item = JavaSyntaxListPart<'source, ClassBodyMember<'source>>>,
     open_dangling_comments: Option<FormattedMember<'source>>,
-    close_dangling_comments: Option<FormattedMember<'source>>,
+    close: Option<JavaSyntaxToken<'source>>,
+    unterminated: bool,
     doc: &mut DocBuilder<'source>,
 ) -> BodyContent<'source> {
     format_member_parts(
         container,
         members,
         open_dangling_comments,
-        close_dangling_comments,
+        close,
+        unterminated,
         family_ignore_range,
         member_category,
         FormattedMember::from_member,
@@ -151,14 +192,18 @@ fn format_member_parts<'source, T: Copy + JavaSyntaxView<'source>>(
     container: TextRange,
     members: impl IntoIterator<Item = JavaSyntaxListPart<'source, T>>,
     open_dangling_comments: Option<FormattedMember<'source>>,
-    close_dangling_comments: Option<FormattedMember<'source>>,
+    close: Option<JavaSyntaxToken<'source>>,
+    unterminated: bool,
     item_range: impl Fn(&T) -> Option<FormatterIgnoreItemRange>,
     item_category: impl Fn(&T) -> MemberCategory,
     mut format_item: impl FnMut(&T, &mut DocBuilder<'source>) -> FormattedMember<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> BodyContent<'source> {
+    let has_open_comments = open_dangling_comments.is_some();
     let members = members.into_iter();
     if !doc.formatter_ignore_may_apply(container) {
+        let close_dangling_comments = format_body_close_dangling_comments(close, &[], doc);
+        let has_close_comments = close_dangling_comments.is_some();
         let (lower, _) = members.size_hint();
         let mut formatted = Vec::with_capacity(lower.saturating_add(2));
         formatted.extend(open_dangling_comments);
@@ -166,6 +211,11 @@ fn format_member_parts<'source, T: Copy + JavaSyntaxView<'source>>(
             formatted.push(format_part(&member, &mut format_item, doc));
         }
         formatted.extend(close_dangling_comments);
+        apply_unterminated_tail_margin(
+            doc,
+            &mut formatted,
+            unterminated && has_open_comments && !has_close_comments,
+        );
         let present = !formatted.is_empty();
         let visible = formatted.iter().any(|member| member.visible);
         let contents = if present {
@@ -183,6 +233,8 @@ fn format_member_parts<'source, T: Copy + JavaSyntaxView<'source>>(
             .iter()
             .map(|part| part_ignore_range(part, &item_range)),
     );
+    let close_dangling_comments = format_body_close_dangling_comments(close, &runs, doc);
+    let has_close_comments = close_dangling_comments.is_some();
     let mut formatted =
         Vec::with_capacity(members.len().saturating_add(runs.len()).saturating_add(2));
     formatted.extend(open_dangling_comments);
@@ -205,6 +257,11 @@ fn format_member_parts<'source, T: Copy + JavaSyntaxView<'source>>(
         FormatterIgnoreSplice::End { .. } => {}
     });
     formatted.extend(close_dangling_comments);
+    apply_unterminated_tail_margin(
+        doc,
+        &mut formatted,
+        unterminated && has_open_comments && !has_close_comments,
+    );
     let present = !formatted.is_empty();
     let visible = formatted.iter().any(|member| member.visible);
     let contents = if present {
@@ -215,13 +272,39 @@ fn format_member_parts<'source, T: Copy + JavaSyntaxView<'source>>(
     BodyContent::new(contents, present, visible)
 }
 
-fn format_part<'source, T>(
+/// Moves salvaged open-brace comments to the root margin when they are the
+/// only visible content of a body that never closes. They cannot stay inside
+/// the body: the reparse attaches them past the whole unterminated chain,
+/// where they render at the root margin, so emitting them there directly keeps
+/// the placement a fixpoint. The comments must lead the member list.
+fn apply_unterminated_tail_margin<'source>(
+    doc: &mut DocBuilder<'source>,
+    formatted: &mut [FormattedMember<'source>],
+    applies: bool,
+) {
+    if !applies {
+        return;
+    }
+    let Some((open, rest)) = formatted.split_first_mut() else {
+        return;
+    };
+    if rest.iter().any(|member| member.visible) {
+        return;
+    }
+    open.doc = doc.root_margin(open.doc);
+}
+
+fn format_part<'source, T: JavaSyntaxView<'source>>(
     part: &JavaSyntaxListPart<'source, T>,
     format_item: &mut impl FnMut(&T, &mut DocBuilder<'source>) -> FormattedMember<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> FormattedMember<'source> {
     match part {
-        JavaSyntaxListPart::Item(item) => format_item(item, doc),
+        // A member in a body begins its own line, so its first token's
+        // leading comments keep lines of their own.
+        JavaSyntaxListPart::Item(item) => {
+            format_line_start_construct(doc, item.first_token(), |doc| format_item(item, doc))
+        }
         JavaSyntaxListPart::Malformed(malformed) => {
             FormattedMember::comment(format_malformed(malformed, doc), false)
         }
@@ -297,10 +380,14 @@ pub(super) fn format_body_open_dangling_comments<'source>(
 
 pub(super) fn format_body_close_dangling_comments<'source>(
     close: Option<JavaSyntaxToken<'source>>,
+    runs: &[FormatterIgnoreRun<'source>],
     doc: &mut DocBuilder<'source>,
 ) -> Option<FormattedMember<'source>> {
     let close = close?;
-    let comments = close.leading_comments();
+    let comments = close
+        .leading_comments()
+        .filter(|comment| !formatter_ignore_runs_claim_boundary_comment(runs, comment))
+        .collect::<Vec<_>>();
     // The gap that opens the close brace's leading trivia belongs to that
     // token, so the separator in front of this run reads it from there.
     (!comments.is_empty()).then(|| {
@@ -438,7 +525,7 @@ impl<'source> FormattedMember<'source> {
                 let body = crate::helpers::recovery::format_required_field(
                     value.body(),
                     doc,
-                    |body, doc| format_line_start_block(&body, doc),
+                    |body, doc| format_block(&body, doc),
                 );
                 Self::formatted(MemberCategory::Initializer, starts_after_blank_line, body)
             }

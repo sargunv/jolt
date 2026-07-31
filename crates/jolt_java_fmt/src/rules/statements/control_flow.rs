@@ -3,11 +3,12 @@ use super::{
     BasicForStatement, DoStatement, EnhancedForStatement, ForStatement, IfStatement,
     JavaSyntaxToken, LeadingTrivia, Statement, SynchronizedStatement, TrailingTrivia,
     WhileStatement, format_block, format_enhanced_for_variable, format_expression,
-    format_local_variable_declaration, format_separator_with_comments, format_statement_semicolon,
-    format_token, format_token_with_comments, format_trailing_comments_before_line_break,
-    statement_body_as_block, statement_body_trailing_comments_force_line,
-    trailing_comments_force_line,
+    format_line_start_construct, format_local_variable_declaration, format_separator_with_comments,
+    format_statement_semicolon, format_token, format_token_with_comments,
+    format_trailing_comments_before_line_break, statement_body_as_block,
+    statement_body_trailing_comments_force_line, trailing_comments_force_line,
 };
+use crate::helpers::comments::{InlineLeadingTrivia, format_token_with_inline_leading_comments};
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, format_optional_field, format_required_field,
     resolve_optional_field, resolve_required_delimiter, resolve_required_field,
@@ -37,7 +38,9 @@ pub(super) fn format_if_statement<'source>(
     let close = resolve_required_delimiter(statement.close_paren(), doc);
     let separator = format_statement_header_body_separator(close.source(), doc);
     let condition = format_required_field(statement.condition(), doc, |condition, doc| {
-        format_expression(&condition, doc)
+        format_line_start_construct(doc, condition.first_token(), |doc| {
+            format_expression(&condition, doc)
+        })
     });
     let open = resolve_required_delimiter(statement.open_paren(), doc);
     let condition = format_parenthesized_statement_expression(doc, open, condition, close);
@@ -108,8 +111,11 @@ pub(super) fn format_parenthesized_statement_expression<'source>(
 ) -> Doc<'source> {
     let open_spacing = format_condition_open_spacing(open.source(), doc);
     let open = format_condition_open_paren(open, doc);
-    let close = format_condition_close_paren(close, doc);
-    doc_group!(
+    let (close, close_trailing) = format_condition_close_paren(close, doc);
+    // A trailing run that ends its line stays out of the group: inside it the
+    // run's hard line would break the group's fit, while the reparse assigns
+    // the same comments to the close paren's trailing trivia either way.
+    let group = doc_group!(
         doc,
         doc_concat!(
             doc,
@@ -119,7 +125,8 @@ pub(super) fn format_parenthesized_statement_expression<'source>(
                 close
             ]
         )
-    )
+    );
+    doc_concat!(doc, [group, close_trailing])
 }
 
 pub(super) fn format_condition_open_paren<'source>(
@@ -163,40 +170,28 @@ fn format_condition_open_spacing<'source>(
 fn format_condition_close_paren<'source>(
     close: JavaFormatDelimiter<'source>,
     doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let has_leading = close
-        .source()
-        .is_some_and(|token| !token.leading_comments().is_empty());
-    let close = match close {
-        JavaFormatDelimiter::Source(close) => doc_concat!(
-            doc,
-            [
-                format_token(
-                    doc,
-                    &close,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::BeforeLineBreak
-                ),
-                if trailing_comments_force_line(&close) {
-                    doc.hard_line()
-                } else {
-                    Doc::nil()
-                },
-            ]
-        ),
-        JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
-    };
-    doc_concat!(
-        doc,
-        [
-            if has_leading {
-                doc.line()
+) -> (Doc<'source>, Doc<'source>) {
+    let (close, trailing) = match close {
+        // The close paren is glued to the condition before it, so its leading
+        // comments take the previous token's trailing form.
+        JavaFormatDelimiter::Source(close) => {
+            let paren = format_token_with_inline_leading_comments(
+                doc,
+                &close,
+                InlineLeadingTrivia::AfterPreviousToken,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            );
+            let trailing = format_trailing_comments_before_line_break(doc, &close);
+            let trailing = if trailing_comments_force_line(&close) {
+                doc_concat!(doc, [trailing, doc.hard_line()])
             } else {
-                doc.soft_line()
-            },
-            close
-        ]
-    )
+                trailing
+            };
+            (paren, trailing)
+        }
+        JavaFormatDelimiter::Recovery(recovery) => (recovery.doc(), Doc::nil()),
+    };
+    (doc_concat!(doc, [doc.soft_line(), close]), trailing)
 }
 
 pub(super) fn format_statement_header_body_separator<'source>(
@@ -217,7 +212,9 @@ pub(super) fn format_while_statement<'source>(
     let close = resolve_required_delimiter(statement.close_paren(), doc);
     let separator = format_statement_header_body_separator(close.source(), doc);
     let condition = format_required_field(statement.condition(), doc, |value, doc| {
-        format_expression(&value, doc)
+        format_line_start_construct(doc, value.first_token(), |doc| {
+            format_expression(&value, doc)
+        })
     });
     let open = resolve_required_delimiter(statement.open_paren(), doc);
     let condition = format_parenthesized_statement_expression(doc, open, condition, close);
@@ -238,7 +235,9 @@ pub(super) fn format_do_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let condition = format_required_field(statement.condition(), doc, |value, doc| {
-        format_expression(&value, doc)
+        format_line_start_construct(doc, value.first_token(), |doc| {
+            format_expression(&value, doc)
+        })
     });
     let open = resolve_required_delimiter(statement.open_paren(), doc);
     let close = resolve_required_delimiter(statement.close_paren(), doc);
@@ -331,11 +330,12 @@ fn format_basic_for_statement<'source>(
         );
         let contents = doc_indent!(doc, doc_concat!(doc, [open_spacing, clauses]));
         let open = format_condition_open_paren(open, doc);
-        let close = format_condition_close_paren(close, doc);
-        doc_group!(
+        let (close, close_trailing) = format_condition_close_paren(close, doc);
+        let group = doc_group!(
             doc,
             doc_concat!(doc, [for_keyword, doc.space(), open, contents, close,])
-        )
+        );
+        doc_concat!(doc, [group, close_trailing])
     };
     doc_concat!(
         doc,
@@ -430,14 +430,14 @@ fn format_enhanced_for_statement<'source>(
         doc,
         [
             format_required_field(statement.variable(), doc, |value, doc| {
-                match value {
+                format_line_start_construct(doc, value.first_token(), |doc| match value {
                     EnhancedForVariableSyntax::EnhancedForVariable(variable) => {
                         format_enhanced_for_variable(&variable, doc)
                     }
                     EnhancedForVariableSyntax::BogusEnhancedForVariable(bogus) => {
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
-                }
+                })
             }),
             doc.space(),
             format_required_field(statement.colon(), doc, |token, doc| {
@@ -521,7 +521,9 @@ pub(super) fn format_synchronized_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let expression = format_required_field(statement.expression(), doc, |value, doc| {
-        format_expression(&value, doc)
+        format_line_start_construct(doc, value.first_token(), |doc| {
+            format_expression(&value, doc)
+        })
     });
     let close = resolve_required_delimiter(statement.close_paren(), doc);
     let separator = format_statement_header_body_separator(close.source(), doc);

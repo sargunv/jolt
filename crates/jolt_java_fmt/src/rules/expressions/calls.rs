@@ -1,11 +1,11 @@
 use super::leaves::format_leaf_token;
 use super::{
-    ArgumentList, CommaListItem, Doc, FieldAccessExpression, LeadingComments,
-    MethodInvocationExpression, delimited_comma_list, format_expression,
-    format_expression_with_leading_comments, format_member_dot, format_token_with_comments,
-    format_type_argument_list,
+    ArgumentList, CommaListItem, Doc, FieldAccessExpression, InlineLeadingTrivia, LeadingComments,
+    MethodInvocationExpression, TrailingTrivia, delimited_comma_list, format_expression,
+    format_expression_with_leading_comments, format_member_dot,
+    format_token_with_inline_leading_comments, format_type_argument_list,
 };
-use crate::helpers::lists::syntax_comma_list_items;
+use crate::helpers::lists::delimited_syntax_comma_list_items;
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, format_optional_field, format_required_field,
     resolve_required_delimiter, resolve_required_field,
@@ -60,7 +60,14 @@ pub(super) fn format_field_access_expression<'source>(
                     format_member_dot(&dot, doc)
                 }),
                 format_required_field(expression.name(), doc, |name, doc| {
-                    format_token_with_comments(doc, &name)
+                    // The name follows its dot, so a comment leading it takes
+                    // the dot boundary's padded form.
+                    format_token_with_inline_leading_comments(
+                        doc,
+                        &name,
+                        InlineLeadingTrivia::BetweenSpaces,
+                        TrailingTrivia::Preserve,
+                    )
                 }),
                 format_optional_field(expression.type_arguments(), doc, |arguments, doc| {
                     format_type_argument_list(&arguments, doc)
@@ -123,6 +130,12 @@ pub(super) fn format_qualified_invocation_name<'source>(
     leading_comments: LeadingComments,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    // The name always follows its dot, so a preserved leading comment takes
+    // the dot boundary's padded form.
+    let leading_comments = match leading_comments {
+        LeadingComments::Preserve => LeadingComments::InlineBetweenSpaces,
+        other => other,
+    };
     format_invocation_name(name.classify(), leading_comments, doc)
 }
 
@@ -161,7 +174,7 @@ pub(crate) fn format_argument_list<'source>(
     let close = resolve_required_delimiter(arguments.close_paren(), doc);
     let items = match resolve_required_field(arguments.arguments(), doc) {
         JavaFormatField::Present(arguments) => {
-            syntax_comma_list_items(doc, arguments.parts(), |argument, doc| {
+            delimited_syntax_comma_list_items(doc, arguments.parts(), |argument, doc| {
                 format_expression(&argument, doc)
             })
         }

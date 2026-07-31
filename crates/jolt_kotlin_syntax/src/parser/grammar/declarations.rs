@@ -264,7 +264,19 @@ impl Parser<'_> {
 
     fn parse_annotation_with_argument_spacing(&mut self, require_adjacent_arguments: bool) {
         let marker = self.start();
+        let sigil = self.current_kind();
         let _ = self.eat(K::At) || self.eat(K::Hash);
+        // kotlinc rejects trivia between the sigil and the annotation name
+        // ("Expected annotation identifier after '@'"). Parse the rest of the
+        // annotation anyway so the tree keeps its shape, but own the
+        // separation on a bogus annotation node.
+        let sigil_end = self.position() - 1;
+        let separated = (!self.tokens_are_adjacent(sigil_end, 2)).then(|| {
+            self.pending_expected(match sigil {
+                K::Hash => "expected annotation identifier after '#'",
+                _ => "expected annotation identifier after '@'",
+            })
+        });
         if self.at_annotation_use_site_target() && self.nth_kind(1) == K::Colon {
             let target = self.start();
             self.bump();
@@ -284,15 +296,26 @@ impl Parser<'_> {
                 self.complete(annotation, K::UnescapedAnnotation);
             }
             self.complete(annotations, K::UnescapedAnnotationList);
-            if !self.eat(K::RBracket) {
-                let diagnostic = self.pending_expected("expected ']' after annotations");
-                self.missing_required_slot(
-                    marker.anchor(),
-                    crate::shape::multi_annotation::Slot::close_bracket as u16,
-                    [diagnostic],
-                );
+            if let Some(diagnostic) = separated {
+                // A bogus annotation has no declared close-bracket slot, so a
+                // missing ']' joins the separation as a node-owned diagnostic
+                // instead of the missing-slot form used below.
+                let mut diagnostics = vec![diagnostic];
+                if !self.eat(K::RBracket) {
+                    diagnostics.push(self.pending_expected("expected ']' after annotations"));
+                }
+                self.complete_recovery(marker, K::BogusAnnotation, diagnostics);
+            } else {
+                if !self.eat(K::RBracket) {
+                    let diagnostic = self.pending_expected("expected ']' after annotations");
+                    self.missing_required_slot(
+                        marker.anchor(),
+                        crate::shape::multi_annotation::Slot::close_bracket as u16,
+                        [diagnostic],
+                    );
+                }
+                self.complete(marker, K::MultiAnnotation);
             }
-            self.complete(marker, K::MultiAnnotation);
             return;
         }
 
@@ -303,7 +326,11 @@ impl Parser<'_> {
         if self.at(K::LParen) && arguments_are_adjacent {
             self.parse_annotation_argument_list();
         }
-        self.complete(marker, K::Annotation);
+        if let Some(diagnostic) = separated {
+            self.complete_recovery(marker, K::BogusAnnotation, [diagnostic]);
+        } else {
+            self.complete(marker, K::Annotation);
+        }
     }
 
     pub(super) fn parse_annotation_argument_list(&mut self) {

@@ -6,7 +6,8 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_token, trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, format_glued_token, format_line_start_construct, format_token,
+    trailing_comments_force_line,
 };
 use crate::helpers::lists::{
     CommaListItem, annotation_parenthesized_list, attach_comma_separator, comma_list_item_range,
@@ -112,7 +113,7 @@ fn format_annotation_use_site_target<'source>(
         )
     });
     let colon = format_required_field(target.colon(), doc, |token, doc| {
-        format_token(
+        format_glued_token(
             doc,
             &token,
             LeadingTrivia::Preserve,
@@ -217,18 +218,24 @@ fn annotation_argument_list_items<'source>(
     };
 
     let mut items = Vec::new();
+    let mut first = true;
     for part in entries.parts() {
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(argument) => {
                 let range = comma_list_item_range(&argument);
-                let formatted = match argument {
-                    ValueArgumentListEntry::ValueArgument(argument) => {
-                        format_value_argument(doc, &argument)
-                    }
-                    ValueArgumentListEntry::BogusValueArgument(bogus) => {
-                        crate::helpers::recovery::format_malformed(&bogus, doc)
-                    }
-                };
+                // The first argument sits behind the open delimiter, so its
+                // leading comments keep lines of their own.
+                let first_token = if first { argument.first_token() } else { None };
+                first = false;
+                let formatted =
+                    format_line_start_construct(doc, first_token, |doc| match argument {
+                        ValueArgumentListEntry::ValueArgument(argument) => {
+                            format_value_argument(doc, &argument)
+                        }
+                        ValueArgumentListEntry::BogusValueArgument(bogus) => {
+                            crate::helpers::recovery::format_malformed(&bogus, doc)
+                        }
+                    });
                 items.push(CommaListItem::visible(formatted).with_ignore_range(range));
             }
             KotlinFormatListPart::Separator(comma) => {

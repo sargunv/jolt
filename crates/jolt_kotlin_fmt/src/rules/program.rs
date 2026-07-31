@@ -8,7 +8,8 @@ use jolt_kotlin_syntax::{
 use crate::helpers::blocks::{BodyItemSeparator, join_line_boundaries};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_byte_order_mark, format_comment,
-    format_removed_separator, format_terminator_list, format_token, token_has_comments,
+    format_line_start_construct, format_removed_separator, format_terminator_list, format_token,
+    token_has_comments,
 };
 use crate::helpers::recovery::{
     KotlinFormatListPart, format_malformed, format_missing, format_optional_field,
@@ -211,10 +212,10 @@ fn format_entry_segment<'source>(
             FileEntry::Item(KotlinFileItem::PackageHeader(package)) => {
                 flush_body(doc, &mut body, &mut sections);
                 let visible = package.first_token().is_some();
-                sections.push(FileSection::new(
-                    format_package_header(doc, &package),
-                    visible,
-                ));
+                let formatted = format_line_start_construct(doc, package.first_token(), |doc| {
+                    format_package_header(doc, &package)
+                });
+                sections.push(FileSection::new(formatted, visible));
             }
             FileEntry::Item(item) => {
                 body.push(item);
@@ -339,7 +340,12 @@ fn format_file_annotations<'source>(
     for part in annotations.parts() {
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(annotation) => {
-                formatted.push(format_annotation_syntax(doc, &annotation));
+                // Each file annotation begins its own line.
+                formatted.push(format_line_start_construct(
+                    doc,
+                    annotation.first_token(),
+                    |doc| format_annotation_syntax(doc, &annotation),
+                ));
             }
             KotlinFormatListPart::Separator(separator) => formatted.push(format_token(
                 doc,
@@ -392,13 +398,15 @@ fn format_body_item<'source>(
     doc: &mut DocBuilder<'source>,
     item: &KotlinFileItem<'source>,
 ) -> Doc<'source> {
-    match item {
+    // A file item begins its own line, so its first token's leading comments
+    // keep lines of their own.
+    format_line_start_construct(doc, item.first_token(), |doc| match item {
         KotlinFileItem::Statement(statement) => {
             format_statement_syntax_with_leading(doc, &StatementSyntax::Statement(*statement))
         }
         KotlinFileItem::BogusKotlinFileItem(malformed) => format_malformed(malformed, doc),
         _ => format_file_item(doc, item),
-    }
+    })
 }
 
 fn source_item_separator(

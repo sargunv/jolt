@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+public @interface UnterminatedAnnotation { // No prefix defined in the annotation itself
+
+formatted:
+public @interface UnterminatedAnnotation {
+// No prefix defined in the annotation itself
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(89), end: TextSize(89) }) message=expected `}` after type body

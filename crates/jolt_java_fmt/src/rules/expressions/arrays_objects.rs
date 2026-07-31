@@ -8,7 +8,7 @@ use super::{
     format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
     format_type, format_type_argument_list, trailing_comments_force_line,
 };
-use crate::helpers::lists::syntax_comma_list_items;
+use crate::helpers::lists::delimited_syntax_comma_list_items;
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_malformed,
     format_optional_field, format_required_field, present_token, resolve_list_part,
@@ -247,10 +247,12 @@ fn format_open_bracket<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match open {
-        JavaFormatDelimiter::Source(open) => format_token(
+        // The bracket is glued to the array or type before it, so its leading
+        // comments take the previous token's trailing form.
+        JavaFormatDelimiter::Source(open) => format_token_with_inline_leading_comments(
             doc,
             open,
-            LeadingTrivia::Preserve,
+            InlineLeadingTrivia::AfterPreviousToken,
             TrailingTrivia::RelocatedToEnclosingContext,
         ),
         JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
@@ -350,7 +352,7 @@ fn array_initializer_items<'source, 'fmt>(
 ) -> Vec<CommaListItem<'source>> {
     match resolve_required_field(initializer.values(), doc) {
         JavaFormatField::Present(values) => {
-            syntax_comma_list_items(doc, values.parts(), |value, doc| match value {
+            delimited_syntax_comma_list_items(doc, values.parts(), |value, doc| match value {
                 VariableInitializerValue::ArrayInitializer(initializer) => {
                     format_line_start_array_initializer(&initializer, doc)
                 }

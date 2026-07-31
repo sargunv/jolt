@@ -1,8 +1,9 @@
 use super::{
-    Doc, LeadingTrivia, ParenthesizedExpression, TrailingTrivia, comment_forces_line,
-    format_expression, format_token, format_token_with_comments,
-    format_trailing_comments_before_line_break,
+    Doc, InlineLeadingTrivia, LeadingTrivia, ParenthesizedExpression, TrailingTrivia,
+    comment_forces_line, format_expression, format_token,
+    format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
 };
+use crate::helpers::comments::format_line_start_construct;
 use crate::helpers::recovery::{JavaFormatField, format_required_field, resolve_required_field};
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::JavaSyntaxToken;
@@ -32,11 +33,14 @@ pub(super) fn format_parenthesized_expression<'source>(
                         doc,
                         [
                             format_open_parenthesized_expression_spacing(open.as_ref(), doc),
-                            format_required_field(
-                                expression.expression(),
-                                doc,
-                                |expression, doc| { format_expression(&expression, doc) }
-                            ),
+                            // The inner expression begins a line of its own
+                            // whenever a leading comment forces the group to
+                            // break, matching the open paren's trailing run.
+                            format_required_field(expression.expression(), doc, |inner, doc| {
+                                format_line_start_construct(doc, inner.first_token(), |doc| {
+                                    format_expression(&inner, doc)
+                                })
+                            }),
                         ]
                     )
                 ),
@@ -93,18 +97,20 @@ fn format_parenthesized_expression_close_with_spacing<'source>(
     close: Option<&JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let close_has_leading_comments =
-        close.is_some_and(|token| !token.leading_comments().is_empty());
-
     doc_concat!(
         doc,
         [
-            if close_has_leading_comments {
-                doc.line()
-            } else {
-                doc.soft_line()
-            },
-            close.map_or_else(Doc::nil, |close| format_token_with_comments(doc, close)),
+            // The close paren is glued to the expression before it, so its
+            // leading comments take the previous token's trailing form.
+            doc.soft_line(),
+            close.map_or_else(Doc::nil, |close| {
+                format_token_with_inline_leading_comments(
+                    doc,
+                    close,
+                    InlineLeadingTrivia::AfterPreviousToken,
+                    TrailingTrivia::Preserve,
+                )
+            }),
         ]
     )
 }

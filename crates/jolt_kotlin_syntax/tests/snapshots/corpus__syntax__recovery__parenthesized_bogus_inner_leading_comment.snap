@@ -1,0 +1,53 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun f() {
+  val b = (
+  /* leads a bogus inner expression */
+  ,)
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "f" @ 4..5
+      ValueParameterList
+        LParen "(" @ 5..6
+        ValueParameterSeparatedList
+        RParen ")" @ 6..7 trailing=[Whitespace " "]
+      BlockBody
+        Block
+          LBrace "{" @ 8..9
+          BlockItemList
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 12..15 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "b" @ 16..17 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 18..19 trailing=[Whitespace " "]
+                ParenthesizedExpression
+                  LParen "(" @ 20..21
+                  BogusExpression
+                    Comma "," @ 63..64 leading=[Newline "\n", Whitespace "  ", BlockComment "/* leads a bogus inner expression */", Newline "\n", Whitespace "  "]
+                  RParen ")" @ 64..65
+              PropertyBodyMemberList
+          RBrace "}" @ 66..67 leading=[Newline "\n"]
+  Eof "" @ 68..68 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=63..64 message="expected expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected expression

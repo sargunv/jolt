@@ -6,7 +6,11 @@ use jolt_kotlin_syntax::{
     PostfixExpression, UnaryExpression,
 };
 
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, comment_forces_line, format_token};
+use crate::helpers::comments::{
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
+    format_leading_comments_before_group, format_token,
+    format_trailing_comment_list_before_line_break,
+};
 use crate::helpers::recovery::format_required_field;
 use crate::rules::types::format_type_reference;
 
@@ -25,15 +29,56 @@ pub(super) fn format_parenthesized_expression<'source>(
         format_token(doc, &token, leading, TrailingTrivia::Preserve)
     });
     let inner = format_required_field(expression.expression(), doc, |inner, doc| {
-        format_expression_with_leading_and_context(doc, &inner, LeadingTrivia::Preserve, context)
+        // The inner expression is glued to the open paren, so its first
+        // token's leading comments take the paren's trailing form: emitted
+        // here, with the inner's own leading trivia suppressed to claim them
+        // once. The relocation registry also covers variants the leading
+        // mode does not reach, such as a bogus inner expression.
+        let first_token = inner.first_token();
+        let comments = first_token.map_or_else(Doc::nil, |token| {
+            format_leading_comments_before_group(
+                doc,
+                &token,
+                InlineLeadingTrivia::AfterPreviousToken,
+            )
+        });
+        let format = |doc: &mut DocBuilder<'source>| {
+            format_expression_with_leading_and_context(
+                doc,
+                &inner,
+                LeadingTrivia::SuppressAlreadyHandled,
+                context,
+            )
+        };
+        let inner = match first_token {
+            Some(token) => doc.with_relocated_leading_trivia(&token, format),
+            None => format(doc),
+        };
+        doc.concat([comments, inner])
     });
     let close = format_required_field(expression.close_paren(), doc, |token, doc| {
-        format_token(
+        // The close paren is glued to the inner expression, so its leading
+        // comments take the inner's trailing form: emitted here, with the
+        // paren's own leading trivia suppressed to claim them once. A final
+        // comment that ends its line takes the close paren with it.
+        let comments =
+            format_trailing_comment_list_before_line_break(doc, token.leading_comments());
+        let line = if token
+            .leading_comments()
+            .last()
+            .is_some_and(|comment| comment_forces_line(&comment))
+        {
+            doc.hard_line()
+        } else {
+            Doc::nil()
+        };
+        let close = format_token(
             doc,
             &token,
-            LeadingTrivia::Preserve,
+            LeadingTrivia::SuppressAlreadyHandled,
             TrailingTrivia::Preserve,
-        )
+        );
+        doc.concat([comments, line, close])
     });
     doc.concat([open, inner, close])
 }

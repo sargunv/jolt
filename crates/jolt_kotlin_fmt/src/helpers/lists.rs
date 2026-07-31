@@ -4,16 +4,16 @@ use jolt_kotlin_syntax::{KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxVi
 use crate::helpers::recovery::KotlinFormatDelimiter;
 
 use crate::helpers::comments::{
-    TrailingTrivia, format_dangling_comments, format_delimiter_dangling_comments,
-    format_leading_comments, format_separator_with_comments,
-    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
-    has_delimiter_dangling_comments,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, format_dangling_comments,
+    format_delimiter_dangling_comments, format_leading_comments, format_separator_with_comments,
+    format_token_after_relocated_leading_comments, has_delimiter_dangling_comments,
 };
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
     for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
     formatter_ignore_runs_claim_boundary_comment,
 };
+use jolt_fmt_ir::{InlineLeadingTrivia, format_leading_comments_before_group};
 
 /// Kotlin stages physical items and separators with the shared representation.
 /// Separators remain distinct until formatter-ignore runs have been spliced,
@@ -127,7 +127,14 @@ fn delimited_comma_list_with<'source>(
         .rev()
         .find(|item| item.is_visible())
         .is_some_and(|item| item.comma().is_some());
-    let open_doc = format_open_delimiter_with_trailing(doc, open, TrailingTrivia::BeforeSoftLine);
+    let item_starts_after_line = items.iter().any(CommaListItem::starts_after_line);
+    let (hoisted, open_leading) = hoist_forcing_open_leading(doc, &open);
+    let open_doc = format_open_delimiter_with_trailing(
+        doc,
+        open,
+        open_leading,
+        TrailingTrivia::BeforeSoftLine,
+    );
     let list = jolt_fmt_ir::comma_list(doc, items);
     let terminal_boundary = if terminal_starts_after_line {
         doc.hard_line_boundary()
@@ -140,14 +147,46 @@ fn delimited_comma_list_with<'source>(
         format_close_with_spacing(doc, close, close_trailing, close_has_leading_comments);
     let contents = doc.concat([indented_contents, close_doc]);
 
-    if force_multiline
+    let list = if force_multiline
         || has_trailing_comma
         || !ignored_runs.is_empty()
         || has_delimiter_dangling_comments(open.source(), close.source())
+        || item_starts_after_line
     {
         doc.force_group(contents)
     } else {
         doc.group(contents)
+    };
+    doc.concat([hoisted, list])
+}
+
+/// Splits off an open delimiter's leading comments when they end their line.
+///
+/// Inside the list's group the run's hard line would break the group's fit
+/// even though the reparse reads the same comments as the previous token's
+/// trailing trivia, which that token renders outside the group. Hoisting the
+/// run before the group makes the two passes agree; the delimiter's own
+/// leading placement is then suppressed.
+fn hoist_forcing_open_leading<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: &KotlinFormatDelimiter<'source>,
+) -> (Doc<'source>, LeadingTrivia) {
+    let KotlinFormatDelimiter::Source(token) = open else {
+        return (doc.nil(), LeadingTrivia::Preserve);
+    };
+    let hoists = token
+        .leading_comments()
+        .last()
+        .is_some_and(|comment| comment_forces_line(&comment));
+    if hoists {
+        let comments = format_leading_comments_before_group(
+            doc,
+            token,
+            InlineLeadingTrivia::AfterPreviousToken,
+        );
+        (comments, LeadingTrivia::SuppressAlreadyHandled)
+    } else {
+        (doc.nil(), LeadingTrivia::Preserve)
     }
 }
 
@@ -179,6 +218,32 @@ where
     items
 }
 
+/// Same as [`physical_comma_list_items`], but for a list behind an open
+/// delimiter. The first element's leading comments have two possible owners
+/// across a reparse -- the element's first token and the open delimiter's
+/// trailing trivia -- and those owners place them differently unless the
+/// element keeps them on lines of their own. Register the first element as
+/// beginning its line; a leading comment forces the list's group to break,
+/// which is what makes the registration true.
+pub(crate) fn delimited_physical_comma_list_items<'source, Entry>(
+    doc: &mut DocBuilder<'source>,
+    entries: impl IntoIterator<Item = KotlinSyntaxListPart<'source, Entry>>,
+    mut format_entry: impl FnMut(&mut DocBuilder<'source>, Entry) -> CommaListItem<'source>,
+) -> Vec<CommaListItem<'source>>
+where
+    Entry: KotlinSyntaxView<'source>,
+{
+    let mut first = true;
+    physical_comma_list_items(doc, entries, |doc, entry| {
+        let first_token = if first { entry.first_token() } else { None };
+        first = false;
+        match first_token {
+            Some(token) => doc.with_line_start_leading(&token, |doc| format_entry(doc, entry)),
+            None => format_entry(doc, entry),
+        }
+    })
+}
+
 fn empty_delimited_list<'source>(
     doc: &mut DocBuilder<'source>,
     open: KotlinFormatDelimiter<'source>,
@@ -189,14 +254,19 @@ fn empty_delimited_list<'source>(
         let open = format_open_delimiter_with_trailing(
             doc,
             open,
+            LeadingTrivia::Preserve,
             TrailingTrivia::RelocatedToEnclosingContext,
         );
         let close = format_close_delimiter(doc, close, close_trailing);
         return doc.concat([open, close]);
     }
 
-    let open_doc =
-        format_open_delimiter_with_trailing(doc, open, TrailingTrivia::RelocatedToEnclosingContext);
+    let open_doc = format_open_delimiter_with_trailing(
+        doc,
+        open,
+        LeadingTrivia::Preserve,
+        TrailingTrivia::RelocatedToEnclosingContext,
+    );
     let line = doc.hard_line();
     let comments = format_delimiter_dangling_comments(doc, open.source(), close.source());
     let body = doc.concat([line, comments]);
@@ -210,12 +280,24 @@ fn empty_delimited_list<'source>(
 fn format_open_delimiter_with_trailing<'source>(
     doc: &mut DocBuilder<'source>,
     open: KotlinFormatDelimiter<'source>,
+    leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
     match open {
-        KotlinFormatDelimiter::Source(open) => {
-            format_token_with_inline_leading_comments(doc, &open, trailing)
-        }
+        // A delimited list's open paren or angle bracket is glued to the name
+        // before it, so its leading comments take the previous token's
+        // trailing form.
+        KotlinFormatDelimiter::Source(open) => match leading {
+            LeadingTrivia::Preserve => jolt_fmt_ir::format_token_with_inline_leading_comments(
+                doc,
+                &open,
+                InlineLeadingTrivia::AfterPreviousToken,
+                trailing,
+            ),
+            LeadingTrivia::SuppressAlreadyHandled => {
+                format_token_after_relocated_leading_comments(doc, &open, trailing)
+            }
+        },
         KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
     }
 }

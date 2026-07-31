@@ -1,6 +1,6 @@
 use super::{
-    Doc, LeadingTrivia, MethodReferenceExpression, TrailingTrivia, format_expression, format_token,
-    format_token_with_comments, format_type, format_type_argument_list,
+    Doc, InlineLeadingTrivia, MethodReferenceExpression, TrailingTrivia, format_expression,
+    format_token_with_inline_leading_comments, format_type, format_type_argument_list,
     trailing_comments_force_line,
 };
 use crate::helpers::recovery::{format_malformed, format_optional_field, format_required_field};
@@ -31,7 +31,14 @@ pub(super) fn format_method_reference_expression<'source>(
                     format_type_argument_list(&arguments, doc)
                 }),
                 format_required_field(expression.target(), doc, |target, doc| {
-                    format_token_with_comments(doc, &target)
+                    // The target follows the `::`, whose trailing comments take
+                    // the padded form, so a comment leading the target matches.
+                    format_token_with_inline_leading_comments(
+                        doc,
+                        &target,
+                        InlineLeadingTrivia::BetweenSpaces,
+                        TrailingTrivia::Preserve,
+                    )
                 }),
             ]
         )
@@ -47,10 +54,12 @@ fn format_method_reference_separator<'source>(
         doc_concat!(
             doc,
             [
-                format_token(
+                // The `::` is glued to the receiver before it, so its leading
+                // comments take the previous token's trailing form.
+                format_token_with_inline_leading_comments(
                     doc,
                     &separator,
-                    LeadingTrivia::Preserve,
+                    InlineLeadingTrivia::AfterPreviousToken,
                     TrailingTrivia::BeforeLineBreak,
                 ),
                 if trailing_comments_force_line(&separator) {

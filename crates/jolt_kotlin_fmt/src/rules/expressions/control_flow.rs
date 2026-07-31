@@ -10,14 +10,15 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_dangling_comments, format_removed_separator,
-    format_token, format_trailing_comments_before_line_break, trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, format_dangling_comments, format_glued_token,
+    format_line_start_construct, format_removed_separator, format_token,
+    format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
 use crate::helpers::lists::{CommaListItem, comma_list_between, physical_comma_list_items};
 use crate::helpers::recovery::{
-    KotlinFormatField, KotlinFormatListPart, format_delimiter, format_optional_field,
-    format_required_field, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
-    resolve_required_field,
+    KotlinFormatDelimiter, KotlinFormatField, KotlinFormatListPart, format_delimiter,
+    format_optional_field, format_required_field, resolve_list_part, resolve_optional_field,
+    resolve_required_delimiter, resolve_required_field,
 };
 use crate::rules::declarations::{
     format_destructuring_declaration, format_inline_modifier_prefix, format_modifier_prefix,
@@ -197,7 +198,7 @@ pub(super) fn format_when_expression<'source>(
                     KotlinFormatListPart::Item(element) => match element.classify() {
                         Ok(WhenEntryListElementSyntax::Entry(entry)) => {
                             preceding_entry = Some(entry);
-                            format_when_entry(doc, &entry)
+                            format_when_entry_at_line_start(doc, &entry)
                         }
                         Ok(WhenEntryListElementSyntax::Terminator(token)) => {
                             if matches!(
@@ -636,16 +637,25 @@ fn format_control_flow_condition<'source>(
 ) -> Doc<'source> {
     let open = resolve_required_delimiter(condition.open_paren(), doc);
     let close = resolve_required_delimiter(condition.close_paren(), doc);
+    // The condition begins a line of its own whenever a leading comment
+    // forces the group to break, matching the open paren's trailing run.
     let expression = format_required_field(condition.expression(), doc, |expression, doc| {
-        format_expression(doc, &expression)
+        format_line_start_construct(doc, expression.first_token(), |doc| {
+            format_expression(doc, &expression)
+        })
     });
     let open = format_delimiter(doc, open, LeadingTrivia::Preserve, TrailingTrivia::Preserve);
-    let close = format_delimiter(
-        doc,
-        close,
-        LeadingTrivia::Preserve,
-        TrailingTrivia::Preserve,
-    );
+    let close = match close {
+        // The close paren is glued to the condition before it, so its leading
+        // comments take the previous token's trailing form.
+        KotlinFormatDelimiter::Source(token) => format_glued_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        ),
+        KotlinFormatDelimiter::Recovery(recovery) => recovery.doc(),
+    };
     let soft_line = doc.soft_line();
     let inner = doc.concat([soft_line, expression]);
     let inner = doc.indent(inner);
@@ -798,6 +808,17 @@ fn format_when_subject<'source>(
     );
     let contents = doc.concat([open_doc, body, before_close, close_doc]);
     doc.group(contents)
+}
+
+fn format_when_entry_at_line_start<'source>(
+    doc: &mut DocBuilder<'source>,
+    entry: &WhenEntry<'source>,
+) -> Doc<'source> {
+    // A when entry begins its own line, so its first token's leading comments
+    // keep lines of their own.
+    format_line_start_construct(doc, entry.first_token(), |doc| {
+        format_when_entry(doc, entry)
+    })
 }
 
 fn format_when_entry<'source>(
@@ -955,7 +976,14 @@ fn format_catch_parameter<'source>(
     let open = format_required_token(parameter.open_paren(), doc, LeadingTrivia::Preserve);
     let modifiers = format_modifier_prefix(doc, parameter.modifiers());
     let name = format_required_field(parameter.name(), doc, |name, doc| format_name(doc, &name));
-    let colon = format_required_token(parameter.colon(), doc, LeadingTrivia::Preserve);
+    let colon = format_required_field(parameter.colon(), doc, |token, doc| {
+        format_glued_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
+    });
     let ty = format_required_field(parameter.r#type(), doc, |ty, doc| {
         let space = doc.space();
         let ty = format_type_reference(doc, &ty);

@@ -3,7 +3,7 @@ source: crates/jolt_kotlin_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-@ /*a*/Anno
+@Anno /*a*/
 
 class SigilComment
 

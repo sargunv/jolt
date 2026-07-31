@@ -33,4 +33,9 @@ String[] localLabels() {
 String[] labels = {"a very long local label that forces the initializer to break across lines","another very long local label that keeps each item on its own line","a third long local label for the trailing comma policy"};
 return labels;
 }
+int bracketLeadingComment(int[] values) {
+return values
+// leads the index bracket
+[0];
+}
 }

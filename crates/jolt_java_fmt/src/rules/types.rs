@@ -12,7 +12,9 @@ use crate::helpers::comments::{
     format_token_with_inline_leading_comments,
 };
 use crate::helpers::lists::delimited_comma_list_without_open_leading_comments;
-use crate::helpers::lists::{CommaListItem, delimited_comma_list, syntax_comma_list_items};
+use crate::helpers::lists::{
+    CommaListItem, delimited_comma_list, delimited_syntax_comma_list_items,
+};
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_optional_field,
     format_required_field, resolve_list_part, resolve_required_delimiter, resolve_required_field,
@@ -66,6 +68,9 @@ fn format_type_with_leading_comments<'source>(
 pub(crate) enum LeadingComments {
     Preserve,
     SuppressFirstToken,
+    /// Glued to the previous token, so preserved comments take the previous
+    /// token's trailing form.
+    InlineAfterPrevious,
 }
 
 pub(crate) fn format_type_parameter_list<'source>(
@@ -77,14 +82,16 @@ pub(crate) fn format_type_parameter_list<'source>(
     let close = resolve_required_delimiter(parameters.close_angle(), doc);
     let items = match resolve_required_field(parameters.parameters(), doc) {
         JavaFormatField::Present(parameters) => {
-            syntax_comma_list_items(doc, parameters.parts(), |parameter, doc| {
+            delimited_syntax_comma_list_items(doc, parameters.parts(), |parameter, doc| {
                 format_type_parameter(&parameter, doc)
             })
         }
         JavaFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
     match leading_comments {
-        LeadingComments::Preserve => delimited_comma_list(doc, open, close, items),
+        LeadingComments::Preserve | LeadingComments::InlineAfterPrevious => {
+            delimited_comma_list(doc, open, close, items)
+        }
         LeadingComments::SuppressFirstToken => {
             delimited_comma_list_without_open_leading_comments(doc, open, close, items)
         }
@@ -116,14 +123,16 @@ fn format_type_argument_list_with_leading<'source>(
     let close = resolve_required_delimiter(arguments.close_angle(), doc);
     let items = match resolve_required_field(arguments.arguments(), doc) {
         JavaFormatField::Present(arguments) => {
-            syntax_comma_list_items(doc, arguments.parts(), |argument, doc| {
+            delimited_syntax_comma_list_items(doc, arguments.parts(), |argument, doc| {
                 format_type_argument(&argument, doc)
             })
         }
         JavaFormatField::Malformed(recovery) => vec![CommaListItem::visible(recovery)],
     };
     match leading_comments {
-        LeadingComments::Preserve => delimited_comma_list(doc, open, close, items),
+        LeadingComments::Preserve | LeadingComments::InlineAfterPrevious => {
+            delimited_comma_list(doc, open, close, items)
+        }
         LeadingComments::SuppressFirstToken => {
             delimited_comma_list_without_open_leading_comments(doc, open, close, items)
         }
@@ -194,6 +203,12 @@ fn format_type_head_token<'source>(
         LeadingComments::SuppressFirstToken => {
             format_token_after_relocated_leading_comments(doc, token, TrailingTrivia::Preserve)
         }
+        LeadingComments::InlineAfterPrevious => format_token_with_inline_leading_comments(
+            doc,
+            token,
+            InlineLeadingTrivia::AfterPreviousToken,
+            TrailingTrivia::Preserve,
+        ),
     }
 }
 
@@ -211,12 +226,12 @@ fn format_class_type<'source>(
                         let comments = if first {
                             leading_comments
                         } else {
-                            LeadingComments::Preserve
+                            LeadingComments::InlineAfterPrevious
                         };
                         first = false;
                         format_class_type_segment(&segment, comments, docs)
                     }
-                    JavaFormatListPart::Separator(dot) => format_token_with_comments(docs, &dot),
+                    JavaFormatListPart::Separator(dot) => format_type_name_dot(docs, &dot),
                     JavaFormatListPart::Recovery(recovery) => recovery.doc(),
                 };
                 docs.push(part);
@@ -259,7 +274,7 @@ fn format_type_name<'source>(
                 format_qualified_name_segment(&segment, leading_comments, doc)
             });
             let first_dot = format_required_field(name.first_dot(), doc, |dot, doc| {
-                format_token_with_comments(doc, &dot)
+                format_type_name_dot(doc, &dot)
             });
             let remaining =
                 format_required_field(name.remaining_segments(), doc, |segments, doc| {
@@ -268,11 +283,11 @@ fn format_type_name<'source>(
                             let part = match resolve_list_part(part, docs) {
                                 JavaFormatListPart::Item(segment) => format_qualified_name_segment(
                                     &segment,
-                                    LeadingComments::Preserve,
+                                    LeadingComments::InlineAfterPrevious,
                                     docs,
                                 ),
                                 JavaFormatListPart::Separator(dot) => {
-                                    format_token_with_comments(docs, &dot)
+                                    format_type_name_dot(docs, &dot)
                                 }
                                 JavaFormatListPart::Recovery(recovery) => recovery.doc(),
                             };
@@ -284,6 +299,20 @@ fn format_type_name<'source>(
         }
         NameSyntax::BogusName(name) => format_malformed(name, doc),
     }
+}
+
+/// Formats a qualified type name's dot, which is glued to the segment before
+/// it, so its leading comments take the previous token's trailing form.
+fn format_type_name_dot<'source>(
+    doc: &mut DocBuilder<'source>,
+    dot: &JavaSyntaxToken<'source>,
+) -> Doc<'source> {
+    format_token_with_inline_leading_comments(
+        doc,
+        dot,
+        InlineLeadingTrivia::AfterPreviousToken,
+        TrailingTrivia::Preserve,
+    )
 }
 
 fn format_qualified_name_segment<'source>(

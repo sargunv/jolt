@@ -140,9 +140,11 @@ syntax/lexer/reports-unterminated-raw-string.kt
 syntax/lexer/separates-not-in-and-not-is-from-identifier-prefixes.kt
 syntax/lexer/soft-keyword-spellings-remain-identifiers.kt
 syntax/parser/block-empty-statement-adjacent-braces.kt
+syntax/parser/diagnoses-annotation-separated-from-name.kt
 syntax/parser/diagnoses-callable-reference-call-like-reserved-form.kt
 syntax/parser/diagnoses-invalid-assignment-targets.kt
 syntax/parser/diagnoses-malformed-type-argument-call.kt
+syntax/parser/diagnoses-value-parameter-line-start-group.kt
 syntax/parser/diagnoses-when-guard-without-subject.kt
 syntax/parser/parses-annotation-after-identifier-initializer.kt
 syntax/parser/parses-annotation-all-use-site-target.kt
@@ -182,6 +184,7 @@ syntax/parser/parses-delegation-class-and-interface.kt
 syntax/parser/parses-delegation-property.kt
 syntax/parser/parses-destructuring-baseline-declarations.kt
 syntax/parser/parses-destructuring-name-based-preview.kt
+syntax/parser/parses-destructuring-parameter-line-start.kt
 syntax/parser/parses-destructuring-square-preview.kt
 syntax/parser/parses-empty-if-then-branch.kt
 syntax/parser/parses-enum-entries-and-body.kt
@@ -281,11 +284,13 @@ syntax/recovery/else-without-branch.kt
 syntax/recovery/explicit-backing-field.kt
 syntax/recovery/expressions.kt
 syntax/recovery/for-partial-header.kt
+syntax/recovery/function-type-parameter-declaration-boundary.kt
 syntax/recovery/import-suffixes.kt
 syntax/recovery/keyword-comment-without-operand.kt
 syntax/recovery/lambda-branch.kt
 syntax/recovery/lambda-missing-close.kt
 syntax/recovery/lambda-parameter-list.kt
+syntax/recovery/lambda-parameter-without-name.kt
 syntax/recovery/navigation-without-receiver.kt
 syntax/recovery/nested-recovered-when-condition.kt
 syntax/recovery/normalization/malformed-binary-normalization-barrier.kt
@@ -295,6 +300,7 @@ syntax/recovery/normalization/malformed-statement-normalization-barrier.kt
 syntax/recovery/normalization.kt
 syntax/recovery/normalizes-package-import-spacing.kt
 syntax/recovery/object-delegation.kt
+syntax/recovery/parenthesized-bogus-inner-leading-comment.kt
 syntax/recovery/preserves-file-annotation-preamble.kt
 syntax/recovery/program.kt
 syntax/recovery/property-body-recovered-gap.kt
@@ -303,8 +309,10 @@ syntax/recovery/source-gap-trivia-ownership.kt
 syntax/recovery/statements-and-control-flow.kt
 syntax/recovery/top-level-orphan-token.kt
 syntax/recovery/trailing-user-type-dot.kt
+syntax/recovery/type-argument-declaration-boundary.kt
 syntax/recovery/type-argument-list.kt
 syntax/recovery/type-constraints.kt
+syntax/recovery/type-parameter-declaration-boundary.kt
 syntax/recovery/type-parameter-list.kt
 syntax/recovery/type-prefix-annotation-recovery.kt
 syntax/recovery/types-and-parameters.kt

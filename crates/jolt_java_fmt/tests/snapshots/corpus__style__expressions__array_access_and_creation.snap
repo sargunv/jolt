@@ -59,6 +59,11 @@ class Example {
       };
     return labels;
   }
+
+  int bracketLeadingComment(int[] values) {
+    return values // leads the index bracket
+    [0];
+  }
 }
 
 diagnostics:

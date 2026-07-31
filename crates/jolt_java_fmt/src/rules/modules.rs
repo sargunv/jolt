@@ -8,10 +8,10 @@ use jolt_java_syntax::{
 
 use crate::helpers::blocks::join_empty_lines;
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_comment, format_inline_trailing_comment_list,
-    format_separator_with_comments, format_token_after_relocated_leading_comments,
-    format_token_before_relocated_trailing_comments, format_token_with_comments,
-    token_has_comments,
+    LeadingTrivia, TrailingTrivia, format_comment, format_dangling_comments,
+    format_inline_trailing_comment_list, format_separator_with_comments,
+    format_token_after_relocated_leading_comments, format_token_before_relocated_trailing_comments,
+    format_token_with_comments, token_has_comments,
 };
 use crate::helpers::recovery::{
     JavaFormatListPart, format_malformed, format_optional_field, format_required_field,
@@ -22,6 +22,7 @@ use crate::rules::names::{NameSortKey, format_name};
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
     for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
+    formatter_ignore_runs_claim_boundary_comment,
 };
 
 pub(crate) fn format_module_declaration<'source>(
@@ -40,19 +41,20 @@ pub(crate) fn format_module_declaration<'source>(
     let open_brace = format_required_field(module.open_brace(), doc, |token, doc| {
         doc_concat!(doc, [doc.space(), format_token_with_comments(doc, &token)])
     });
-    let (directives, directives_visible) = match module.directives() {
+    let (directives, directives_visible, runs) = match module.directives() {
         JavaSyntaxField::Present(list) => format_module_directives(module, &list, doc),
         JavaSyntaxField::Malformed(malformed) => {
             let visible = malformed.first_token().is_some();
-            (format_malformed(&malformed, doc), visible)
+            (format_malformed(&malformed, doc), visible, Vec::new())
         }
         JavaSyntaxField::Missing(missing) => (
             crate::helpers::recovery::format_missing(&missing, doc),
             false,
+            Vec::new(),
         ),
     };
     let close_brace = format_required_field(module.close_brace(), doc, |token, doc| {
-        format_token_with_comments(doc, &token)
+        format_module_close_brace(doc, &token, &runs)
     });
     let head = doc_concat!(doc, [open, keyword, name, open_brace]);
     let body = if directives_visible {
@@ -72,7 +74,7 @@ fn format_module_directives<'source>(
     module: &ModuleDeclaration<'source>,
     list: &jolt_java_syntax::ModuleDirectiveList<'source>,
     doc: &mut DocBuilder<'source>,
-) -> (Doc<'source>, bool) {
+) -> (Doc<'source>, bool, Vec<FormatterIgnoreRun<'source>>) {
     let open = match module.open_brace() {
         JavaSyntaxField::Present(token) => Some(token),
         _ => None,
@@ -84,7 +86,11 @@ fn format_module_directives<'source>(
     let container = formatter_ignore_content_range(list.text_range(), open, close);
     if !doc.formatter_ignore_may_apply(container) {
         let visible = list.parts().any(|part| directive_part_is_visible(&part));
-        return (format_directive_parts(list.parts(), doc), visible);
+        return (
+            format_directive_parts(list.parts(), doc),
+            visible,
+            Vec::new(),
+        );
     }
 
     let parts = list.parts().collect::<Vec<_>>();
@@ -95,7 +101,40 @@ fn format_module_directives<'source>(
     } else {
         format_directive_parts_with_ignored(&parts, &runs, doc)
     };
-    (directives, visible || !runs.is_empty())
+    (directives, visible || !runs.is_empty(), runs)
+}
+
+/// Formats the close brace, leaving out any leading comments an ignore run's
+/// verbatim text already owns.
+///
+/// Without a claim the brace keeps its own leading trivia, the common case. A
+/// claimed run covers every comment between the last ignored directive and the
+/// brace, so the brace suppresses its leading trivia and only comments the run
+/// did not cover keep a line in front of it.
+fn format_module_close_brace<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: &jolt_java_syntax::JavaSyntaxToken<'source>,
+    runs: &[FormatterIgnoreRun<'source>],
+) -> Doc<'source> {
+    let (claimed, retained): (Vec<_>, Vec<_>) = token
+        .leading_comments()
+        .partition(|comment| formatter_ignore_runs_claim_boundary_comment(runs, comment));
+    if claimed.is_empty() {
+        return format_token_with_comments(doc, token);
+    }
+    let brace = format_token_after_relocated_leading_comments(doc, token, TrailingTrivia::Preserve);
+    if retained.is_empty() {
+        brace
+    } else {
+        doc_concat!(
+            doc,
+            [
+                format_dangling_comments(doc, retained),
+                doc.hard_line(),
+                brace
+            ]
+        )
+    }
 }
 
 fn directive_part_is_visible(part: &JavaSyntaxListPart<'_, ModuleDirective<'_>>) -> bool {

@@ -1,0 +1,225 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+when (element) {
+    is KtAnnotatedExpression -> {
+        if (elementText.startsWith("/*") && !elementText.endsWith("*/
+")) {
+            println("doc")
+        }
+    }
+    is KtStringTemplateExpression -> println("template")
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    Statement
+      ExpressionStatement
+        WhenExpression
+          WhenKw "when" @ 0..4 trailing=[Whitespace " "]
+          WhenSubject
+            LParen "(" @ 5..6
+            NameExpression
+              Identifier "element" @ 6..13
+            RParen ")" @ 13..14 trailing=[Whitespace " "]
+          LBrace "{" @ 15..16
+          WhenEntryList
+            WhenEntry
+              WhenConditionSeparatedList
+                WhenCondition
+                  IsKw "is" @ 21..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "KtAnnotatedExpression" @ 24..45 trailing=[Whitespace " "]
+              Arrow "->" @ 46..48 trailing=[Whitespace " "]
+              WhenEntryBody
+                LambdaExpression
+                  LambdaBody
+                    LBrace "{" @ 49..50
+                    LambdaParameterList
+                      LambdaParameterSeparatedList
+                        BogusLambdaParameter
+                          ModifierList
+                          IfKw "if" @ 59..61 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        LambdaParameter
+                          ModifierList
+                          LambdaParameterBinding
+                            DestructuringDeclaration
+                              LParen "(" @ 62..63
+                              DestructuringEntrySeparatedList
+                                DestructuringEntry
+                                  Name
+                                    Identifier "elementText" @ 63..74
+                                BogusDestructuringEntry
+                                  Dot "." @ 74..75
+                                DestructuringEntry
+                                  Name
+                                    Identifier "startsWith" @ 75..85
+                                BogusDestructuringEntry
+                                  LParen "(" @ 85..86
+                                BogusDestructuringEntry
+                                  OpenQuote "\"" @ 86..87
+                                BogusDestructuringEntry
+                                  RegularStringPart "/*" @ 87..89
+                                BogusDestructuringEntry
+                                  ClosingQuote "\"" @ 89..90
+                              RParen ")" @ 90..91 trailing=[Whitespace " "]
+                        BogusLambdaParameter
+                          ModifierList
+                          AndAnd "&&" @ 92..94 trailing=[Whitespace " "]
+                        BogusLambdaParameter
+                          ModifierList
+                          Bang "!" @ 95..96
+                        LambdaParameter
+                          ModifierList
+                          LambdaParameterBinding
+                            Name
+                              Identifier "elementText" @ 96..107
+                        BogusLambdaParameter
+                          ModifierList
+                          Dot "." @ 107..108
+                        LambdaParameter
+                          ModifierList
+                          LambdaParameterBinding
+                            Name
+                              Identifier "endsWith" @ 108..116
+                        LambdaParameter
+                          ModifierList
+                          LambdaParameterBinding
+                            DestructuringDeclaration
+                              LParen "(" @ 116..117
+                              DestructuringEntrySeparatedList
+                                BogusDestructuringEntry
+                                  OpenQuote "\"" @ 117..118
+                                BogusDestructuringEntry
+                                  RegularStringPart "*/" @ 118..120
+                                BogusDestructuringEntry
+                                  DanglingNewline "" @ 120..120
+                                BogusDestructuringEntry
+                                  OpenQuote "\"" @ 121..122 leading=[Newline "\n"]
+                                BogusDestructuringEntry
+                                  RegularStringPart ")) {" @ 122..126
+                                BogusDestructuringEntry
+                                  DanglingNewline "" @ 126..126
+                                DestructuringEntry
+                                  Name
+                                    Identifier "println" @ 139..146 leading=[Newline "\n", Whitespace "            "]
+                                BogusDestructuringEntry
+                                  LParen "(" @ 146..147
+                                BogusDestructuringEntry
+                                  OpenQuote "\"" @ 147..148
+                                BogusDestructuringEntry
+                                  RegularStringPart "doc" @ 148..151
+                                BogusDestructuringEntry
+                                  ClosingQuote "\"" @ 151..152
+                              RParen ")" @ 152..153
+                    LambdaBodyItemList
+                    RBrace "}" @ 162..163 leading=[Newline "\n", Whitespace "        "]
+          RBrace "}" @ 168..169 leading=[Newline "\n", Whitespace "    "]
+      TerminatorList
+    Statement
+      ExpressionStatement
+        BogusExpression
+          BogusExpression
+            BogusExpression
+              BogusExpression
+                BogusExpression
+                  BogusExpression
+                    BogusExpression
+                      BinaryExpression
+                        BogusExpression
+                          IsKw "is" @ 174..176 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "KtStringTemplateExpression" @ 177..203 trailing=[Whitespace " "]
+                      Arrow "->" @ 204..206 trailing=[Whitespace " "]
+                    Identifier "println" @ 207..214
+                  LParen "(" @ 214..215
+                OpenQuote "\"" @ 215..216
+              RegularStringPart "template" @ 216..224
+            ClosingQuote "\"" @ 224..225
+          RParen ")" @ 225..226
+      TerminatorList
+    BogusKotlinFileItem
+      RBrace "}" @ 227..228 leading=[Newline "\n"]
+  Eof "" @ 229..229 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.lex.unterminated_string_literal severity=Error stage=Lexer range=117..120 message="unterminated string literal"
+  code=kotlin.lex.unterminated_string_literal severity=Error stage=Lexer range=121..126 message="unterminated string literal"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=59..61 message="expected lambda parameter"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=62..63 message="expected ',' between lambda parameters"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=74..75 message="expected ',' between destructuring entries"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=74..75 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=85..86 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=86..87 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=87..89 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=89..90 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=92..94 message="expected lambda parameter"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=95..96 message="expected lambda parameter"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=107..108 message="expected lambda parameter"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=117..118 message="expected destructuring entry"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=118..120 message="expected ',' between destructuring entries"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=118..120 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=120..120 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=121..122 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=122..126 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=126..126 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=146..147 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=147..148 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=148..151 message="expected destructuring entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=151..152 message="expected destructuring entry"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=162..163 message="expected '->' after lambda parameters"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=174..176 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=177..203 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=204..206 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=207..214 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=214..215 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=215..216 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=216..224 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=224..225 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=225..226 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=227..228 message="unexpected closing brace at top level"
+
+diagnostics:
+code=kotlin.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(117), end: TextSize(120) }) message=unterminated string literal
+code=kotlin.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(121), end: TextSize(126) }) message=unterminated string literal
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(59), end: TextSize(61) }) message=expected lambda parameter
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(62), end: TextSize(63) }) message=expected ',' between lambda parameters
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(74), end: TextSize(75) }) message=expected ',' between destructuring entries
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(74), end: TextSize(75) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(85), end: TextSize(86) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(86), end: TextSize(87) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(89) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(89), end: TextSize(90) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(92), end: TextSize(94) }) message=expected lambda parameter
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(95), end: TextSize(96) }) message=expected lambda parameter
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(107), end: TextSize(108) }) message=expected lambda parameter
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(117), end: TextSize(118) }) message=expected destructuring entry
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(118), end: TextSize(120) }) message=expected ',' between destructuring entries
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(118), end: TextSize(120) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(120), end: TextSize(120) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(121), end: TextSize(122) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(122), end: TextSize(126) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(126), end: TextSize(126) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(146), end: TextSize(147) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(147), end: TextSize(148) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(148), end: TextSize(151) }) message=expected destructuring entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(151), end: TextSize(152) }) message=expected destructuring entry
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(162), end: TextSize(163) }) message=expected '->' after lambda parameters
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(174), end: TextSize(176) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(177), end: TextSize(203) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(204), end: TextSize(206) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(207), end: TextSize(214) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(214), end: TextSize(215) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(215), end: TextSize(216) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(216), end: TextSize(224) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(224), end: TextSize(225) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(225), end: TextSize(226) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(227), end: TextSize(228) }) message=unexpected closing brace at top level

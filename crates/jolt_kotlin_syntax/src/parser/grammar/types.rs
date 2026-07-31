@@ -406,6 +406,7 @@ impl TypeParser<'_, '_, '_> {
         self.eat_asserted(K::LParen);
         let entries = self.start();
         let mut expect_parameter = true;
+        let mut list_recovery = None;
         while !matches!(self.current_kind(), K::RParen | K::Eof)
             && !self.is_stopped_at(self.position())
         {
@@ -422,11 +423,36 @@ impl TypeParser<'_, '_, '_> {
                 expect_parameter = true;
                 continue;
             }
+            if !expect_parameter && list_recovery.is_none() {
+                // An entry that does not follow a comma leaves a required
+                // separator slot empty; own that recovery on the list.
+                list_recovery =
+                    Some(self.pending_expected("expected ',' between function type parameters"));
+            }
             self.parse_function_type_parameter();
+            if self.position() == before {
+                // The missing-type recovery in `parse_type_reference` declines
+                // to consume a line-start declaration keyword, leaving it to
+                // the outer declaration, so nothing in a function type
+                // parameter would consume the current token. Bump it into a
+                // bogus parameter or the loop never advances: unbounded in a
+                // release build, where the assertion below is compiled out.
+                // The loop condition already excludes `)` and `Eof`, so the
+                // bump cannot run past the end.
+                let error = self.start();
+                let diagnostic = self.pending_unexpected("expected function type parameter");
+
+                self.bump();
+                self.complete_recovery(error, K::BogusFunctionTypeParameter, [diagnostic]);
+            }
             expect_parameter = false;
             debug_assert!(self.position() > before || self.is_stopped_at(self.position()));
         }
-        self.complete(entries, entries_kind);
+        if let Some(diagnostic) = list_recovery {
+            self.complete_recovery(entries, entries_kind, [diagnostic]);
+        } else {
+            self.complete(entries, entries_kind);
+        }
         if self.is_stopped_at(self.position()) || !self.eat(K::RParen) {
             let diagnostic = self.pending_expected("expected ')' in type");
             self.missing_required_slot(owner, close_slot, [diagnostic]);
@@ -525,6 +551,7 @@ impl TypeParser<'_, '_, '_> {
         self.eat_asserted(K::Lt);
         let entries = self.start();
         let mut expect_argument = true;
+        let mut list_recovery = None;
         while !matches!(self.current_kind(), K::Gt | K::Eof) && !self.is_stopped_at(self.position())
         {
             let before = self.position();
@@ -539,6 +566,11 @@ impl TypeParser<'_, '_, '_> {
                 self.bump();
                 expect_argument = true;
                 continue;
+            }
+            if !expect_argument && list_recovery.is_none() {
+                // An entry that does not follow a comma leaves a required
+                // separator slot empty; own that recovery on the list.
+                list_recovery = Some(self.pending_expected("expected ',' between type arguments"));
             }
 
             let argument = self.start();
@@ -564,10 +596,29 @@ impl TypeParser<'_, '_, '_> {
                 self.abandon(argument);
                 self.parse_type_reference(TypeStops::new(&[K::Comma, K::Gt]));
             }
+            if self.position() == before {
+                // The missing-type recovery in `parse_type_reference` declines
+                // to consume a line-start declaration keyword, leaving it to
+                // the outer declaration, so nothing in a type argument would
+                // consume the current token. Bump it into a bogus argument or
+                // the loop never advances: unbounded in a release build, where
+                // the assertion below is compiled out. The loop condition
+                // already excludes `>` and `Eof`, so the bump cannot run past
+                // the end.
+                let error = self.start();
+                let diagnostic = self.pending_unexpected("expected type argument");
+
+                self.bump();
+                self.complete_recovery(error, K::BogusTypeArgument, [diagnostic]);
+            }
             expect_argument = false;
             debug_assert!(self.position() > before || self.is_stopped_at(self.position()));
         }
-        self.complete(entries, K::TypeProjectionSeparatedList);
+        if let Some(diagnostic) = list_recovery {
+            self.complete_recovery(entries, K::TypeProjectionSeparatedList, [diagnostic]);
+        } else {
+            self.complete(entries, K::TypeProjectionSeparatedList);
+        }
         if self.is_stopped_at(self.position()) || !self.eat(K::Gt) {
             let diagnostic = self.pending_expected("expected '>' after type arguments");
             self.missing_required_slot(

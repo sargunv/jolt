@@ -1,0 +1,2 @@
+fun <T
+class C

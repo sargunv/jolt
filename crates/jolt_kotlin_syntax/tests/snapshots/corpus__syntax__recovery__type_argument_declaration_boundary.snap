@@ -1,0 +1,51 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val x: Box<
+class C
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "x" @ 4..5
+      Colon ":" @ 5..6 trailing=[Whitespace " "]
+      TypeReference
+        UserType
+          UserTypeSegmentList
+            UserTypeSegment
+              Identifier "Box" @ 7..10
+              TypeArgumentList
+                Lt "<" @ 10..11
+                TypeProjectionSeparatedList
+                  TypeReference
+                    BogusType
+                  BogusTypeArgument
+                    ClassKw "class" @ 12..17 leading=[Newline "\n"] trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "C" @ 18..19
+      PropertyBodyMemberList
+  Eof "" @ 20..20 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=12..17 message="expected type"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=12..17 message="expected type argument"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=18..19 message="expected ',' between type arguments"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=20..20 message="expected '>' after type arguments"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(12), end: TextSize(17) }) message=expected type
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(12), end: TextSize(17) }) message=expected type argument
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(18), end: TextSize(19) }) message=expected ',' between type arguments
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(20), end: TextSize(20) }) message=expected '>' after type arguments

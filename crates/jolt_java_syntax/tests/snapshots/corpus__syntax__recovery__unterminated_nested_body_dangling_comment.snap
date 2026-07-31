@@ -1,0 +1,36 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class UnterminatedOuter {
+    void method() { // trailing comment closes out the block
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "UnterminatedOuter" @ 6..23 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 24..25
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 30..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "method" @ 35..41
+            LParen "(" @ 41..42
+            RParen ")" @ 42..43 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 44..45 trailing=[Whitespace " ", LineComment "// trailing comment closes out the block"]
+              BlockStatementList
+  Eof "" @ 87..87 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=87..87 message="expected `}` after block"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=87..87 message="expected `}` after type body"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(87) }) message=expected `}` after block
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(87) }) message=expected `}` after type body

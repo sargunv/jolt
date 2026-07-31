@@ -1,0 +1,209 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun pairSum(
+  first: Int,
+  (a, b): Pair<Int, Int>,
+) = first + a + b
+
+val describe = { (
+    name,
+    age,
+) -> "$name is $age" }
+
+val collect = { first: Int,
+  (x, y),
+  ->
+  first + x + y
+}
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    FunctionDeclaration
+      ModifierList
+      ModifierList
+      FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+      ModifierList
+      Name
+        Identifier "pairSum" @ 4..11
+      ValueParameterList
+        LParen "(" @ 11..12
+        ValueParameterSeparatedList
+          ValueParameter
+            ModifierList
+            Name
+              Identifier "first" @ 15..20 leading=[Newline "\n", Whitespace "  "]
+            Colon ":" @ 20..21 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Int" @ 22..25
+          Comma "," @ 25..26
+          ValueParameter
+            ModifierList
+            DestructuringDeclaration
+              LParen "(" @ 29..30 leading=[Newline "\n", Whitespace "  "]
+              DestructuringEntrySeparatedList
+                DestructuringEntry
+                  Name
+                    Identifier "a" @ 30..31
+                Comma "," @ 31..32 trailing=[Whitespace " "]
+                DestructuringEntry
+                  Name
+                    Identifier "b" @ 33..34
+              RParen ")" @ 34..35
+            Colon ":" @ 35..36 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                UserTypeSegmentList
+                  UserTypeSegment
+                    Identifier "Pair" @ 37..41
+                    TypeArgumentList
+                      Lt "<" @ 41..42
+                      TypeProjectionSeparatedList
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                Identifier "Int" @ 42..45
+                        Comma "," @ 45..46 trailing=[Whitespace " "]
+                        TypeReference
+                          UserType
+                            UserTypeSegmentList
+                              UserTypeSegment
+                                Identifier "Int" @ 47..50
+                      Gt ">" @ 50..51
+          Comma "," @ 51..52
+        RParen ")" @ 53..54 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ExpressionBody
+        Assign "=" @ 55..56 trailing=[Whitespace " "]
+        BinaryExpression
+          BinaryExpression
+            NameExpression
+              Identifier "first" @ 57..62 trailing=[Whitespace " "]
+            Plus "+" @ 63..64 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "a" @ 65..66 trailing=[Whitespace " "]
+          Plus "+" @ 67..68 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "b" @ 69..70
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 72..75 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "describe" @ 76..84 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 85..86 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 87..88 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    DestructuringDeclaration
+                      LParen "(" @ 89..90
+                      DestructuringEntrySeparatedList
+                        DestructuringEntry
+                          Name
+                            Identifier "name" @ 95..99 leading=[Newline "\n", Whitespace "    "]
+                        Comma "," @ 99..100
+                        DestructuringEntry
+                          Name
+                            Identifier "age" @ 105..108 leading=[Newline "\n", Whitespace "    "]
+                        Comma "," @ 108..109
+                      RParen ")" @ 110..111 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Arrow "->" @ 112..114 trailing=[Whitespace " "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  StringTemplateExpression
+                    StringTemplateEntryList
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 115..116
+                      StringTemplateEntry
+                        ShortTemplateEntryStart "$" @ 116..117
+                      StringTemplateEntry
+                        Identifier "name" @ 117..121
+                      StringTemplateEntry
+                        RegularStringPart " is " @ 121..125
+                      StringTemplateEntry
+                        ShortTemplateEntryStart "$" @ 125..126
+                      StringTemplateEntry
+                        Identifier "age" @ 126..129
+                    ClosingQuote "\"" @ 129..130 trailing=[Whitespace " "]
+                TerminatorList
+            RBrace "}" @ 131..132
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 134..137 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "collect" @ 138..145 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 146..147 trailing=[Whitespace " "]
+        LambdaExpression
+          LambdaBody
+            LBrace "{" @ 148..149 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameterSeparatedList
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    Name
+                      Identifier "first" @ 150..155
+                  Colon ":" @ 155..156 trailing=[Whitespace " "]
+                  TypeReference
+                    UserType
+                      UserTypeSegmentList
+                        UserTypeSegment
+                          Identifier "Int" @ 157..160
+                Comma "," @ 160..161
+                LambdaParameter
+                  ModifierList
+                  LambdaParameterBinding
+                    DestructuringDeclaration
+                      LParen "(" @ 164..165 leading=[Newline "\n", Whitespace "  "]
+                      DestructuringEntrySeparatedList
+                        DestructuringEntry
+                          Name
+                            Identifier "x" @ 165..166
+                        Comma "," @ 166..167 trailing=[Whitespace " "]
+                        DestructuringEntry
+                          Name
+                            Identifier "y" @ 168..169
+                      RParen ")" @ 169..170
+                Comma "," @ 170..171
+              Arrow "->" @ 174..176 leading=[Newline "\n", Whitespace "  "]
+            LambdaBodyItemList
+              Statement
+                ExpressionStatement
+                  BinaryExpression
+                    BinaryExpression
+                      NameExpression
+                        Identifier "first" @ 179..184 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                      Plus "+" @ 185..186 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "x" @ 187..188 trailing=[Whitespace " "]
+                    Plus "+" @ 189..190 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "y" @ 191..192
+                TerminatorList
+            RBrace "}" @ 193..194 leading=[Newline "\n"]
+      PropertyBodyMemberList
+  Eof "" @ 195..195 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

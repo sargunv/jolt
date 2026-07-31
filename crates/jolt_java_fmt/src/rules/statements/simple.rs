@@ -5,7 +5,10 @@ use super::{
     format_token_before_relocated_trailing_comments, format_token_with_comments,
     format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
-use crate::helpers::comments::{comment_is_star_block, format_comment, format_trailing_comment};
+use crate::helpers::comments::{
+    InlineLeadingTrivia, comment_is_star_block, format_comment, format_line_start_construct,
+    format_token_with_inline_leading_comments, format_trailing_comment,
+};
 use crate::helpers::recovery::{
     JavaFormatField, format_optional_field, format_required_field, resolve_optional_field,
     resolve_required_field,
@@ -26,12 +29,22 @@ pub(super) fn format_labeled_statement<'source>(
                 format_token_with_comments(doc, &token)
             }),
             format_required_field(statement.colon(), doc, |token, doc| {
-                format_token_with_comments(doc, &token)
+                // A label's colon is glued to the label, so its leading
+                // comments take the label's trailing form.
+                format_token_with_inline_leading_comments(
+                    doc,
+                    &token,
+                    InlineLeadingTrivia::AfterPreviousToken,
+                    TrailingTrivia::Preserve,
+                )
             }),
             doc.hard_line(),
-            format_required_field(statement.body(), doc, |body, doc| format_statement(
-                &body, doc
-            )),
+            // The body follows a hard line, so it begins a line of its own.
+            format_required_field(statement.body(), doc, |body, doc| {
+                format_line_start_construct(doc, body.first_token(), |doc| {
+                    format_statement(&body, doc)
+                })
+            }),
         ]
     )
 }
@@ -134,8 +147,21 @@ fn format_keyword_expression_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let operand = resolve_optional_field(expression, doc);
-    format_keyword_operand_statement(keyword, operand, semicolon, doc, |expression, doc| {
-        format_expression(&expression, doc)
+    format_keyword_operand_statement(
+        keyword,
+        operand,
+        semicolon,
+        doc,
+        |expression, doc| format_expression(&expression, doc),
+        leading_forces_line,
+    )
+}
+
+fn leading_forces_line(expression: &Expression<'_>) -> bool {
+    expression.first_token().is_some_and(|token| {
+        token
+            .leading_comments()
+            .any(|comment| comment_forces_line(&comment))
     })
 }
 
@@ -146,9 +172,14 @@ fn format_required_keyword_expression_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let operand = into_optional_operand(resolve_required_field(expression, doc));
-    format_keyword_operand_statement(keyword, operand, semicolon, doc, |expression, doc| {
-        format_expression(&expression, doc)
-    })
+    format_keyword_operand_statement(
+        keyword,
+        operand,
+        semicolon,
+        doc,
+        |expression, doc| format_expression(&expression, doc),
+        leading_forces_line,
+    )
 }
 
 pub(super) fn format_jump_statement<'source>(
@@ -158,9 +189,18 @@ pub(super) fn format_jump_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let operand = resolve_optional_field(label, doc);
-    format_keyword_operand_statement(keyword, operand, semicolon, doc, |label, doc| {
-        format_token_with_comments(doc, &label)
-    })
+    format_keyword_operand_statement(
+        keyword,
+        operand,
+        semicolon,
+        doc,
+        |label, doc| format_token_with_comments(doc, &label),
+        |label| {
+            label
+                .leading_comments()
+                .any(|comment| comment_forces_line(&comment))
+        },
+    )
 }
 
 /// Formats a statement built from a keyword, the operand it applies to, and a
@@ -175,16 +215,28 @@ fn format_keyword_operand_statement<'source, T>(
     semicolon: TokenField<'source>,
     doc: &mut DocBuilder<'source>,
     format_operand: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
+    operand_leading_forces_line: impl FnOnce(&T) -> bool,
 ) -> Doc<'source> {
     let keyword_token = present_keyword(keyword);
     let head = format_statement_keyword_head(keyword, doc);
     let terminator = format_statement_semicolon(semicolon, doc);
     let operand = match operand {
         JavaFormatField::Present(Some(operand)) => {
+            // A comment that ends the keyword's line pushes the operand onto
+            // the next one, whether the reparse reads it as the keyword's
+            // trailing trivia or as the operand's leading trivia.
+            let forces_continuation = keyword_token
+                .as_ref()
+                .is_some_and(trailing_comments_force_line)
+                || operand_leading_forces_line(&operand);
             let separator = format_keyword_operand_separator(keyword_token.as_ref(), doc);
             let operand = format_operand(operand, doc);
             let operand = doc_concat!(doc, [separator, operand, terminator]);
-            indent_keyword_continuation(keyword_token.as_ref(), operand, doc)
+            if forces_continuation {
+                doc_indent!(doc, operand)
+            } else {
+                operand
+            }
         }
         // A statement whose operand slot is empty (`return;`, `break;`) has no
         // continuation, so its terminator belongs at the keyword's own column.

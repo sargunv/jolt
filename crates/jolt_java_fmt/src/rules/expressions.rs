@@ -118,4 +118,7 @@ fn format_expression_with_leading_comments<'source>(
 enum LeadingComments {
     Preserve,
     SuppressFirstToken,
+    /// Padded with a space on each side, matching the way a member-access dot
+    /// boundary renders the dot's trailing comments.
+    InlineBetweenSpaces,
 }

@@ -140,6 +140,8 @@ pub struct DocBuilder<'source> {
     list_scratch: Vec<Doc<'source>>,
     formatter_ignore: Option<FormatterIgnorePlan<'source>>,
     relocated_trailing_trivia: Option<SourceTokenId<'source>>,
+    relocated_leading_trivia: Option<SourceTokenId<'source>>,
+    line_start_leading: Option<SourceTokenId<'source>>,
 }
 
 impl<'source> DocBuilder<'source> {
@@ -150,6 +152,8 @@ impl<'source> DocBuilder<'source> {
             list_scratch: Vec::new(),
             formatter_ignore: None,
             relocated_trailing_trivia: None,
+            relocated_leading_trivia: None,
+            line_start_leading: None,
         }
     }
 
@@ -176,6 +180,59 @@ impl<'source> DocBuilder<'source> {
     #[must_use]
     pub fn relocates_trailing_trivia<L: Language>(&self, token: &SyntaxToken<'source, L>) -> bool {
         self.relocated_trailing_trivia == Some(token.source_id())
+    }
+
+    /// Formats a syntax-owned construct while its first token's leading trivia
+    /// is owned by the enclosing layout boundary.
+    ///
+    /// Nested boundaries replace and then restore the active token in constant
+    /// time. Token formatting consults only this exact source identity, so no
+    /// source text or token scan is needed.
+    pub fn with_relocated_leading_trivia<L: Language, T>(
+        &mut self,
+        token: &SyntaxToken<'source, L>,
+        format: impl FnOnce(&mut Self) -> T,
+    ) -> T {
+        let previous = self.relocated_leading_trivia.replace(token.source_id());
+        let result = catch_unwind(AssertUnwindSafe(|| format(self)));
+        self.relocated_leading_trivia = previous;
+        match result {
+            Ok(result) => result,
+            Err(payload) => resume_unwind(payload),
+        }
+    }
+
+    #[must_use]
+    pub fn relocates_leading_trivia<L: Language>(&self, token: &SyntaxToken<'source, L>) -> bool {
+        self.relocated_leading_trivia == Some(token.source_id())
+    }
+
+    /// Formats a syntax-owned construct whose first token statically begins
+    /// its line: an enclosing join already emitted a hard line boundary in
+    /// front of it.
+    ///
+    /// Token formatting consults this exact source identity to give preserved
+    /// leading comments a line of their own. A token that is not registered
+    /// keeps its leading comments inline beside it, the only placement the
+    /// reparse reads back identically for a mid-line token. Nested boundaries
+    /// replace and then restore the active token in constant time.
+    pub fn with_line_start_leading<L: Language, T>(
+        &mut self,
+        token: &SyntaxToken<'source, L>,
+        format: impl FnOnce(&mut Self) -> T,
+    ) -> T {
+        let previous = self.line_start_leading.replace(token.source_id());
+        let result = catch_unwind(AssertUnwindSafe(|| format(self)));
+        self.line_start_leading = previous;
+        match result {
+            Ok(result) => result,
+            Err(payload) => resume_unwind(payload),
+        }
+    }
+
+    #[must_use]
+    pub fn has_line_start_leading<L: Language>(&self, token: &SyntaxToken<'source, L>) -> bool {
+        self.line_start_leading == Some(token.source_id())
     }
 
     /// Creates the root document builder with its immutable formatter-ignore
@@ -216,6 +273,8 @@ impl<'source> DocBuilder<'source> {
             list_scratch: Vec::new(),
             formatter_ignore: None,
             relocated_trailing_trivia: None,
+            relocated_leading_trivia: None,
+            line_start_leading: None,
         }
     }
 
@@ -520,6 +579,27 @@ impl<'source> DocBuilder<'source> {
         self.push_node(DocNode::Indent {
             contents,
             levels: 1,
+        })
+    }
+
+    /// Renders contents at the root margin, unwinding every enclosing indent.
+    ///
+    /// Comments salvaged from the open delimiter of an unterminated construct
+    /// close out that construct: the reparse attaches them to whatever follows
+    /// the whole unterminated chain — the end of the file — and the
+    /// end-of-file formatter emits them at the root margin. Rendering them
+    /// there directly keeps that placement a fixpoint instead of dedenting one
+    /// level per pass. Negative levels clamp at zero in the renderer, so the
+    /// nesting depth of the unterminated construct does not matter.
+    #[must_use]
+    pub fn root_margin(&mut self, contents: Doc<'source>) -> Doc<'source> {
+        if contents.is_nil() {
+            return contents;
+        }
+
+        self.push_node(DocNode::Indent {
+            contents,
+            levels: i16::MIN,
         })
     }
 

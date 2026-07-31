@@ -1,4 +1,4 @@
-@ /*a*/ Anno
+@Anno /*a*/
 class SigilComment
 
 @file /*b*/ :JvmName("X")

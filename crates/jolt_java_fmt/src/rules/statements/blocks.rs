@@ -1,59 +1,40 @@
 use super::{
     Block, BlockItem, BlockStatement, BodyItem, Doc, FormatterIgnoreItemRange,
-    FormatterIgnoreSplice, JavaSyntaxToken, TrailingTrivia, comments_from_tokens,
+    FormatterIgnoreSplice, LeadingTrivia, TrailingTrivia, comments_from_tokens,
     for_each_formatter_ignore_splice, format_dangling_comments, format_local_variable_declaration,
-    format_statement, format_statement_semicolon, format_type_declaration,
+    format_statement, format_statement_semicolon, format_token, format_type_declaration,
     formatter_ignore_content_range, formatter_ignore_run_doc, join_body_items,
 };
 use crate::helpers::blocks::BodyContent;
 use crate::helpers::comments::{
-    InlineLeadingTrivia, format_construct_leading_comments,
-    format_token_after_relocated_leading_comments, format_token_removal,
-    format_token_with_inline_leading_comments, has_removed_comments,
+    format_line_start_construct, format_token_after_relocated_leading_comments,
+    format_token_removal, has_removed_comments,
 };
 use crate::helpers::recovery::{
-    JavaFormatField, format_malformed, present_token, resolve_required_field,
+    JavaFormatField, field_is_claim_only, format_malformed, present_token, resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
-use jolt_fmt_ir::formatter_ignore::FormatterIgnoreRun;
+use jolt_fmt_ir::formatter_ignore::{
+    FormatterIgnoreRun, formatter_ignore_runs_claim_boundary_comment,
+};
 use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxView, LocalTypeDeclarationSyntax};
 
 pub(crate) fn format_block<'source>(
     block: &Block<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_block_with_open_leading(block, OpenBraceLeading::Inline, doc)
-}
-
-/// Formats a block that begins its own line: an instance initializer or a
-/// nested block statement. A comment leading the open brace is a member- or
-/// statement-leading comment, so it keeps its own line like the leading
-/// comments of any other member or statement. Inlining it beside the brace
-/// would flip-flop with the enclosing body's dangling-comment placement.
-pub(crate) fn format_line_start_block<'source>(
-    block: &Block<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let open = present_token(block.open_brace());
-    let leading = format_construct_leading_comments(doc, open.as_ref());
-    let block = format_block_with_open_leading(block, OpenBraceLeading::Suppress, doc);
-    doc_concat!(doc, [leading, block])
-}
-
-fn format_block_with_open_leading<'source>(
-    block: &Block<'source>,
-    leading: OpenBraceLeading,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
+    // A comment leading the open brace follows line-start knowledge: a block
+    // that begins its own line (a nested block statement or an instance
+    // initializer) is registered by the enclosing join and keeps the comment
+    // on a line of its own, while a block behind a header inlines it between
+    // the header and the brace, where the reparse reads it back identically.
     let open = match resolve_required_field(block.open_brace(), doc) {
-        JavaFormatField::Present(open) => match leading {
-            OpenBraceLeading::Inline => format_block_open_brace(&open, doc),
-            OpenBraceLeading::Suppress => format_token_after_relocated_leading_comments(
-                doc,
-                &open,
-                TrailingTrivia::RelocatedToEnclosingContext,
-            ),
-        },
+        JavaFormatField::Present(open) => format_token(
+            doc,
+            &open,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        ),
         JavaFormatField::Malformed(malformed) => malformed,
     };
     let body = match format_block_statements_body(block, doc) {
@@ -76,35 +57,26 @@ fn format_block_with_open_leading<'source>(
     doc_concat!(doc, [open, body, close])
 }
 
-#[derive(Clone, Copy)]
-enum OpenBraceLeading {
-    Inline,
-    Suppress,
-}
-
-fn format_block_open_brace<'source>(
-    open: &JavaSyntaxToken<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    format_token_with_inline_leading_comments(
-        doc,
-        open,
-        InlineLeadingTrivia::BeforeToken,
-        TrailingTrivia::RelocatedToEnclosingContext,
-    )
-}
-
 fn format_block_statements_body<'source>(
     block: &Block<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> BodyContent<'source> {
-    let statements = match resolve_required_field(block.statements(), doc) {
+    let statements_field = block.statements();
+    let statements = match resolve_required_field(statements_field, doc) {
         JavaFormatField::Present(statements) => statements,
         JavaFormatField::Malformed(malformed) => {
+            // Salvaged open-brace comments that are the tail of a block that
+            // never closes take the unterminated-tail placement.
+            let unterminated_tail = present_token(block.close_brace()).is_none()
+                && field_is_claim_only(&statements_field);
             let mut items = Vec::new();
-            items.extend(format_block_open_dangling_comments(block, doc));
+            items.extend(format_block_open_dangling_comments(
+                block,
+                unterminated_tail,
+                doc,
+            ));
             items.push(BodyItem::new(malformed, false));
-            items.extend(format_block_close_dangling_comments(block, doc));
+            items.extend(format_block_close_dangling_comments(block, &[], doc));
             return BodyContent::new(join_body_items(doc, items), true, true);
         }
     };
@@ -117,19 +89,25 @@ fn format_block_statements_body<'source>(
         entries.iter().map(block_statement_part_ignore_range),
     );
     let mut items = Vec::with_capacity(entries.len().saturating_add(2));
-    items.extend(format_block_open_dangling_comments(block, doc));
-    if runs.is_empty() {
-        items.extend(
-            entries
-                .iter()
-                .map(|entry| format_block_statement_part(entry, doc)),
-        );
+    let entry_items: Vec<BodyItem<'source>> = if runs.is_empty() {
+        entries
+            .iter()
+            .map(|entry| format_block_statement_part(entry, doc))
+            .collect()
     } else {
-        items.extend(format_block_statement_items_with_ignored(
-            &entries, &runs, doc,
-        ));
-    }
-    items.extend(format_block_close_dangling_comments(block, doc));
+        format_block_statement_items_with_ignored(&entries, &runs, doc)
+    };
+    let close_item = format_block_close_dangling_comments(block, &runs, doc);
+    // Salvaged open-brace comments that are the only visible content of a
+    // block that never closes take the unterminated-tail placement.
+    let unterminated_tail = close.is_none() && entry_items.iter().all(|item| !item.visible);
+    items.extend(format_block_open_dangling_comments(
+        block,
+        unterminated_tail,
+        doc,
+    ));
+    items.extend(entry_items);
+    items.extend(close_item);
     let present = !items.is_empty();
     let visible = items.iter().any(|item| item.visible);
     let contents = if present {
@@ -183,23 +161,36 @@ fn format_block_statement_part<'source>(
 
 fn format_block_open_dangling_comments<'source>(
     block: &Block<'source>,
+    at_root_margin: bool,
     doc: &mut DocBuilder<'source>,
 ) -> Option<BodyItem<'source>> {
     let jolt_java_syntax::JavaSyntaxField::Present(open) = block.open_brace() else {
         return None;
     };
     let comments = open.trailing_comments();
-    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(doc, comments), false))
+    (!comments.is_empty()).then(|| {
+        let comments = format_dangling_comments(doc, comments);
+        let comments = if at_root_margin {
+            doc.root_margin(comments)
+        } else {
+            comments
+        };
+        BodyItem::new(comments, false)
+    })
 }
 
 fn format_block_close_dangling_comments<'source>(
     block: &Block<'source>,
+    runs: &[FormatterIgnoreRun<'source>],
     doc: &mut DocBuilder<'source>,
 ) -> Option<BodyItem<'source>> {
     let jolt_java_syntax::JavaSyntaxField::Present(close) = block.close_brace() else {
         return None;
     };
-    let comments = close.leading_comments();
+    let comments = close
+        .leading_comments()
+        .filter(|comment| !formatter_ignore_runs_claim_boundary_comment(runs, comment))
+        .collect::<Vec<_>>();
     // The gap that opens the close brace's leading trivia belongs to that
     // token, so the separator in front of this run reads it from there.
     (!comments.is_empty()).then(|| {
@@ -231,6 +222,18 @@ fn block_statement_part_ignore_range(
 
 #[allow(clippy::map_unwrap_or)]
 pub(crate) fn format_block_statement_item<'source>(
+    statement: &BlockStatement<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> BodyItem<'source> {
+    // A statement in a body begins its own line, so its first token's leading
+    // comments keep lines of their own.
+    format_line_start_construct(doc, statement.first_token(), |doc| {
+        format_block_statement_item_at_line_start(statement, doc)
+    })
+}
+
+#[allow(clippy::map_unwrap_or)]
+fn format_block_statement_item_at_line_start<'source>(
     statement: &BlockStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> BodyItem<'source> {
@@ -292,7 +295,7 @@ pub(crate) fn format_block_statement_item<'source>(
                 JavaFormatField::Malformed(malformed) => malformed,
             }
         }
-        BlockItem::Block(block) => format_line_start_block(&block, doc),
+        BlockItem::Block(block) => format_block(&block, doc),
         BlockItem::BogusBlockItem(value) => format_malformed(&value, doc),
         BlockItem::BogusStatement(value) => format_malformed(&value, doc),
         BlockItem::LabeledStatement(statement) => format_statement(&statement.into(), doc),

@@ -6,18 +6,20 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    TrailingTrivia, format_token_after_relocated_leading_comments, format_token_with_comments,
+    InlineLeadingTrivia, TrailingTrivia, format_leading_comments_before_group,
+    format_line_start_construct, format_token_after_relocated_leading_comments,
+    format_token_with_comments,
 };
 use crate::helpers::lists::{
-    CommaListItem, braced_comma_list_with_trailing_separator, delimited_comma_list,
-    syntax_comma_list_items,
+    CommaListItem, braced_comma_list_with_trailing_separator,
+    delimited_comma_list_with_open_placement, delimited_syntax_comma_list_items,
 };
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_missing, format_optional_field,
     format_required_field, resolve_list_part, resolve_required_delimiter,
 };
 use crate::rules::expressions::format_expression;
-use crate::rules::names::format_name;
+use crate::rules::names::format_name_without_leading_comments;
 
 pub(crate) fn format_annotation<'source>(
     annotation: &Annotation<'source>,
@@ -63,7 +65,11 @@ pub(crate) fn format_required_annotation_lines<'source>(
                         let line = docs.hard_line();
                         docs.push(line);
                     }
-                    let annotation = format_annotation(&annotation, docs);
+                    // Each annotation line begins its own line.
+                    let annotation =
+                        format_line_start_construct(docs, annotation.first_token(), |docs| {
+                            format_annotation(&annotation, docs)
+                        });
                     docs.push(annotation);
                 }
                 JavaFormatListPart::Separator(separator) => {
@@ -89,7 +95,20 @@ fn format_annotation_with_at_token<'source>(
     ) -> Doc<'source>,
 ) -> Doc<'source> {
     let at = format_required_field(annotation.at(), doc, |token, doc| at_token(doc, &token));
-    let name = format_required_field(annotation.name(), doc, |name, doc| format_name(&name, doc));
+    let name = format_required_field(annotation.name(), doc, |name, doc| {
+        // The name is glued to its `@`, so its first token's leading comments
+        // take the previous token's trailing form: emitted here, with the
+        // name's own first token suppressed to claim them once.
+        let leading = name.first_token().map_or_else(Doc::nil, |token| {
+            format_leading_comments_before_group(
+                doc,
+                &token,
+                InlineLeadingTrivia::AfterPreviousToken,
+            )
+        });
+        let name = format_name_without_leading_comments(&name, doc);
+        doc_concat!(doc, [leading, name])
+    });
     let arguments = format_optional_field(annotation.arguments(), doc, |arguments, doc| {
         format_annotation_argument_list(&arguments, doc)
     });
@@ -126,7 +145,15 @@ fn format_annotation_argument_list<'source>(
     let open = resolve_required_delimiter(arguments.open_paren(), doc);
     let close = resolve_required_delimiter(arguments.close_paren(), doc);
     let items = annotation_argument_list_items(arguments, doc);
-    delimited_comma_list(doc, open, close, items)
+    // The open paren follows the annotation's name, whose trailing comments
+    // take the padded form.
+    delimited_comma_list_with_open_placement(
+        doc,
+        open,
+        close,
+        items,
+        InlineLeadingTrivia::BetweenSpaces,
+    )
 }
 
 fn annotation_argument_list_items<'source, 'fmt>(
@@ -138,7 +165,7 @@ fn annotation_argument_list_items<'source, 'fmt>(
         JavaFormatField::Present(Some(elements)) => {
             match crate::helpers::recovery::resolve_required_field(elements.arguments(), doc) {
                 JavaFormatField::Present(arguments) => {
-                    syntax_comma_list_items(doc, arguments.parts(), |argument, doc| {
+                    delimited_syntax_comma_list_items(doc, arguments.parts(), |argument, doc| {
                         format_annotation_argument(&argument, doc)
                     })
                 }
@@ -205,7 +232,7 @@ fn annotation_array_initializer_items<'source, 'fmt>(
 ) -> Vec<CommaListItem<'source>> {
     match crate::helpers::recovery::resolve_required_field(initializer.values(), doc) {
         JavaFormatField::Present(values) => {
-            syntax_comma_list_items(doc, values.parts(), |value, doc| {
+            delimited_syntax_comma_list_items(doc, values.parts(), |value, doc| {
                 format_annotation_element_value(&value, doc)
             })
         }

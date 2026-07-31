@@ -39,5 +39,10 @@ fun labels() {
   consume(this@labels, labeled)
 }
 
+private val iterations = 50_000 * stressTestMultiplier
+
+@get:Rule
+val pool = ExecutorRule(4)
+
 diagnostics:
 (none)

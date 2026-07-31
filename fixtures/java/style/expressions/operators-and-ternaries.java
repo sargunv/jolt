@@ -28,4 +28,12 @@ return currentEstimate;
 int sum(int x) {
 return x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x + x;
 }
+int postfix(int count) {
+count
+// leads the postfix operator
+++;
+return count
+/* leads the postfix operator */
+--;
+}
 }

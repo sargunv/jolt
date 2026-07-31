@@ -1,0 +1,58 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+data class NumericDestructuringEntries(
+  val target: Position = Position
+(0.0, 0.0),
+)
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+        Identifier "data" @ 0..4 trailing=[Whitespace " "]
+      ModifierList
+      ClassKw "class" @ 5..10 trailing=[Whitespace " "]
+      Name
+        Identifier "NumericDestructuringEntries" @ 11..38
+      PrimaryConstructor
+        ModifierList
+        ValueParameterList
+          LParen "(" @ 38..39
+          ValueParameterSeparatedList
+            ValueParameter
+              ModifierList
+              ValKw "val" @ 42..45 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Name
+                Identifier "target" @ 46..52
+              Colon ":" @ 52..53 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "Position" @ 54..62 trailing=[Whitespace " "]
+              Assign "=" @ 63..64 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "Position" @ 65..73
+            BogusValueParameter
+              LParen "(" @ 74..75 leading=[Newline "\n"]
+              FloatLiteral "0.0" @ 75..78
+              Comma "," @ 78..79 trailing=[Whitespace " "]
+              FloatLiteral "0.0" @ 80..83
+              RParen ")" @ 83..84
+            Comma "," @ 84..85
+          RParen ")" @ 86..87 leading=[Newline "\n"]
+  Eof "" @ 88..88 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=74..75 message="expected ',' between value parameters"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=74..75 message="unexpected '(' after value parameter"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(74), end: TextSize(75) }) message=expected ',' between value parameters
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(74), end: TextSize(75) }) message=unexpected '(' after value parameter

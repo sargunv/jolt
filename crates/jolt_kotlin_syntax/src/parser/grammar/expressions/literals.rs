@@ -26,6 +26,7 @@ impl Parser<'_> {
             let params = self.start();
             let parameters = self.start();
             let mut expect_parameter = true;
+            let mut list_recovery = None;
             while !matches!(self.current_kind(), K::Arrow | K::RBrace | K::Eof) {
                 let before = self.position();
                 if self.at(K::Comma) {
@@ -40,11 +41,34 @@ impl Parser<'_> {
                     expect_parameter = true;
                     continue;
                 }
+                if !expect_parameter && list_recovery.is_none() {
+                    // An entry that does not follow a comma leaves a required
+                    // separator slot empty; own that recovery on the list.
+                    list_recovery =
+                        Some(self.pending_expected("expected ',' between lambda parameters"));
+                }
                 let parameter = self.start();
                 // A lambda parameter admits annotations but no modifier
                 // keywords: `value`, `data` and friends are soft keywords that
                 // are ordinary parameter names here.
                 self.parse_lambda_parameter_annotations();
+                if !self.at(K::LParen) && !self.at_identifier_like() {
+                    // A parameter is a name or a destructuring pattern, so
+                    // nothing in one would consume the current token -- a hard
+                    // keyword such as `if` in a parameter position reaches
+                    // here. Take the token into a bogus parameter rather than
+                    // building a parameter around a name that cannot be parsed,
+                    // or the loop never advances: unbounded in a release build,
+                    // where the assertion below is compiled out. The loop
+                    // condition already excludes `->`, `}` and `Eof`, so the
+                    // bump cannot run past the end.
+                    let diagnostic = self.pending_unexpected("expected lambda parameter");
+
+                    self.bump();
+                    self.complete_recovery(parameter, K::BogusLambdaParameter, [diagnostic]);
+                    expect_parameter = false;
+                    continue;
+                }
                 let binding = self.start();
                 self.parse_name_or_destructuring();
                 self.complete(binding, K::LambdaParameterBinding);
@@ -55,7 +79,11 @@ impl Parser<'_> {
                 expect_parameter = false;
                 debug_assert!(self.position() > before);
             }
-            self.complete(parameters, K::LambdaParameterSeparatedList);
+            if let Some(diagnostic) = list_recovery {
+                self.complete_recovery(parameters, K::LambdaParameterSeparatedList, [diagnostic]);
+            } else {
+                self.complete(parameters, K::LambdaParameterSeparatedList);
+            }
             if !self.eat(K::Arrow) {
                 let diagnostic = self.pending_expected("expected '->' after lambda parameters");
                 self.missing_required_slot(

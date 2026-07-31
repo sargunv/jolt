@@ -1,0 +1,2 @@
+val f: (
+class C

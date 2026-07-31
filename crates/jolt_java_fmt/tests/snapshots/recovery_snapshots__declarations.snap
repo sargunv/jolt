@@ -1,5 +1,6 @@
 ---
 source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+assertion_line: 13
 expression: snapshot
 ---
 input:
@@ -29,8 +30,7 @@ enum RecoveredEnum {
     void recovered() {
     }
   },
-  /* JOLT-TRIVIA:enum-recovered */
-  ,;
+  /* JOLT-TRIVIA:enum-recovered */,;
 
   int member;
 }

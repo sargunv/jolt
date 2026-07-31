@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{Doc, DocBuilder, InlineLeadingTrivia};
 use jolt_kotlin_syntax::{
     KotlinComment, KotlinSyntaxField, KotlinSyntaxListPart, KotlinSyntaxToken, KotlinSyntaxView,
     Name, QualifiedName, QualifiedNameSegment,
@@ -51,10 +51,18 @@ fn format_qualified_name_parts<'source>(
 ) -> Doc<'source> {
     match resolve_required_field(name.segments(), doc) {
         KotlinFormatField::Present(segments) => doc.concat_list(|docs| {
+            let mut first = true;
             for part in segments.parts() {
                 match resolve_list_part(part, docs) {
                     KotlinFormatListPart::Item(QualifiedNameSegment::Name(name)) => {
-                        let formatted = format_name(docs, &name);
+                        // A segment after a dot matches the dot boundary's
+                        // padded comment form.
+                        let formatted = if first {
+                            format_name(docs, &name)
+                        } else {
+                            format_name_after_dot(docs, &name)
+                        };
+                        first = false;
                         docs.push(formatted);
                     }
                     KotlinFormatListPart::Item(
@@ -204,6 +212,20 @@ impl PartialOrd for NameSortKey<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
+}
+
+fn format_name_after_dot<'source>(
+    doc: &mut DocBuilder<'source>,
+    name: &Name<'source>,
+) -> Doc<'source> {
+    format_required_field(name.identifier(), doc, |token, doc| {
+        jolt_fmt_ir::format_token_with_inline_leading_comments(
+            doc,
+            &token,
+            InlineLeadingTrivia::BetweenSpaces,
+            TrailingTrivia::Preserve,
+        )
+    })
 }
 
 fn format_name_dot<'source>(

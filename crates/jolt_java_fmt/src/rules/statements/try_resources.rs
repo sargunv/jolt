@@ -3,10 +3,12 @@ use super::simple::format_statement_keyword;
 use super::{
     CatchClause, CatchParameter, Doc, FinallyClause, JavaSyntaxToken, LeadingTrivia, Resource,
     ResourceList, TrailingTrivia, TryStatement, TryWithResourcesStatement, format_annotation,
-    format_block, format_dangling_comments, format_expression, format_removed_comments,
-    format_resource_variable_declaration, format_token, format_token_with_comments,
-    format_trailing_comments_before_line_break, format_type, trailing_comments_force_line,
+    format_block, format_dangling_comments, format_expression, format_line_start_construct,
+    format_removed_comments, format_resource_variable_declaration, format_token,
+    format_token_with_comments, format_trailing_comments_before_line_break, format_type,
+    trailing_comments_force_line,
 };
+use crate::helpers::comments::{InlineLeadingTrivia, format_token_with_inline_leading_comments};
 use crate::helpers::recovery::{
     JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_malformed, resolve_list_part,
     resolve_optional_field, resolve_required_delimiter, resolve_required_field,
@@ -245,7 +247,11 @@ fn format_resource_lines<'source>(
                         let line = joined.hard_line();
                         joined.push(line);
                     }
-                    let resource = format_resource(&resource, joined);
+                    // Each resource begins its own line.
+                    let resource =
+                        format_line_start_construct(joined, resource.first_token(), |joined| {
+                            format_resource(&resource, joined)
+                        });
                     joined.push(resource);
                     needs_line = false;
                 }
@@ -364,13 +370,24 @@ fn format_parenthesized_catch_parameter<'source>(
 ) -> Doc<'source> {
     let open = resolve_required_delimiter(clause.open_paren(), doc);
     let close = resolve_required_delimiter(clause.close_paren(), doc);
-    let inner = format_catch_parameter(parameter, doc);
+    // The parameter begins a line of its own whenever a leading comment
+    // forces the group to break, matching the open paren's trailing run.
+    let inner = format_line_start_construct(doc, parameter.first_token(), |doc| {
+        format_catch_parameter(parameter, doc)
+    });
     let open = match open {
         JavaFormatDelimiter::Source(open) => format_token_with_comments(doc, &open),
         JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     };
     let close = match close {
-        JavaFormatDelimiter::Source(close) => format_token_with_comments(doc, &close),
+        // The close paren is glued to the parameter before it, so its leading
+        // comments take the previous token's trailing form.
+        JavaFormatDelimiter::Source(close) => format_token_with_inline_leading_comments(
+            doc,
+            &close,
+            InlineLeadingTrivia::AfterPreviousToken,
+            TrailingTrivia::Preserve,
+        ),
         JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),
     };
     let inner = doc_indent!(doc, doc_concat!(doc, [doc.soft_line(), inner]));

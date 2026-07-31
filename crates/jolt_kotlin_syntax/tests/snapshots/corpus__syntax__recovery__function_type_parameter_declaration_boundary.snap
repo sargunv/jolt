@@ -1,0 +1,50 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val f: (
+class C
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 0..3 trailing=[Whitespace " "]
+      Name
+        Identifier "f" @ 4..5
+      Colon ":" @ 5..6 trailing=[Whitespace " "]
+      TypeReference
+        ParenthesizedType
+          AnnotationList
+          LParen "(" @ 7..8
+          ParenthesizedTypeEntryList
+            FunctionTypeParameter
+              TypeReference
+                BogusType
+            BogusFunctionTypeParameter
+              ClassKw "class" @ 9..14 leading=[Newline "\n"] trailing=[Whitespace " "]
+            FunctionTypeParameter
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "C" @ 15..16
+      PropertyBodyMemberList
+  Eof "" @ 17..17 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=9..14 message="expected type"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=9..14 message="expected function type parameter"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=15..16 message="expected ',' between function type parameters"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=17..17 message="expected ')' in type"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(9), end: TextSize(14) }) message=expected type
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(9), end: TextSize(14) }) message=expected function type parameter
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(15), end: TextSize(16) }) message=expected ',' between function type parameters
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(17), end: TextSize(17) }) message=expected ')' in type

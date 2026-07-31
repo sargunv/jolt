@@ -330,6 +330,13 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
             }
             Some(DocNode::Indent { contents, levels }) => {
                 self.indent_levels += i32::from(*levels);
+                // A dedent that opens right after a line break owns the pending
+                // line's indent, the same way a closing dedent does on exit.
+                if *levels < 0 && self.pending_indent > 0 {
+                    let (indent, width) = self.pending_newline_indent(0);
+                    self.pending_indent = indent;
+                    self.column = width;
+                }
                 stack.push(RenderCommand::EndIndent(*levels));
                 stack.push(RenderCommand::Doc(*contents, mode));
                 Ok(())

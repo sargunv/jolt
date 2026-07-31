@@ -2,8 +2,9 @@ use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
 use jolt_java_syntax::{ImportDeclaration, JavaSyntaxView, NameSyntax, ReorderClaim};
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_comment, format_token_after_relocated_leading_comments,
-    format_token_before_relocated_trailing_comments, format_token_with_comments,
+    LeadingTrivia, TrailingTrivia, format_comment, format_line_start_construct,
+    format_token_after_relocated_leading_comments, format_token_before_relocated_trailing_comments,
+    format_token_with_comments,
 };
 use crate::helpers::recovery::{format_optional_field, format_required_field};
 use crate::rules::names::{NameSortKey, format_name};
@@ -46,7 +47,9 @@ pub(crate) fn format_imports<'source>(
                 });
             });
             sections.push(ImportSection {
-                doc: format_import_in_place(&declaration, doc),
+                doc: format_line_start_construct(doc, declaration.first_token(), |doc| {
+                    format_import_in_place(&declaration, doc)
+                }),
                 blank_before: blank_before && salvaged.is_none(),
             });
             continue;
@@ -235,7 +238,10 @@ fn format_import_list<'source>(
                 let line = docs.hard_line();
                 docs.push(line);
             }
-            let import = import.into_doc(docs);
+            // Each import in the list begins its own line.
+            let first_token = import.import.first_token();
+            let import =
+                format_line_start_construct(docs, first_token, |docs| import.into_doc(docs));
             docs.push(import);
         }
     })

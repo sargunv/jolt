@@ -8,8 +8,8 @@ use jolt_kotlin_syntax::{
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_dangling_comments,
-    format_leading_comments, format_removed_separator, format_separator_with_comments,
-    format_token, token_has_comments, trailing_comments_force_line,
+    format_glued_token, format_leading_comments, format_removed_separator,
+    format_separator_with_comments, format_token, token_has_comments, trailing_comments_force_line,
 };
 use crate::helpers::lists::{
     CommaListItem, physical_comma_list_items, prepare_comma_list_items_between,
@@ -299,7 +299,7 @@ fn format_lambda_parameter<'source>(
         })
     });
     let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {
-        let colon = format_token(
+        let colon = format_glued_token(
             doc,
             &colon,
             LeadingTrivia::Preserve,

@@ -9,8 +9,7 @@ class LeadingCommentsOnBinaryOperands {
       // leads the left operand of a binary chain
       first + second
     val product =
-      /* block comment leads the left operand */
-      first * second * third
+      /* block comment leads the left operand */ first * second * third
     val flag =
       // leads an operand of a mixed chain
       first > second && second < third

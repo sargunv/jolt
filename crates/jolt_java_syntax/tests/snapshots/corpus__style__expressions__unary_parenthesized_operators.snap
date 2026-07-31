@@ -7,6 +7,40 @@ class Example {
 boolean disjoint(Rectangle bounds) {
 return !(bounds.getLeft() > getRight() || bounds.getRight() < getLeft() || bounds.getTop() > getBottom() || bounds.getBottom() < getTop());
 }
+boolean parenthesizedOperand(boolean flag) {
+return !
+// leads a parenthesized operand
+(flag);
+}
+boolean castOperand(boolean flag) {
+return !
+/* leads a cast operand */
+(Boolean) flag;
+}
+boolean nestedUnaryOperand(boolean flag) {
+return !
+// leads a nested unary operand
+!flag;
+}
+int literalOperand() {
+return -
+/* leads a literal operand */
+1;
+}
+int invocationOperand() {
+return -
+// leads an invocation operand
+count();
+}
+int fieldOperand() {
+return -
+/* leads a field access operand */
+this.value;
+}
+int value;
+int count() {
+return 0;
+}
 }
 
 syntax:
@@ -136,8 +170,194 @@ CompilationUnit
                         RParen ")" @ 190..191
                     Semicolon ";" @ 191..192
               RBrace "}" @ 193..194 leading=[Newline "\n"]
-        RBrace "}" @ 195..196 leading=[Newline "\n"]
-  Eof "" @ 197..197 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 195..202 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "parenthesizedOperand" @ 203..223
+            LParen "(" @ 223..224
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 224..231 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "flag" @ 232..236
+            RParen ")" @ 236..237 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 238..239
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 240..246 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    UnaryExpression
+                      Bang "!" @ 247..248
+                      ParenthesizedExpression
+                        LParen "(" @ 282..283 leading=[Newline "\n", LineComment "// leads a parenthesized operand", Newline "\n"]
+                        NameExpression
+                          Identifier "flag" @ 283..287
+                        RParen ")" @ 287..288
+                    Semicolon ";" @ 288..289
+              RBrace "}" @ 290..291 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 292..299 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "castOperand" @ 300..311
+            LParen "(" @ 311..312
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 312..319 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "flag" @ 320..324
+            RParen ")" @ 324..325 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 326..327
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 328..334 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    UnaryExpression
+                      Bang "!" @ 335..336
+                      CastExpression
+                        LParen "(" @ 364..365 leading=[Newline "\n", BlockComment "/* leads a cast operand */", Newline "\n"]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "Boolean" @ 365..372
+                        RParen ")" @ 372..373 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "flag" @ 374..378
+                    Semicolon ";" @ 378..379
+              RBrace "}" @ 380..381 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              BooleanKw "boolean" @ 382..389 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "nestedUnaryOperand" @ 390..408
+            LParen "(" @ 408..409
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  BooleanKw "boolean" @ 409..416 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "flag" @ 417..421
+            RParen ")" @ 421..422 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 423..424
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 425..431 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    UnaryExpression
+                      Bang "!" @ 432..433
+                      UnaryExpression
+                        Bang "!" @ 466..467 leading=[Newline "\n", LineComment "// leads a nested unary operand", Newline "\n"]
+                        NameExpression
+                          Identifier "flag" @ 467..471
+                    Semicolon ";" @ 471..472
+              RBrace "}" @ 473..474 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 475..478 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "literalOperand" @ 479..493
+            LParen "(" @ 493..494
+            RParen ")" @ 494..495 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 496..497
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 498..504 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    UnaryExpression
+                      Minus "-" @ 505..506
+                      LiteralExpression
+                        IntegerLiteral "1" @ 537..538 leading=[Newline "\n", BlockComment "/* leads a literal operand */", Newline "\n"]
+                    Semicolon ";" @ 538..539
+              RBrace "}" @ 540..541 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 542..545 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "invocationOperand" @ 546..563
+            LParen "(" @ 563..564
+            RParen ")" @ 564..565 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 566..567
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 568..574 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    UnaryExpression
+                      Minus "-" @ 575..576
+                      MethodInvocationExpression
+                        UnqualifiedMethodInvocation
+                          NameExpression
+                            Identifier "count" @ 608..613 leading=[Newline "\n", LineComment "// leads an invocation operand", Newline "\n"]
+                          ArgumentList
+                            LParen "(" @ 613..614
+                            ExpressionList
+                            RParen ")" @ 614..615
+                    Semicolon ";" @ 615..616
+              RBrace "}" @ 617..618 leading=[Newline "\n"]
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 619..622 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "fieldOperand" @ 623..635
+            LParen "(" @ 635..636
+            RParen ")" @ 636..637 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 638..639
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 640..646 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    UnaryExpression
+                      Minus "-" @ 647..648
+                      FieldAccessExpression
+                        ThisExpression
+                          ThisKw "this" @ 684..688 leading=[Newline "\n", BlockComment "/* leads a field access operand */", Newline "\n"]
+                        Dot "." @ 688..689
+                        Identifier "value" @ 689..694
+                    Semicolon ";" @ 694..695
+              RBrace "}" @ 696..697 leading=[Newline "\n"]
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 698..701 leading=[Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "value" @ 702..707
+            Semicolon ";" @ 707..708
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 709..712 leading=[Newline "\n"] trailing=[Whitespace " "]
+            Identifier "count" @ 713..718
+            LParen "(" @ 718..719
+            RParen ")" @ 719..720 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 721..722
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 723..729 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "0" @ 730..731
+                    Semicolon ";" @ 731..732
+              RBrace "}" @ 733..734 leading=[Newline "\n"]
+        RBrace "}" @ 735..736 leading=[Newline "\n"]
+  Eof "" @ 737..737 leading=[Newline "\n"]
 
 diagnostics:
   (none)

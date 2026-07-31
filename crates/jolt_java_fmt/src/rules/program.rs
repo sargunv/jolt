@@ -5,8 +5,9 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    comments_from_tokens, format_byte_order_mark, format_comment, format_token_removal,
-    format_token_with_comments, format_trailing_substitute, has_removed_comments,
+    InlineLeadingTrivia, TrailingTrivia, comments_from_tokens, format_byte_order_mark,
+    format_comment, format_line_start_construct, format_token_removal, format_token_with_comments,
+    format_token_with_inline_leading_comments, format_trailing_substitute, has_removed_comments,
 };
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, format_missing, format_required_field,
@@ -457,6 +458,17 @@ fn format_program_item<'source>(
     item: CompilationUnitItem<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    // A top-level item begins its own line, so its first token's leading
+    // comments keep lines of their own.
+    format_line_start_construct(doc, item.first_token(), |doc| {
+        format_program_item_at_line_start(item, doc)
+    })
+}
+
+fn format_program_item_at_line_start<'source>(
+    item: CompilationUnitItem<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     match item {
         CompilationUnitItem::PackageDeclaration(package) => {
             format_package_declaration(&package, doc)
@@ -524,7 +536,14 @@ fn format_package_declaration<'source>(
         });
         let name = format_required_field(package.name(), doc, |name, doc| format_name(&name, doc));
         let semicolon = format_required_field(package.semicolon(), doc, |token, doc| {
-            format_token_with_comments(doc, &token)
+            // The semicolon follows the name, whose trailing comments take the
+            // padded form, so a comment leading it matches.
+            format_token_with_inline_leading_comments(
+                doc,
+                &token,
+                InlineLeadingTrivia::BetweenSpaces,
+                TrailingTrivia::Preserve,
+            )
         });
         let declaration = doc_concat!(doc, [keyword, name, semicolon]);
         if annotations_visible {
