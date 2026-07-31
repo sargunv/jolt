@@ -4,8 +4,10 @@ use jolt_kotlin_syntax::{
     ValueParameterName,
 };
 
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
-use crate::helpers::lists::{CommaListItem, delimited_comma_list, physical_comma_list_items};
+use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_glued_token, format_token};
+use crate::helpers::lists::{
+    CommaListItem, delimited_comma_list, delimited_physical_comma_list_items,
+};
 use crate::helpers::recovery::{
     KotlinFormatField, format_optional_field, format_required_field, resolve_required_delimiter,
     resolve_required_field,
@@ -25,7 +27,7 @@ pub(crate) fn format_value_parameter_list<'source>(
     let close = resolve_required_delimiter(list.close_paren(), doc);
     let items = match resolve_required_field(list.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, parameter| {
+            delimited_physical_comma_list_items(doc, entries.parts(), |doc, parameter| {
                 CommaListItem::visible(match parameter {
                     ValueParameterListEntry::ValueParameter(parameter) => {
                         format_value_parameter(doc, &parameter)
@@ -75,7 +77,7 @@ fn format_value_parameter<'source>(
         format_parameter_name(doc, name)
     });
     let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {
-        let colon = format_token(
+        let colon = format_glued_token(
             doc,
             &colon,
             LeadingTrivia::Preserve,

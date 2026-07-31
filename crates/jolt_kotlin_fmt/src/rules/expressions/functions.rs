@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::AnonymousFunctionExpression;
 
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
+use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_glued_token, format_token};
 use crate::helpers::recovery::{
     KotlinFormatField, format_optional_field, format_required_field, resolve_optional_field,
 };
@@ -40,7 +40,7 @@ fn format_anonymous_function_receiver<'source>(
     };
     let receiver = format_type_reference(doc, &receiver);
     let dot = format_optional_field(expression.dot(), doc, |dot, doc| {
-        format_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
+        format_glued_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
     });
     let space = doc.space();
     doc.concat([space, receiver, dot])

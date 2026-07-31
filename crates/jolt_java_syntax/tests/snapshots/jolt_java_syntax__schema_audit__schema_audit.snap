@@ -133,5 +133,8 @@ syntax__recovery__trailing_separator_in_delimited_lists: ExpressionStatement occ
 syntax__recovery__trailing_separator_in_delimited_lists: ArgumentList occurrence 4 (LParen("(") ExpressionList)
 syntax__recovery__trailing_separator_in_delimited_lists: ExpressionList occurrence 4 (LiteralExpression Comma(","))
 syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)
+syntax__recovery__unterminated_body_dangling_comment: AnnotationInterfaceBody occurrence 1 (LBrace("{") AnnotationElementList)
 syntax__recovery__unterminated_doc_comment: ClassBody occurrence 1 (LBrace("{") ClassBodyMemberList)
+syntax__recovery__unterminated_nested_body_dangling_comment: ClassBody occurrence 1 (LBrace("{") ClassBodyMemberList)
+syntax__recovery__unterminated_nested_body_dangling_comment: Block occurrence 1 (LBrace("{") BlockStatementList)
 syntax__recovery__variable_declarators: VariableDeclarator occurrence 2 ()

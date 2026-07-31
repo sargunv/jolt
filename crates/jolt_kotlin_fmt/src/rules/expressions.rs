@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{AnnotatedExpression, Expression};
 
-use crate::helpers::comments::LeadingTrivia;
+use crate::helpers::comments::{LeadingTrivia, format_leading_comments};
 use crate::helpers::recovery::{KotlinFormatField, format_malformed, resolve_required_field};
 use crate::rules::declarations::format_modifier_list_with_leading;
 
@@ -189,12 +189,21 @@ fn format_annotated_expression<'source>(
         KotlinFormatField::Malformed(recovery) => recovery,
     };
     let inner = match resolve_required_field(expression.expression(), doc) {
-        KotlinFormatField::Present(inner) => format_expression_with_leading_and_context(
-            doc,
-            &inner,
-            LeadingTrivia::SuppressAlreadyHandled,
-            context,
-        ),
+        KotlinFormatField::Present(inner) => {
+            // The annotation prefix ends its line, so the inner expression's
+            // leading comments keep lines of their own: hoisted here, with
+            // the inner's own leading trivia suppressed to claim them once.
+            let comments = inner
+                .first_token()
+                .map_or_else(Doc::nil, |token| format_leading_comments(doc, &token));
+            let inner = format_expression_with_leading_and_context(
+                doc,
+                &inner,
+                LeadingTrivia::SuppressAlreadyHandled,
+                context,
+            );
+            doc.concat([comments, inner])
+        }
         KotlinFormatField::Malformed(recovery) => recovery,
     };
     doc.concat([prefix, inner])

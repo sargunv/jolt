@@ -3,8 +3,12 @@ use super::{
     format_annotation, format_block, format_expression, format_separator_with_comments,
     format_token, format_token_with_comments, format_type,
 };
-use crate::helpers::comments::token_has_comments;
-use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
+use crate::helpers::comments::{
+    InlineLeadingTrivia, format_token_with_inline_leading_comments, token_has_comments,
+};
+use crate::helpers::lists::{
+    CommaListItem, comma_list, delimited_syntax_comma_list_items, syntax_comma_list_items,
+};
 use crate::helpers::recovery::{
     JavaFormatField, JavaFormatListPart, format_malformed, format_optional_field,
     format_required_field, resolve_list_part, resolve_required_field,
@@ -106,11 +110,21 @@ fn format_lambda_parameters<'source>(
         format_token_with_comments(doc, &token)
     });
     let parameters = match parameters {
-        JavaFormatField::Present(parameters) => format_lambda_parameter_entries(&parameters, doc),
+        JavaFormatField::Present(parameters) => {
+            format_lambda_parameter_entries(&parameters, has_parentheses, doc)
+        }
         JavaFormatField::Malformed(recovery) => recovery,
     };
     let close = format_optional_field(expression.close_paren(), doc, |token, doc| {
-        format_token_with_comments(doc, &token)
+        // A parenthesized parameter list's close paren is glued to the last
+        // parameter, so its leading comments take the previous token's
+        // trailing form -- the placement the reparse reads back identically.
+        format_token_with_inline_leading_comments(
+            doc,
+            &token,
+            InlineLeadingTrivia::AfterPreviousToken,
+            TrailingTrivia::Preserve,
+        )
     });
 
     if has_parentheses {
@@ -136,16 +150,25 @@ fn optional_delimiter_is_comment_free(
 
 fn format_lambda_parameter_entries<'source>(
     parameters: &jolt_java_syntax::LambdaParameterList<'source>,
+    parenthesized: bool,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let items = lambda_parameter_items(parameters, doc);
+    let items = lambda_parameter_items(parameters, parenthesized, doc);
     comma_list(doc, items)
 }
 
 fn lambda_parameter_items<'source, 'fmt>(
     parameters: &'fmt jolt_java_syntax::LambdaParameterList<'source>,
+    parenthesized: bool,
     doc: &'fmt mut DocBuilder<'source>,
 ) -> Vec<CommaListItem<'source>> {
+    if parenthesized {
+        // Parenthesized parameters sit behind an open delimiter, so the first
+        // one's leading comments keep lines of their own.
+        return delimited_syntax_comma_list_items(doc, parameters.parts(), |parameter, doc| {
+            format_lambda_parameter(&parameter, doc)
+        });
+    }
     syntax_comma_list_items(doc, parameters.parts(), |parameter, doc| {
         format_lambda_parameter(&parameter, doc)
     })

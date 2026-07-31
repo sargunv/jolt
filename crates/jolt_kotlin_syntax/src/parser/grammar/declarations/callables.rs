@@ -210,6 +210,7 @@ impl Parser<'_> {
         self.eat_asserted(K::Lt);
         let entries = self.start();
         let mut expect_parameter = true;
+        let mut list_recovery = None;
         while !matches!(self.current_kind(), K::Gt | K::Eof) {
             let before = self.position();
             if self.at(K::Comma) {
@@ -223,6 +224,11 @@ impl Parser<'_> {
                 self.bump();
                 expect_parameter = true;
                 continue;
+            }
+            if !expect_parameter && list_recovery.is_none() {
+                // An entry that does not follow a comma leaves a required
+                // separator slot empty; own that recovery on the list.
+                list_recovery = Some(self.pending_expected("expected ',' between type parameters"));
             }
             let parameter = self.start();
             self.parse_modifier_list();
@@ -242,10 +248,30 @@ impl Parser<'_> {
             } else {
                 self.complete(parameter, K::TypeParameter);
             }
+            if self.position() == before {
+                // A type parameter is modifiers, a variance keyword and a name
+                // with an optional bound; the missing-type recovery in
+                // `parse_type_reference_until` declines to consume a line-start
+                // declaration keyword, leaving it to the outer declaration, so
+                // nothing in the parameter would consume the current token.
+                // Bump it into a bogus parameter or the loop never advances:
+                // unbounded in a release build, where the assertion below is
+                // compiled out. The loop condition already excludes `>` and
+                // `Eof`, so the bump cannot run past the end.
+                let error = self.start();
+                let diagnostic = self.pending_unexpected("expected type parameter");
+
+                self.bump();
+                self.complete_recovery(error, K::BogusTypeParameter, [diagnostic]);
+            }
             expect_parameter = false;
             debug_assert!(self.position() > before);
         }
-        self.complete(entries, K::TypeParameterSeparatedList);
+        if let Some(diagnostic) = list_recovery {
+            self.complete_recovery(entries, K::TypeParameterSeparatedList, [diagnostic]);
+        } else {
+            self.complete(entries, K::TypeParameterSeparatedList);
+        }
         if !self.eat(K::Gt) {
             let diagnostic = self.pending_expected("expected '>' after type parameters");
             self.missing_required_slot(
@@ -491,6 +517,7 @@ impl Parser<'_> {
         }
         let entries = self.start();
         let mut expect_parameter = true;
+        let mut list_recovery = None;
         while !matches!(self.current_kind(), K::RParen | K::Eof) {
             let before = self.position();
             if self.at(K::Comma) {
@@ -503,6 +530,51 @@ impl Parser<'_> {
                 }
                 self.bump();
                 expect_parameter = true;
+                continue;
+            }
+            if !expect_parameter && list_recovery.is_none() {
+                // An entry that does not follow a comma leaves a required
+                // separator slot empty; own that recovery on the list.
+                list_recovery =
+                    Some(self.pending_expected("expected ',' between value parameters"));
+            }
+            if !expect_parameter
+                && matches!(self.current_kind(), K::LParen | K::LBracket)
+                && self.newline_before_current()
+            {
+                // A destructuring parameter binding can only follow a comma,
+                // so a group starting a line after an unterminated parameter
+                // continues nothing: the expression parser already refused it
+                // as a call or indexing suffix, and it cannot start a real
+                // parameter. Bump the balanced group into a bogus parameter.
+                let error = self.start();
+                let (open, close) = match self.current_kind() {
+                    K::LBracket => (K::LBracket, K::RBracket),
+                    _ => (K::LParen, K::RParen),
+                };
+                let diagnostic = self.pending_unexpected(match open {
+                    K::LBracket => "unexpected '[' after value parameter",
+                    _ => "unexpected '(' after value parameter",
+                });
+
+                let mut depth = 0usize;
+                while !self.at(K::Eof) {
+                    let kind = self.current_kind();
+                    if kind == open {
+                        depth += 1;
+                    } else if kind == close {
+                        depth = depth.saturating_sub(1);
+                        self.bump();
+                        if depth == 0 {
+                            break;
+                        }
+                        continue;
+                    }
+                    self.bump();
+                }
+                self.complete_recovery(error, K::BogusValueParameter, [diagnostic]);
+                expect_parameter = false;
+                debug_assert!(self.position() > before);
                 continue;
             }
             let parameter = self.start();
@@ -529,7 +601,11 @@ impl Parser<'_> {
             expect_parameter = false;
             debug_assert!(self.position() > before);
         }
-        self.complete(entries, K::ValueParameterSeparatedList);
+        if let Some(diagnostic) = list_recovery {
+            self.complete_recovery(entries, K::ValueParameterSeparatedList, [diagnostic]);
+        } else {
+            self.complete(entries, K::ValueParameterSeparatedList);
+        }
         if !self.eat(K::RParen) {
             let diagnostic = self.pending_expected("expected ')' after value parameters");
             self.missing_required_slot(
@@ -573,6 +649,7 @@ impl Parser<'_> {
         self.eat_asserted(open);
         let entries = self.start();
         let mut expect_entry = true;
+        let mut list_recovery = None;
         while !matches!(self.current_kind(), K::Eof) && !self.at(close) {
             let before = self.position();
             if self.at(K::Comma) {
@@ -587,6 +664,12 @@ impl Parser<'_> {
                 self.bump();
                 expect_entry = true;
                 continue;
+            }
+            if !expect_entry && list_recovery.is_none() {
+                // An entry that does not follow a comma leaves a required
+                // separator slot empty; own that recovery on the list.
+                list_recovery =
+                    Some(self.pending_expected("expected ',' between destructuring entries"));
             }
             let entry = self.start();
             if !self.at(K::ValKw) && !self.at(K::VarKw) && !self.at_identifier_like() {
@@ -620,7 +703,11 @@ impl Parser<'_> {
             expect_entry = false;
             debug_assert!(self.position() > before);
         }
-        self.complete(entries, K::DestructuringEntrySeparatedList);
+        if let Some(diagnostic) = list_recovery {
+            self.complete_recovery(entries, K::DestructuringEntrySeparatedList, [diagnostic]);
+        } else {
+            self.complete(entries, K::DestructuringEntrySeparatedList);
+        }
         if !self.eat(close) {
             let diagnostic =
                 self.pending_expected("expected closing delimiter after destructuring declaration");

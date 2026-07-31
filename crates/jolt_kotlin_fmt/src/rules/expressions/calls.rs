@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
+use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder, InlineLeadingTrivia};
 use jolt_kotlin_syntax::{
     CallExpression, CallableReferenceExpression, CallableReferenceReceiver,
     CallableReferenceReceiverSyntax, CollectionLiteralExpression, Expression, IndexExpression,
@@ -10,7 +10,8 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
+    LeadingTrivia, TrailingTrivia, format_glued_token, format_leading_comments,
+    format_line_start_construct, format_token,
 };
 use crate::helpers::lists::{
     CommaListItem, attach_comma_separator, comma_list_item_range, delimited_comma_list,
@@ -547,10 +548,12 @@ fn format_navigation_operator<'source>(
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
     match operator.classify() {
-        Ok(NavigationOperatorSyntax::Token(token)) => format_token(doc, &token, leading, trailing),
+        Ok(NavigationOperatorSyntax::Token(token)) => {
+            format_glued_token(doc, &token, leading, trailing)
+        }
         Ok(NavigationOperatorSyntax::SplitSafe(split)) => {
             let question = format_required_field(split.question(), doc, |token, doc| {
-                format_token(
+                format_glued_token(
                     doc,
                     &token,
                     leading,
@@ -574,12 +577,16 @@ fn format_navigation_selector<'source>(
     selector: NavigationSelectorValue<'source>,
 ) -> Doc<'source> {
     match selector.classify() {
-        Ok(NavigationSelectorSyntax::Name(selector)) => format_token(
-            doc,
-            &selector,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::Preserve,
-        ),
+        // The selector follows its navigation operator, whose trailing
+        // comments take the padded form, so a comment leading it matches.
+        Ok(NavigationSelectorSyntax::Name(selector)) => {
+            jolt_fmt_ir::format_token_with_inline_leading_comments(
+                doc,
+                &selector,
+                InlineLeadingTrivia::BetweenSpaces,
+                TrailingTrivia::Preserve,
+            )
+        }
         Ok(NavigationSelectorSyntax::This(selector)) => format_expression_with_leading(
             doc,
             &Expression::ThisExpression(selector),
@@ -674,18 +681,23 @@ fn value_argument_list_entry_items<'source>(
     parts: impl Iterator<Item = KotlinSyntaxListPart<'source, ValueArgumentListEntry<'source>>>,
 ) -> Vec<CommaListItem<'source>> {
     let mut items: Vec<CommaListItem<'source>> = Vec::new();
+    let mut first = true;
     for part in parts {
         match resolve_list_part(part, doc) {
             KotlinFormatListPart::Item(entry) => {
                 let range = comma_list_item_range(&entry);
-                let formatted = match entry {
+                // The first argument sits behind the open delimiter, so its
+                // leading comments keep lines of their own.
+                let first_token = if first { entry.first_token() } else { None };
+                first = false;
+                let formatted = format_line_start_construct(doc, first_token, |doc| match entry {
                     ValueArgumentListEntry::ValueArgument(argument) => {
                         format_value_argument(doc, &argument)
                     }
                     ValueArgumentListEntry::BogusValueArgument(bogus) => {
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
-                };
+                });
                 items.push(CommaListItem::visible(formatted).with_ignore_range(range));
             }
             KotlinFormatListPart::Separator(comma) => {

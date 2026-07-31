@@ -44,9 +44,6 @@ fn main() {
 /// forgotten, and a missing one is a regression. Each entry names the issue that
 /// tracks it, so growing the list is a deliberate act with a paper trail.
 const KNOWN_OPEN: &[&str] = &[
-    // #225: a line comment before an argument list's open paren gains a space on
-    // the second pass.
-    "linecomment:not-idempotent",
     // #224: an own-line comment is dropped or duplicated at a few positions.
     "ownline:comments-changed",
     // #223: a leading comment takes a line of its own at every site that has not

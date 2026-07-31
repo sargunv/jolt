@@ -6,8 +6,8 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_dangling_comments, format_token,
-    trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, format_dangling_comments, format_line_start_construct,
+    format_token, trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
     KotlinFormatDelimiter, KotlinFormatField, format_delimiter, format_malformed, format_missing,
@@ -16,6 +16,7 @@ use crate::helpers::recovery::{
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
     for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
+    formatter_ignore_runs_claim_boundary_comment,
 };
 
 use super::{
@@ -68,16 +69,20 @@ fn format_class_body_contents<'source>(
     } else {
         class_body_sections_with_ignored(doc, &parts, &ignored_runs)
     };
-    if let Some(close) = close
-        && !close.leading_comments().is_empty()
-    {
-        // The gap that opens the close brace's leading trivia belongs to that
-        // token, so the separator in front of this run reads it from there.
-        sections.push(ClassBodySection::neutral(
-            format_dangling_comments(doc, close.leading_comments()),
-            false,
-            close.has_leading_blank_line(),
-        ));
+    if let Some(close) = close {
+        let comments = close
+            .leading_comments()
+            .filter(|comment| !formatter_ignore_runs_claim_boundary_comment(&ignored_runs, comment))
+            .collect::<Vec<_>>();
+        if !comments.is_empty() {
+            // The gap that opens the close brace's leading trivia belongs to that
+            // token, so the separator in front of this run reads it from there.
+            sections.push(ClassBodySection::neutral(
+                format_dangling_comments(doc, comments),
+                false,
+                close.has_leading_blank_line(),
+            ));
+        }
     }
     let starts_after_blank_line = sections
         .first()
@@ -207,8 +212,13 @@ fn push_class_body_part<'source>(
             let last_token = member.last_token();
             *previous_forces_line =
                 last_token.is_some_and(|token| trailing_comments_force_line(&token));
+            // A member in a body begins its own line, so its first token's
+            // leading comments keep lines of their own.
+            let formatted = format_line_start_construct(doc, member.first_token(), |doc| {
+                format_class_member(doc, member)
+            });
             sections.push(ClassBodySection {
-                doc: format_class_member(doc, member),
+                doc: formatted,
                 hard_line_after: enum_entry_continues(member),
                 category: Some(member_category(member)),
                 starts_after_blank_line: member.starts_after_blank_line(),

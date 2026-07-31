@@ -12,11 +12,11 @@ use jolt_kotlin_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_token, trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, format_glued_token, format_token, trailing_comments_force_line,
 };
 use crate::helpers::lists::{
-    CommaListItem, delimited_comma_list, physical_comma_list_items,
-    prepare_comma_list_items_between,
+    CommaListItem, delimited_comma_list, delimited_physical_comma_list_items,
+    physical_comma_list_items, prepare_comma_list_items_between,
 };
 use crate::helpers::recovery::{
     KotlinFormatField, KotlinFormatListPart, format_malformed, format_optional_field,
@@ -31,9 +31,10 @@ pub(crate) fn format_type_parameter_list<'source>(
 ) -> Doc<'source> {
     let open = resolve_required_delimiter(parameters.open_angle(), doc);
     let close = resolve_required_delimiter(parameters.close_angle(), doc);
+    let after_line = malformed_starts_after_line(&parameters.entries());
     let items = match resolve_required_field(parameters.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, parameter| {
+            delimited_physical_comma_list_items(doc, entries.parts(), |doc, parameter| {
                 CommaListItem::visible(match parameter {
                     TypeParameterListEntry::TypeParameter(parameter) => {
                         format_type_parameter(doc, &parameter)
@@ -44,7 +45,7 @@ pub(crate) fn format_type_parameter_list<'source>(
                 })
             })
         }
-        KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
+        KotlinFormatField::Malformed(recovery) => malformed_item(recovery, after_line),
     };
     delimited_comma_list(doc, open, close, items)
 }
@@ -69,6 +70,7 @@ pub(crate) fn format_type_constraint_list<'source>(
             TrailingTrivia::Preserve,
         )
     });
+    let after_line = malformed_starts_after_line(&constraints.entries());
     let items = match resolve_required_field(constraints.entries(), doc) {
         KotlinFormatField::Present(entries) => {
             physical_comma_list_items(doc, entries.parts(), |doc, constraint| {
@@ -82,7 +84,7 @@ pub(crate) fn format_type_constraint_list<'source>(
                 })
             })
         }
-        KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
+        KotlinFormatField::Malformed(recovery) => malformed_item(recovery, after_line),
     };
     let constraints =
         format_indented_comma_items(doc, items, where_source.as_ref(), where_forces_line);
@@ -368,13 +370,14 @@ pub(crate) fn format_type_argument_list<'source>(
 ) -> Doc<'source> {
     let open = resolve_required_delimiter(arguments.open_angle(), doc);
     let close = resolve_required_delimiter(arguments.close_angle(), doc);
+    let after_line = malformed_starts_after_line(&arguments.entries());
     let items = match resolve_required_field(arguments.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, argument| {
+            delimited_physical_comma_list_items(doc, entries.parts(), |doc, argument| {
                 CommaListItem::visible(format_type_argument(doc, &argument))
             })
         }
-        KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
+        KotlinFormatField::Malformed(recovery) => malformed_item(recovery, after_line),
     };
     delimited_comma_list(doc, open, close, items)
 }
@@ -458,13 +461,14 @@ fn format_parenthesized_type<'source>(
     let annotations = format_required_field(ty.annotations(), doc, format_type_annotations);
     let open = resolve_required_delimiter(ty.open_paren(), doc);
     let close = resolve_required_delimiter(ty.close_paren(), doc);
+    let after_line = malformed_starts_after_line(&ty.entries());
     let items = match resolve_required_field(ty.entries(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, entry| {
+            delimited_physical_comma_list_items(doc, entries.parts(), |doc, entry| {
                 CommaListItem::visible(format_function_type_parameter_entry(doc, &entry))
             })
         }
-        KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
+        KotlinFormatField::Malformed(recovery) => malformed_item(recovery, after_line),
     };
     let list = delimited_comma_list(doc, open, close, items);
     doc.concat([annotations, list])
@@ -494,7 +498,7 @@ fn format_function_type_parameter<'source>(
     );
     let name = format_optional_field(parameter.name(), doc, |name, doc| format_name(doc, &name));
     let colon = format_optional_field(parameter.colon(), doc, |colon, doc| {
-        let colon = format_token(
+        let colon = format_glued_token(
             doc,
             &colon,
             LeadingTrivia::Preserve,
@@ -524,7 +528,7 @@ fn format_receiver_type<'source>(
         })
     });
     let dot = format_required_field(ty.dot(), doc, |dot, doc| {
-        format_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
+        format_glued_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
     });
     let parameter = format_required_field(ty.parameter(), doc, |parameter, doc| {
         format_type(doc, &parameter)
@@ -604,13 +608,14 @@ fn format_context_function_type<'source>(
     });
     let open = resolve_required_delimiter(ty.open_paren(), doc);
     let close = resolve_required_delimiter(ty.close_paren(), doc);
+    let after_line = malformed_starts_after_line(&ty.context_parameters());
     let items = match resolve_required_field(ty.context_parameters(), doc) {
         KotlinFormatField::Present(entries) => {
-            physical_comma_list_items(doc, entries.parts(), |doc, entry| {
+            delimited_physical_comma_list_items(doc, entries.parts(), |doc, entry| {
                 CommaListItem::visible(format_function_type_parameter_entry(doc, &entry))
             })
         }
-        KotlinFormatField::Malformed(recovery) => malformed_item(recovery),
+        KotlinFormatField::Malformed(recovery) => malformed_item(recovery, after_line),
     };
     let parameters = delimited_comma_list(doc, open, close, items);
     let function = format_required_field(ty.function_type(), doc, |function, doc| {
@@ -745,8 +750,26 @@ fn format_role_token<'source>(
     format_token(doc, &token, LeadingTrivia::Preserve, trailing)
 }
 
-fn malformed_item(recovery: Doc<'_>) -> Vec<CommaListItem<'_>> {
-    vec![CommaListItem::visible(recovery)]
+fn malformed_item(recovery: Doc<'_>, starts_after_line: bool) -> Vec<CommaListItem<'_>> {
+    let item = CommaListItem::visible(recovery);
+    vec![if starts_after_line {
+        item.with_line_before()
+    } else {
+        item
+    }]
+}
+
+/// A malformed separated list claims only the source its verbatim core owns,
+/// and that core excludes leading trivia, so a line break before its first
+/// token is layout the enclosing list must re-emit -- collapsing it can move a
+/// line-sensitive recovery boundary and change the reparse. Detect that case
+/// from the field before it is resolved.
+fn malformed_starts_after_line<T>(field: &KotlinSyntaxField<'_, T>) -> bool {
+    matches!(
+        field,
+        KotlinSyntaxField::Malformed(malformed)
+            if malformed.first_token().is_some_and(|token| token.has_leading_line_break())
+    )
 }
 
 pub(crate) fn format_bogus_list_entry<'source>(

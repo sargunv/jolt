@@ -55,6 +55,17 @@ pub(crate) fn present_token<'source>(
     }
 }
 
+/// Whether a field's recovery renders no source of its own: a missing slot,
+/// or a malformed node that owns no tokens. The recovery document still
+/// carries its claims; this only reports that it emits no visible text.
+pub(crate) fn field_is_claim_only<T>(field: &JavaSyntaxField<'_, T>) -> bool {
+    match field {
+        JavaSyntaxField::Present(_) => false,
+        JavaSyntaxField::Missing(_) => true,
+        JavaSyntaxField::Malformed(malformed) => malformed.syntax().first_token().is_none(),
+    }
+}
+
 pub(crate) fn resolve_list_part<'source, T>(
     part: JavaSyntaxListPart<'source, T>,
     doc: &mut DocBuilder<'source>,

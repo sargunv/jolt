@@ -1,9 +1,10 @@
 use crate::helpers::blocks::{BodyItem, inserted_braced_body, join_body_items};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comments_from_tokens,
-    format_dangling_comments, format_removed_comments, format_separator_with_comments,
-    format_token, format_token_before_relocated_trailing_comments, format_token_with_comments,
-    format_trailing_comments_before_line_break, trailing_comments_force_line,
+    format_dangling_comments, format_line_start_construct, format_removed_comments,
+    format_separator_with_comments, format_token, format_token_before_relocated_trailing_comments,
+    format_token_with_comments, format_trailing_comments_before_line_break,
+    trailing_comments_force_line,
 };
 use crate::helpers::recovery::{JavaFormatField, format_malformed, resolve_required_field};
 use crate::rules::annotations::format_annotation;
@@ -35,7 +36,7 @@ mod simple;
 mod switches;
 mod try_resources;
 
-pub(crate) use blocks::{format_block, format_block_statement_item, format_line_start_block};
+pub(crate) use blocks::{format_block, format_block_statement_item};
 use control_flow::{
     format_do_statement, format_for_statement, format_if_statement, format_synchronized_statement,
     format_while_statement,
@@ -55,7 +56,7 @@ fn format_statement<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match statement {
-        Statement::Block(block) => format_line_start_block(block, doc),
+        Statement::Block(block) => format_block(block, doc),
         Statement::EmptyStatement(statement) => format_empty_statement(statement, doc),
         Statement::LabeledStatement(statement) => format_labeled_statement(statement, doc),
         Statement::ExpressionStatement(statement) => format_expression_statement(statement, doc),
@@ -110,7 +111,15 @@ fn statement_body_as_block<'source>(
             None => format_empty_statement(&statement, doc),
         },
         JavaFormatField::Present(statement) => {
-            let body = format_statement(&statement, doc);
+            // The inserted braces put a normalized body on a line of its own;
+            // an unbraced body follows the header separator on the same line.
+            let body = if normalization.is_some() {
+                format_line_start_construct(doc, statement.first_token(), |doc| {
+                    format_statement(&statement, doc)
+                })
+            } else {
+                format_statement(&statement, doc)
+            };
             normalization.map_or_else(
                 || body,
                 |normalization| inserted_braced_body(doc, Some(body), normalization.braces),

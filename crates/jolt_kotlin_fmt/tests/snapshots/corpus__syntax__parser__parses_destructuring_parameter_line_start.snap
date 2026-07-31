@@ -1,0 +1,21 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun pairSum(
+  first: Int,
+  (a, b): Pair<Int, Int>,
+) = first + a + b
+
+val describe = { (
+    name,
+    age,
+  ) ->
+  "$name is $age"
+}
+
+val collect = { first: Int, (x, y), -> first + x + y }
+
+diagnostics:
+(none)

@@ -8,8 +8,8 @@ use jolt_java_syntax::{
 
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
-    format_construct_leading_comments, format_token, format_token_with_comments,
-    format_token_with_inline_leading_comments,
+    format_construct_leading_comments, format_line_start_construct, format_token,
+    format_token_with_comments, format_token_with_inline_leading_comments,
 };
 use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
@@ -547,7 +547,11 @@ fn format_variable_initializer_split<'source>(
                             .first_token()
                             .is_some_and(|token| !token.leading_comments().is_empty());
                         (
-                            format_variable_initializer_value(value, doc),
+                            // The boundary ahead of a comment-carrying value is
+                            // a hard one, so the value then begins its own line.
+                            format_line_start_construct(doc, value.first_token(), |doc| {
+                                format_variable_initializer_value(value, doc)
+                            }),
                             has_comments,
                             true,
                         )

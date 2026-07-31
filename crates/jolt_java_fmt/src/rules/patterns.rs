@@ -5,7 +5,7 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::format_token_with_comments;
-use crate::helpers::lists::{delimited_comma_list, syntax_comma_list_items};
+use crate::helpers::lists::{delimited_comma_list, delimited_syntax_comma_list_items};
 use crate::helpers::recovery::{
     JavaFormatField, format_malformed, format_optional_field, format_required_field,
     resolve_required_delimiter, resolve_required_field,
@@ -111,7 +111,7 @@ fn format_record_pattern_components<'source>(
     let close = resolve_required_delimiter(pattern.close_paren(), doc);
     let items = match resolve_required_field(pattern.components(), doc) {
         JavaFormatField::Present(components) => {
-            syntax_comma_list_items(doc, components.parts(), |component, doc| {
+            delimited_syntax_comma_list_items(doc, components.parts(), |component, doc| {
                 format_component_pattern(&component, doc)
             })
         }

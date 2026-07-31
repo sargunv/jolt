@@ -5,6 +5,15 @@
 //! decisions are all language-neutral. [`CommentKind::Doc`] already covers both
 //! Javadoc and `KDoc`.
 //!
+//! Leading-comment placement is line-start-aware. A token an enclosing join
+//! registered with [`DocBuilder::with_line_start_leading`] — a body item, a
+//! member, the first element behind an open delimiter — keeps its leading
+//! comments on lines of their own, which is exactly how the reparse reads them
+//! back. Any other token keeps them inline: block comments beside the token,
+//! line comments on a line of their own before it, since a line comment can
+//! never legally sit before its token on one line. Both forms are fixpoints of
+//! format ∘ reparse, which is what makes formatting idempotent.
+//!
 //! Language crates still own comment placement that is specific to their
 //! grammar, such as Java's modifier relocation or Kotlin's semicolon
 //! terminators.
@@ -24,6 +33,9 @@ use crate::{ConcatBuilder, Doc, DocBuilder, LeadingTrivia, TrailingTrivia};
 pub enum InlineLeadingTrivia {
     AfterPreviousToken,
     BeforeToken,
+    /// Padded with a space on each side, matching the way a member-access dot
+    /// boundary renders the dot's trailing comments.
+    BetweenSpaces,
 }
 
 /// Emits byte-order-mark trivia exactly once.
@@ -353,15 +365,19 @@ pub fn has_delimiter_dangling_comments<L: Language>(
 }
 
 /// Formats a list separator, breaking after it when its comments force a line.
+///
+/// A separator is glued to the item before it, so its leading comments take
+/// the previous token's trailing form -- the placement the reparse reads back
+/// identically.
 pub fn format_separator_with_comments<'source, L: Language>(
     doc: &mut DocBuilder<'source>,
     token: &SyntaxToken<'source, L>,
     unforced_break: Doc<'source>,
 ) -> Doc<'source> {
-    let token_doc = format_token(
+    let token_doc = format_token_with_inline_leading_comments(
         doc,
         token,
-        LeadingTrivia::Preserve,
+        InlineLeadingTrivia::AfterPreviousToken,
         TrailingTrivia::BeforeLineBreak,
     );
     let line = if trailing_comments_force_line(token) {
@@ -387,6 +403,12 @@ pub fn format_token<'source, L: Language>(
 ///
 /// Used where a rule replaces the token's own text, such as a normalized
 /// separator.
+///
+/// Preserved leading comments are placed by line-start knowledge: a token the
+/// enclosing join registered with [`DocBuilder::with_line_start_leading`]
+/// keeps them on lines of their own, while any other token keeps them inline
+/// beside it, the only placement the reparse reads back identically for a
+/// token that does not statically begin its line.
 pub fn format_token_body<'source, L: Language>(
     doc: &mut DocBuilder<'source>,
     token: &SyntaxToken<'source, L>,
@@ -397,12 +419,19 @@ pub fn format_token_body<'source, L: Language>(
     if doc.relocates_trailing_trivia(token) {
         trailing = TrailingTrivia::RelocatedToEnclosingContext;
     }
+    let line_start = doc.has_line_start_leading(token);
     format_token_doc(
         doc,
         token_doc,
         leading,
         trailing,
-        |doc| format_leading_comments(doc, token),
+        |doc| {
+            if line_start {
+                format_leading_comments(doc, token)
+            } else {
+                format_inline_leading_comments(doc, token)
+            }
+        },
         |doc| format_trailing_comments(doc, token),
         |doc| format_trailing_comments_before_line_break(doc, token),
         trailing_comments_force_line(token),
@@ -427,53 +456,143 @@ pub fn format_token_with_inline_leading_comments<'source, L: Language>(
     placement: InlineLeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    let leading = token.leading_comments();
-    let leading = if leading.is_empty() {
-        Doc::nil()
-    } else {
-        let mut final_comment_forces_line = false;
-        let comments = doc.concat_list(|comments| {
-            for comment in leading {
-                if !comments.is_empty() {
-                    let separator = if final_comment_forces_line {
-                        comments.hard_line()
-                    } else {
-                        comments.space()
-                    };
-                    comments.push(separator);
-                }
-                final_comment_forces_line = comment_forces_line(&comment);
-                let comment = format_comment(comments, &comment);
-                comments.push(comment);
-            }
-        });
-        match placement {
-            InlineLeadingTrivia::AfterPreviousToken => {
-                let before_comments = doc.space();
-                let after_comments = if final_comment_forces_line {
-                    doc.hard_line()
-                } else {
-                    Doc::nil()
-                };
-                doc.concat([before_comments, comments, after_comments])
-            }
-            InlineLeadingTrivia::BeforeToken => {
-                let after_comments = if final_comment_forces_line {
-                    doc.hard_line()
-                } else {
-                    doc.space()
-                };
-                let comments = doc.concat([comments, after_comments]);
-                if final_comment_forces_line {
-                    doc.comment_prefix(comments)
-                } else {
-                    comments
-                }
-            }
+    let leading = match placement {
+        InlineLeadingTrivia::AfterPreviousToken => {
+            format_inline_leading_comments_after_previous(doc, token)
+        }
+        InlineLeadingTrivia::BeforeToken => format_inline_leading_comments(doc, token),
+        InlineLeadingTrivia::BetweenSpaces => {
+            format_inline_leading_comments_between_spaces(doc, token)
         }
     };
     let token = format_token_after_relocated_leading_comments(doc, token, trailing);
     doc.concat([leading, token])
+}
+
+/// Formats a token's leading comments inline before the token.
+///
+/// Block comments sit beside the token; the reparse reads them as the previous
+/// token's same-line trailing trivia and emits them in the same place again. A
+/// comment that ends its line takes a line of its own instead, because it can
+/// never sit before the token on one line without swallowing the code that
+/// follows it.
+fn format_inline_leading_comments<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    token: &SyntaxToken<'source, L>,
+) -> Doc<'source> {
+    let Some((comments, forces_line)) = inline_leading_comment_run(doc, token) else {
+        return Doc::nil();
+    };
+    let after_comments = if forces_line {
+        doc.hard_line()
+    } else {
+        doc.space()
+    };
+    let comments = doc.concat([comments, after_comments]);
+    if forces_line {
+        doc.comment_prefix(comments)
+    } else {
+        comments
+    }
+}
+
+/// Formats a token's leading comments for hoisting before the group the token
+/// opens.
+///
+/// `AfterPreviousToken` prefixes a space, matching the trailing run of a
+/// previous token the delimiter is glued to; `BeforeToken` relies on the
+/// separator the construct already emitted. The run ends the line when its
+/// final comment forces one. A line comment hoisted this way stays out of the
+/// group's fit, which is what the reparse's trailing-trivia assignment of the
+/// same comments also does.
+pub fn format_leading_comments_before_group<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    token: &SyntaxToken<'source, L>,
+    placement: InlineLeadingTrivia,
+) -> Doc<'source> {
+    let Some((comments, forces_line)) = inline_leading_comment_run(doc, token) else {
+        return Doc::nil();
+    };
+    let before = match placement {
+        InlineLeadingTrivia::AfterPreviousToken | InlineLeadingTrivia::BetweenSpaces => doc.space(),
+        InlineLeadingTrivia::BeforeToken => Doc::nil(),
+    };
+    let after = if forces_line {
+        doc.hard_line()
+    } else {
+        Doc::nil()
+    };
+    doc.concat([before, comments, after])
+}
+
+/// Formats a token's leading comments inline after the previous token.
+fn format_inline_leading_comments_after_previous<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    token: &SyntaxToken<'source, L>,
+) -> Doc<'source> {
+    let Some((comments, forces_line)) = inline_leading_comment_run(doc, token) else {
+        return Doc::nil();
+    };
+    let before_comments = doc.space();
+    let after_comments = if forces_line {
+        doc.hard_line()
+    } else {
+        Doc::nil()
+    };
+    let comments = doc.concat([before_comments, comments, after_comments]);
+    if forces_line {
+        doc.comment_prefix(comments)
+    } else {
+        comments
+    }
+}
+
+/// Formats a token's leading comments with a space on each side, or a hard
+/// line in place of the trailing space when the final comment ends its line.
+fn format_inline_leading_comments_between_spaces<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    token: &SyntaxToken<'source, L>,
+) -> Doc<'source> {
+    let Some((comments, forces_line)) = inline_leading_comment_run(doc, token) else {
+        return Doc::nil();
+    };
+    let before_comments = doc.space();
+    let after_comments = if forces_line {
+        doc.hard_line()
+    } else {
+        doc.space()
+    };
+    doc.concat([before_comments, comments, after_comments])
+}
+
+fn inline_leading_comment_run<'source, L: Language>(
+    doc: &mut DocBuilder<'source>,
+    token: &SyntaxToken<'source, L>,
+) -> Option<(Doc<'source>, bool)> {
+    let leading = token.leading_comments();
+    if leading.is_empty() {
+        return None;
+    }
+    let mut final_comment_forces_line = false;
+    let comments = doc.concat_list(|comments| {
+        for comment in leading {
+            if !comments.is_empty() {
+                let separator = if final_comment_forces_line {
+                    comments.hard_line()
+                } else {
+                    comments.space()
+                };
+                comments.push(separator);
+            }
+            final_comment_forces_line = comment_forces_line(&comment);
+            // The comments sit beside code, so a single-line star block keeps
+            // its line: reflowing it onto three would make the reparse read a
+            // line-forcing comment where the source had none.
+            let comment = format_trailing_comment(comments, &comment);
+            comments.push(comment);
+        }
+    });
+    Some((comments, final_comment_forces_line))
 }
 
 fn format_line_comment<'source>(

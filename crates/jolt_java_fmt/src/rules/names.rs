@@ -6,8 +6,8 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
-    trailing_comments_force_line,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment,
+    format_token, format_token_with_inline_leading_comments, trailing_comments_force_line,
 };
 use crate::helpers::recovery::{
     JavaFormatListPart, format_malformed, format_missing, resolve_list_part,
@@ -186,7 +186,7 @@ fn format_name_parts<'source>(
 ) {
     match name {
         NameSyntax::Name(name) => {
-            push_identifier_doc(name.identifier(), false, multiline, leading, docs);
+            push_identifier_doc(name.identifier(), false, multiline, leading, false, docs);
         }
         NameSyntax::QualifiedName(name) => {
             let first_has_dot = matches!(name.first_dot(), JavaSyntaxField::Present(_));
@@ -197,6 +197,7 @@ fn format_name_parts<'source>(
                         first_has_dot,
                         multiline,
                         leading,
+                        false,
                         docs,
                     );
                 }
@@ -223,6 +224,7 @@ fn format_name_parts<'source>(
                                     followed_by_dot,
                                     multiline,
                                     LeadingTrivia::Preserve,
+                                    true,
                                     docs,
                                 );
                             }
@@ -255,11 +257,12 @@ fn push_identifier_doc<'source>(
     followed_by_dot: bool,
     multiline: bool,
     leading: LeadingTrivia,
+    after_dot: bool,
     docs: &mut jolt_fmt_ir::ConcatBuilder<'_, 'source>,
 ) {
     let formatted = match field {
         JavaSyntaxField::Present(identifier) if multiline => {
-            format_name_segment_identifier(docs, &identifier, followed_by_dot, leading)
+            format_name_segment_identifier(docs, &identifier, followed_by_dot, leading, after_dot)
         }
         JavaSyntaxField::Present(identifier) => {
             format_inline_name_segment_identifier(docs, &identifier, followed_by_dot, leading)
@@ -325,8 +328,19 @@ fn format_name_segment_identifier<'source>(
     identifier: &JavaSyntaxToken<'source>,
     followed_by_dot: bool,
     leading: LeadingTrivia,
+    after_dot: bool,
 ) -> Doc<'source> {
-    let token = format_token(doc, identifier, leading, TrailingTrivia::BeforeLineBreak);
+    // A segment after a dot matches the dot boundary's padded comment form.
+    let token = if after_dot && leading == LeadingTrivia::Preserve {
+        format_token_with_inline_leading_comments(
+            doc,
+            identifier,
+            InlineLeadingTrivia::BetweenSpaces,
+            TrailingTrivia::BeforeLineBreak,
+        )
+    } else {
+        format_token(doc, identifier, leading, TrailingTrivia::BeforeLineBreak)
+    };
     // A following dot brings its own break. The last segment has nothing after
     // it inside the name, so a line comment there would swallow whatever the
     // enclosing construct renders next -- typically a `;`. The boundary

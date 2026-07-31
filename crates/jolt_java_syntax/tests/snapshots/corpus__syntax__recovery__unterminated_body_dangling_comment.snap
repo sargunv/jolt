@@ -1,0 +1,28 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+public @interface UnterminatedAnnotation { // No prefix defined in the annotation itself
+
+syntax:
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    AnnotationInterfaceDeclaration
+      ModifierList
+        PublicKw "public" @ 0..6 trailing=[Whitespace " "]
+      At "@" @ 7..8
+      InterfaceKw "interface" @ 8..17 trailing=[Whitespace " "]
+      Identifier "UnterminatedAnnotation" @ 18..40 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 41..42 trailing=[Whitespace " ", LineComment "// No prefix defined in the annotation itself"]
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+  Eof "" @ 89..89 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=89..89 message="expected `}` after type body"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(89), end: TextSize(89) }) message=expected `}` after type body

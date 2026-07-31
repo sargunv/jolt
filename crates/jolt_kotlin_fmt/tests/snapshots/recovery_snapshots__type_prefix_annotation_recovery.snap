@@ -25,6 +25,8 @@ fun f(x: Any) = when (x) {
 class Following
 
 diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(23) }) message=expected annotation identifier after '@'
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(23) }) message=expected name
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(23) }) message=expected type
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(156), end: TextSize(162) }) message=expected annotation identifier after '@'
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(163), end: TextSize(165) }) message=expected type

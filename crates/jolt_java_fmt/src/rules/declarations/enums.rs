@@ -10,12 +10,13 @@ use super::{
     formatter_ignore_content_range, is_formatter_control_marker, source_braced_body,
 };
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token, format_token_doc,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, format_leading_comments_before_group,
+    format_line_start_construct, format_token, format_token_doc,
 };
 use crate::helpers::recovery::{
-    JavaFormatField, JavaFormatListPart, format_optional_field, format_required_field,
-    present_token, resolve_list_part, resolve_optional_field, resolve_required_delimiter,
-    resolve_required_field,
+    JavaFormatField, JavaFormatListPart, field_is_claim_only, format_optional_field,
+    format_required_field, present_token, resolve_list_part, resolve_optional_field,
+    resolve_required_delimiter, resolve_required_field,
 };
 use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
 use jolt_java_syntax::NormalizedToken;
@@ -57,7 +58,9 @@ pub(super) fn format_enum_body_contents<'source>(
         };
     let has_constants = constants.iter().any(|constant| !constant.is_malformed);
     let has_constant_entries = !constants.is_empty();
-    let resolved_members = resolve_required_field(body.members(), doc);
+    let members_field = body.members();
+    let unterminated_tail = close.is_none() && field_is_claim_only(&members_field);
+    let resolved_members = resolve_required_field(members_field, doc);
     let resolved_has_body_declarations = match &resolved_members {
         JavaFormatField::Present(members) => members.parts().any(|part| match part {
             jolt_java_syntax::JavaSyntaxListPart::Item(
@@ -86,7 +89,6 @@ pub(super) fn format_enum_body_contents<'source>(
     let open_comments = combine_comment_members(doc, open_dangling_comments, semicolon_comments);
     let empty_constant_comments = format_empty_enum_constant_list_comments(constant_list, doc);
     let open_comments = combine_comment_members(doc, open_comments, empty_constant_comments);
-    let close_comments = format_body_close_dangling_comments(close, doc);
     let (members_doc, has_body_declarations) = match resolved_members {
         JavaFormatField::Present(members) => {
             let member_start = body_declaration_separator.map_or_else(
@@ -111,18 +113,29 @@ pub(super) fn format_enum_body_contents<'source>(
                     container,
                     members.parts(),
                     open_comments,
-                    close_comments,
+                    close,
+                    close.is_none(),
                     doc,
                 ),
                 resolved_has_body_declarations,
             )
         }
         JavaFormatField::Malformed(recovery) => {
+            let close_comments = format_body_close_dangling_comments(close, &[], doc);
             let comments = combine_comment_members(doc, open_comments, close_comments)
                 .map(|comments| comments.doc);
-            let recovery = comments.map_or(recovery, |comments| {
-                doc_concat!(doc, [comments, doc.hard_line(), recovery])
-            });
+            // Salvaged comments that are the tail of a body that never closes
+            // cannot stay inside it: the reparse attaches them past the whole
+            // unterminated chain, where they render at the root margin.
+            let recovery = match (comments, unterminated_tail) {
+                (Some(comments), true) => {
+                    doc_concat!(doc, [doc.root_margin(comments), recovery])
+                }
+                (Some(comments), false) => {
+                    doc_concat!(doc, [comments, doc.hard_line(), recovery])
+                }
+                (None, _) => recovery,
+            };
             (
                 crate::helpers::blocks::BodyContent::new(recovery, true, true),
                 true,
@@ -173,7 +186,13 @@ pub(super) fn format_enum_body_contents<'source>(
 
     let contents = match (constants_doc, members_doc) {
         (Some(constants), Some(members)) if members_visible => {
-            Some(doc_concat!(doc, [constants, doc.empty_line(), members]))
+            // A boundary, not a break: constants that render nothing (a
+            // claim-only recovery) must not stack a second blank line on the
+            // body's opening line end.
+            Some(doc_concat!(
+                doc,
+                [constants, doc.empty_line_boundary(), members]
+            ))
         }
         (Some(constants), Some(members)) => Some(doc_concat!(doc, [constants, members])),
         (Some(constants), None) => Some(constants),
@@ -298,7 +317,10 @@ fn enum_constant_entries<'source>(
     for part in parts {
         match resolve_list_part(part, doc) {
             JavaFormatListPart::Item(constant) => entries.push(FormattedEnumConstant {
-                doc: format_enum_constant(&constant, doc),
+                // Each constant begins its own line.
+                doc: format_line_start_construct(doc, constant.first_token(), |doc| {
+                    format_enum_constant(&constant, doc)
+                }),
                 comma: None,
                 is_malformed: false,
             }),
@@ -359,7 +381,13 @@ fn format_enum_constant_separator<'source>(
     doc_concat!(
         doc,
         [
-            format_leading_comments(doc, separator_token),
+            // The separator is glued to the constant before it, so its
+            // leading comments take the previous token's trailing form.
+            format_leading_comments_before_group(
+                doc,
+                separator_token,
+                InlineLeadingTrivia::AfterPreviousToken
+            ),
             if separator_token.text() == separator {
                 format_token(
                     doc,

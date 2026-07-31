@@ -38,6 +38,11 @@ fun labels() {
     consume(this@labels, labeled)
 }
 
+private val iterations = 50_000 * stressTestMultiplier
+
+@get:Rule
+val pool = ExecutorRule(4)
+
 syntax:
 syntax:
 KotlinFile
@@ -345,7 +350,54 @@ KotlinFile
                   LambdaExpressionList
               TerminatorList
           RBrace "}" @ 577..578 leading=[Newline "\n"]
-  Eof "" @ 579..579 leading=[Newline "\n"]
+    PropertyDeclaration
+      ModifierList
+        Identifier "private" @ 580..587 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      ModifierList
+      ValKw "val" @ 588..591 trailing=[Whitespace " "]
+      Name
+        Identifier "iterations" @ 592..602 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 603..604 trailing=[Whitespace " "]
+        BinaryExpression
+          LiteralExpression
+            IntegerLiteral "50_000" @ 605..611 trailing=[Whitespace " "]
+          Star "*" @ 612..613 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "stressTestMultiplier" @ 614..634
+      PropertyBodyMemberList
+    PropertyDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 636..637 leading=[Newline "\n", Newline "\n"]
+          AnnotationUseSiteTarget
+            Identifier "get" @ 637..640
+            Colon ":" @ 640..641
+          QualifiedName
+            QualifiedNameSegmentList
+              Name
+                Identifier "Rule" @ 641..645
+      ModifierList
+      ValKw "val" @ 646..649 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "pool" @ 650..654 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 655..656 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "ExecutorRule" @ 657..669
+          TypeArgumentListList
+          ValueArgumentList
+            LParen "(" @ 669..670
+            ValueArgumentEntryList
+              ValueArgument
+                ValueArgumentPrefixList
+                LiteralExpression
+                  IntegerLiteral "4" @ 670..671
+            RParen ")" @ 671..672
+          LambdaExpressionList
+      PropertyBodyMemberList
+  Eof "" @ 673..673 leading=[Newline "\n"]
 
 diagnostics:
   (none)

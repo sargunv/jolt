@@ -1,10 +1,13 @@
 use super::{
     AssignmentExpression, BinaryExpression, ConditionalExpression, Doc, Expression,
     PostfixExpression, UnaryExpression, casts_patterns::format_instanceof_expression,
-    format_expression, format_token_with_comments,
+    format_expression, format_expression_with_leading_comments, format_token_with_comments,
 };
-use crate::helpers::comments::token_has_comments;
+use crate::helpers::comments::{
+    InlineLeadingTrivia, format_leading_comments_before_group, token_has_comments,
+};
 use crate::helpers::recovery::format_required_field;
+use crate::rules::expressions::LeadingComments;
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{
     AssignmentTargetSyntax, ExpressionParentRole, JavaFamily, JavaNode, JavaOperator,
@@ -252,11 +255,18 @@ pub(super) fn format_unary_expression<'source>(
     let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         format_token_with_comments(doc, &operator)
     });
+    // The operand is glued to its prefix operator, so its first token's
+    // leading comments take the operator's trailing form: emitted here, with
+    // the operand's own first token suppressed to claim them once.
+    let operand_first = present(expression.operand()).and_then(|operand| operand.first_token());
+    let operand_leading = operand_first.map_or_else(Doc::nil, |token| {
+        format_leading_comments_before_group(doc, &token, InlineLeadingTrivia::AfterPreviousToken)
+    });
     let operand = format_required_field(expression.operand(), doc, |operand, doc| {
-        format_expression(&operand, doc)
+        format_expression_with_leading_comments(&operand, LeadingComments::SuppressFirstToken, doc)
     });
     let separator = if needs_space { doc.space() } else { Doc::nil() };
-    doc_concat!(doc, [operator, separator, operand])
+    doc_concat!(doc, [operator, separator, operand_leading, operand])
 }
 
 pub(super) fn format_postfix_expression<'source>(

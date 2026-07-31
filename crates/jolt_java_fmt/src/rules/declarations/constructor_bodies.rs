@@ -2,10 +2,11 @@ use super::{
     BodyItem, ConstructorInvocation, Doc, FormatterIgnoreItemRange, FormatterIgnoreSplice,
     JavaSyntaxToken, for_each_formatter_ignore_splice, format_argument_list,
     format_block_statement_item, format_construct_leading_comments, format_dangling_comments,
-    format_expression, format_name_without_leading_comments, format_removed_comments,
-    format_statement_semicolon, format_token_after_construct_leading_comments,
-    format_token_with_comments, format_type_argument_list_without_leading_comments,
-    formatter_ignore_content_range, formatter_ignore_run_doc, join_body_items,
+    format_expression, format_line_start_construct, format_name_without_leading_comments,
+    format_removed_comments, format_statement_semicolon,
+    format_token_after_construct_leading_comments, format_token_with_comments,
+    format_type_argument_list_without_leading_comments, formatter_ignore_content_range,
+    formatter_ignore_run_doc, join_body_items,
 };
 use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{ConstructorBodyEntry, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView};
@@ -186,8 +187,13 @@ fn format_constructor_body_element<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> BodyItem<'source> {
     match element {
+        // A constructor body element begins its own line. The invocation's own
+        // hoisting owns its first token's leading comments where a qualifier
+        // or type arguments would inline them; registration covers the rest.
         ConstructorBodyElement::Invocation(invocation) => BodyItem::new(
-            format_constructor_invocation(invocation, doc),
+            format_line_start_construct(doc, invocation.first_token(), |doc| {
+                format_constructor_invocation(invocation, doc)
+            }),
             invocation
                 .first_token()
                 .is_some_and(|token| token.has_leading_blank_line()),

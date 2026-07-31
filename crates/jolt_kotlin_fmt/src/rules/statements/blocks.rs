@@ -16,6 +16,7 @@ use crate::helpers::recovery::{
 use jolt_fmt_ir::formatter_ignore::{
     FormatterIgnoreItemRange, FormatterIgnoreRun, FormatterIgnoreSplice,
     for_each_formatter_ignore_splice, formatter_ignore_content_range, formatter_ignore_run_doc,
+    formatter_ignore_runs_claim_boundary_comment,
 };
 
 use super::format_block_item_at_body_boundary;
@@ -62,7 +63,7 @@ fn format_block_contents<'source>(
     if let Some(comments) = format_open_dangling_comments(doc, open) {
         body_items.insert(0, BodyItem::new(comments, BodyItemSeparator::Line));
     }
-    if let Some(comments) = format_close_dangling_comments(doc, close) {
+    if let Some(comments) = format_close_dangling_comments(doc, close, &ignored_runs) {
         // The gap that opens the close brace's leading trivia belongs to that
         // token, so the separator in front of this run reads it from there.
         let separator = BodyItemSeparator::between(
@@ -88,8 +89,12 @@ fn format_open_dangling_comments<'source>(
 fn format_close_dangling_comments<'source>(
     doc: &mut DocBuilder<'source>,
     close: Option<&KotlinSyntaxToken<'source>>,
+    ignored_runs: &[FormatterIgnoreRun<'source>],
 ) -> Option<Doc<'source>> {
-    let comments = close?.leading_comments().collect::<Vec<_>>();
+    let comments = close?
+        .leading_comments()
+        .filter(|comment| !formatter_ignore_runs_claim_boundary_comment(ignored_runs, comment))
+        .collect::<Vec<_>>();
     (!comments.is_empty()).then(|| format_dangling_comments(doc, comments))
 }
 

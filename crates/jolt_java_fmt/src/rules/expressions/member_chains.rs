@@ -6,11 +6,12 @@ use super::calls::{
 use super::leaves::{format_super_expression, format_this_expression};
 use super::operators::format_postfix_expression;
 use super::{
-    Doc, Expression, FieldAccessExpression, JavaSyntaxToken, LeadingComments, LeadingTrivia,
+    Doc, Expression, FieldAccessExpression, JavaSyntaxToken, LeadingComments,
     MethodInvocationExpression, TrailingTrivia, format_argument_list,
-    format_expression_with_leading_comments, format_leading_comments, format_token,
-    format_token_with_comments, format_type_argument_list, trailing_comments_force_line,
+    format_expression_with_leading_comments, format_leading_comments, format_type_argument_list,
+    trailing_comments_force_line,
 };
+use crate::helpers::comments::{InlineLeadingTrivia, format_token_with_inline_leading_comments};
 use crate::helpers::recovery::{format_optional_field, format_required_field};
 use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
 use jolt_java_syntax::{
@@ -40,12 +41,18 @@ pub(super) fn format_postfix_family_expression<'source>(
     };
     // An enclosing construct that already hoisted these comments passes
     // `SuppressFirstToken`; relocating them here as well would emit them twice.
+    // The hoist is an own-line placement, so it applies only when the chain's
+    // first token begins its line; anywhere else the first token's leading
+    // comments take the standard inline placement.
     let relocate_comments = leading_comments == LeadingComments::Preserve
         && matches!(
             current,
             Expression::LiteralExpression(_) | Expression::NameExpression(_)
         )
-        && postfix_parent(current_node).is_some_and(|(parent, _)| is_member_expression(parent));
+        && postfix_parent(current_node).is_some_and(|(parent, _)| is_member_expression(parent))
+        && current
+            .first_token()
+            .is_some_and(|token| doc.has_line_start_leading(&token));
     let mut comments = relocate_comments.then(|| format_expression_leading_comments(&current, doc));
     let base_leading = if relocate_comments {
         LeadingComments::SuppressFirstToken
@@ -363,7 +370,15 @@ fn format_field_access_suffix<'source>(
                 format_member_dot(&dot, doc)
             }),
             format_required_field(access.name(), doc, |name, doc| {
-                format_token_with_comments(doc, &name)
+                // The name follows its dot the way the dot's own trailing
+                // comments follow the dot, so a comment leading the name takes
+                // that same padded form.
+                format_token_with_inline_leading_comments(
+                    doc,
+                    &name,
+                    InlineLeadingTrivia::BetweenSpaces,
+                    TrailingTrivia::Preserve,
+                )
             }),
             format_optional_field(access.type_arguments(), doc, |arguments, doc| {
                 format_type_argument_list(&arguments, doc)
@@ -402,10 +417,12 @@ pub(super) fn format_member_dot<'source>(
     doc_concat!(
         doc,
         [
-            format_token(
+            // The dot is glued to the receiver before it, so its leading
+            // comments take the previous token's trailing form.
+            format_token_with_inline_leading_comments(
                 doc,
                 dot,
-                LeadingTrivia::Preserve,
+                InlineLeadingTrivia::AfterPreviousToken,
                 TrailingTrivia::BeforeLineBreak,
             ),
             if trailing_comments_force_line(dot) {

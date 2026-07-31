@@ -1,0 +1,264 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class SeparatedAnnotations {
+    val product = 5 * factor
+
+    @ Volatile
+    var counter = 0
+
+    @/* a comment is trivia too */JvmField
+    var backing: String = "initial"
+
+    @
+    Volatile
+    var detached = 1
+
+    @ get:Rule
+    val rule = ExecutorRule(4)
+
+    @ [Deprecated("x") Suppress("y")]
+    var multi = 2
+}
+
+val separatedExpression = @ Suppress("x") compute()
+
+syntax:
+syntax:
+KotlinFile
+  AnnotationList
+  KotlinFileItemList
+    ClassDeclaration
+      ModifierList
+      ModifierList
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Name
+        Identifier "SeparatedAnnotations" @ 6..26 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 27..28
+        ClassMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+              ModifierList
+              ValKw "val" @ 33..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "product" @ 37..44 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 45..46 trailing=[Whitespace " "]
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "5" @ 47..48 trailing=[Whitespace " "]
+                  Star "*" @ 49..50 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "factor" @ 51..57
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+                BogusAnnotation
+                  At "@" @ 63..64 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Volatile" @ 65..73
+              ModifierList
+              VarKw "var" @ 78..81 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "counter" @ 82..89 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 90..91 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 92..93
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+                BogusAnnotation
+                  At "@" @ 99..100 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[BlockComment "/* a comment is trivia too */"]
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "JvmField" @ 129..137
+              ModifierList
+              VarKw "var" @ 142..145 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "backing" @ 146..153
+              Colon ":" @ 153..154 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  UserTypeSegmentList
+                    UserTypeSegment
+                      Identifier "String" @ 155..161 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 162..163 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntryList
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 164..165
+                    StringTemplateEntry
+                      RegularStringPart "initial" @ 165..172
+                  ClosingQuote "\"" @ 172..173
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+                BogusAnnotation
+                  At "@" @ 179..180 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Volatile" @ 185..193 leading=[Newline "\n", Whitespace "    "]
+              ModifierList
+              VarKw "var" @ 198..201 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "detached" @ 202..210 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 211..212 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 213..214
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+                BogusAnnotation
+                  At "@" @ 220..221 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  AnnotationUseSiteTarget
+                    Identifier "get" @ 222..225
+                    Colon ":" @ 225..226
+                  QualifiedName
+                    QualifiedNameSegmentList
+                      Name
+                        Identifier "Rule" @ 226..230
+              ModifierList
+              ValKw "val" @ 235..238 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "rule" @ 239..243 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 244..245 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "ExecutorRule" @ 246..258
+                  TypeArgumentListList
+                  ValueArgumentList
+                    LParen "(" @ 258..259
+                    ValueArgumentEntryList
+                      ValueArgument
+                        ValueArgumentPrefixList
+                        LiteralExpression
+                          IntegerLiteral "4" @ 259..260
+                    RParen ")" @ 260..261
+                  LambdaExpressionList
+              PropertyBodyMemberList
+          ClassMemberDeclaration
+            PropertyDeclaration
+              ModifierList
+                BogusAnnotation
+                  At "@" @ 267..268 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LBracket "[" @ 269..270
+                  UnescapedAnnotationList
+                    UnescapedAnnotation
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Deprecated" @ 270..280
+                      AnnotationArgumentList
+                        LParen "(" @ 280..281
+                        ValueArgumentSeparatedList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 281..282
+                                StringTemplateEntry
+                                  RegularStringPart "x" @ 282..283
+                              ClosingQuote "\"" @ 283..284
+                        RParen ")" @ 284..285 trailing=[Whitespace " "]
+                    UnescapedAnnotation
+                      QualifiedName
+                        QualifiedNameSegmentList
+                          Name
+                            Identifier "Suppress" @ 286..294
+                      AnnotationArgumentList
+                        LParen "(" @ 294..295
+                        ValueArgumentSeparatedList
+                          ValueArgument
+                            ValueArgumentPrefixList
+                            StringTemplateExpression
+                              StringTemplateEntryList
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 295..296
+                                StringTemplateEntry
+                                  RegularStringPart "y" @ 296..297
+                              ClosingQuote "\"" @ 297..298
+                        RParen ")" @ 298..299
+                  RBracket "]" @ 299..300
+              ModifierList
+              VarKw "var" @ 305..308 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Name
+                Identifier "multi" @ 309..314 trailing=[Whitespace " "]
+              PropertyInitializer
+                Assign "=" @ 315..316 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "2" @ 317..318
+              PropertyBodyMemberList
+        RBrace "}" @ 319..320 leading=[Newline "\n"]
+    PropertyDeclaration
+      ModifierList
+      ModifierList
+      ValKw "val" @ 322..325 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Name
+        Identifier "separatedExpression" @ 326..345 trailing=[Whitespace " "]
+      PropertyInitializer
+        Assign "=" @ 346..347 trailing=[Whitespace " "]
+        AnnotatedExpression
+          ModifierList
+            BogusAnnotation
+              At "@" @ 348..349 trailing=[Whitespace " "]
+              QualifiedName
+                QualifiedNameSegmentList
+                  Name
+                    Identifier "Suppress" @ 350..358
+              AnnotationArgumentList
+                LParen "(" @ 358..359
+                ValueArgumentSeparatedList
+                  ValueArgument
+                    ValueArgumentPrefixList
+                    StringTemplateExpression
+                      StringTemplateEntryList
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 359..360
+                        StringTemplateEntry
+                          RegularStringPart "x" @ 360..361
+                      ClosingQuote "\"" @ 361..362
+                RParen ")" @ 362..363 trailing=[Whitespace " "]
+          CallExpression
+            NameExpression
+              Identifier "compute" @ 364..371
+            TypeArgumentListList
+            ValueArgumentList
+              LParen "(" @ 371..372
+              ValueArgumentEntryList
+              RParen ")" @ 372..373
+            LambdaExpressionList
+      PropertyBodyMemberList
+  Eof "" @ 374..374 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=65..73 message="expected annotation identifier after '@'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=129..137 message="expected annotation identifier after '@'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=185..193 message="expected annotation identifier after '@'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=222..225 message="expected annotation identifier after '@'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=269..270 message="expected annotation identifier after '@'"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=350..358 message="expected annotation identifier after '@'"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(65), end: TextSize(73) }) message=expected annotation identifier after '@'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(129), end: TextSize(137) }) message=expected annotation identifier after '@'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(185), end: TextSize(193) }) message=expected annotation identifier after '@'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(222), end: TextSize(225) }) message=expected annotation identifier after '@'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(269), end: TextSize(270) }) message=expected annotation identifier after '@'
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(350), end: TextSize(358) }) message=expected annotation identifier after '@'

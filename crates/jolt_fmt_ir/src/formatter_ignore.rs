@@ -98,8 +98,13 @@ pub fn formatter_ignore_runs_claim_boundary_comment<'source>(
         run.range.interior.start().get()
     })
     .is_some_and(|run| {
+        // A run closed by an on marker owns the boundary through that marker;
+        // an unterminated run owns it through the clamped container end. Both
+        // emit the covered comments as part of their verbatim text, so the
+        // boundary comment is theirs exactly once.
+        let claims_boundary = run.ends_with_on_marker() || run.range.unterminated;
         let claim_start = run.range.interior.start().get();
-        run.ends_with_on_marker()
+        claims_boundary
             && claim_start <= comment_range.start().get()
             && comment_range.end().get() <= claim_start + run.range.raw_text_with_on.len()
     })

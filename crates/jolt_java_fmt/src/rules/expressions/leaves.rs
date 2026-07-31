@@ -143,6 +143,12 @@ pub(super) fn format_leaf_token<'source>(
         LeadingComments::SuppressFirstToken => {
             format_token_after_relocated_leading_comments(doc, token, TrailingTrivia::Preserve)
         }
+        LeadingComments::InlineBetweenSpaces => format_token_with_inline_leading_comments(
+            doc,
+            token,
+            InlineLeadingTrivia::BetweenSpaces,
+            TrailingTrivia::Preserve,
+        ),
     }
 }
 
@@ -177,10 +183,12 @@ pub(super) fn format_class_literal_expression<'source>(
                 format_class_literal_dot(&dot, doc)
             }),
             format_required_field(expression.class_keyword(), doc, |token, doc| {
-                format_token(
+                // The keyword follows its dot, whose trailing comments take
+                // the padded form, so a comment leading it matches.
+                format_token_with_inline_leading_comments(
                     doc,
                     &token,
-                    LeadingTrivia::Preserve,
+                    InlineLeadingTrivia::BetweenSpaces,
                     TrailingTrivia::Preserve,
                 )
             }),

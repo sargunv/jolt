@@ -4,9 +4,9 @@ use super::{
     PermitsClause, RecordDeclaration, TrailingTrivia, TypeLeadingComments, attach_comma_separator,
     comma_list, comment_forces_line, delimited_comma_list, format_annotation_interface_body,
     format_class_body, format_construct_leading_comments, format_enum_body_contents,
-    format_interface_body, format_modifier_prefix, format_name, format_record_body,
-    format_record_component, format_token, format_token_with_comments, format_type_parameter_list,
-    format_type_without_leading_comments, source_braced_body,
+    format_interface_body, format_line_start_construct, format_modifier_prefix, format_name,
+    format_record_body, format_record_component, format_token, format_token_with_comments,
+    format_type_parameter_list, format_type_without_leading_comments, source_braced_body,
 };
 use crate::helpers::comments::trailing_comments_force_line;
 use crate::helpers::recovery::{
@@ -318,11 +318,20 @@ fn format_record_components<'source>(
             let parts = components.parts();
             let (lower, _) = parts.size_hint();
             let mut items = Vec::with_capacity(lower);
+            let mut first = true;
             for part in parts {
                 match resolve_list_part(part, doc) {
-                    JavaFormatListPart::Item(component) => items.push(CommaListItem::visible(
-                        format_record_component(&component, doc),
-                    )),
+                    // The first component sits behind the open delimiter, so
+                    // its leading comments keep lines of their own.
+                    JavaFormatListPart::Item(component) => {
+                        let first_token = if first { component.first_token() } else { None };
+                        first = false;
+                        items.push(CommaListItem::visible(format_line_start_construct(
+                            doc,
+                            first_token,
+                            |doc| format_record_component(&component, doc),
+                        )));
+                    }
                     JavaFormatListPart::Separator(comma) => {
                         attach_comma_separator(doc, &mut items, comma);
                     }

@@ -4,9 +4,10 @@ use super::{
     attach_comma_separator, comment_forces_line, delimited_comma_list,
     format_annotation_element_value, format_array_dimensions, format_block,
     format_construct_leading_comments, format_constructor_body, format_formal_parameter,
-    format_modifier_prefix, format_receiver_parameter, format_separator_with_comments,
-    format_statement_semicolon, format_token, format_token_with_comments, format_type,
-    format_type_parameter_list, format_typed_modifier_prefix, source_braced_body,
+    format_line_start_construct, format_modifier_prefix, format_receiver_parameter,
+    format_separator_with_comments, format_statement_semicolon, format_token,
+    format_token_with_comments, format_type, format_type_parameter_list,
+    format_typed_modifier_prefix, source_braced_body,
 };
 use jolt_fmt_ir::DocBuilder;
 
@@ -342,10 +343,15 @@ fn parameter_list_items<'source, 'fmt>(
     let parts = parameters.parts();
     let (lower, _) = parts.size_hint();
     let mut items = Vec::with_capacity(lower);
+    let mut first = true;
     for part in parts {
         match resolve_list_part(part, doc) {
             JavaFormatListPart::Item(item) => {
-                let item_doc = match item {
+                // The first parameter sits behind the open delimiter, so its
+                // leading comments keep lines of their own.
+                let first_token = if first { item.first_token() } else { None };
+                first = false;
+                let item_doc = format_line_start_construct(doc, first_token, |doc| match item {
                     jolt_java_syntax::FormalParameterSyntax::FormalParameter(parameter) => {
                         format_formal_parameter(&parameter, doc)
                     }
@@ -355,7 +361,7 @@ fn parameter_list_items<'source, 'fmt>(
                     jolt_java_syntax::FormalParameterSyntax::BogusFormalParameter(bogus) => {
                         crate::helpers::recovery::format_malformed(&bogus, doc)
                     }
-                };
+                });
                 items.push(CommaListItem::visible(item_doc));
             }
             JavaFormatListPart::Separator(comma) => {

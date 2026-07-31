@@ -465,8 +465,10 @@ syntax/recovery/switch-statement-group.java
 syntax/recovery/top-level-empty-declaration-comments.java
 syntax/recovery/trailing-separator-in-delimited-lists.java
 syntax/recovery/type-annotation-and-parameter-lists.java
+syntax/recovery/unterminated-body-dangling-comment.java
 syntax/recovery/unterminated-comment.java
 syntax/recovery/unterminated-doc-comment.java
+syntax/recovery/unterminated-nested-body-dangling-comment.java
 syntax/recovery/variable-declarators.java
 syntax/recovery/wildcard-bounds-and-type-argument-annotations.java
 trivia/annotations-and-modifiers-crevices.java

@@ -65,8 +65,7 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
     first /* JOLT-TRIVIA:call-arg */
   ) /* JOLT-TRIVIA:binary-left */ + /* JOLT-TRIVIA:binary-plus */
     transform(second))
-    /* JOLT-TRIVIA:before-chain-dot */
-    . /* JOLT-TRIVIA:chain-dot */ trim /* JOLT-TRIVIA:trim-name */()
+    /* JOLT-TRIVIA:before-chain-dot */. /* JOLT-TRIVIA:chain-dot */ trim /* JOLT-TRIVIA:trim-name */()
     ?. /* JOLT-TRIVIA:safe-chain */ ifEmpty /* JOLT-TRIVIA:if-empty-name */ { /* JOLT-TRIVIA:if-empty-open */
       fallback /* JOLT-TRIVIA:if-empty-body */
     }

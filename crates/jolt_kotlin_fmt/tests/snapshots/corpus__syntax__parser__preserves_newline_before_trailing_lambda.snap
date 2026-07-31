@@ -17,10 +17,7 @@ fun nextLineTrailingLambdas() {
   acceptsLambda() // boundary comment
   { println("commented") }
   acceptsLambda()
-  /* leading comment */
-  {
-    println("leading comment")
-  }
+  /* leading comment */ { println("leading comment") }
   acceptsTwo()
   first@{ println("first") }
   second@{ println("second") }

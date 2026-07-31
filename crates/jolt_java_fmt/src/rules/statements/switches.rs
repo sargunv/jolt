@@ -10,6 +10,7 @@ use super::{
     join_body_items,
 };
 use crate::helpers::blocks::BodyItem;
+use crate::helpers::comments::format_line_start_construct;
 use crate::helpers::comments::token_has_comments;
 use crate::helpers::comments::trailing_comments_force_line;
 use crate::helpers::recovery::{
@@ -29,7 +30,11 @@ pub(super) fn format_switch_statement<'source>(
     let close = resolve_required_delimiter(statement.close_paren(), doc);
     let separator = format_statement_header_body_separator(close.source(), doc);
     let selector = match resolve_required_field(statement.selector(), doc) {
-        JavaFormatField::Present(selector) => format_expression(&selector, doc),
+        JavaFormatField::Present(selector) => {
+            format_line_start_construct(doc, selector.first_token(), |doc| {
+                format_expression(&selector, doc)
+            })
+        }
         JavaFormatField::Malformed(malformed) => malformed,
     };
     let open = resolve_required_delimiter(statement.open_paren(), doc);
@@ -72,13 +77,19 @@ pub(crate) fn format_switch_block<'source>(
             let part = resolve_list_part(part, docs);
             let visible = part.is_visible(|item| item.first_token().is_some(), |_| true);
             let entry = match part {
-                JavaFormatListPart::Item(entry) => match entry {
-                    SwitchEntrySyntax::SwitchBlockStatementGroup(group) => {
-                        format_switch_statement_group(&group, docs)
-                    }
-                    SwitchEntrySyntax::SwitchRule(rule) => format_switch_rule(&rule, docs),
-                    SwitchEntrySyntax::BogusSwitchEntry(bogus) => format_malformed(&bogus, docs),
-                },
+                // A switch entry begins its own line, so its first token's
+                // leading comments keep lines of their own.
+                JavaFormatListPart::Item(entry) => {
+                    format_line_start_construct(docs, entry.first_token(), |docs| match entry {
+                        SwitchEntrySyntax::SwitchBlockStatementGroup(group) => {
+                            format_switch_statement_group(&group, docs)
+                        }
+                        SwitchEntrySyntax::SwitchRule(rule) => format_switch_rule(&rule, docs),
+                        SwitchEntrySyntax::BogusSwitchEntry(bogus) => {
+                            format_malformed(&bogus, docs)
+                        }
+                    })
+                }
                 JavaFormatListPart::Recovery(malformed) => malformed.doc(),
                 JavaFormatListPart::Separator(separator) => {
                     docs.block_on_invariant("unseparated switch entry list had a separator");
@@ -199,7 +210,11 @@ fn format_switch_group_labels<'source>(
                         docs.push(previous);
                         has_visible_output |= previous_is_visible;
                     }
-                    let formatted = format_switch_label(&label, docs);
+                    // Each label in a group begins its own line.
+                    let formatted =
+                        format_line_start_construct(docs, label.first_token(), |docs| {
+                            format_switch_label(&label, docs)
+                        });
                     if part_is_visible {
                         label_count += 1;
                         single_label = Some(formatted);
@@ -556,7 +571,11 @@ fn format_guard<'source>(
     let open = resolve_optional_field(guard.open_paren(), doc);
     let close = resolve_optional_field(guard.close_paren(), doc);
     let condition = match resolve_required_field(guard.condition(), doc) {
-        JavaFormatField::Present(value) => format_expression(&value, doc),
+        JavaFormatField::Present(value) => {
+            format_line_start_construct(doc, value.first_token(), |doc| {
+                format_expression(&value, doc)
+            })
+        }
         JavaFormatField::Malformed(value) => value,
     };
     let condition = match (open, close) {

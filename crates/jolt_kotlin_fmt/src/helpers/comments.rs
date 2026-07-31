@@ -4,33 +4,54 @@
 //! module owns only the Kotlin-specific placements: removed semicolon
 //! separators and terminator lists.
 
-use jolt_fmt_ir::{Doc, DocBuilder, InlineLeadingTrivia};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{KotlinRoleElement, KotlinSyntaxToken, TerminatorList};
 use jolt_syntax::RemovalClaim;
 
 use crate::helpers::recovery::{KotlinFormatListPart, resolve_list_part};
 
 pub(crate) use jolt_fmt_ir::{
-    LeadingTrivia, TrailingTrivia, comment_forces_line, format_byte_order_mark, format_comment,
-    format_dangling_comments, format_delimiter_dangling_comments, format_leading_comments,
-    format_removed_comments, format_separator_with_comments, format_token,
-    format_token_after_relocated_leading_comments, format_trailing_comment_list_before_line_break,
-    format_trailing_comments_before_line_break, has_delimiter_dangling_comments,
-    token_has_comments, trailing_comments_force_line,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
+    format_byte_order_mark, format_comment, format_dangling_comments,
+    format_delimiter_dangling_comments, format_leading_comments,
+    format_leading_comments_before_group, format_removed_comments, format_separator_with_comments,
+    format_token, format_token_after_relocated_leading_comments,
+    format_trailing_comment_list_before_line_break, format_trailing_comments_before_line_break,
+    has_delimiter_dangling_comments, token_has_comments, trailing_comments_force_line,
 };
 
-/// Kotlin keeps inline leading comments immediately before their token.
-pub(crate) fn format_token_with_inline_leading_comments<'source>(
+/// Formats a construct whose first token begins its line: the enclosing join
+/// already emitted a hard line boundary in front of it, so the first token's
+/// preserved leading comments keep lines of their own.
+pub(crate) fn format_line_start_construct<'source, T>(
+    doc: &mut DocBuilder<'source>,
+    first_token: Option<KotlinSyntaxToken<'source>>,
+    format: impl FnOnce(&mut DocBuilder<'source>) -> T,
+) -> T {
+    match first_token {
+        Some(token) => doc.with_line_start_leading(&token, format),
+        None => format(doc),
+    }
+}
+
+/// Formats a token glued to the previous token — a navigation operator or a
+/// type colon — placing preserved leading comments in the previous token's
+/// trailing form, the placement the reparse reads back identically.
+pub(crate) fn format_glued_token<'source>(
     doc: &mut DocBuilder<'source>,
     token: &KotlinSyntaxToken<'source>,
+    leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    jolt_fmt_ir::format_token_with_inline_leading_comments(
-        doc,
-        token,
-        InlineLeadingTrivia::BeforeToken,
-        trailing,
-    )
+    match leading {
+        LeadingTrivia::Preserve => jolt_fmt_ir::format_token_with_inline_leading_comments(
+            doc,
+            token,
+            InlineLeadingTrivia::AfterPreviousToken,
+            trailing,
+        ),
+        LeadingTrivia::SuppressAlreadyHandled => format_token(doc, token, leading, trailing),
+    }
 }
 
 pub(crate) fn format_removed_separator<'source>(

@@ -2,8 +2,7 @@ use jolt_fmt_ir::{BodyItemSeparator, Doc, DocBuilder};
 use jolt_java_syntax::{JavaDelimiterSynthesis, SynthesisClaim};
 
 use crate::helpers::comments::{
-    InlineLeadingTrivia, TrailingTrivia, format_token_after_relocated_leading_comments,
-    format_token_with_inline_leading_comments,
+    LeadingTrivia, TrailingTrivia, format_token, format_token_after_relocated_leading_comments,
 };
 use crate::helpers::recovery::JavaFormatDelimiter;
 
@@ -192,21 +191,19 @@ pub(crate) fn join_body_items<'source>(
 }
 
 /// Formats the open brace of a body whose header precedes it on the same line:
-/// a type, anonymous class, enum constant, or constructor body. A comment
-/// leading that brace sits between the header and the brace, so it stays inline
-/// there rather than taking a line of its own -- the same treatment
-/// `format_block_open_brace` gives a method or plain block body. Giving it its
-/// own line instead would flip-flop, because the reparse reads it as a trailing
-/// comment of the header's last token and inlines it on the next pass.
+/// a type, anonymous class, enum constant, or constructor body. Such a brace is
+/// never a join's line-start token, so a comment leading it takes the standard
+/// inline placement and the reparse reads it back as the header's trailing
+/// trivia.
 fn format_source_open_brace<'source>(
     doc: &mut DocBuilder<'source>,
     open: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
     match open {
-        JavaFormatDelimiter::Source(open) => format_token_with_inline_leading_comments(
+        JavaFormatDelimiter::Source(open) => format_token(
             doc,
             &open,
-            InlineLeadingTrivia::BeforeToken,
+            LeadingTrivia::Preserve,
             TrailingTrivia::RelocatedToEnclosingContext,
         ),
         JavaFormatDelimiter::Recovery(recovery) => recovery.doc(),

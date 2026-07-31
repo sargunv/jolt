@@ -11,12 +11,12 @@ pub(crate) use jolt_fmt_ir::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block,
     format_byte_order_mark, format_comment, format_dangling_comments,
     format_delimiter_dangling_comments, format_inline_trailing_comment_list,
-    format_leading_comment_list, format_leading_comments, format_removed_comments,
-    format_separator_with_comments, format_token, format_token_after_relocated_leading_comments,
-    format_token_body as format_token_doc, format_token_with_inline_leading_comments,
-    format_trailing_comment, format_trailing_comments_before_line_break,
-    format_trailing_substitute, has_delimiter_dangling_comments, token_has_comments,
-    trailing_comments_force_line,
+    format_leading_comment_list, format_leading_comments, format_leading_comments_before_group,
+    format_removed_comments, format_separator_with_comments, format_token,
+    format_token_after_relocated_leading_comments, format_token_body as format_token_doc,
+    format_token_with_inline_leading_comments, format_trailing_comment,
+    format_trailing_comments_before_line_break, format_trailing_substitute,
+    has_delimiter_dangling_comments, token_has_comments, trailing_comments_force_line,
 };
 
 pub(crate) fn comments_from_tokens<'source>(
@@ -43,6 +43,20 @@ pub(crate) fn format_construct_leading_comments<'source>(
             .into_iter()
             .flat_map(JavaSyntaxToken::leading_comments),
     )
+}
+
+/// Formats a construct whose first token begins its line: the enclosing join
+/// already emitted a hard line boundary in front of it, so the first token's
+/// preserved leading comments keep lines of their own.
+pub(crate) fn format_line_start_construct<'source, T>(
+    doc: &mut DocBuilder<'source>,
+    first_token: Option<JavaSyntaxToken<'source>>,
+    format: impl FnOnce(&mut DocBuilder<'source>) -> T,
+) -> T {
+    match first_token {
+        Some(token) => doc.with_line_start_leading(&token, format),
+        None => format(doc),
+    }
 }
 
 /// Removes a source token only when syntax issued the exact claim.
