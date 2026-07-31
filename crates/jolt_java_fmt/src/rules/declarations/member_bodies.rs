@@ -150,9 +150,7 @@ fn recovered_member_body<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> BodyContent<'source> {
     // Salvaged open-brace comments that are the tail of a body that never
-    // closes cannot stay inside it: the reparse attaches them past the whole
-    // unterminated chain, where they render at the root margin. Emit them
-    // there directly so the placement is a fixpoint.
+    // closes take the unterminated-tail placement.
     let open = match (unterminated_tail, open) {
         (true, Some(member)) => doc.root_margin(member.doc),
         (_, open) => open.map_or_else(Doc::nil, |member| member.doc),

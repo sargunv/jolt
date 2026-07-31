@@ -345,7 +345,7 @@ fn format_open_delimiter_before_items<'source>(
     match open {
         // A delimited list's open paren or angle bracket is glued to the name
         // before it, so its leading comments take the previous token's
-        // trailing form -- the placement the reparse reads back identically.
+        // trailing form.
         JavaFormatDelimiter::Source(open) => format_source_open_delimiter(
             doc,
             &open,

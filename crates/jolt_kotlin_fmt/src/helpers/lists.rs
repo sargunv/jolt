@@ -286,7 +286,7 @@ fn format_open_delimiter_with_trailing<'source>(
     match open {
         // A delimited list's open paren or angle bracket is glued to the name
         // before it, so its leading comments take the previous token's
-        // trailing form -- the placement the reparse reads back identically.
+        // trailing form.
         KotlinFormatDelimiter::Source(open) => match leading {
             LeadingTrivia::Preserve => jolt_fmt_ir::format_token_with_inline_leading_comments(
                 doc,

@@ -118,7 +118,7 @@ fn format_lambda_parameters<'source>(
     let close = format_optional_field(expression.close_paren(), doc, |token, doc| {
         // A parenthesized parameter list's close paren is glued to the last
         // parameter, so its leading comments take the previous token's
-        // trailing form -- the placement the reparse reads back identically.
+        // trailing form.
         format_token_with_inline_leading_comments(
             doc,
             &token,

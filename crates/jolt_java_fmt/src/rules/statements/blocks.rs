@@ -66,9 +66,7 @@ fn format_block_statements_body<'source>(
         JavaFormatField::Present(statements) => statements,
         JavaFormatField::Malformed(malformed) => {
             // Salvaged open-brace comments that are the tail of a block that
-            // never closes cannot stay inside it: the reparse attaches them
-            // past the whole unterminated chain, where they render at the root
-            // margin. Emit them there directly so the placement is a fixpoint.
+            // never closes take the unterminated-tail placement.
             let unterminated_tail = present_token(block.close_brace()).is_none()
                 && field_is_claim_only(&statements_field);
             let mut items = Vec::new();
@@ -101,9 +99,7 @@ fn format_block_statements_body<'source>(
     };
     let close_item = format_block_close_dangling_comments(block, &runs, doc);
     // Salvaged open-brace comments that are the only visible content of a
-    // block that never closes take the unterminated-tail placement: the
-    // reparse attaches them past the whole unterminated chain, where they
-    // render at the root margin.
+    // block that never closes take the unterminated-tail placement.
     let unterminated_tail = close.is_none() && entry_items.iter().all(|item| !item.visible);
     items.extend(format_block_open_dangling_comments(
         block,

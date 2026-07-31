@@ -125,8 +125,7 @@ pub(super) fn format_enum_body_contents<'source>(
             let comments = combine_comment_members(doc, open_comments, close_comments)
                 .map(|comments| comments.doc);
             // Salvaged comments that are the tail of a body that never closes
-            // cannot stay inside it: the reparse attaches them past the whole
-            // unterminated chain, where they render at the root margin.
+            // take the unterminated-tail placement.
             let recovery = match (comments, unterminated_tail) {
                 (Some(comments), true) => {
                     doc_concat!(doc, [doc.root_margin(comments), recovery])
