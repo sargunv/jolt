@@ -8,7 +8,7 @@ use jolt_java_syntax::{
 };
 use jolt_syntax::{AstNode, ListElement, SyntaxElement};
 
-use super::{parenthesized, with_dangling};
+use super::parenthesized;
 use crate::JavaFormatter;
 use crate::helpers::lists::list_item;
 use crate::rules::types::inline_modifiers;
@@ -117,7 +117,7 @@ pub(crate) fn resource_specification<'a>(
         }
     }
     let inner = f.concat(docs);
-    let inner = with_dangling(f, node.syntax(), inner);
+    let inner = f.with_dangling(node.syntax(), inner);
     let inner = indent![f; f.hard_line(), inner];
     let close = f.token_opt(node.close_paren());
     cat![f; open, inner, f.hard_line(), close]

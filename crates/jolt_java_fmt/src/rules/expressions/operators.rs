@@ -9,7 +9,7 @@ use jolt_syntax::AstNode;
 
 use crate::JavaFormatter;
 use crate::helpers::assignment::assignment_like;
-use crate::helpers::lists::enclosed;
+use crate::helpers::lists::{enclosed, parenthesized};
 
 pub(crate) fn assignment_expression<'a>(
     f: &mut JavaFormatter<'a>,
@@ -73,15 +73,12 @@ pub(crate) fn parenthesized_expression<'a>(
     f: &mut JavaFormatter<'a>,
     node: ParenthesizedExpression<'a>,
 ) -> Doc {
-    let open = f.token_opt(node.open_paren());
     let expression = f.fmt_opt(node.expression());
-    let dangling = f.dangling(node.syntax());
-    let inner = if dangling.is_nil() {
-        expression
-    } else {
-        cat![f; expression, f.hard_line(), dangling]
-    };
-    let inner = indent![f; f.soft_line(), inner];
-    let close = f.token_opt(node.close_paren());
-    group![f; open, inner, f.soft_line(), close]
+    parenthesized(
+        f,
+        node.syntax(),
+        node.open_paren(),
+        expression,
+        node.close_paren(),
+    )
 }

@@ -330,6 +330,18 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         self.builder.concat(docs)
     }
 
+    /// `inner`, then `owner`'s dangling comments on their own lines after it,
+    /// separated by a blank line when the source had one there. `inner`
+    /// alone when there are none, the comments alone when `inner` is NIL.
+    pub fn with_dangling(&mut self, owner: SyntaxNode<'a>, inner: Doc) -> Doc {
+        let dangling = self.dangling(owner);
+        if dangling.is_nil() || inner.is_nil() {
+            return cat![self; inner, dangling];
+        }
+        let line = self.line_or_blank(self.blank_line_before_dangling(owner));
+        cat![self; inner, line, dangling]
+    }
+
     // ── Queries ──
 
     #[must_use]

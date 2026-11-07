@@ -127,3 +127,24 @@ class RemovedSemicolonComments {
   // a second salvaged comment
   ;
 }
+
+class DanglingAfterInnerBlankLines {
+  void method() {
+    if (a
+
+        // after a blank line in a statement header
+        ) {}
+    f(a
+
+        // after a blank line in arguments
+        );
+    x = (a
+
+        // after a blank line in parentheses
+        );
+    x = values[i
+
+        // after a blank line in brackets
+        ];
+  }
+}

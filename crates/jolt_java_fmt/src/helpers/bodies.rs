@@ -33,20 +33,14 @@ pub(crate) fn braced<'a>(
     content: Doc,
     close: Doc,
 ) -> Doc {
-    let dangling = owner.map_or(Doc::NIL, |owner| f.dangling(owner));
-    let mut inner = Vec::with_capacity(4);
-    if !content.is_nil() {
-        inner.extend([f.hard_line(), content]);
-    }
-    if !dangling.is_nil() {
-        let blank =
-            !content.is_nil() && owner.is_some_and(|owner| f.blank_line_before_dangling(owner));
-        inner.extend([if blank { f.empty_line() } else { f.hard_line() }, dangling]);
-    }
-    if inner.is_empty() {
+    let inner = match owner {
+        Some(owner) => f.with_dangling(owner, content),
+        None => content,
+    };
+    if inner.is_nil() {
         return cat![f; open, close];
     }
-    let inner = f.concat(inner);
+    let inner = cat![f; f.hard_line(), inner];
     let inner = f.indent(inner);
     cat![f; open, inner, f.hard_line(), close]
 }

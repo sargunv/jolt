@@ -1,6 +1,6 @@
 //! Delimited comma lists.
 
-use jolt_fmt::{Doc, cat};
+use jolt_fmt::{Doc, cat, group, indent};
 use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
 use crate::JavaFormatter;
@@ -83,17 +83,11 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
             docs.push(f.if_break(comma, Doc::NIL));
         }
     }
-    let dangling = f.dangling(owner);
-    if !dangling.is_nil() {
-        if has_items || trailing_separator {
-            let blank = f.blank_line_before_dangling(owner);
-            docs.push(if blank { f.empty_line() } else { f.hard_line() });
-        }
-        docs.push(dangling);
-    }
+    let items = f.concat(docs);
+    let inner = f.with_dangling(owner, items);
     let open = f.token_opt(open);
     let close = f.token_opt(close);
-    if docs.is_empty() {
+    if inner.is_nil() {
         return cat![f; open, close];
     }
     let line = if layout.padded {
@@ -101,7 +95,6 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     } else {
         f.soft_line()
     };
-    let inner = f.concat(docs);
     let inner = cat![f; line, inner];
     let inner = f.indent(inner);
     let list = cat![f; open, inner, line, close];
@@ -120,16 +113,33 @@ pub(crate) fn enclosed<'a>(
     indent_inner: bool,
 ) -> Doc {
     let open = f.token_opt(open);
-    let dangling = f.dangling(owner);
-    let (inner, before_close) = if dangling.is_nil() {
+    let (inner, before_close) = if f.has_dangling_comments(owner) {
+        let inner = f.with_dangling(owner, inner);
+        (f.indent(inner), f.hard_line())
+    } else {
         let inner = if indent_inner { f.indent(inner) } else { inner };
         (inner, Doc::NIL)
-    } else {
-        let inner = cat![f; inner, f.hard_line(), dangling];
-        (f.indent(inner), f.hard_line())
     };
     let close = f.token_opt(close);
     cat![f; open, inner, before_close, close]
+}
+
+/// `(inner)` that breaks like a call: flat if it fits, otherwise `(` ends the
+/// line, `inner` and `owner`'s dangling comments continue one indent deeper,
+/// and `)` returns to the outer indent. Statement headers and parenthesized
+/// expressions.
+pub(crate) fn parenthesized<'a>(
+    f: &mut JavaFormatter<'a>,
+    owner: SyntaxNode<'a>,
+    open: Option<SyntaxToken<'a>>,
+    inner: Doc,
+    close: Option<SyntaxToken<'a>>,
+) -> Doc {
+    let open = f.token_opt(open);
+    let inner = f.with_dangling(owner, inner);
+    let inner = indent![f; f.soft_line(), inner];
+    let close = f.token_opt(close);
+    group![f; open, inner, f.soft_line(), close]
 }
 
 /// One item of a list: the item, or a bogus node in its place.

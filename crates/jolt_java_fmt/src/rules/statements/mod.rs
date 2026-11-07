@@ -7,11 +7,10 @@ mod jumps;
 mod switches;
 mod tries;
 
-use jolt_fmt::{Doc, ListItem, cat, group, indent};
+use jolt_fmt::ListItem;
 use jolt_java_syntax::{BlockItem, BlockStatementList};
-use jolt_syntax::{AstNode, ListElement, SyntaxNode, SyntaxToken};
+use jolt_syntax::{AstNode, ListElement};
 
-use crate::JavaFormatter;
 use crate::helpers::bodies;
 
 pub(crate) use blocks::{
@@ -38,41 +37,7 @@ pub(crate) use tries::{
     try_with_resources_statement, variable_access,
 };
 
-/// `(inner)` of a statement header: flat if it fits, otherwise `(` ends the
-/// line, `inner` continues one indent deeper, and `)` returns to the
-/// statement's indent. `owner`'s dangling comments print before `)`, each on
-/// its own line.
-fn parenthesized<'a>(
-    f: &mut JavaFormatter<'a>,
-    owner: SyntaxNode<'a>,
-    open: Option<SyntaxToken<'a>>,
-    inner: Doc,
-    close: Option<SyntaxToken<'a>>,
-) -> Doc {
-    let open = f.token_opt(open);
-    let inner = with_dangling(f, owner, inner);
-    let inner = indent![f; f.soft_line(), inner];
-    let close = f.token_opt(close);
-    group![f; open, inner, f.soft_line(), close]
-}
-
-/// `inner` followed by `owner`'s dangling comments on their own lines, with a
-/// blank line before them when the source had one.
-fn with_dangling<'a>(f: &mut JavaFormatter<'a>, owner: SyntaxNode<'a>, inner: Doc) -> Doc {
-    let dangling = f.dangling(owner);
-    if dangling.is_nil() {
-        return inner;
-    }
-    if inner.is_nil() {
-        return dangling;
-    }
-    let line = if f.blank_line_before_dangling(owner) {
-        f.empty_line()
-    } else {
-        f.hard_line()
-    };
-    cat![f; inner, line, dangling]
-}
+pub(crate) use crate::helpers::lists::parenthesized;
 
 /// The statements of a block or switch group as item-list items: every
 /// child of the list, including bogus ones, with empty statements elided
