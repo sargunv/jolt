@@ -312,8 +312,9 @@ impl<'s, L: Language> Parser<'s, L> {
     /// method that forwards here).
     pub fn nested<P: AsMut<Self>, T>(parser: &mut P, parse: impl FnOnce(&mut P) -> T) -> Option<T>;
     /// Bumps tokens up to EOF or, outside the brackets the skipped tokens
-    /// open, a token `stop` accepts. Expression recovery stops at `}` this
-    /// way, so it never swallows the closer of an enclosing block.
+    /// open, a token `stop` accepts. Expression recovery stops at `;` and
+    /// `}` this way, so it never swallows the end of an enclosing statement
+    /// or block.
     pub fn skip_balanced(&mut self, stop: impl Fn(L::Kind) -> bool);
     /// The one deep-nesting recovery. Records a "too deeply nested"
     /// diagnostic and wraps tokens into a single `BOGUS` node until, at
@@ -542,6 +543,14 @@ precedence by token kind, contextual keyword tests, modifier partitioning
   type: `> , ) ] {` plus the `>` compounds; body member: `}`). This single
   function replaces all 13 `parse_excessive_*` functions and their bespoke
   shapes; the result is always one `Bogus` node at a category or list position.
+- No expression contains a `;` or `}` outside the brackets it opened, so
+  expression recovery (`parse_expression_until`) stops at either, and so do the
+  element loops of argument, parameter, annotation-argument and
+  array-initializer lists: an unclosed list ends where its statement, header or
+  body does, with a missing closer, and the next statement parses normally
+  (`f(;` / `g();` is two statements, not one `Bogus` argument that runs to the
+  block's `}`). A parameter list also ends at `{`. A type-body member that is
+  not one (`consume_body_member_fragment`) ends after a `;` or a braced body.
 - Recovery has exactly three representations: an empty required slot (missing),
   a `Bogus` node at a category or list position (unexpected tokens), and a
   `MALFORMED` node whose children did not fit its shape. There is no other.

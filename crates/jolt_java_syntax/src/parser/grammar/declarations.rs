@@ -619,7 +619,12 @@ impl Parser<'_> {
             let mut allow_receiver = true;
             self.parse_comma_separated(
                 "expected parameter",
-                |parser| parser.at(JavaSyntaxKind::RParen),
+                // Without its `)`, the list ends where the body or the
+                // enclosing body does.
+                |parser| {
+                    parser.at_expression_list_close(JavaSyntaxKind::RParen)
+                        || parser.at(JavaSyntaxKind::LBrace)
+                },
                 |parser| {
                     let element = if parser.at(JavaSyntaxKind::Comma) {
                         let bogus = parser.start();
@@ -994,18 +999,22 @@ impl Parser<'_> {
         self.complete(members, JavaSyntaxKind::AnnotationInterfaceBodyMemberList);
     }
 
+    /// Skips one member's worth of tokens: up to and including a `;` or a
+    /// braced body, or up to the body's `}` or a type declaration.
     pub(super) fn consume_body_member_fragment(&mut self) {
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
             if self.at(JavaSyntaxKind::LBrace) {
                 self.consume_balanced_delimited(JavaSyntaxKind::LBrace, JavaSyntaxKind::RBrace);
-            } else if self.at(JavaSyntaxKind::Semicolon) {
-                self.bump();
                 break;
-            } else if self.starts_type_declaration() {
-                break;
-            } else {
-                self.bump();
             }
+            if self.at(JavaSyntaxKind::Semicolon) {
+                self.bump();
+                break;
+            }
+            if self.starts_type_declaration() {
+                break;
+            }
+            self.bump();
         }
     }
 
