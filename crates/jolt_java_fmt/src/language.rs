@@ -197,7 +197,12 @@ fn comment_before_body_brace<'a>(
         return None;
     }
     let header = body.parent()?;
-    if header.first_token() == Some(next) || header.parent().is_none() {
+    // A labeled statement's body starts its own line, so a comment before
+    // its `{` already prints where the next pass reads it.
+    if header.first_token() == Some(next)
+        || header.parent().is_none()
+        || node_kind(header) == K::LabeledStatement
+    {
         return None;
     }
     let layout = if context.comment.kind == CommentKind::Line {

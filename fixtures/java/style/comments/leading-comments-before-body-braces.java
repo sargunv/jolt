@@ -58,3 +58,16 @@ class LineCommentBeforeClassBrace
 {
   int field;
 }
+
+class LabeledBlockBodies {
+  void method() {
+    inline: /* stays before the block on the next line */ {
+      run();
+    }
+    ownLine:
+    /* stays on the block's line */
+    {
+      run();
+    }
+  }
+}
