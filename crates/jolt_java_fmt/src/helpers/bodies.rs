@@ -71,11 +71,11 @@ fn line_or_blank(f: &JavaFormatter<'_>, blank: bool) -> Doc {
 }
 
 /// Members: a blank line between two members, except between two fields,
-/// which keep the source's choice. Comments of a removed `;` lead the next
-/// member.
+/// which keep the source's choice. The comments of a removed `;` keep the
+/// source's choice too.
 pub(crate) fn member_separator<'a>(f: &mut JavaFormatter<'a>, separator: Separator<'a>) -> Doc {
     if is_carrier(separator.prev) {
-        return f.hard_line();
+        return line_or_blank(f, separator.blank_line_in_source);
     }
     let fields =
         kind(separator.prev) == K::FieldDeclaration && kind(separator.next) == K::FieldDeclaration;

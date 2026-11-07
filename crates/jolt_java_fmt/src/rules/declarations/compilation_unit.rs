@@ -131,11 +131,12 @@ fn top_level_separator<'a>(
             _ => f.hard_line(),
         };
     }
-    // A carrier's comments lead whatever follows it, so it is separated
-    // like that item would be.
+    // A carrier is separated from what precedes it like the item after it
+    // would be, and from that item as in the source.
     match (prev, next) {
-        (Some(Role::Carrier { .. }), _) => f.hard_line(),
-        (_, Some(Role::Carrier { last: true })) => line_or_blank(f, blank),
+        (Some(Role::Carrier { .. }), _) | (_, Some(Role::Carrier { last: true })) => {
+            line_or_blank(f, blank)
+        }
         _ => f.empty_line(),
     }
 }

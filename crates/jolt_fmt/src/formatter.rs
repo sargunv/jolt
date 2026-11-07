@@ -159,14 +159,16 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// Every comment attached to or inside `element`, in source order, without
     /// the element's text. NIL when there are none.
     pub fn removed(&mut self, element: SyntaxElement<'a>) -> Doc {
-        let (before, after) = self.removed_parts(element);
+        let (before, after, _) = self.removed_parts(element);
         cat![self; before, after]
     }
 
     /// `removed`, split into the trailing comments that sit before the
     /// element in the source (moved onto it by S1, so they end the previous
-    /// line) and the rest.
-    fn removed_parts(&mut self, element: SyntaxElement<'a>) -> (Doc, Doc) {
+    /// line) and the rest, and whether the source has a blank line after the
+    /// last comment (which, with the element gone, separates the comments
+    /// from what follows).
+    fn removed_parts(&mut self, element: SyntaxElement<'a>) -> (Doc, Doc, bool) {
         let mut indices: Vec<usize> = self
             .comments
             .attached(element, Side::Leading)
@@ -180,6 +182,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         let mut before = Vec::new();
         let mut after = Vec::new();
         let last = indices.last().copied();
+        let blank_after = last.is_some_and(|last| self.comments.list[last].lines_after >= 2);
         for index in indices {
             let (side, layout) = self.comments.attached[index];
             // The last comment has no element left to separate it from.
@@ -197,7 +200,11 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 after.push(doc);
             }
         }
-        (self.builder.concat(before), self.builder.concat(after))
+        (
+            self.builder.concat(before),
+            self.builder.concat(after),
+            blank_after,
+        )
     }
 
     /// The node's source from its first to its last token, interior comments
@@ -434,17 +441,22 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         let mut prev: Option<(SyntaxNode<'a>, Option<usize>)> = None;
         // An elided item vanished since the last emitted one.
         let mut vanished = false;
+        // The previous item was elided and the source has a blank line after
+        // its last comment.
+        let mut blank_after_elided = false;
         for item in items {
             let (node, elide) = match item {
                 ListItem::Format(node) => (node, false),
                 ListItem::Elide(node) => (node, true),
             };
             let region = self.region_of(node);
+            let mut blank_after = false;
             let doc = if region.is_some() {
                 let body = self.verbatim(node);
                 self.node_with(node, body)
             } else if elide {
-                let (before, after) = self.removed_parts(SyntaxElement::Node(node));
+                let (before, after, blank) = self.removed_parts(SyntaxElement::Node(node));
+                blank_after = blank;
                 let doc = if vanished || prev.is_none() {
                     cat![self; before, after]
                 } else {
@@ -460,7 +472,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 self.node(node)
             };
             if let Some((prev_node, prev_region)) = prev {
-                let blank = self.blank_line_before(SyntaxElement::Node(node));
+                let blank = blank_after_elided || self.blank_line_before(SyntaxElement::Node(node));
                 // Items in an ignore region, and the item after one, keep the
                 // source's separation, so the region prints as written.
                 let doc = if prev_region.is_some() {
@@ -480,6 +492,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             docs.push(doc);
             prev = Some((node, region));
             vanished = false;
+            blank_after_elided = blank_after;
         }
         self.builder.concat(docs)
     }
@@ -558,9 +571,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             (Side::Leading, CommentLayout::EndOfLine) => {
                 let hug = self.comments.prev[index].is_some_and(L::hugs_next);
                 let before = if hug { Doc::NIL } else { Doc::SPACE };
-                let hard_line = Doc::HARD_LINE;
+                let after = self.line_or_blank(comment.lines_after >= 2);
                 let text = self.comment_doc(index, false);
-                cat![self; before, text, hard_line]
+                cat![self; before, text, after]
             }
             (Side::Leading, _) => {
                 let hug = self.comments.prev[index].is_some_and(L::hugs_next);

@@ -8,8 +8,8 @@ mod switches;
 mod tries;
 
 use jolt_fmt::{Doc, ListItem, cat, group, indent};
-use jolt_java_syntax::{BlockItem, BlockStatement, BlockStatementList};
-use jolt_syntax::{AstNode, ListElement, SyntaxNode, SyntaxToken, TriviaKind};
+use jolt_java_syntax::{BlockItem, BlockStatementList};
+use jolt_syntax::{AstNode, ListElement, SyntaxNode, SyntaxToken};
 
 use crate::JavaFormatter;
 use crate::helpers::bodies;
@@ -95,40 +95,4 @@ fn statement_items(list: Option<BlockStatementList<'_>>) -> Vec<ListItem<'_>> {
         .collect()
 }
 
-/// Statements: a blank line iff the source had one. After a removed `;`
-/// whose leading comments stand in its place, a blank line between the last
-/// of those comments and the `;` also counts, since nothing else is left to
-/// carry it.
-fn statement_separator<'a>(f: &mut JavaFormatter<'a>, separator: jolt_fmt::Separator<'a>) -> Doc {
-    if blank_after_removed_comments(separator.prev) {
-        f.empty_line()
-    } else {
-        bodies::statement_separator(f, separator)
-    }
-}
-
-/// Whether `node` is a statement holding only an empty statement whose `;`
-/// has a leading comment followed by a blank line.
-fn blank_after_removed_comments(node: SyntaxNode<'_>) -> bool {
-    let semicolon = BlockStatement::cast(node)
-        .and_then(BlockStatement::item)
-        .and_then(|item| match item {
-            BlockItem::EmptyStatement(empty) => empty.semicolon(),
-            _ => None,
-        });
-    let Some(semicolon) = semicolon else {
-        return false;
-    };
-    let mut newlines = None;
-    for piece in semicolon.leading() {
-        match piece.kind {
-            TriviaKind::Newline => newlines = newlines.map(|count| count + 1),
-            TriviaKind::LineComment
-            | TriviaKind::BlockComment
-            | TriviaKind::DocComment
-            | TriviaKind::UnterminatedBlockComment => newlines = Some(0),
-            _ => {}
-        }
-    }
-    newlines.is_some_and(|count| count >= 2)
-}
+use bodies::statement_separator;

@@ -1065,7 +1065,9 @@ build its `Doc` once and reference the handle twice.
   `} // c` then a stray `;`) end the previous item's line: they are printed
   before the separator, unless an item vanished in between. The last comment of
   an elided item, when it is an own-line leading comment, is not followed by its
-  blank line (there is no element left to separate it from).
+  blank line itself; instead a blank line after it in the source counts as a
+  blank line before the next item (`Separator::blank_line_in_source`), so every
+  body keeps the source's blank line there.
 - **Formatter-ignore.** An item (`Format` or `Elide`) whose first token's text
   starts inside an ignore region prints `node_with(item, verbatim(item))`: its
   own leading and trailing comments (including the markers) are formatted
