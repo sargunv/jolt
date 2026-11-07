@@ -1036,7 +1036,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// `reindented(slice, Reindent::Strip(p))` where `p` is the indentation of
     /// the source line the node starts on. Text block literals inside are
     /// emitted as raw `text` pieces between the reindented pieces, so their
-    /// content never changes. Re-indenting relative to the output line (not
+    /// content never changes. A multi-line comment inside with a line that
+    /// does not start with `p` is emitted as `reindented(comment,
+    /// Reindent::Comment)` instead: stripping `p` would shift its lines
+    /// relative to each other. Re-indenting relative to the output line (not
     /// the document indent) is what makes verbatim output a fixpoint even when
     /// the node starts mid-line inside an `indent`. After the slice come the
     /// trailing comments of the elements inside the node that end at its last

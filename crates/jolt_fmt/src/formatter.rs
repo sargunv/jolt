@@ -236,30 +236,46 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         if node.last_token().is_none() || range.is_empty() {
             return Doc::NIL;
         }
-        for index in self.comments.within(range) {
+        let inside = self.comments.within(range);
+        for index in inside.clone() {
             self.emitted[index] += 1;
             self.by_verbatim[index] = true;
         }
         let source = node.source();
         let prefix = line_indentation(source, range.start());
+        // Text blocks are written raw. A multi-line comment with a line that
+        // does not start with the node's indentation, which stripping it
+        // would shift relative to the comment's other lines, is re-indented
+        // as a comment (C13).
+        let mut apart: Vec<(TextRange, Option<Reindent<'a>>)> = node
+            .tokens()
+            .filter(|token| has_line_break(token.text()))
+            .map(|token| (token.text_range(), None))
+            .collect();
+        apart.extend(
+            inside
+                .map(|index| self.comments.list[index])
+                .filter(|comment| !comment.is_unterminated() && lines_outside(comment.text, prefix))
+                .map(|comment| (comment.range, Some(Reindent::Comment))),
+        );
+        apart.sort_unstable_by_key(|(range, _)| range.start());
         let mut docs = Vec::new();
         let mut cursor = range.start();
         let mut started = false;
-        let mut piece = |f: &mut Self, text: &'a str, prefix: Option<&'a str>| {
+        let mut piece = |f: &mut Self, text: &'a str, reindent: Option<Reindent<'a>>| {
             let flags = if started { 0 } else { VERBATIM_START };
             started |= !text.is_empty();
-            f.builder
-                .text_with(text, prefix.map(Reindent::Strip), flags)
+            f.builder.text_with(text, reindent, flags)
         };
-        for token in node.tokens().filter(|token| has_line_break(token.text())) {
-            let token_range = token.text_range();
-            let text = &source[cursor.get()..token_range.start().get()];
-            docs.push(piece(self, text, Some(prefix)));
-            docs.push(piece(self, token.text(), None));
-            cursor = token_range.end();
+        for (span, reindent) in apart {
+            let text = &source[cursor.get()..span.start().get()];
+            docs.push(piece(self, text, Some(Reindent::Strip(prefix))));
+            let text = &source[span.start().get()..span.end().get()];
+            docs.push(piece(self, text, reindent));
+            cursor = span.end();
         }
         let text = &source[cursor.get()..range.end().get()];
-        docs.push(piece(self, text, Some(prefix)));
+        docs.push(piece(self, text, Some(Reindent::Strip(prefix))));
         // Comments attached inside the node but lying outside its text: the
         // node's own formatting would have printed them, before or after.
         let (mut before, mut after) = (Vec::new(), Vec::new());
@@ -663,6 +679,14 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
         self.builder.comment_text(comment.text, 0)
     }
+}
+
+/// Whether a continuation line of a multi-line `text` does not start with
+/// `prefix` (blank lines aside).
+fn lines_outside(text: &str, prefix: &str) -> bool {
+    text.lines()
+        .skip(1)
+        .any(|line| !line.trim().is_empty() && !line.starts_with(prefix))
 }
 
 /// The indentation of the source line containing `offset`.
