@@ -57,15 +57,14 @@ impl Parser<'_> {
             expression = self.complete(error, JavaSyntaxKind::Bogus);
         }
 
-        if !self.at_eof() && !stops.contains(&self.current()) {
+        let stop = |kind| kind == JavaSyntaxKind::RBrace || stops.contains(&kind);
+        if !self.at_eof() && !stop(self.current()) {
             let error = self.precede(expression);
             self.error(
                 codes::INVALID_STATEMENT_EXPRESSION,
                 "unexpected token in statement expression",
             );
-            while !self.at_eof() && !stops.contains(&self.current()) {
-                self.bump();
-            }
+            self.skip_balanced(stop);
             self.complete(error, JavaSyntaxKind::Bogus);
         }
     }
@@ -96,12 +95,12 @@ impl Parser<'_> {
 
         let expression = self.parse_expression();
 
-        if !self.at_eof() && !stops.contains(self.current()) {
+        // A `}` at this level closes an enclosing block or body.
+        let stop = |kind| kind == JavaSyntaxKind::RBrace || stops.contains(kind);
+        if !self.at_eof() && !stop(self.current()) {
             let error = self.precede(expression);
             self.error_unexpected("unexpected token in expression");
-            while !self.at_eof() && !stops.contains(self.current()) {
-                self.bump();
-            }
+            self.skip_balanced(stop);
             self.complete(error, JavaSyntaxKind::Bogus);
         }
     }
@@ -118,12 +117,12 @@ impl Parser<'_> {
 
         let expression = self.parse_assignment_expression_without_leading_lambda();
 
-        if !self.at_eof() && !stops.contains(self.current()) {
+        // A `}` at this level closes an enclosing block or body.
+        let stop = |kind| kind == JavaSyntaxKind::RBrace || stops.contains(kind);
+        if !self.at_eof() && !stop(self.current()) {
             let error = self.precede(expression);
             self.error_unexpected("unexpected token in expression");
-            while !self.at_eof() && !stops.contains(self.current()) {
-                self.bump();
-            }
+            self.skip_balanced(stop);
             self.complete(error, JavaSyntaxKind::Bogus);
         }
     }

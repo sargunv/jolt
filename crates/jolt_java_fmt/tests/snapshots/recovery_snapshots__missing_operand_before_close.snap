@@ -1,0 +1,61 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class MissingOperandBeforeClose {
+  void returns() {
+    return
+    // the operand is missing and the block closes
+  }
+
+  void throwsBlock() {
+    throw
+    /* the operand is missing */
+  }
+
+  void throwsDoc() {
+    throw
+    /** the operand is missing */
+  }
+
+  void returnsTokens() {
+    return a b { c } d
+    // recovery stops at the closing brace
+  }
+}
+
+formatted:
+class MissingOperandBeforeClose {
+  void returns() {
+    return
+    // the operand is missing and the block closes
+  }
+
+  void throwsBlock() {
+    throw
+    /* the operand is missing */
+  }
+
+  void throwsDoc() {
+    throw
+    /**
+     * the operand is missing
+     */
+  }
+
+  void returnsTokens() {
+    return a b { c } d
+    // recovery stops at the closing brace
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax range=117..118 message=expected expression
+code=java.parse.expected_syntax range=117..118 message=expected `;` after return statement
+code=java.parse.expected_syntax range=188..189 message=expected expression
+code=java.parse.expected_syntax range=188..189 message=expected `;` after throw statement
+code=java.parse.expected_syntax range=258..259 message=expected expression
+code=java.parse.expected_syntax range=258..259 message=expected `;` after throw statement
+code=java.parse.unexpected_syntax range=299..300 message=unexpected token in expression
+code=java.parse.expected_syntax range=354..355 message=expected `;` after return statement

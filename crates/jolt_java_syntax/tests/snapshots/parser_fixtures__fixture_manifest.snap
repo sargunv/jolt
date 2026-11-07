@@ -288,6 +288,7 @@ syntax/recovery/malformed-import-without-semicolon.java
 syntax/recovery/member-body-unowned-tokens.java
 syntax/recovery/member-body-with-formatter-ignore.java
 syntax/recovery/method-invocation-without-name.java
+syntax/recovery/missing-operand-before-close.java
 syntax/recovery/missing-type-body-token.java
 syntax/recovery/mixed-line-ending-comment-missing-type.java
 syntax/recovery/modifier-leading-comment-ownership.java

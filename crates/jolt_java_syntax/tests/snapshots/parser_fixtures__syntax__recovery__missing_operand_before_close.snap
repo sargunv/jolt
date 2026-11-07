@@ -1,0 +1,111 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+class MissingOperandBeforeClose {
+  void returns() {
+    return
+    // the operand is missing and the block closes
+  }
+
+  void throwsBlock() {
+    throw
+    /* the operand is missing */
+  }
+
+  void throwsDoc() {
+    throw
+    /** the operand is missing */
+  }
+
+  void returnsTokens() {
+    return a b { c } d
+    // recovery stops at the closing brace
+  }
+}
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "MissingOperandBeforeClose" @ 6..31 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 32..33
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 36..40 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "returns" @ 41..48
+            LParen "(" @ 48..49
+            RParen ")" @ 49..50 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 51..52
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 57..63 leading=[Newline "\n", Whitespace "    "]
+                    Bogus
+              RBrace "}" @ 117..118 leading=[Newline "\n", Whitespace "    ", LineComment "// the operand is missing and the block closes", Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 122..126 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "throwsBlock" @ 127..138
+            LParen "(" @ 138..139
+            RParen ")" @ 139..140 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 141..142
+              BlockStatementList
+                BlockStatement
+                  ThrowStatement
+                    ThrowKw "throw" @ 147..152 leading=[Newline "\n", Whitespace "    "]
+                    Bogus
+              RBrace "}" @ 188..189 leading=[Newline "\n", Whitespace "    ", BlockComment "/* the operand is missing */", Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 193..197 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "throwsDoc" @ 198..207
+            LParen "(" @ 207..208
+            RParen ")" @ 208..209 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 210..211
+              BlockStatementList
+                BlockStatement
+                  ThrowStatement
+                    ThrowKw "throw" @ 216..221 leading=[Newline "\n", Whitespace "    "]
+                    Bogus
+              RBrace "}" @ 258..259 leading=[Newline "\n", Whitespace "    ", DocComment "/** the operand is missing */", Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 263..267 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "returnsTokens" @ 268..281
+            LParen "(" @ 281..282
+            RParen ")" @ 282..283 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 284..285
+              BlockStatementList
+                BlockStatement
+                  ReturnStatement
+                    ReturnKw "return" @ 290..296 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                    Bogus
+                      NameExpression
+                        Identifier "a" @ 297..298 trailing=[Whitespace " "]
+                      Identifier "b" @ 299..300 trailing=[Whitespace " "]
+                      LBrace "{" @ 301..302 trailing=[Whitespace " "]
+                      Identifier "c" @ 303..304 trailing=[Whitespace " "]
+                      RBrace "}" @ 305..306 trailing=[Whitespace " "]
+                      Identifier "d" @ 307..308
+              RBrace "}" @ 354..355 leading=[Newline "\n", Whitespace "    ", LineComment "// recovery stops at the closing brace", Newline "\n", Whitespace "  "]
+        RBrace "}" @ 356..357 leading=[Newline "\n"]
+  Eof "" @ 358..358 leading=[Newline "\n"]
+
+diagnostics:
+code=java.parse.expected_syntax range=117..118 message=expected expression
+code=java.parse.expected_syntax range=117..118 message=expected `;` after return statement
+code=java.parse.expected_syntax range=188..189 message=expected expression
+code=java.parse.expected_syntax range=188..189 message=expected `;` after throw statement
+code=java.parse.expected_syntax range=258..259 message=expected expression
+code=java.parse.expected_syntax range=258..259 message=expected `;` after throw statement
+code=java.parse.unexpected_syntax range=299..300 message=unexpected token in expression
+code=java.parse.expected_syntax range=354..355 message=expected `;` after return statement

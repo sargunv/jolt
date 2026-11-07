@@ -363,25 +363,28 @@ impl<'s, L: Language> Parser<'s, L> {
             L::TOO_DEEP_CODE,
             "syntax is too deeply nested to parse safely",
         );
+        self.skip_balanced(|kind| {
+            stops.contains(L::to_raw(kind)) || L::BRACKETS.iter().any(|&(_, close)| close == kind)
+        });
+        self.complete(marker, L::BOGUS)
+    }
+
+    /// Bumps tokens up to EOF or, outside the brackets the skipped tokens
+    /// open, a token `stop` accepts.
+    pub fn skip_balanced(&mut self, stop: impl Fn(L::Kind) -> bool) {
         let mut depth = 0usize;
         loop {
             let kind = self.current();
-            if kind == L::EOF {
+            if kind == L::EOF || (depth == 0 && stop(kind)) {
                 break;
             }
-            let opens = L::BRACKETS.iter().any(|&(open, _)| open == kind);
-            let closes = L::BRACKETS.iter().any(|&(_, close)| close == kind);
-            if depth == 0 && (closes || stops.contains(L::to_raw(kind))) {
-                break;
-            }
-            if opens {
+            if L::BRACKETS.iter().any(|&(open, _)| open == kind) {
                 depth += 1;
-            } else if closes {
-                depth -= 1;
+            } else if L::BRACKETS.iter().any(|&(_, close)| close == kind) {
+                depth = depth.saturating_sub(1);
             }
             self.bump();
         }
-        self.complete(marker, L::BOGUS)
     }
 
     /// A read-only cursor for speculative lookahead.

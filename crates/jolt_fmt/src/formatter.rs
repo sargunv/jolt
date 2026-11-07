@@ -202,20 +202,20 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
 
     /// The node's source from its first to its last token, interior comments
     /// included, re-indented relative to the output line it starts on. Text
-    /// blocks (multi-line tokens) are written raw.
+    /// blocks (multi-line tokens) are written raw. Comments attached inside
+    /// the node but outside its text (to an empty descendant, to an item that
+    /// begins or ends it, or dangling in it) print before or after it.
     pub fn verbatim(&mut self, node: SyntaxNode<'a>) -> Doc {
         let range = node.text_range();
-        if range.is_empty() {
-            return Doc::NIL;
-        }
-        for index in self.comments.within(range) {
+        let inside = self.comments.within(range);
+        for index in inside.clone() {
             self.emitted[index] += 1;
             self.by_verbatim[index] = true;
         }
-        // Comments attached to descendants that begin or end with the node
-        // (items of a list printed as a unit) lie outside its range.
-        let leading = self.edge_comments(node, Side::Leading);
-        let trailing = self.edge_comments(node, Side::Trailing);
+        let (leading, trailing) = self.outside_comments(node, range, inside);
+        if range.is_empty() {
+            return cat![self; leading, trailing];
+        }
         let source = node.source();
         let prefix = line_indentation(source, range.start());
         let mut docs = vec![leading];
@@ -239,42 +239,52 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         self.builder.concat(docs)
     }
 
-    /// The `side` comments of the descendants of `node` that share its first
-    /// (or last) token, outermost first.
-    fn edge_comments(&mut self, node: SyntaxNode<'a>, side: Side) -> Doc {
-        let edge = match side {
-            Side::Leading => node.first_token(),
-            _ => node.last_token(),
-        };
-        let mut docs = Vec::new();
-        let mut current = node;
-        loop {
-            let child = match side {
-                Side::Leading => current.children().next(),
-                _ => current.children().last(),
-            };
-            let Some(child) = child else { break };
-            let child_edge = match side {
-                Side::Leading => child.first_token(),
-                _ => child.last_token(),
-            };
-            if child_edge != edge {
-                break;
+    /// The comments attached to `node`'s descendants (and dangling in
+    /// `node`) that lie outside its text `range`, split into those before and
+    /// after it. `node`'s own leading and trailing comments are left to
+    /// `node_with`.
+    fn outside_comments(
+        &mut self,
+        node: SyntaxNode<'a>,
+        range: TextRange,
+        inside: std::ops::Range<usize>,
+    ) -> (Doc, Doc) {
+        let mut indices = Vec::new();
+        for element in node.descendants() {
+            if !self.comments.has(element) {
+                continue;
             }
-            let indices: Vec<usize> = self.comments.attached(child, side).collect();
-            for index in indices {
-                let (_, layout) = self.comments.attached[index];
-                docs.push(self.attached_comment(index, side, layout));
-            }
-            match child {
-                SyntaxElement::Node(child) => current = child,
-                SyntaxElement::Token(_) => break,
+            let own = element == SyntaxElement::Node(node);
+            for side in [Side::Leading, Side::Trailing, Side::Dangling] {
+                if own && side != Side::Dangling {
+                    continue;
+                }
+                indices.extend(
+                    self.comments
+                        .attached(element, side)
+                        .filter(|index| !inside.contains(index)),
+                );
             }
         }
-        if side == Side::Trailing {
-            docs.reverse();
+        indices.sort_unstable();
+        let mut before = Vec::new();
+        let mut after = Vec::new();
+        for index in indices {
+            let (side, layout) = self.comments.attached[index];
+            let is_before = self.comments.list[index].range.end() <= range.start();
+            let side = match side {
+                Side::Dangling if is_before => Side::Leading,
+                Side::Dangling => Side::Trailing,
+                side => side,
+            };
+            let doc = self.attached_comment(index, side, layout);
+            if is_before {
+                before.push(doc);
+            } else {
+                after.push(doc);
+            }
         }
-        self.builder.concat(docs)
+        (self.builder.concat(before), self.builder.concat(after))
     }
 
     /// A piece of verbatim output: source re-indented by `prefix`, or a raw
