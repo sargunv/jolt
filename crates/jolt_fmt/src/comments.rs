@@ -58,14 +58,23 @@ pub struct CommentContext<'a, 'p> {
     pub prev: Option<SyntaxToken<'a>>,
     pub next: SyntaxToken<'a>,
     root: SyntaxNode<'a>,
-    unclosed: &'p BitSet,
+    unclosed: &'p Unclosed,
 }
 
 impl<'a> CommentContext<'a, '_> {
     /// [`is_unclosed`], answered from a set computed once per tree.
     #[must_use]
     pub fn is_unclosed(&self, open: SyntaxToken<'_>) -> bool {
-        self.unclosed.contains(open.id().index())
+        self.unclosed.tokens.contains(open.id().index())
+    }
+
+    /// Whether one of `node`'s child tokens up to `token` [`is_unclosed`].
+    #[must_use]
+    pub fn has_unclosed_child_until(&self, node: SyntaxNode<'_>, token: SyntaxToken<'_>) -> bool {
+        self.unclosed
+            .first_in_node
+            .get(node.id().index())
+            .is_some_and(|&first| first <= token.id().index())
     }
 
     /// The deepest node containing both `prev` and `next` (the root when
@@ -107,13 +116,29 @@ pub fn is_unclosed<L: FormatLanguage>(open: SyntaxToken<'_>) -> bool {
     unclosed
 }
 
-/// Every opener under `root` that [`is_unclosed`], in one linear pass.
-fn unclosed_openers<L: FormatLanguage>(root: SyntaxNode<'_>) -> BitSet {
-    let mut unclosed = BitSet::new(root.tree().token_count());
+/// The openers under `root` that are unclosed, and for each node the index
+/// of its first unclosed child token (`usize::MAX` for none; empty when the
+/// tree is recovery-free), found in one linear pass.
+pub(crate) struct Unclosed {
+    tokens: BitSet,
+    first_in_node: Vec<usize>,
+}
+
+fn unclosed_openers<L: FormatLanguage>(root: SyntaxNode<'_>) -> Unclosed {
+    let tree = root.tree();
+    let mut unclosed = Unclosed {
+        tokens: BitSet::new(tree.token_count()),
+        first_in_node: Vec::new(),
+    };
     if !root.is_recovery_free() {
+        unclosed.first_in_node = vec![usize::MAX; tree.node_count()];
         for element in root.descendants() {
             if let SyntaxElement::Node(node) = element {
-                for_each_unclosed::<L>(node, |token| unclosed.insert(token.id().index()));
+                // Reported last to first, so the first one stays.
+                for_each_unclosed::<L>(node, |token| {
+                    unclosed.tokens.insert(token.id().index());
+                    unclosed.first_in_node[node.id().index()] = token.id().index();
+                });
             }
         }
     }

@@ -219,11 +219,7 @@ fn braced_body<'a>(
     }
     let mut node = prev.parent();
     loop {
-        if node
-            .children()
-            .filter_map(SyntaxElement::as_token)
-            .any(|token| token.id() <= prev.id() && context.is_unclosed(token))
-        {
+        if context.has_unclosed_child_until(node, prev) {
             return None;
         }
         if node == header {
