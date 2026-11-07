@@ -650,8 +650,8 @@ pub trait FormatLanguage: Sized + 'static {
 
 A `Doc` is a `u32` handle into one append-only arena per format run. Text is
 always borrowed (`&'a str`: source slices and `&'static` punctuation), so no
-string is allocated during layout. Target node size: 16 bytes; texts live in a
-side table with their precomputed display width (ASCII fast path) and flags.
+string is allocated during layout. Node size: 12 bytes; texts live in a side
+table with their precomputed display width (ASCII fast path) and flags.
 
 | Constructor                     | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -665,9 +665,8 @@ side table with their precomputed display width (ASCII fast path) and flags.
 | `empty_line()`                  | Blank line (two newlines); forces enclosing groups to break.                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `concat([Doc])`                 | Sequence.                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `group(Doc)`                    | Flat if the contents fit, else broken.                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `group_with_id(Doc, GroupId)`   | Same, and records the decision under `GroupId` (allocated by `group_id()`).                                                                                                                                                                                                                                                                                                                                                                                        |
 | `indent(Doc)`                   | One more indentation level for newlines inside.                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `if_break(broken, flat, id)`    | Chooses by the mode of group `id`, or of the enclosing group when `None`.                                                                                                                                                                                                                                                                                                                                                                                          |
+| `if_break(broken, flat)`        | Chooses by the mode of the enclosing group.                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `line_suffix(Doc)`              | Deferred until the next newline (or a non-sticky text; see printer).                                                                                                                                                                                                                                                                                                                                                                                               |
 | `break_parent()`                | Forces every enclosing group to break.                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `will_break(Doc)` (query)       | Whether the doc contains a forced break; a rule may choose a layout from it (qualified names break every segment when a comment forces a break inside).                                                                                                                                                                                                                                                                                                            |
@@ -700,8 +699,8 @@ borrowing the builder: `cat!`, `group!` and `indent!`, each written
 ### Printer
 
 The printer is iterative: a command stack of `(indent, mode, doc)`, a line
-suffix buffer, a `Vec<Mode>` indexed by `GroupId`, and output buffered into
-chunks for the sink. State that replaces the old line modes:
+suffix buffer, and output buffered into chunks for the sink. State that replaces
+the old line modes:
 
 - **Newline coalescing.** A newline request (broken `line`/`soft_line`,
   `hard_line`) sets `pending = max(pending, 1)`; `empty_line` sets
@@ -756,8 +755,6 @@ break further by its own rule. If `fits` treated that text as fitting, the group
 would print flat and a long value could never break. The fresh-line rule is what
 keeps `a ||  // c` / `(b && c)` from breaking the parenthesized operand: its
 group starts with text, so it is measured on the line the comment pushes it to.
-
-An `if_break` whose group id has not been printed yet chooses the flat branch.
 
 Indentation is `indent_width` spaces per level, or one tab per level with
 `use_tabs` (a tab counts `indent_width` columns for fitting).
@@ -1518,7 +1515,7 @@ For an input `S` and output `F = format(S)`:
   `comment_positions.rs`, with oracle checks 1, 3 and 4. It must stay under ten
   seconds in a debug build; the sweep covers everything else.
 - `jolt_java_fmt/tests/deep.rs`: the stack-depth tests (see Deep spines), and a
-  fit-budget test in `jolt_fmt`.
+  fit-budget test in `jolt_fmt` (`printer.rs`).
 - The old `structure_fingerprint.rs`, `trivia_conservation.rs`,
   `comment_positions.rs`, `layout_fit_boundaries.rs`,
   `jolt_java_syntax/tests/normalization.rs`, diagnostic-ownership audits, and
@@ -1558,7 +1555,7 @@ unique to the stage so concurrent runs do not share output directories. Measured
 at integration, and by any area that changes a hot path.
 
 Design levers already in this contract: no per-token comment work without a
-bitset hit; borrowed text only; 16-byte doc nodes with precomputed widths and
+bitset hit; borrowed text only; 12-byte doc nodes with precomputed widths and
 break bits; early sink halt in check mode; no debug-only work in release. If the
 budget is missed, the next levers are reusing the token, node, and doc vectors
 across files on a thread, and profile-guided builds (`tools/pgo.py`).

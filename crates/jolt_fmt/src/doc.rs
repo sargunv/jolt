@@ -27,10 +27,6 @@ impl Doc {
     }
 }
 
-/// Identifies a group whose break decision an [`DocBuilder::if_break`] reads.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct GroupId(u32);
-
 /// How the printer rewrites the continuation lines of a multi-line text.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Reindent<'a> {
@@ -55,13 +51,13 @@ pub(crate) enum Kind {
     EmptyLine,
     BreakParent,
     Concat(u32, u32),
-    Group(Doc, u32),
+    Group(Doc),
     Indent(Doc),
-    IfBreak(Doc, Doc, u32),
+    IfBreak(Doc, Doc),
     LineSuffix(Doc),
 }
 
-const _: () = assert!(size_of::<Kind>() == 16);
+const _: () = assert!(size_of::<Kind>() == 12);
 
 pub(crate) const STICKY: u8 = 1;
 pub(crate) const LINE_COMMENT: u8 = 2;
@@ -86,7 +82,6 @@ pub struct DocBuilder<'a> {
     breaks: Vec<bool>,
     pub(crate) children: Vec<Doc>,
     pub(crate) texts: Vec<Text<'a>>,
-    groups: u32,
 }
 
 impl Default for DocBuilder<'_> {
@@ -124,7 +119,6 @@ impl<'a> DocBuilder<'a> {
             breaks,
             children: Vec::with_capacity(tokens * 3),
             texts: Vec::with_capacity(tokens + tokens / 4),
-            groups: 0,
         }
     }
 
@@ -141,10 +135,6 @@ impl<'a> DocBuilder<'a> {
     #[must_use]
     pub fn will_break(&self, doc: Doc) -> bool {
         self.breaks(doc)
-    }
-
-    pub(crate) const fn group_count(&self) -> usize {
-        self.groups as usize
     }
 
     fn push(&mut self, kind: Kind, breaks: bool) -> Doc {
@@ -291,19 +281,7 @@ impl<'a> DocBuilder<'a> {
             return doc;
         }
         let breaks = self.breaks(doc);
-        self.push(Kind::Group(doc, 0), breaks)
-    }
-
-    /// A new group id for [`Self::group_with_id`].
-    pub fn group_id(&mut self) -> GroupId {
-        self.groups += 1;
-        GroupId(self.groups)
-    }
-
-    /// A group whose decision is recorded under `id`.
-    pub fn group_with_id(&mut self, doc: Doc, id: GroupId) -> Doc {
-        let breaks = self.breaks(doc);
-        self.push(Kind::Group(doc, id.0), breaks)
+        self.push(Kind::Group(doc), breaks)
     }
 
     /// One more indentation level for newlines inside.
@@ -315,11 +293,10 @@ impl<'a> DocBuilder<'a> {
         self.push(Kind::Indent(doc), breaks)
     }
 
-    /// `broken` or `flat` by the mode of group `id`, or of the enclosing
-    /// group when `None`. A group not printed yet counts as flat.
-    pub fn if_break(&mut self, broken: Doc, flat: Doc, id: Option<GroupId>) -> Doc {
+    /// `broken` or `flat` by the mode of the enclosing group.
+    pub fn if_break(&mut self, broken: Doc, flat: Doc) -> Doc {
         let breaks = self.breaks(flat);
-        self.push(Kind::IfBreak(broken, flat, id.map_or(0, |id| id.0)), breaks)
+        self.push(Kind::IfBreak(broken, flat), breaks)
     }
 
     /// Deferred until the next newline, or the next text that is not sticky.

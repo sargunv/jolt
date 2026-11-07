@@ -80,7 +80,7 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
             docs.push(f.break_parent());
         } else if !last_commented {
             let comma = f.sticky(",");
-            docs.push(f.if_break(comma, Doc::NIL, None));
+            docs.push(f.if_break(comma, Doc::NIL));
         }
     }
     let dangling = f.dangling(owner);

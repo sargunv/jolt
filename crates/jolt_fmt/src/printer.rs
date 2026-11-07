@@ -10,7 +10,7 @@ use crate::doc::{
 use crate::{Doc, DocBuilder, FormatOptions, Reindent, Sink};
 
 /// The most commands one fit check visits before answering "does not fit".
-pub const FIT_BUDGET: usize = 4096;
+pub(crate) const FIT_BUDGET: usize = 4096;
 
 /// The whitespace verbatim lines lose at their ends: what separates tokens.
 /// (Other Unicode whitespace is a token of its own.)
@@ -58,7 +58,6 @@ struct Printer<'p, 'a, S: Sink + ?Sized> {
     suffixes: Vec<Command>,
     /// The fit check's stack, kept to reuse its allocation.
     fit_stack: Vec<Fit>,
-    group_modes: Vec<Option<Mode>>,
     stack: Vec<Command>,
 }
 
@@ -88,7 +87,6 @@ pub(crate) fn print<S: Sink + ?Sized>(
         joins,
         suffixes: Vec::new(),
         fit_stack: Vec::new(),
-        group_modes: vec![None; docs.group_count() + 1],
         stack: vec![Command {
             indent: 0,
             mode: Mode::Break,
@@ -134,7 +132,7 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                     mode,
                     doc: child,
                 }),
-                Kind::Group(child, id) => {
+                Kind::Group(child) => {
                     let mode = if self.docs.breaks(doc) {
                         Mode::Break
                     } else if mode == Mode::Flat || self.fits(child, indent) {
@@ -142,27 +140,17 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                     } else {
                         Mode::Break
                     };
-                    if id != 0 {
-                        self.group_modes[id as usize] = Some(mode);
-                    }
                     self.stack.push(Command {
                         indent,
                         mode,
                         doc: child,
                     });
                 }
-                Kind::IfBreak(broken, flat, id) => {
-                    let chosen = if id == 0 {
-                        mode
-                    } else {
-                        self.group_modes[id as usize].unwrap_or(Mode::Flat)
-                    };
-                    self.stack.push(Command {
-                        indent,
-                        mode,
-                        doc: if chosen == Mode::Break { broken } else { flat },
-                    });
-                }
+                Kind::IfBreak(broken, flat) => self.stack.push(Command {
+                    indent,
+                    mode,
+                    doc: if mode == Mode::Break { broken } else { flat },
+                }),
                 Kind::LineSuffix(child) => self.suffixes.push(Command {
                     indent,
                     mode,
@@ -455,7 +443,7 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                     indent: entry.indent + 1,
                     ..entry
                 }),
-                Kind::Group(child, _) => {
+                Kind::Group(child) => {
                     let mode = if self.docs.breaks(doc) {
                         Mode::Break
                     } else {
@@ -467,17 +455,10 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                         ..entry
                     });
                 }
-                Kind::IfBreak(broken, flat, id) => {
-                    let chosen = if id == 0 {
-                        mode
-                    } else {
-                        self.group_modes[id as usize].unwrap_or(Mode::Flat)
-                    };
-                    stack.push(Fit {
-                        doc: if chosen == Mode::Break { broken } else { flat },
-                        ..entry
-                    });
-                }
+                Kind::IfBreak(broken, flat) => stack.push(Fit {
+                    doc: if mode == Mode::Break { broken } else { flat },
+                    ..entry
+                }),
                 // The suffix (an end-of-line comment) counts toward the width
                 // of the line it ends, as in the reference.
                 Kind::LineSuffix(child) => {
@@ -509,4 +490,36 @@ fn leading_ws(line: &str) -> &str {
         .find(|ch: char| ch != ' ' && ch != '\t')
         .unwrap_or(line.len());
     &line[..end]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{FIT_BUDGET, print};
+    use crate::{DocBuilder, FormatOptions};
+
+    /// The fit check is bounded: a group whose flat contents take more than
+    /// `FIT_BUDGET` commands breaks, even though it would fit by width.
+    #[test]
+    fn fit_check_gives_up_after_its_budget() {
+        let render = |lines: usize| {
+            let mut docs = DocBuilder::new();
+            let mut parts = vec![docs.text("a")];
+            parts.extend((0..lines).map(|_| docs.soft_line()));
+            parts.push(docs.text("b"));
+            let contents = docs.concat(parts);
+            let root = docs.group(contents);
+            let mut out = String::new();
+            let _ = print(
+                &docs,
+                root,
+                FormatOptions::default(),
+                |_, _| false,
+                true,
+                &mut out,
+            );
+            out
+        };
+        assert_eq!(render(8), "ab\n");
+        assert!(render(FIT_BUDGET).contains("a\n"));
+    }
 }

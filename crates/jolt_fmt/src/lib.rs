@@ -15,9 +15,8 @@ use jolt_syntax::{Language, RawSyntaxKind, SyntaxNode, SyntaxToken, TriviaKind};
 pub use comments::{
     Comment, CommentContext, CommentKind, CommentLayout, Placement, leading_target, trailing_target,
 };
-pub use doc::{Doc, DocBuilder, GroupId, Reindent};
+pub use doc::{Doc, DocBuilder, Reindent};
 pub use formatter::{Formatter, ListItem, Separator};
-pub use printer::FIT_BUDGET;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
