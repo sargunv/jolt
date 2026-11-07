@@ -1,10 +1,9 @@
 # Formatter architecture
 
-This page is the design contract for Jolt's formatter. It describes the target
-architecture the rewrite builds toward: the crates, their public APIs, the core
-data structures and algorithms with their costs, what is deleted, and how the
-work is staged. The Java output it must produce is specified separately in
-[Java style](./java-style.md).
+This page is the design contract for Jolt's formatter. It describes the
+architecture: the crates, their public APIs, the core data structures and
+algorithms with their costs, and what the rewrite deleted. The Java output it
+must produce is specified separately in [Java style](./java-style.md).
 
 Where this page and an implementation disagree, the implementation is wrong or
 this page must be amended in the same change. Where this page explicitly
@@ -174,15 +173,15 @@ pub struct NodeId(u32);
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TokenId(u32); // source order
 
-// Equality is identity: (tree pointer, id). Implemented once on a private
-// `TreeRef<'a>(&'a SyntaxTree)` newtype so the cursors themselves can derive.
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+// Equality and hashing are identity: (tree pointer, id), written by hand
+// because the borrowed source a cursor also carries must not take part.
+#[derive(Clone, Copy)]
 pub struct SyntaxNode<'a> {
     tree: TreeRef<'a>,
     source: &'a str,
     id: NodeId,
 }
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy)]
 pub struct SyntaxToken<'a> {
     tree: TreeRef<'a>,
     source: &'a str,
@@ -294,7 +293,6 @@ impl<'s, L: Language> Parser<'s, L> {
     pub fn nth(&mut self, n: usize) -> L::Kind;
     pub fn nth_text(&mut self, n: usize) -> &'s str;
     pub fn at(&mut self, kind: L::Kind) -> bool;
-    pub fn at_set(&mut self, set: TokenSet) -> bool;
     pub fn bump(&mut self);
     pub fn eat(&mut self, kind: L::Kind) -> bool;
     /// Eats `kind` or records `message` as an `expected` diagnostic at the
@@ -309,8 +307,14 @@ impl<'s, L: Language> Parser<'s, L> {
     pub fn split_current(&mut self, first: L::Kind, rest: L::Kind);
     pub fn loop_guard(&mut self) -> LoopGuard;
     /// Runs `parse` one recursion level deeper, or returns `None` without
-    /// running it when `MAX_DEPTH` (128) levels are active.
-    pub fn nested<T>(&mut self, parse: impl FnOnce(&mut Self) -> T) -> Option<T>;
+    /// running it when `MAX_DEPTH` (128) levels are active. `parser` is the
+    /// parser or a language's wrapper around it (Java's has a `nested`
+    /// method that forwards here).
+    pub fn nested<P: AsMut<Self>, T>(parser: &mut P, parse: impl FnOnce(&mut P) -> T) -> Option<T>;
+    /// Bumps tokens up to EOF or, outside the brackets the skipped tokens
+    /// open, a token `stop` accepts. Expression recovery stops at `}` this
+    /// way, so it never swallows the closer of an enclosing block.
+    pub fn skip_balanced(&mut self, stop: impl Fn(L::Kind) -> bool);
     /// The one deep-nesting recovery. Records a "too deeply nested"
     /// diagnostic and wraps tokens into a single `BOGUS` node until, at
     /// bracket depth zero, a token in `stops` or an unmatched closing
@@ -1141,7 +1145,7 @@ comment multiset catches that.
 ```text
 crates/jolt_java_fmt/
   src/lib.rs                    shared   pub fn format, JavaFormat, type JavaFormatter
-  src/language.rs               shared   impl FormatLanguage: separator/delimiter tables, hooks H1–H5
+  src/language.rs               shared   impl FormatLanguage: separator/delimiter tables, hooks H1–H3, H5 (H4 is in rules/statements/control.rs)
   src/dispatch.rs               shared   total match: node kind → rule function
   src/helpers/mod.rs            shared
   src/helpers/lists.rs          shared   delimited comma lists, one-element delimited nodes, list items
@@ -1191,11 +1195,9 @@ directly. A list kind therefore has a rule function only when some other rule
 formats it as a unit with `f.fmt`; those are exactly the lists in the
 [cross-area contracts](#cross-area-layout-contracts) (`ModifierList`,
 `ParameterModifierList`, `VariableDeclaratorList`, `ArrayDimensions`,
-`AnnotationList`). Every other list kind is laid out by its parent's rule, is
-owned by the parent's area (see the list-kind table in the build plan), and
+`AnnotationList`). Every other list kind is laid out by its parent's rule and
 dispatches to `helpers::lists::unexpected_list`, which `debug_assert!`s and
-formats the children separated by spaces. The foundation fixes this split in
-`dispatch.rs`.
+formats the children separated by spaces (`dispatch.rs`).
 
 ### Java comment hooks
 
@@ -1540,24 +1542,23 @@ For an input `S` and output `F = format(S)`:
   syntax errors are skipped and counted separately (the reference CLI left them
   untouched, and the new CLI refuses them too). The reference set is
   `tools/import/.imports/.jolt-ref/` (`input/`, `old-output/`,
-  `old-output-w100/`, `jolt-old`, `README.md`, `rerun.sh`) and the snapshots at
-  commit `53efc726`. It was captured in `/tmp/jolt-ref-ScpJkX`, which is a tmpfs
-  and does not survive a reboot; the copy under `.imports` is the durable one.
-  `import.py` keeps dot-named entries of `.imports` when it re-imports, and
-  every worktree reaches it through the `.imports` symlink.
+  `old-output-w100/`, `jolt-old`, `bench/`), which `tools/jolt-ref.sh build`
+  recreates from commit `de12e2cb`, and the snapshots at commit `53efc726`.
+  `tools/jolt-ref.sh compare <binary>` counts the files another binary formats
+  differently. `import.py` keeps dot-named entries of `.imports` when it
+  re-imports.
 
 ### Performance
 
 Budget: `jolt format --no-config --check` over
 `tools/import/.imports/.jolt-ref/bench/spring-framework` must not be slower than
 the reference binary `jolt-old` beside it, with default threads and with
-`--threads 1` (hyperfine, as in that directory's `README.md`; the recorded
-baseline was a median wall of 109.5 ms and 1141.8 ms on a 32-core machine).
-Because several agents share the machine, compare against `jolt-old` measured in
-the same session, back to back, on a quiet machine, rather than against the
-recorded numbers. `rerun.sh <binary> <suffix>` reruns everything; pass a suffix
-unique to the stage so concurrent runs do not share output directories. Measured
-at integration, and by any area that changes a hot path.
+`--threads 1`
+(`hyperfine -N -i --warmup 3 --runs 10 '<jolt> format --no-config
+--check bench/spring-framework'`;
+the recorded baseline was a median wall of 109.5 ms and 1141.8 ms on a 32-core
+machine). Compare against `jolt-old` measured back to back on a quiet machine
+rather than against the recorded numbers.
 
 Design levers already in this contract: no per-token comment work without a
 bitset hit; borrowed text only; 12-byte doc nodes with precomputed widths and
@@ -1565,16 +1566,16 @@ break bits; early sink halt in check mode; no debug-only work in release. If the
 budget is missed, the next levers are reusing the token, node, and doc vectors
 across files on a thread, and profile-guided builds (`tools/pgo.py`).
 
-Measured at integration (same session, back to back, machine shared with other
-agents): median wall 107.0 ms against `jolt-old`'s 121.4 ms with default
-threads, and 1.132 s against 1.160 s with `--threads 1` (non-PGO release builds
-of both; the dprint plugin formats the corpus in 0.34 s). Two fixes got there:
-syntax cursors compare and hash by tree and id (the derived impls compared the
-whole source string, which made comment placement scan the file per comparison),
-and check mode halts at the first difference again (the printer hands the sink 1
-KiB chunks). In a single-threaded run over Spring, parsing is about 0.47 s,
-comment placement 0.04 s, document construction 0.48 s and printing 0.20 s;
-document construction (many small allocations in the rules) is the next target.
+Measured at integration (back to back): median wall 107.0 ms against
+`jolt-old`'s 121.4 ms with default threads, and 1.132 s against 1.160 s with
+`--threads 1` (non-PGO release builds of both; the dprint plugin formats the
+corpus in 0.34 s). Two fixes got there: syntax cursors compare and hash by tree
+and id (the derived impls compared the whole source string, which made comment
+placement scan the file per comparison), and check mode halts at the first
+difference again (the printer hands the sink 1 KiB chunks). In a single-threaded
+run over Spring, parsing is about 0.47 s, comment placement 0.04 s, document
+construction 0.48 s and printing 0.20 s; document construction (many small
+allocations in the rules) is the next target.
 
 ## Deleted
 
@@ -1591,13 +1592,14 @@ type parameter on cursors and every hand-written
 `Clone`/`Copy`/`Debug`/`PartialEq` impl for marker types.
 
 `jolt_java_syntax`: `normalization.rs`, `shape.rs`, `schema_audit.rs`,
-`schema.rs` macros (replaced by `java.schema` + `generated.rs`), the
-hand-written projections, `classify`, `as_*`, `partitioned_items` and
-`define_*_projection` macros in `nodes/mod.rs`, `JavaOperator` and
-`JavaOperatorKind` composites, the five composite operator kinds, 27 of the 28
-bogus kinds, `split_token`, all `parse_excessive_*` functions, the diagnostic
-owner/slot arguments at every parser call site, `JavaParseDiagnosticCode`
-`InvalidEventStream`, `structural_diagnostic_owners`, `tests/normalization.rs`.
+`schema.rs` macros (replaced by the schema data in `tests/codegen/schema.rs` and
+the `generated.rs` it produces), the hand-written projections, `classify`,
+`as_*`, `partitioned_items` and `define_*_projection` macros in `nodes/mod.rs`,
+`JavaOperator` and `JavaOperatorKind` composites, the five composite operator
+kinds, 27 of the 28 bogus kinds, `split_token`, all `parse_excessive_*`
+functions, the diagnostic owner/slot arguments at every parser call site,
+`JavaParseDiagnosticCode` `InvalidEventStream`, `structural_diagnostic_owners`,
+`tests/normalization.rs`.
 
 `jolt_java_fmt`: all of `src/` (rewritten), `tests/structure_fingerprint.rs`,
 `tests/trivia_conservation.rs`, `tests/comment_positions.rs`,
@@ -1612,164 +1614,17 @@ relocation state on `DocBuilder`, the nine line modes, `CommentPrefix`,
 formatter-ignore planner and splice sites, recovery `FormatField`/`LayoutDoc`
 plumbing, `RenderError`, invariant blocking (`block_on_invariant`).
 
-## Build plan
+## History
 
-All stages work in their own worktree, commit locally with conventional commits,
-and report honestly. Gates use the current task names.
-
-### (a) Syntax foundation
-
-Scope: `jolt_syntax`, `jolt_java_syntax`, the deletions above for those crates,
-and folding `jolt_text`/`jolt_diagnostics`. The old `jolt_fmt_ir` and
-`jolt_java_fmt` cannot follow the new syntax API: delete both, and temporarily
-remove `jolt_formatter`, `jolt_java_fmt`, `jolt_cli`, `jolt_fmt_dprint` and
-`tools/bench/driver` from the workspace `members` (marked `TEMPORARY`; the
-formatter foundation restores them). Cut `jolt_test_support` down to what the
-syntax tests use (fixture collection, snapshot sections, diagnostics rendering);
-the formatter foundation restores the oracle and sweep from `53efc726`, adapted.
-The old rules stay readable at commit `53efc726` (`git show 53efc726:<path>`),
-which is how later stages consult them.
-
-Gates, run directly (the `mise` check tasks still list the removed crates):
-
-- `cargo clippy --workspace --all-targets -- -D warnings`
-- `cargo nextest run --workspace`
-- the parser snapshot diff, reviewed and explained in the result
-- every corpus file in `tools/import/.imports` parses in release with the same
-  diagnostic count as before
-
-### (b) Formatter foundation
-
-Scope: `jolt_fmt` complete (IR, printer, placement, rules G1–G3 and S1,
-`Formatter`, item lists, formatter-ignore, emission check); `jolt_java_fmt`
-shared files (`lib.rs`, `language.rs` with H1–H3, `dispatch.rs`, `helpers/**`,
-`rules/mod.rs`, tests, examples including `jref`); one file per area with
-**every** rule entry point, each a call to `placeholder`, except these
-exemplars, which must match the reference: `compilation_unit` (item list without
-import sorting), `class_declaration` (without clauses), `class_body`,
-`field_declaration`, `method_declaration` (simple header), `block`,
-`expression_statement`, `return_statement`, `method_invocation_expression`
-(unqualified and simple qualified), `name_expression`, `literal_expression`,
-`argument_list`, `class_type`, `primitive_type`, `modifier_list` (no sorting),
-`formal_parameter`; the `jolt_formatter` facade; minimal call-site updates in
-`jolt_cli`/`jolt_fmt_dprint` and the crate lists in `hk.pkl`; `AGENTS.md`
-invariants updated to this design. Formatter snapshots are **not** accepted in
-this stage; they remain the reference.
-
-This stage lands before the periphery agent branches, so its edits to
-periphery-owned files cannot conflict.
-
-As built, the exemplars also cover import grouping and sorting (N1, with the
-barrier/anchor rules of Java style), `package_declaration`,
-`import_declaration`, `throws_clause`, `block_statement`,
-`local_variable_declaration`, `binary_expression` (iterative chain with N7; N6
-is left to Area C), the member-chain spine walk over qualified calls and field
-accesses, `annotation_list`, `class_type_segment_node`,
-`qualified_name_segment_node`, `qualified_name` (every segment on its own line
-when a comment forces a break), `void_type`, `parameter_modifier_list` and the
-declarator rules. `tools/bench/driver` is not restored: it measured the deleted
-`bench` metrics; the periphery stage decides its future. The hk clippy step now
-runs with `--all-targets`, and the wasm check covers every formatter crate.
-
-Gates:
-
-- `cargo clippy --workspace --all-targets -- -D warnings`
-- `INSTA_FORCE_PASS=1 mise run test` green: every oracle check passes, snapshot
-  mismatches are expected
-- `mise run hunt` green with an empty `KNOWN_OPEN`
-- the stack-depth tests pass
-- `jref` totals recorded in the result as the baseline for the areas
-
-### (c) Rule areas (parallel)
-
-Four agents branch from the formatter-foundation commit, one worktree each. Each
-owns exactly the files below and may create new files only inside its own
-directories. They implement their kinds to match the reference (snapshots and
-`tools/import/.imports/.jolt-ref`) plus the comment behaviour this page defines,
-deleting each `placeholder` call they port.
-
-| Area                           | Owned files                                                                                                                                                               | Node kinds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A, declarations                | `crates/jolt_java_fmt/src/rules/declarations/**`; new fixture files under `fixtures/java/style/{declarations,program,imports,modules,compact-compilation-units}/`         | `CompilationUnit`, `PackageDeclaration`, `ImportDeclaration` (N1), `ModuleDeclaration`, `RequiresDirective`, `ExportsDirective`, `OpensDirective`, `UsesDirective`, `ProvidesDirective` (N3), `ModuleTargetClause`, `ModuleImplementationClause`, `ClassDeclaration`, `RecordDeclaration`, `EnumDeclaration`, `InterfaceDeclaration`, `AnnotationInterfaceDeclaration`, `ExtendsClause`, `ImplementsClause`, `PermitsClause`, `ClassBody`, `InterfaceBody`, `EnumBody`, `RecordBody`, `AnnotationInterfaceBody`, `EmptyDeclaration`, `EnumConstant`, `RecordComponent`, `FieldDeclaration`, `MethodDeclaration`, `ConstructorDeclaration`, `ConstructorBody`, `ConstructorInvocation`, `CompactConstructorDeclaration`, `StaticInitializer`, `InstanceInitializer`, `ThrowsClause`, `AnnotationElementDeclaration`, `DefaultValue`; the parentheses and break-all layout of formal parameter and record component lists (via `delimited`) |
-| B, statements                  | `crates/jolt_java_fmt/src/rules/statements/**`; new fixture files under `fixtures/java/style/statements/`                                                                 | `Block`, `BlockStatement`, `LocalVariableDeclaration`, `LocalClassOrInterfaceDeclaration`, `EmptyStatement`, `LabeledStatement`, `ExpressionStatement`, `IfStatement`, `AssertStatement`, `WhileStatement`, `DoStatement`, `ForStatement`, `BasicForStatement`, `EnhancedForStatement`, `EnhancedForVariable`, `ForInitializer`, `ForUpdate`, brace promotion (N4), `BreakStatement`, `YieldStatement`, `ContinueStatement`, `ReturnStatement`, `ThrowStatement`, `SynchronizedStatement`, `SwitchStatement`, `SwitchExpression`, `SwitchBlock`, `SwitchBlockStatementGroup`, `SwitchRule`, `SwitchLabel`, `CaseConstant`, `CasePattern`, `Guard`, `TryStatement`, `TryWithResourcesStatement`, `CatchClause`, `CatchParameter`, `CatchTypeList`, `FinallyClause`, `ResourceSpecification`, `Resource`, `ResourceVariableDeclaration`, `VariableAccess`                                                                                   |
-| C, expressions                 | `crates/jolt_java_fmt/src/rules/expressions/**`; new fixture files under `fixtures/java/style/{expressions,layout-fit-boundaries,lists}/` and `fixtures/java/properties/` | Every `Expression` category member except `SwitchExpression`: `LiteralExpression`, `NameExpression`, `ThisExpression`, `SuperExpression`, `ParenthesizedExpression`, `ClassLiteralExpression`, `FieldAccessExpression`, `ArrayAccessExpression`, `MethodInvocationExpression`, `QualifiedMethodInvocation`, `UnqualifiedMethodInvocation` (member chains: iterative spine walk), `MethodReferenceExpression`, `ObjectCreationExpression` (anonymous bodies via `f.fmt`), `ArrayCreationExpression`, `DimExpression`, `ArrayInitializer`, `AssignmentExpression`, `ConditionalExpression`, `InstanceofExpression`, `BinaryExpression` (iterative, N6, N7), `UnaryExpression`, `PostfixExpression`, `CastExpression`, `LambdaExpression`, `LambdaParameter` (N6 single-parameter parentheses), `ArgumentList`                                                                                                                               |
-| D, types and declaration parts | `crates/jolt_java_fmt/src/rules/types/**`; new fixture files under `fixtures/java/style/types/` (a new directory)                                                         | `ModifierList` (N2, annotation placement), `ParameterModifierList` (both layouts), `NonSealedModifier`, `Annotation`, `AnnotationArgumentList`, `AnnotationElementValue`, `AnnotationElementValuePair`, `AnnotationElementList`, `AnnotationArrayInitializer`, `TypeParameterList`, `TypeParameter`, `TypeBoundList`, `PrimitiveType`, `VoidType`, `ClassType`, `ClassTypeSegmentNode`, `ArrayType`, `IntersectionType`, `UnionType`, `TypeArgumentList`, `TypeArgument`, `WildcardType`, `ArrayDimensions`, `ArrayDimension`, `AnnotationList`, `Name`, `QualifiedName`, `QualifiedNameSegmentNode`, `FormalParameter`, `ReceiverParameter`, `VariableDeclaratorList`, `VariableDeclarator`, `VariableInitializer`, `TypePattern`, `RecordPattern`, `ComponentPattern`, `MatchAllPattern`                                                                                                                                                |
-
-List kinds without a rule of their own belong to the area of the node that
-iterates them:
-
-| Area | List kinds laid out by the parent's rule                                                                                                                                                                                                                                                                                                                                |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A    | `CompilationUnitItemList`, `ModuleDirectiveList`, `RequiresModifierList`, `ModuleNameList`, `NameList` (permits), `TypeList` (extends, implements, throws), `ClassBodyMemberList`, `InterfaceBodyMemberList`, `RecordBodyMemberList`, `AnnotationInterfaceBodyMemberList`, `EnumConstantList`, `RecordComponentList`, `FormalParameterList`, `ConstructorBodyEntryList` |
-| B    | `BlockStatementList`, `SwitchEntryList`, `SwitchLabelColonList`, `SwitchLabelItemList`, `CatchClauseList`, `ResourceList`, `StatementExpressionList`                                                                                                                                                                                                                    |
-| C    | `ExpressionList`, `DimExpressionList`, `VariableInitializerList`, `LambdaParameterList`, `LambdaModifierList`                                                                                                                                                                                                                                                           |
-| D    | `AnnotationElementArgumentList`, `AnnotationElementValueList`, `TypeParameterSeparatedList`, `TypeArgumentSeparatedList`, `ClassTypeSegmentList`, `NameSegmentDotList`, `TypeAmpList`, `TypeBarList`, `ComponentPatternList`                                                                                                                                            |
-
-No area owns `fixtures/java/style/comments/`, `fixtures/java/trivia/`,
-`fixtures/java/syntax/` or any snapshot; comment behaviour is the foundation's,
-and an area that wants a comment fixture for its kinds adds it to its own
-directory. Two areas never add a file with the same path, because their
-directories are disjoint.
-
-Rules of engagement:
-
-- Do not edit any file you do not own: no shared helper, hook, dispatch, test,
-  snapshot, syntax crate, or another area's rules. If you need a shared helper
-  or hook, write a private version in your own files marked with a
-  `REQUEST(shared)` comment saying what it is, and list it in your result;
-  integration consolidates.
-- The old rule for a kind is at commit `53efc726` under
-  `crates/jolt_java_fmt/src/rules/`; read it for the reference's decisions, but
-  do not port its comment or recovery plumbing.
-- Never accept or edit existing snapshots. Inspect pending diffs for your
-  fixture directories with `cargo insta test -p jolt_java_fmt`, and run
-  `cargo insta reject` before committing. Snapshots for fixtures you add are
-  created at integration.
-
-Gates:
-
-- `cargo clippy --workspace --all-targets -- -D warnings`
-- `INSTA_FORCE_PASS=1 mise run test` green
-- `mise run hunt` green
-- `jref` over the four corpora (`--input`/`--expected` at width 80, and
-  spring-framework at width 100 against `old-output-w100`) and over the snapshot
-  directory, reported against the foundation baseline; mismatches with no
-  placeholder hits are reported as bugs, and mismatches you believe belong to
-  other areas are reported as such
-
-### Periphery (concurrent with (c))
-
-A separate agent owns `crates/jolt_cli`, `crates/jolt_fmt_dprint`, `tools/`,
-`docs/` except `docs/internals/`, `.agents/`, `README.md`, `mise.toml`, `hk.pkl`
-and `.github`, branching from the formatter-foundation commit. It consumes only
-the facade above. It should also add [Java style](./java-style.md) to the docs
-sidebar, and delete `.agents/docs/VISION.md` (it describes a product that does
-not exist) or cut it to what is true; integration then fixes the `AGENTS.md`
-project map to match.
-
-### (d) Integration
-
-Merge A–D and the periphery; consolidate `REQUEST(shared)` helpers; delete
-`helpers/placeholder.rs` and its `jref` reporting; review every snapshot diff
-against the reference and accept only differences listed in Java style's
-"Deliberate changes"; then apply D1 (empty bodies) as its own commit with its
-snapshot updates; run every gate including the performance budget; update
-`AGENTS.md` and this page to what was built.
-
-As built: the areas merged without conflicts. The shared requests became
-`helpers::bodies::braced`, `helpers::lists::{enclosed, list_item}`, the
-trailing-comma policy in `delimited`,
-`types::{inline_modifiers,
-annotation_lines}`,
-`Formatter::has_trailing_line_comment` and hooks H4 and H5.
-`AnnotationElementList` was removed from the schema (annotation argument lists
-hold their element list, annotation interface bodies their member list), which
-made formatter-ignore and comments between `@interface` members work like other
-bodies. The reference diff found and fixed: line-suffix width not counted, the
-fit check counting a space at line start, a parenthesized operand after
-`|| // c` breaking, end-of-line block comments forcing breaks, the declaration
-header group leaving out the return type, the multi-declarator indent, and the
-enum separator comment layout. Every remaining difference from the reference is
+The rewrite was built in stages, each gated on `mise run test`,
+`mise run
+check`, `mise run hunt` and the reference diff: the syntax foundation
+(arena tree, factory, parser infrastructure, schema and generated code), the
+formatter foundation (document IR, printer, comment placement, item lists,
+formatter-ignore, verbatim, the oracle and the sweep), the Java rules in four
+areas (declarations, statements, expressions, types and comments), and
+integration (merging the areas, reviewing every snapshot diff against the
+reference, applying D1). Every remaining difference from the reference is
 classified under Java style's "Deliberate changes".
 
 ## Changes to project invariants
@@ -1793,14 +1648,13 @@ deleted it.
 ## Decisions
 
 Recommended defaults for questions this page would otherwise leave open. Follow
-them unless this page is amended; report any deviation in the stage result.
+them unless this page is amended.
 
 1. **Schema form.** The Java schema is Rust data in the codegen test, not a text
    DSL, so no schema parser exists (see [Schema](#schema-and-generated-code)).
 2. **Reference location.** The normative reference outputs and `jolt-old` live
-   in `tools/import/.imports/.jolt-ref/` (copied from `/tmp/jolt-ref-ScpJkX`,
-   which a reboot erases). Every worktree reaches it through the `.imports`
-   symlink.
+   in `tools/import/.imports/.jolt-ref/`, which `tools/jolt-ref.sh build`
+   recreates.
 3. **Unclosed delimiters.** G1 needs the matching closer. A comment after an
    opener whose closer is missing attaches by the generic rules, usually to
    `Eof`, and prints at the outer indentation. This fixes #222 (the first pass

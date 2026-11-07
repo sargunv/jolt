@@ -8,11 +8,11 @@ Fast, opinionated Java formatter.
   `jolt_cli` (the `jolt` binary) and `jolt_fmt_dprint` (the dprint plugin) use
   only the `jolt_formatter` facade and `jolt_config`, the one definition of the
   user-facing format options.
-- `tools/`: corpus import (`import/import.py`), the profile-guided release build
-  (`pgo.py`), the optimized plugin build (`wasm.sh`), and the benchmark
-  (`bench.py`).
+- `tools/`: corpus import (`import/import.py`), the regression reference
+  (`jolt-ref.sh`), the profile-guided release build (`pgo.py`), the optimized
+  plugin build (`wasm.sh`), and the benchmark (`bench.py`).
 - `docs/internals/formatter.md`: the formatter design contract (crates, APIs,
-  comment model, verification, build plan). Amend it in the same change when an
+  comment model, verification). Amend it in the same change when an
   implementation has to deviate.
 - `docs/internals/java-style.md`: the normative Java output and its deliberate
   changes from the reference.
@@ -23,38 +23,41 @@ Fast, opinionated Java formatter.
 - `mise run test`: run all tests.
 - `mise run test --update`: run tests with `INSTA_UPDATE=always`.
 - `mise run jolt ...`: run the Jolt CLI from local source.
-- `mise run hunt`: sweep the imported corpora (tools/import/.imports) for
-  formatter bugs. Formats every file at several line widths, and with a comment
-  injected at token boundaries in each shape of `PROBE_SHAPES` — on the
-  boundary's own line, so it lands in the previous token's trailing trivia, and
-  on a line of its own, so it lands in the next token's leading trivia — then
-  checks reparse validity, structure/comment conservation, and idempotence.
-  Positions inside a string literal are excluded, since text there is content
-  rather than trivia. Runs in release mode; too slow in debug for the normal
-  test suite. Reports land in `target/hunt/`, capped per failure category. Exits
-  non-zero on any failure category not in `KNOWN_OPEN`, which must stay empty,
-  and on a `KNOWN_OPEN` entry that stops firing. The `jcheck` example re-runs
-  one file, or one probe position for a repro, e.g. `.../File.java:ownline12`.
+- `mise run hunt`: sweep the repository fixtures and the imported corpora
+  (tools/import/.imports) for formatter bugs. Formats every file at several line
+  widths, and with a comment injected at token boundaries in each shape of
+  `PROBE_SHAPES` — on the boundary's own line, so it lands in the previous
+  token's trailing trivia, and on a line of its own, so it lands in the next
+  token's leading trivia — then checks reparse validity, structure, token and
+  comment conservation, and idempotence. The fixtures and the gjf, palantir and
+  prettier inputs up to 4 KiB get every boundary at every width and every
+  one-token deletion; larger files and Spring are sampled. Positions inside a
+  string literal are excluded, since text there is content rather than trivia.
+  Runs in release mode; too slow in debug for the normal test suite. Reports
+  land in `target/hunt/`, capped per failure category. Exits non-zero on any
+  failure category not in `KNOWN_OPEN`, which must stay empty, and on a
+  `KNOWN_OPEN` entry that stops firing. The `jcheck` example re-runs one file,
+  or one variant for a repro, e.g. `.../File.java:ownline12`,
+  `.../File.java:comment3@40` or `.../File.java:delete7`.
 - `mise run jref ...`: compare the formatter with the reference outputs
   (`jref <dir>` checks `format(F) == F` for `.java` files and `.snap`
   `formatted:` sections; `jref --input <in> --expected <out>` checks
   `format(in) == out`). The reference outputs and the reference binary live in
-  `tools/import/.imports/.jolt-ref/` (see its `README.md`); differences from
-  them must be explained by "Deliberate changes" in
-  `docs/internals/java-style.md`.
+  `tools/import/.imports/.jolt-ref/`, which `tools/jolt-ref.sh build` recreates
+  and `tools/jolt-ref.sh compare <binary>` diffs against; differences from them
+  must be explained by "Deliberate changes" in `docs/internals/java-style.md`.
 - `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
   plugin.
-- `mise run bench`: time formatting the Spring corpus with hyperfine
-  (`--compare` adds google-java-format and prettier-java) and write
-  `docs/bench.json`, which the docs show. Rerun it on a quiet machine before
-  committing the numbers.
+- `mise run bench`: time formatting the Spring corpus with hyperfine and print
+  the medians; `mise run bench --compare` adds google-java-format and
+  prettier-java and writes `docs/bench.json`, which the docs show. Rerun it on a
+  quiet machine before committing the numbers.
 - `mise run build:jolt --mode release` and
   `mise run build:dprint-plugin --mode release`: the PGO-built CLI in
   `target/release/jolt` and the optimized, smoke-tested plugin in
   `target/plugin.wasm`.
-- `mise x google-java-format -- google-java-format ...`: run the
-  google-java-format formatter as a useful reference.
-- `mise x oxfmt -- oxfmt ...`: run the oxfmt formatter as a useful reference.
+- `mise x aqua:google/google-java-format -- google-java-format ...`: run the
+  pinned google-java-format as a useful reference.
 
 Run `mise tasks ls --all` for the full task list.
 

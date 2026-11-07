@@ -90,7 +90,7 @@ esac
 '''
 
 [tasks.bench]
-description = "Time format checks on the Spring corpus and write docs/bench.json"
+description = "Time formatting the Spring corpus (with --compare, against other formatters, writing docs/bench.json)"
 usage = 'flag "--compare" help="Also time google-java-format and prettier-java"'
 depends = ["build:jolt --mode release", "build:dprint-plugin --mode release"]
 run = 'python tools/bench.py $([ "${usage_compare:-false}" = "true" ] && printf %s --compare)'

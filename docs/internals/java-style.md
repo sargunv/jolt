@@ -11,12 +11,12 @@ The reference is, in order of precedence:
 1. The formatter snapshots at commit `53efc726`
    (`crates/jolt_java_fmt/tests/snapshots/corpus__*.snap`, the `formatted:`
    section), whose inputs are `fixtures/java/**`.
-2. The reference corpus outputs in `tools/import/.imports/.jolt-ref/` (a durable
-   copy of `/tmp/jolt-ref-ScpJkX`): `old-output/` (line width 80) and
+2. The reference corpus outputs in `tools/import/.imports/.jolt-ref/`, which
+   `tools/jolt-ref.sh build` recreates: `old-output/` (line width 80) and
    `old-output-w100/` (spring-framework at line width 100) for the inputs in
-   `input/`, produced by `jolt-old` at commit `de12e2cb`, whose Java output is
-   identical to `53efc726`. Files with syntax errors were left untouched by
-   `jolt-old` and are not part of the reference.
+   `input/`, produced by `jolt-old` built from commit `de12e2cb`, whose Java
+   output is identical to `53efc726`. Files with syntax errors were left
+   untouched by `jolt-old` and are not part of the reference.
 3. This page, which summarizes 1 and 2 so rules can be written against it.
 
 Where this summary and the reference disagree, the reference wins. Any output

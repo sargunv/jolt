@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""Time formatting the Spring Framework sources with hyperfine and write the
-medians to docs/bench.json, which the docs read.
+"""Time formatting the Spring Framework sources with hyperfine. With
+--compare, which also times google-java-format and prettier-java, write the
+medians to docs/bench.json, which the docs read; without it, only print them,
+so the docs never lose their comparison rows.
 
 Run with `mise run bench`, which builds the release CLI and plugin first.
 Each run formats a fresh copy of the corpus; copying is not timed. Numbers
@@ -75,6 +77,15 @@ def main() -> None:
         subprocess.run(hyperfine, check=True)
         results = json.loads((work / "results.json").read_text())["results"]
 
+    medians = {
+        name: round(result["summary"]["time_wall_clock"]["median"], 4)
+        for name, result in zip(commands, results, strict=True)
+    }
+    if not args.compare:
+        for name, median in medians.items():
+            print(f"{name}: {median} s")
+        print(f"Not writing {OUTPUT.relative_to(ROOT)}: it needs --compare")
+        return
     OUTPUT.write_text(
         json.dumps(
             {
@@ -84,12 +95,7 @@ def main() -> None:
                 "machine": machine(),
                 "commit": capture("git", "rev-parse", "--short", "HEAD"),
                 "date": datetime.date.today().isoformat(),
-                "medianSeconds": {
-                    name: round(
-                        result["summary"]["time_wall_clock"]["median"], 4
-                    )
-                    for name, result in zip(commands, results, strict=True)
-                },
+                "medianSeconds": medians,
             },
             indent=2,
         )
