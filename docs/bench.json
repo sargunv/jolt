@@ -3,13 +3,13 @@
   "files": 9206,
   "bytes": 52549613,
   "machine": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, 32 threads, Linux",
-  "commit": "d9bd36e4",
+  "commit": "cee7e64c",
   "date": "2026-11-07",
   "medianSeconds": {
-    "jolt": 0.1023,
-    "jolt, 1 thread": 1.1068,
-    "jolt (dprint)": 1.9542,
-    "google-java-format": 11.3499,
-    "prettier-java": 26.5364
+    "jolt": 0.0965,
+    "jolt, 1 thread": 1.0959,
+    "jolt (dprint)": 0.3415,
+    "google-java-format": 11.3807,
+    "prettier-java": 26.408
   }
 }
