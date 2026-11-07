@@ -3,6 +3,7 @@
 //! limit, so its recovery is exercised too) on the 1 MiB WASM stack.
 
 use jolt_fmt::FormatOptions;
+use jolt_syntax::MAX_DEPTH;
 use jolt_test_support::check_source;
 
 mod common;
@@ -38,9 +39,14 @@ fn deep_spines_format_on_a_small_stack() {
             suffix.repeat(depth)
         )
     };
+    let chain = format!(
+        "class C {{ void m() {{ if (a) {{}}{} }} int following; }}",
+        " else if (b) {}".repeat(depth)
+    );
     on_stack(
         256 * 1024,
         vec![
+            chain,
             field(" + value"),
             field(".method()"),
             field("[0]"),
@@ -72,6 +78,12 @@ fn deepest_nesting_formats_on_the_wasm_stack() {
             field(nested("new Object() { Object o = ", "; }", "leaf")),
             statement(nested("{ ", " }", "sibling();")),
             statement(nested("if (a) ", "", "b();")),
+            // Brace promotion must not nest the output deeper than the input
+            // (two levels per `if` would pass `MAX_DEPTH`).
+            statement(format!(
+                "{}b();",
+                "if (a) ".repeat(MAX_DEPTH as usize / 2 + 6)
+            )),
             statement(nested("label: ", "", ";")),
             format!(
                 "{} int following; {}",

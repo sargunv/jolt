@@ -16,9 +16,20 @@ const DO_BODY_BOUNDARIES: &[JavaSyntaxKind] = &[
 ];
 
 impl Parser<'_> {
+    /// The body of a control or labeled statement. A block body takes no
+    /// nesting level of its own (its statement already took one), so brace
+    /// promotion never makes the formatted output nest deeper than the input.
     fn parse_required_statement(&mut self, stops: &[JavaSyntaxKind]) {
         if self.at_eof() || stops.contains(&self.current()) {
             self.error_expected("expected statement");
+        } else {
+            self.parse_body_statement();
+        }
+    }
+
+    fn parse_body_statement(&mut self) {
+        if self.at(JavaSyntaxKind::LBrace) {
+            self.parse_block();
         } else {
             self.parse_statement();
         }
@@ -146,15 +157,25 @@ impl Parser<'_> {
         self.complete(statement, JavaSyntaxKind::ExpressionStatement);
     }
 
+    /// An `else if` chain is parsed in a loop and takes one nesting level,
+    /// however long it is (the formatter walks it iteratively too).
     pub(super) fn parse_if_statement(&mut self) {
-        let statement = self.start();
-        self.expect(JavaSyntaxKind::IfKw, "expected `if`");
-        self.parse_parenthesized_expression(
-            "expected `(` before if condition",
-            "expected `)` after if condition",
-        );
-        self.parse_required_statement(STATEMENT_BOUNDARIES);
-        if self.eat(JavaSyntaxKind::ElseKw) {
+        let mut chain = Vec::new();
+        loop {
+            let statement = self.start();
+            chain.push(statement);
+            self.expect(JavaSyntaxKind::IfKw, "expected `if`");
+            self.parse_parenthesized_expression(
+                "expected `(` before if condition",
+                "expected `)` after if condition",
+            );
+            self.parse_required_statement(STATEMENT_BOUNDARIES);
+            if !self.eat(JavaSyntaxKind::ElseKw) {
+                break;
+            }
+            if self.at(JavaSyntaxKind::IfKw) {
+                continue;
+            }
             if self.at_eof() || STATEMENT_BOUNDARIES.contains(&self.current()) {
                 // The else branch is optional in the schema, so an absent
                 // one is represented by an empty bogus statement.
@@ -162,10 +183,13 @@ impl Parser<'_> {
                 self.error_expected("expected statement");
                 self.complete(missing, JavaSyntaxKind::Bogus);
             } else {
-                self.parse_statement();
+                self.parse_body_statement();
             }
+            break;
         }
-        self.complete(statement, JavaSyntaxKind::IfStatement);
+        for statement in chain.into_iter().rev() {
+            self.complete(statement, JavaSyntaxKind::IfStatement);
+        }
     }
 
     pub(super) fn parse_assert_statement(&mut self) {

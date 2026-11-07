@@ -348,7 +348,10 @@ abandoned; it guards programmer error, not input).
 Cost: the guard makes every loop advance by at least one token per iteration, so
 a parse is `O(tokens)` iterations in release builds regardless of grammar bugs.
 Recursion is bounded by `MAX_DEPTH` active `nested` calls; the value stays 128,
-calibrated for the 1 MiB WASM stack.
+calibrated for the 1 MiB WASM stack. A block that is the body of a control or
+labeled statement takes no level of its own (the statement took one), so brace
+promotion (N4) never makes the output nest deeper than the input, and an
+`else if` chain is parsed in a loop and takes one level however long it is.
 
 ### Tree building and the factory
 
@@ -1407,11 +1410,12 @@ the spine: they walk the spine with an explicit loop, format the leaves with
 (before the head) and `trailing_comments` (after the segment the node ends
 with), its dangling comments in its segment, and `removed` for parentheses
 removed by N6. A malformed spine node stops the walk and is formatted with
-`f.node`. Every other recursion is bounded by the parser's `MAX_DEPTH`.
-`tests/deep.rs` formats a 20 000-term `+` chain, a 20 000-call chain, a 20
-000-deep `a[0][0]…` and a 20 000-deep `a.new B().new B()…` on a 256 KiB thread,
-and the deepest accepted nesting of each recursive construct on a 1 MiB thread
-(the WASM stack).
+`f.node`. The `else if` chain is walked the same way by `if_statement`. Every
+other recursion is bounded by the parser's `MAX_DEPTH`. `tests/deep.rs` formats
+a 20 000-long `else if` chain, a 20 000-term `+` chain, a 20 000-call chain, a
+20 000-deep `a[0][0]…` and a 20 000-deep `a.new B().new B()…` on a 256 KiB
+thread, and the deepest accepted nesting of each recursive construct on a 1 MiB
+thread (the WASM stack).
 
 ## `jolt_formatter` (facade)
 

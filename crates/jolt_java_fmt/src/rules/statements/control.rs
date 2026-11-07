@@ -14,38 +14,48 @@ use super::{blocks, jumps, parenthesized, statement_separator, switches, tries};
 use crate::JavaFormatter;
 use crate::helpers::bodies::braced;
 
-/// `if (condition) body`, then ` else body`. An `else if` chain stays flat.
+/// `if (condition) body`, then ` else body`. An `else if` chain stays flat;
+/// it is walked iteratively (its length is unbounded), each chained `if`'s
+/// comments printed around it as `node` would.
 pub(crate) fn if_statement<'a>(f: &mut JavaFormatter<'a>, node: IfStatement<'a>) -> Doc {
-    let keyword = f.token_opt(node.if_keyword());
-    let condition = f.fmt_opt(node.condition());
-    let header = parenthesized(
-        f,
-        node.syntax(),
-        node.open_paren(),
-        condition,
-        node.close_paren(),
-    );
-    let then_branch = body(f, node.syntax(), node.then_branch());
-    let else_keyword = node.else_keyword().map(|keyword| {
-        let keyword = f.token(keyword);
-        cat![f; f.space(), keyword]
-    });
-    let else_branch = match node.else_branch() {
-        Some(Statement::IfStatement(chained)) => {
-            let chained = f.fmt(chained);
-            cat![f; f.space(), chained]
+    let mut docs = Vec::new();
+    let mut chained = Vec::new();
+    let mut current = node;
+    loop {
+        let keyword = f.token_opt(current.if_keyword());
+        let condition = f.fmt_opt(current.condition());
+        let header = parenthesized(
+            f,
+            current.syntax(),
+            current.open_paren(),
+            condition,
+            current.close_paren(),
+        );
+        let then_branch = body(f, current.syntax(), current.then_branch());
+        docs.extend([keyword, f.space(), header, then_branch]);
+        if let Some(keyword) = current.else_keyword() {
+            let keyword = f.token(keyword);
+            docs.extend([f.space(), keyword]);
         }
-        branch => body(f, node.syntax(), branch),
-    };
-    cat![
-        f;
-        keyword,
-        f.space(),
-        header,
-        then_branch,
-        else_keyword.unwrap_or(Doc::NIL),
-        else_branch,
-    ]
+        match current.else_branch() {
+            Some(Statement::IfStatement(next)) if !next.syntax().is_malformed() => {
+                let leading = f.leading_comments(next.syntax());
+                docs.extend([f.space(), leading]);
+                chained.push(next.syntax());
+                current = next;
+            }
+            branch => {
+                let else_branch = body(f, current.syntax(), branch);
+                docs.push(else_branch);
+                break;
+            }
+        }
+    }
+    for &node in chained.iter().rev() {
+        let trailing = f.trailing_comments(node);
+        docs.push(trailing);
+    }
+    f.concat(docs)
 }
 
 pub(crate) fn while_statement<'a>(f: &mut JavaFormatter<'a>, node: WhileStatement<'a>) -> Doc {
