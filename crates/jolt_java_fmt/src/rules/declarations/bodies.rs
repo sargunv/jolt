@@ -5,7 +5,7 @@ use jolt_java_syntax::{
     AnnotationInterfaceBody, ClassBody, EmptyDeclaration, EnumBody, EnumConstant, InterfaceBody,
     JavaSyntaxKind as K, RecordBody,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode};
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken, TriviaKind};
 
 use crate::JavaFormatter;
 use crate::helpers::bodies::{braced_body, member_separator};
@@ -131,88 +131,15 @@ pub(crate) fn enum_body<'a>(f: &mut JavaFormatter<'a>, node: EnumBody<'a>) -> Do
     let has_members = members
         .iter()
         .any(|member| matches!(member, ListItem::Format(_)));
-    let normalize = node
-        .constants()
-        .is_none_or(|constants| constants.syntax().is_recovery_free());
-    let separator = node.body_separator();
-
-    let elements: Vec<_> = node
-        .constants()
-        .into_iter()
-        .flat_map(jolt_java_syntax::EnumConstantList::elements)
-        .filter(|element| !matches!(element, ListElement::Missing))
-        .collect();
-    let last_constant = elements
-        .iter()
-        .rposition(|element| matches!(element, ListElement::Item(_) | ListElement::Bogus(_)));
-    let mut constants = Vec::new();
-    let mut removed_comma = None;
-    let mut trailing_comma = false;
-    for (index, element) in elements.into_iter().enumerate() {
-        match element {
-            ListElement::Item(constant) => {
-                if !constants.is_empty() {
-                    constants.push(f.hard_line());
-                }
-                constants.push(f.fmt(constant));
-            }
-            ListElement::Bogus(bogus) => {
-                if !constants.is_empty() {
-                    constants.push(f.hard_line());
-                }
-                constants.push(f.node(bogus));
-            }
-            ListElement::Separator(comma) => {
-                let trailing = last_constant.is_some_and(|last| index > last);
-                if trailing && normalize && separator.is_some() {
-                    removed_comma = Some(comma);
-                } else {
-                    trailing_comma |= trailing;
-                    constants.push(f.token(comma));
-                }
-            }
-            ListElement::Missing => {}
-        }
-    }
-    // With members, the comments of a removed trailing comma start the
-    // section after the constants, after a blank line, where the next pass
-    // finds them leading the first member (`B, // c` `;` members prints `B;`,
-    // a blank line, `// c`, the members), as in the reference. Comments on
-    // their own lines before the `;` stay there too, and the `;` moves up to
-    // the last constant: it is re-emitted there and its comments print with
-    // the comma's. Without members, the `;` stays in place and the comma's
-    // comments follow it (`B; // c`): there, after a blank line, they would
-    // be dangling comments, which print one per line.
-    let move_down = normalize && has_members && last_constant.is_some();
-    let mut moved_semicolon = None;
-    match separator {
-        Some(semicolon) if move_down && f.has_leading_comments(SyntaxElement::Token(semicolon)) => {
-            constants.push(f.sticky(";"));
-            moved_semicolon = Some(semicolon);
-        }
-        Some(semicolon) if last_constant.is_some() || has_members || !normalize => {
-            constants.push(f.token(semicolon));
-        }
-        Some(semicolon) => constants.push(f.removed(SyntaxElement::Token(semicolon))),
-        None if last_constant.is_some() && !trailing_comma && !has_members && normalize => {
-            constants.push(f.sticky(","));
-        }
-        None => {}
-    }
-    let mut removed = Vec::new();
-    for token in [removed_comma, moved_semicolon].into_iter().flatten() {
-        removed.push(f.removed(SyntaxElement::Token(token)));
-    }
-    let removed = f.concat(removed);
-    if !move_down {
-        constants.push(removed);
-    }
-    let constants = f.concat(constants);
+    let Constants {
+        constants,
+        moved_comments,
+    } = enum_constants(f, node, has_members);
     let members = f.item_list(members, member_separator);
     let mut content = vec![constants];
     let mut before_members = f.empty_line();
-    if move_down && !removed.is_nil() {
-        content.extend([f.empty_line(), removed]);
+    if !moved_comments.is_nil() {
+        content.extend([f.empty_line(), moved_comments]);
         before_members = f.hard_line();
     }
     if !members.is_nil() {
@@ -224,6 +151,109 @@ pub(crate) fn enum_body<'a>(f: &mut JavaFormatter<'a>, node: EnumBody<'a>) -> Do
     let content = f.concat(content);
     let close = f.token_opt(node.close_brace());
     braced(f, node.syntax(), open, content, close)
+}
+
+struct Constants {
+    /// The constants with their separators, and the `;`.
+    constants: Doc,
+    /// Comments that start the section after the constants.
+    moved_comments: Doc,
+}
+
+/// With members, the comments of a removed trailing comma start the section
+/// after the constants, after a blank line, where the next pass finds them
+/// leading the first member (`B, // c` `;` members prints `B;`, a blank line,
+/// `// c`, the members), as in the reference. Comments on their own lines
+/// before the `;` stay there too, and the `;` moves up to the last constant:
+/// it is re-emitted there and its comments print with the comma's. Without
+/// members, the `;` stays in place and the comma's comments follow it
+/// (`B; // c`): after a blank line they would be dangling comments, which
+/// print one per line.
+fn enum_constants<'a>(
+    f: &mut JavaFormatter<'a>,
+    node: EnumBody<'a>,
+    has_members: bool,
+) -> Constants {
+    let normalize = node
+        .constants()
+        .is_none_or(|constants| constants.syntax().is_recovery_free());
+    let separator = node.body_separator();
+    let elements: Vec<_> = node
+        .constants()
+        .into_iter()
+        .flat_map(jolt_java_syntax::EnumConstantList::elements)
+        .filter(|element| !matches!(element, ListElement::Missing))
+        .collect();
+    let last_constant = elements
+        .iter()
+        .rposition(|element| matches!(element, ListElement::Item(_) | ListElement::Bogus(_)));
+    let mut constants = Vec::new();
+    let mut removed_comma = None;
+    // A comma is synthesized after the last constant unless one follows it,
+    // or, as in the reference, it ends its line with a line comment.
+    let synthesize_comma = normalize && separator.is_none() && !has_members;
+    let mut needs_comma = false;
+    for (index, element) in elements.into_iter().enumerate() {
+        let constant = match element {
+            ListElement::Item(constant) => constant.syntax(),
+            ListElement::Bogus(bogus) => bogus,
+            ListElement::Separator(comma) => {
+                needs_comma = false;
+                if last_constant.is_some_and(|last| index > last)
+                    && normalize
+                    && separator.is_some()
+                {
+                    removed_comma = Some(comma);
+                } else {
+                    constants.push(f.token(comma));
+                }
+                continue;
+            }
+            ListElement::Missing => continue,
+        };
+        if !constants.is_empty() {
+            constants.push(f.hard_line());
+        }
+        constants.push(f.node(constant));
+        needs_comma =
+            synthesize_comma && !constant.last_token().is_some_and(ends_with_line_comment);
+    }
+    let move_down = normalize && has_members && last_constant.is_some();
+    let mut moved_semicolon = None;
+    match separator {
+        Some(semicolon) if move_down && f.has_leading_comments(SyntaxElement::Token(semicolon)) => {
+            constants.push(f.sticky(";"));
+            moved_semicolon = Some(semicolon);
+        }
+        Some(semicolon) if last_constant.is_some() || has_members || !normalize => {
+            constants.push(f.token(semicolon));
+        }
+        Some(semicolon) => constants.push(f.removed(SyntaxElement::Token(semicolon))),
+        None if needs_comma => constants.push(f.sticky(",")),
+        None => {}
+    }
+    let mut removed = Vec::new();
+    for token in [removed_comma, moved_semicolon].into_iter().flatten() {
+        removed.push(f.removed(SyntaxElement::Token(token)));
+    }
+    let mut moved_comments = f.concat(removed);
+    if !move_down {
+        constants.push(moved_comments);
+        moved_comments = Doc::NIL;
+    }
+    Constants {
+        constants: f.concat(constants),
+        moved_comments,
+    }
+}
+
+/// REQUEST(shared): whether a line comment follows `token` on its line. A
+/// formatter query (`Formatter::has_trailing_line_comment`) would avoid
+/// reading trivia in a rule.
+fn ends_with_line_comment(token: SyntaxToken<'_>) -> bool {
+    token
+        .trailing()
+        .any(|piece| piece.kind == TriviaKind::LineComment)
 }
 
 /// The annotations one per line, then `NAME(arguments) {body}`.
