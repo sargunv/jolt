@@ -1549,13 +1549,15 @@ budget is missed, the next levers are reusing the token, node, and doc vectors
 across files on a thread, and profile-guided builds (`tools/pgo.py`).
 
 Measured at integration (same session, back to back, machine shared with other
-agents): PERF_NUMBERS. Two fixes got there: syntax cursors compare and hash by
-tree and id (the derived impls compared the whole source string, which made
-comment placement scan the file per comparison), and check mode halts at the
-first difference again (the printer hands the sink 1 KiB chunks). In a
-single-threaded run over Spring, parsing is about 0.47 s, comment placement 0.04
-s, document construction 0.48 s and printing 0.20 s; document construction (many
-small allocations in the rules) is the next target.
+agents): median wall 107.0 ms against `jolt-old`'s 121.4 ms with default
+threads, and 1.132 s against 1.160 s with `--threads 1` (non-PGO release builds
+of both; the dprint plugin formats the corpus in 0.34 s). Two fixes got there:
+syntax cursors compare and hash by tree and id (the derived impls compared the
+whole source string, which made comment placement scan the file per comparison),
+and check mode halts at the first difference again (the printer hands the sink 1
+KiB chunks). In a single-threaded run over Spring, parsing is about 0.47 s,
+comment placement 0.04 s, document construction 0.48 s and printing 0.20 s;
+document construction (many small allocations in the rules) is the next target.
 
 ## Deleted
 
