@@ -334,9 +334,15 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// separated by a blank line when the source had one there. `inner`
     /// alone when there are none, the comments alone when `inner` is NIL.
     pub fn with_dangling(&mut self, owner: SyntaxNode<'a>, inner: Doc) -> Doc {
+        if !self.comments.has(SyntaxElement::Node(owner)) {
+            return inner;
+        }
         let dangling = self.dangling(owner);
-        if dangling.is_nil() || inner.is_nil() {
-            return cat![self; inner, dangling];
+        if dangling.is_nil() {
+            return inner;
+        }
+        if inner.is_nil() {
+            return dangling;
         }
         let line = self.line_or_blank(self.blank_line_before_dangling(owner));
         cat![self; inner, line, dangling]
