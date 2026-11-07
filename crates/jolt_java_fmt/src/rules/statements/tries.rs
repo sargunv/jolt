@@ -130,7 +130,9 @@ pub(crate) fn resource_variable_declaration<'a>(
     f: &mut JavaFormatter<'a>,
     node: ResourceVariableDeclaration<'a>,
 ) -> Doc {
-    let modifiers = f.fmt_opt(node.modifiers());
+    let modifiers = node
+        .modifiers()
+        .map_or(Doc::NIL, |modifiers| inline_modifiers(f, modifiers));
     let ty = match node.r#type() {
         Some(ResourceVariableType::Type(ty)) => f.fmt(ty),
         Some(ResourceVariableType::Token(token)) => f.token(token),

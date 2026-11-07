@@ -14,6 +14,7 @@ use super::{parenthesized, statement_separator};
 use crate::JavaFormatter;
 use crate::helpers::bodies::braced;
 use crate::helpers::lists::joined;
+use crate::rules::types::inline_modifiers;
 
 /// `if (condition) body`, then ` else body`. An `else if` chain stays flat;
 /// it is walked iteratively (its length is unbounded), each chained `if`'s
@@ -158,7 +159,9 @@ pub(crate) fn enhanced_for_variable<'a>(
     f: &mut JavaFormatter<'a>,
     node: EnhancedForVariable<'a>,
 ) -> Doc {
-    let modifiers = f.fmt_opt(node.modifiers());
+    let modifiers = node
+        .modifiers()
+        .map_or(Doc::NIL, |modifiers| inline_modifiers(f, modifiers));
     let ty = match node.r#type() {
         Some(EnhancedForVariableType::Type(ty)) => f.fmt(ty),
         Some(EnhancedForVariableType::Token(token)) => f.token(token),

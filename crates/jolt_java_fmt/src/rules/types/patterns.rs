@@ -6,11 +6,13 @@ use jolt_syntax::AstNode;
 
 use crate::JavaFormatter;
 use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
+use crate::rules::types::inline_modifiers;
 
-/// `modifiers Type name dims`, the modifiers in the declaration layout (as
-/// in the reference: a leading annotation takes its own line).
+/// `modifiers Type name dims`, modifiers inline.
 pub(crate) fn type_pattern<'a>(f: &mut JavaFormatter<'a>, node: TypePattern<'a>) -> Doc {
-    let modifiers = f.fmt_opt(node.modifiers());
+    let modifiers = node
+        .modifiers()
+        .map_or(Doc::NIL, |modifiers| inline_modifiers(f, modifiers));
     let ty = f.fmt_opt(node.r#type());
     let name = f.token_opt(node.name());
     let dimensions = f.fmt_opt(node.dimensions());

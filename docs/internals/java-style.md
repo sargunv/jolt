@@ -139,9 +139,10 @@ public final class User {
 - Declaration annotations (those before the first modifier keyword) go one per
   line before the declaration. Annotations after a modifier keyword are type-use
   annotations and stay inline. This applies to every declaration kind, including
-  local variables and try resources (`@Nonnull` / `final String s = "x";`);
-  formal and lambda parameters keep their annotations inline
-  (`void m(@Nonnull String p)`).
+  local variables (`@Nonnull` / `final String s = "x";`). Variables declared
+  inside a header or pattern keep their annotations inline: formal, lambda and
+  catch parameters, try resources, enhanced-for variables and type patterns
+  (`void m(@Nonnull String p)`, `for (@A String s : values)`, R10).
 - Modifier keywords are reordered to this order:
 
   ```java
@@ -1122,3 +1123,30 @@ commented: /* nothing */
 as the operand of unary minus. The parser enforced that value rule and the CLI
 refused such files as having syntax errors; that is a compiler's check, not a
 formatter's, so they now format like any literal (`int x = 2147483648;`).
+
+### R10. Annotations stay inline on resources, for-each variables and patterns
+
+The reference put a declaration annotation of a try resource, an enhanced-for
+variable or a type pattern on its own line, which broke the enclosing header.
+These variables now keep their annotations inline, as parameters and catch
+parameters already did:
+
+```java
+// reference
+try (
+  @Nonnull
+  AutoCloseable resource = open()
+) {}
+if (
+  o
+    instanceof Foo(
+      @Bar
+      String s
+    )
+) {}
+// new
+try (
+  @Nonnull AutoCloseable resource = open()
+) {}
+if (o instanceof Foo(@Bar String s)) {}
+```
