@@ -13,8 +13,7 @@ record Point(@Deprecated int x, String... labels) implements Named {
   }
 }
 
-interface Named {
-}
+interface Named {}
 
 diagnostics:
 (none)

@@ -8,8 +8,7 @@ class ResourceSpecificationShape {
     try (
       var declared = open();
       existing
-    ) {
-    }
+    ) {}
   }
 
   AutoCloseable open() {

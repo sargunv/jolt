@@ -7,12 +7,10 @@ class CatchUnionTypeShape {
   void method() {
     try {
       risky();
-    } catch (java.io.IOException | RuntimeException ex) {
-    }
+    } catch (java.io.IOException | RuntimeException ex) {}
   }
 
-  void risky() throws java.io.IOException {
-  }
+  void risky() throws java.io.IOException {}
 }
 
 diagnostics:

@@ -4,11 +4,9 @@ expression: snapshot
 ---
 formatted:
 class Patterns {
-  record Point(int x, int y) {
-  }
+  record Point(int x, int y) {}
 
-  record Line(Point start, Point end) {
-  }
+  record Line(Point start, Point end) {}
 
   boolean check(Object o) {
     if (o instanceof final String s) {

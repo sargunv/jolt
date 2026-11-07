@@ -4,13 +4,11 @@ expression: snapshot
 ---
 formatted:
 // plain class
-class Plain {
-}
+class Plain {}
 
 // annotated interface
 @Beta
-interface Api {
-}
+interface Api {}
 
 diagnostics:
 (none)

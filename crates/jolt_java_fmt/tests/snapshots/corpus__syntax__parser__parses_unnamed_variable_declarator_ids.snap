@@ -8,9 +8,7 @@ class UnnamedVariableDeclarators {
     var _ = values;
     try (
       AutoCloseable _ = open()
-    ) {
-    } catch (Exception _) {
-    }
+    ) {} catch (Exception _) {}
     java.util.function.IntUnaryOperator zero = (int _) -> 0;
   }
 

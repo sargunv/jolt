@@ -24,12 +24,10 @@ class TryTrivia {
     return null;
   }
 
-  void cleanup() {
-  }
+  void cleanup() {}
 }
 
-interface Resource extends AutoCloseable {
-}
+interface Resource extends AutoCloseable {}
 
 diagnostics:
 (none)

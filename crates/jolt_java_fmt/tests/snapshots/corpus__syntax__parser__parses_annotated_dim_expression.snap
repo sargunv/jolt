@@ -9,8 +9,7 @@ class AnnotatedDimExpression {
   }
 }
 
-@interface Marker {
-}
+@interface Marker {}
 
 diagnostics:
 (none)

@@ -11,8 +11,7 @@ void main() {
   Runner.run();
 }
 
-record Point(int x, int y) {
-}
+record Point(int x, int y) {}
 
 static final Map<String, Integer> COUNTS = Map.of("one", 1);
 
@@ -30,8 +29,7 @@ enum Status {
   READY,
 }
 
-@interface Tag {
-}
+@interface Tag {}
 
 diagnostics:
 (none)

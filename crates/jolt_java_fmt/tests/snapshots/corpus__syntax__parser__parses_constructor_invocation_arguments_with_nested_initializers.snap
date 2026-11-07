@@ -8,8 +8,7 @@ class ConstructorInvocationArguments {
     this(new String[] { value }, true, null);
   }
 
-  ConstructorInvocationArguments(String[] values, boolean flag, Object extra) {
-  }
+  ConstructorInvocationArguments(String[] values, boolean flag, Object extra) {}
 }
 
 diagnostics:

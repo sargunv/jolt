@@ -36,8 +36,7 @@ class Annotated {
   void params(
     @Named("a") String a,
     @Deprecated @Named(value = "b") final String b
-  ) {
-  }
+  ) {}
 }
 
 diagnostics:

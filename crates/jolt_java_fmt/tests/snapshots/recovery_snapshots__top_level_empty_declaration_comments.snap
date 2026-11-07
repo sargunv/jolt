@@ -8,12 +8,10 @@ class A {}
 class B {}
 
 formatted:
-class A {
-}
+class A {}
 
 // keep
-class B {
-}
+class B {}
 
 diagnostics:
 (none)

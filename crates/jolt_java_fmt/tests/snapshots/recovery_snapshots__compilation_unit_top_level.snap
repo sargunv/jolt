@@ -9,8 +9,7 @@ input:
 formatted:
 /* top */ + ;
 
-class C {
-}
+class C {}
 // JOLT-TRIVIA:file-tail
 
 diagnostics:

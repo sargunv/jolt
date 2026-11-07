@@ -10,8 +10,7 @@ import a.Alpha;
 // keeps the blank line before it
 import b.Beta;
 
-class A {
-}
+class A {}
 
 diagnostics:
 (none)

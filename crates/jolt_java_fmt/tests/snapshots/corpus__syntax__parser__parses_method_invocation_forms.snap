@@ -4,20 +4,15 @@ expression: snapshot
 ---
 formatted:
 class MethodInvocations extends Base {
-  static void staticMethod() {
-  }
+  static void staticMethod() {}
 
-  static <T> void staticGeneric(T value) {
-  }
+  static <T> void staticGeneric(T value) {}
 
-  void simple() {
-  }
+  void simple() {}
 
-  void instance() {
-  }
+  void instance() {}
 
-  <T> void generic(T value) {
-  }
+  <T> void generic(T value) {}
 
   void method(MethodInvocations target) {
     simple();
@@ -35,11 +30,9 @@ class MethodInvocations extends Base {
 }
 
 class Base {
-  void baseMethod() {
-  }
+  void baseMethod() {}
 
-  <T> void baseGeneric(T value) {
-  }
+  <T> void baseGeneric(T value) {}
 }
 
 diagnostics:

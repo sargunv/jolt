@@ -11,9 +11,7 @@ class C {
     try (
       a + /* resource */;
       b
-    ) {
-    } catch (A | /* catch */ | B e) {
-    }
+    ) {} catch (A | /* catch */ | B e) {}
   }
 }
 

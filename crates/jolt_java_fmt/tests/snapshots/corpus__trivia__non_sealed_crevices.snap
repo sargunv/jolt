@@ -4,23 +4,18 @@ expression: snapshot
 ---
 formatted:
 non- // JOLT-TRIVIA:non-sealed-minus-line-top-level
-sealed interface TopLevel {
-}
+sealed interface TopLevel {}
 
 class NonSealedCrevices {
   non- // JOLT-TRIVIA:non-sealed-minus-line
-  sealed interface Member {
-  }
+  sealed interface Member {}
 
   non // JOLT-TRIVIA:non-sealed-non-line
-  -sealed class MemberClass {
-  }
+  -sealed class MemberClass {}
 
-  non /* JOLT-TRIVIA:non-sealed-non-block */ -sealed interface BlockBetween {
-  }
+  non /* JOLT-TRIVIA:non-sealed-non-block */ -sealed interface BlockBetween {}
 
-  non- /* JOLT-TRIVIA:non-sealed-minus-block */ sealed interface BlockAfterMinus {
-  }
+  non- /* JOLT-TRIVIA:non-sealed-minus-block */ sealed interface BlockAfterMinus {}
 }
 
 // The same comment is the previous token's trailing trivia when the source keeps
@@ -31,23 +26,19 @@ class NonSealedCrevices {
 class NonSealedOwnLineCrevices {
   non-
   // JOLT-TRIVIA:non-sealed-own-line-before-sealed
-  sealed interface LineBeforeSealed {
-  }
+  sealed interface LineBeforeSealed {}
 
   non
   // JOLT-TRIVIA:non-sealed-own-line-before-minus
-  -sealed class LineBeforeMinus {
-  }
+  -sealed class LineBeforeMinus {}
 
   non-
   /* JOLT-TRIVIA:non-sealed-own-block-before-sealed */
-  sealed interface BlockBeforeSealed {
-  }
+  sealed interface BlockBeforeSealed {}
 
   non
   /* JOLT-TRIVIA:non-sealed-own-block-before-minus */
-  -sealed interface BlockBeforeMinus {
-  }
+  -sealed interface BlockBeforeMinus {}
 }
 
 diagnostics:

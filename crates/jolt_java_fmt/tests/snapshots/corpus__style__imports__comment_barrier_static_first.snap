@@ -10,8 +10,7 @@ import static c.C;
 /* comment travels with its import */
 import static d.D;
 
-class A {
-}
+class A {}
 
 diagnostics:
 (none)

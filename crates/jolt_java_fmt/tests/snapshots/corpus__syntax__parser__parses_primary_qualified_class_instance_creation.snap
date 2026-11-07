@@ -10,8 +10,7 @@ class PrimaryQualifiedCreation {
 }
 
 class Outer {
-  class Inner {
-  }
+  class Inner {}
 }
 
 diagnostics:

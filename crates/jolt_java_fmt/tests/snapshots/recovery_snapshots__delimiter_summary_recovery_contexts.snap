@@ -23,27 +23,22 @@ class NestedRecoveryContexts {
 formatted:
 import a @A(value;
 
-class FollowingMalformedImport {
-}
+class FollowingMalformedImport {}
 
 @A(@B)
-@interface ValidNestedAnnotation {
-}
+@interface ValidNestedAnnotation {}
 
 @
-@interface RecoveredAnnotationInterface {
-}
+@interface RecoveredAnnotationInterface {}
 
 class NestedRecoveryContexts {
   @A @A 0;
 
-  class FollowingMalformedMember {
-  }
+  class FollowingMalformedMember {}
 
   NestedRecoveryContexts int value) @A @A 0;
 
-  class FollowingMalformedConstructor {
-  }
+  class FollowingMalformedConstructor {}
 }
 
 diagnostics:

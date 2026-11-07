@@ -26,8 +26,7 @@ enum RecoveredEnum {
   @Marker() /* JOLT-TRIVIA:enum-annotation */
   (/* JOLT-TRIVIA:enum-arguments */ 1) {
     /* JOLT-TRIVIA:enum-body */
-    void recovered() {
-    }
+    void recovered() {}
   },
   /* JOLT-TRIVIA:enum-recovered */ ,;
 

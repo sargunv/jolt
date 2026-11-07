@@ -17,8 +17,7 @@ class NestedParentheses {
 
 @Outer(value = @Middle(value = @Inner(value = (1 + (2));
 
-class FollowingDeclaration {
-}
+class FollowingDeclaration {}
 
 diagnostics:
 code=java.parse.unexpected_syntax range=63..64 message=unexpected token at top level

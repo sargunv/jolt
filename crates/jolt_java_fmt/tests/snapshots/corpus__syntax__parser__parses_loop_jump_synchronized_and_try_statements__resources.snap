@@ -8,8 +8,7 @@ class Resources {
     try (
       var declared = open();
       existing
-    ) {
-    }
+    ) {}
   }
 
   AutoCloseable open() {

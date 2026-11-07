@@ -22,12 +22,10 @@ public /* JOLT-TRIVIA:after-public */ final class DeclarationHeaders<
   }
 
   @Override
-  public void run() {
-  }
+  public void run() {}
 }
 
-class Base {
-}
+class Base {}
 
 diagnostics:
 (none)

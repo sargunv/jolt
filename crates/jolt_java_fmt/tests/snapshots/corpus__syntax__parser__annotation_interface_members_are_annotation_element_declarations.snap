@@ -11,8 +11,7 @@ formatted:
   Nested nested() default @Nested;
 }
 
-@interface Nested {
-}
+@interface Nested {}
 
 diagnostics:
 (none)

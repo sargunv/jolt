@@ -6,8 +6,7 @@ formatted:
 @StringSingle("test")
 @NestedSingle(@Marker)
 @ArraySingle({ @Marker, "x" })
-class Annotated {
-}
+class Annotated {}
 
 @interface StringSingle {
   String value() default "fallback";
@@ -21,8 +20,7 @@ class Annotated {
   Object[] value() default { @Marker, "y" };
 }
 
-@interface Marker {
-}
+@interface Marker {}
 
 diagnostics:
 (none)

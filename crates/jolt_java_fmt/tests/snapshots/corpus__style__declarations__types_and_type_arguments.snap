@@ -18,11 +18,9 @@ class Types<
       ? super T
       // before args close
     > value
-  ) {
-  }
+  ) {}
 
-  void read(java.util.List<? extends Number> numbers) {
-  }
+  void read(java.util.List<? extends Number> numbers) {}
 }
 
 diagnostics:

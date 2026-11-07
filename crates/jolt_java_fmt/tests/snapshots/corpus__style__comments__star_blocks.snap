@@ -16,40 +16,34 @@ class Example {
   /*
    * Runs the task.
    */
-  void run() {
-  }
+  void run() {}
 
   /* Runs first.
    * Then continues.
    *
    * After a blank.
    */
-  void openerText() {
-  }
+  void openerText() {}
 
   /* * starred opener
    * body
    */
-  void starredOpener() {
-  }
+  void starredOpener() {}
 
   /* opener holds /* an inner marker
    * body holds /* one too
    */
-  void innerMarkers() {
-  }
+  void innerMarkers() {}
 
   /* opener
   plain body
   */
-  void plainBody() {
-  }
+  void plainBody() {}
 
   /* opener
    * closes on this line
    */
-  void closingOnBody() {
-  }
+  void closingOnBody() {}
 }
 
 diagnostics:

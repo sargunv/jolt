@@ -5,16 +5,14 @@ expression: snapshot
 formatted:
 import java.io.InputStream;
 
-@interface A {
-}
+@interface A {}
 
 class LeadingCommentOwnership {
   /**
    * Before a structured modifier that precedes an annotation.
    */
   @A
-  public static class DocumentedModifierFirst {
-  }
+  public static class DocumentedModifierFirst {}
 
   @A
   // Between an annotation and a field type.
@@ -22,8 +20,7 @@ class LeadingCommentOwnership {
 
   @A
   // Between an annotation and a method return type.
-  void annotatedMethod() {
-  }
+  void annotatedMethod() {}
 
   @A
   // Between an annotation and a modifier token.
@@ -31,13 +28,11 @@ class LeadingCommentOwnership {
 
   // Between a modifier token and an annotation.
   @A
-  public static class Nested {
-  }
+  public static class Nested {}
 
   @A
   public // Trailing modifier comment.
-  static class Trailing {
-  }
+  static class Trailing {}
 
   /**
    * Generic method documentation.
@@ -49,8 +44,7 @@ class LeadingCommentOwnership {
   /**
    * Generic constructor documentation.
    */
-  <T> LeadingCommentOwnership(T value) {
-  }
+  <T> LeadingCommentOwnership(T value) {}
 
   void declarations(
     Iterable<String> values,
@@ -67,37 +61,32 @@ class LeadingCommentOwnership {
       // Enhanced-for variable documentation.
       @A
       String value : values
-    ) {
-    }
+    ) {}
 
     try (
       // Resource variable documentation.
       final InputStream resource = input
-    ) {
-    }
+    ) {}
 
     if (
       candidate
         instanceof
         // Type pattern documentation.
         final String text
-    ) {
-    }
+    ) {}
   }
 }
 
 @A
 // Between an annotation and a type keyword.
-class AnnotatedType {
-}
+class AnnotatedType {}
 
 record Compact(int value) {
   /**
    * Compact constructor documentation.
    */
   @A
-  Compact {
-  }
+  Compact {}
 }
 
 @interface Elements {
@@ -124,8 +113,7 @@ enum Values {
 
 public
 // Between two modifier tokens.
-static class LeadingModifierComment {
-}
+static class LeadingModifierComment {}
 
 diagnostics:
 (none)

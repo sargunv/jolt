@@ -10,8 +10,7 @@ class ConstructorTypeArgumentsCreation {
 }
 
 class Box<T> {
-  <U> Box(U value) {
-  }
+  <U> Box(U value) {}
 }
 
 diagnostics:

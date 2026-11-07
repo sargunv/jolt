@@ -40,8 +40,7 @@ class BracePromotionComments {
       /* own line block */
       run();
     }
-    while (b) /* empty */ {
-    }
+    while (b) /* empty */ {}
     if (a) {
       // empty then
     }

@@ -27,22 +27,17 @@ class Shapes<K extends Comparable<? super K>, V> {
     T extends AVeryLongBoundTypeName
       & AnotherVeryLongBoundTypeName
       & AThirdBoundTypeName
-  > void bounded() {
-  }
+  > void bounded() {}
 
   class Inner {
-    Inner(@A Shapes Shapes.this) {
-    }
+    Inner(@A Shapes Shapes.this) {}
 
-    void receiver(@A Inner this, String... rest) {
-    }
+    void receiver(@A Inner this, String... rest) {}
   }
 
-  void dims(int values[], String @A ... more) {
-  }
+  void dims(int values[], String @A ... more) {}
 
-  void unnamed(Object _) {
-  }
+  void unnamed(Object _) {}
 
   void diamond() {
     Map<String, String> m = new HashMap<>();
@@ -51,12 +46,10 @@ class Shapes<K extends Comparable<? super K>, V> {
   void union() {
     try {
       run();
-    } catch (IllegalStateException | IllegalArgumentException e) {
-    }
+    } catch (IllegalStateException | IllegalArgumentException e) {}
     try {
       run();
-    } catch (final @Ann IllegalStateException e) {
-    }
+    } catch (final @Ann IllegalStateException e) {}
   }
 
   void locals() {

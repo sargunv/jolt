@@ -12,8 +12,7 @@ class QualifiedCreation {
 }
 
 class Outer {
-  class Inner {
-  }
+  class Inner {}
 }
 
 diagnostics:

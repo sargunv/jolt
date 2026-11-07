@@ -3,14 +3,11 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-@interface NonNull {
-}
+@interface NonNull {}
 
-interface FirstBound {
-}
+interface FirstBound {}
 
-interface SecondBound {
-}
+interface SecondBound {}
 
 class AnnotatedIntersectionCastBounds {
   Object cast(Object value) {

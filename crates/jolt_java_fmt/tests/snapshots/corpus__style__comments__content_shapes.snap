@@ -31,8 +31,7 @@ class CommentContentShapes {
 
   last line after a blank
   */
-  void plainMultiline() {
-  }
+  void plainMultiline() {}
 
   String markers = "/* not a comment */ // /**/";
   String unicode = "Καλημέρα 世界";

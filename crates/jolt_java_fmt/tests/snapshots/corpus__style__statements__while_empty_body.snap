@@ -5,8 +5,7 @@ expression: snapshot
 formatted:
 class Example {
   void run() {
-    while (ready) {
-    }
+    while (ready) {}
   }
 }
 

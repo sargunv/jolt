@@ -27,8 +27,7 @@ class DanglingCommentsInBodies {
     );
   }
 
-  void call() {
-  }
+  void call() {}
 }
 
 class BraceTrailingCommentBlankLines {
@@ -81,8 +80,7 @@ class BraceTrailingCommentsInBodies {
     );
   }
 
-  void call() {
-  }
+  void call() {}
 }
 
 class ItemTrailingCommentBeforeCloseComment {

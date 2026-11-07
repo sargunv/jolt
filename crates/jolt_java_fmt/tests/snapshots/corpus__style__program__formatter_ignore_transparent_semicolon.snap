@@ -9,8 +9,7 @@ class   A{}
 // @formatter:off
 class   B{}
 // @formatter:on
-class C {
-}
+class C {}
 
 diagnostics:
 (none)

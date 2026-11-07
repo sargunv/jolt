@@ -58,8 +58,7 @@ class CommentShapes {
     //
   }
 
-  void call(Object... values) {
-  }
+  void call(Object... values) {}
 } //
 
 diagnostics:

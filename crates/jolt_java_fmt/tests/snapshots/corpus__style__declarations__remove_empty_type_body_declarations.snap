@@ -22,8 +22,7 @@ enum Mode {
   A;
 
   // keep enum marker
-  void run() {
-  }
+  void run() {}
 }
 
 enum EmptyEnum {

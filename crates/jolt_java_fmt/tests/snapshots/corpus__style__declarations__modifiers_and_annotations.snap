@@ -21,8 +21,7 @@ public final class User {
 
   @Action
   @Checked
-  public @Nullable void reset() {
-  }
+  public @Nullable void reset() {}
 
   @Override
   String raw() {
@@ -30,15 +29,12 @@ public final class User {
   }
 }
 
-public sealed strictfp class Base permits Open {
-}
+public sealed strictfp class Base permits Open {}
 
-public non-sealed strictfp class Open extends Base {
-}
+public non-sealed strictfp class Open extends Base {}
 
 @Deprecated
-non-sealed class AnnotatedOpen extends Base {
-}
+non-sealed class AnnotatedOpen extends Base {}
 
 final /* stable */ public class CommentedModifier {
   volatile /* shared */ public int value;

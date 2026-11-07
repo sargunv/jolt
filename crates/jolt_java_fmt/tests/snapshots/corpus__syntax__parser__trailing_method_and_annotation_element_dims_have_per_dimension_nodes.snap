@@ -11,11 +11,9 @@ abstract class TrailingMethodPerDimensionDims {
   int values() @A [] @B [];
 }
 
-@interface A {
-}
+@interface A {}
 
-@interface B {
-}
+@interface B {}
 
 diagnostics:
 (none)

@@ -10,8 +10,7 @@ class ImportTrailingTokens {}
 formatted:
 import com.example + lost;
 
-class ImportTrailingTokens {
-}
+class ImportTrailingTokens {}
 
 diagnostics:
 code=java.parse.unexpected_syntax range=19..20 message=unexpected token in import declaration

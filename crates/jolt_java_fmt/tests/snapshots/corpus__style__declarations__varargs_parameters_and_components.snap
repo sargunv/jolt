@@ -4,24 +4,18 @@ expression: snapshot
 ---
 formatted:
 class Args {
-  void call(String... names) {
-  }
+  void call(String... names) {}
 
-  void mix(final int count, Object... values) {
-  }
+  void mix(final int count, Object... values) {}
 
-  void annotated(@Nonnull String name, String @Marker ... labels) {
-  }
+  void annotated(@Nonnull String name, String @Marker ... labels) {}
 
-  void unnamed(Object _) {
-  }
+  void unnamed(Object _) {}
 }
 
-record Values(String name, int... flags) {
-}
+record Values(String name, int... flags) {}
 
-record AnnotatedValues(@Nonnull String name, String @Marker ... labels) {
-}
+record AnnotatedValues(@Nonnull String name, String @Marker ... labels) {}
 
 diagnostics:
 (none)

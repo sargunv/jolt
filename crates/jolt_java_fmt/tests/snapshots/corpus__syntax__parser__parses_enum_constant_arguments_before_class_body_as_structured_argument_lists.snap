@@ -5,8 +5,7 @@ expression: snapshot
 formatted:
 enum StructuredEnumClassBodyArguments {
   SPECIAL(helper(1)) {
-    void run() {
-    }
+    void run() {}
   },
 }
 

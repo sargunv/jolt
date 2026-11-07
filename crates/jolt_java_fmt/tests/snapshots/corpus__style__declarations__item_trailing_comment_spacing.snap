@@ -3,23 +3,17 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-class A {
-} // trailing
+class A {} // trailing
 
-class B {
-}
+class B {}
 
-class C {
-} // trailing
+class C {} // trailing
 
-class D {
-}
+class D {}
 
-class E {
-} /* block does not end the line */
+class E {} /* block does not end the line */
 
-class F {
-}
+class F {}
 
 diagnostics:
 (none)

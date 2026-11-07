@@ -24,11 +24,9 @@ enum Mode {
     /* JOLT-TRIVIA:enum-b-open */ "b" /* JOLT-TRIVIA:enum-b-arg */
   ) /* JOLT-TRIVIA:enum-b-tail */;
 
-  Mode() {
-  }
+  Mode() {}
 
-  Mode(String value) {
-  }
+  Mode(String value) {}
 }
 
 @interface Flag {

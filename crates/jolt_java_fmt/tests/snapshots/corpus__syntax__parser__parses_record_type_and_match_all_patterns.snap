@@ -3,8 +3,7 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-record Pair(int left, int right) {
-}
+record Pair(int left, int right) {}
 
 class Patterns {
   int method(Object value) {

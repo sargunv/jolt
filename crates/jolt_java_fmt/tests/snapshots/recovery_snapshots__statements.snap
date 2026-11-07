@@ -57,46 +57,34 @@ class RecoveredStatements {
 formatted:
 class RecoveredStatements {
   void enhancedFor(int[] values) {
-    for (int value = /* enhanced-initializer */ 0 : values) {
-    }
-    for (int first, /* enhanced-extra */ second : values) {
-    }
-    for (int value, /* enhanced-trailing */ : values) {
-    }
+    for (int value = /* enhanced-initializer */ 0 : values) {}
+    for (int first, /* enhanced-extra */ second : values) {}
+    for (int value, /* enhanced-trailing */ : values) {}
   }
 
   void resources(AutoCloseable existing) {
     try (
       AutoCloseable missing /* resource-initializer */
-    ) {
-    }
+    ) {}
     try (
       AutoCloseable first = open(), /* resource-extra */ second = open()
-    ) {
-    }
+    ) {}
     try (
       AutoCloseable first = open(), /* resource-trailing */
-    ) {
-    }
+    ) {}
     try (
       /* resource-missing-access */
-    ) {
-    }
+    ) {}
     try (
       existing /* resource-junk */ @
-    ) {
-    }
+    ) {}
     try (
       call() /* resource-invalid-access */
-    ) {
-    }
+    ) {}
     try (
       var malformed = /* resource-trailing */;
-    ) {
-    }
-    try {
-    } catch (Exception exception /* catch-dimension */ []) {
-    }
+    ) {}
+    try {} catch (Exception exception /* catch-dimension */ []) {}
   }
 
   void switches(int value) {
@@ -117,8 +105,7 @@ class RecoveredStatements {
   }
 
   void missingElse(boolean value) {
-    if (value) {
-    } else
+    if (value) {} else
   }
 
   void missingWhile(boolean value) {
@@ -152,8 +139,7 @@ class RecoveredStatements {
   void missingResourceTry(AutoCloseable resource) {
     try (
       resource
-    ) catch (Exception exception) {
-    }
+    ) catch (Exception exception) {}
   }
 }
 

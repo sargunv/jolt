@@ -15,11 +15,9 @@ class ArrayCreationTrailingDimensions {
   Object value = new String[1] @First [] @Second [];
 }
 
-@interface First {
-}
+@interface First {}
 
-@interface Second {
-}
+@interface Second {}
 
 diagnostics:
 (none)

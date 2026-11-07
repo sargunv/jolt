@@ -5,14 +5,11 @@ expression: snapshot
 formatted:
 class Statements {
   void method(Object o) {
-    class LocalClass {
-    }
-    interface LocalInterface {
-    }
+    class LocalClass {}
+    interface LocalInterface {}
     final var local = o;
     label:
-    if (local == null) {
-    }
+    if (local == null) {}
     if (local instanceof String s) {
       s.trim();
     } else {

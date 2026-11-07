@@ -9,8 +9,7 @@ import java.util.List;
 import static java.util.Collections.*;
 import static java.util.Collections.emptyList;
 
-class Imports {
-}
+class Imports {}
 
 diagnostics:
 (none)

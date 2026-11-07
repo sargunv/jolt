@@ -9,11 +9,9 @@ class ArrayCreationPerDimensionDims {
   }
 }
 
-@interface A {
-}
+@interface A {}
 
-@interface B {
-}
+@interface B {}
 
 diagnostics:
 (none)

@@ -19,8 +19,7 @@ class SwitchOpeningBraceComment {
     }
   }
 
-  void done() {
-  }
+  void done() {}
 }
 
 diagnostics:

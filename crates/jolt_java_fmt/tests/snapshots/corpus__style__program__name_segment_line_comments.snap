@@ -12,8 +12,7 @@ class NameSegmentLineComments {
   void method(
     final @Deprecated // annotation stays put
     String value
-  ) {
-  }
+  ) {}
 }
 
 diagnostics:

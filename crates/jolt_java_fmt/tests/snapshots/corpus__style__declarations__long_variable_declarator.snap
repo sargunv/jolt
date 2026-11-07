@@ -15,11 +15,9 @@ class LongVariableDeclarator {
 
   void consume(
     final @Nullable String creationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  ) {
-  }
+  ) {}
 
-  void consumeShort(final @Nullable String shortName) {
-  }
+  void consumeShort(final @Nullable String shortName) {}
 
   void run() {
     final @Nullable String creationUserAgentXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX;

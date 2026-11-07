@@ -11,8 +11,7 @@ class Expressions extends Base {
     Object created = new Outer<String>().new Inner(1);
     Object anonymous =
       new Runnable() {
-        public void run() {
-        }
+        public void run() {}
       };
     Object literal = null;
     Object parenthesized = (created);
@@ -24,13 +23,11 @@ class Expressions extends Base {
   }
 }
 
-class Base {
-}
+class Base {}
 
 class Outer<T> {
   class Inner {
-    Inner(int value) {
-    }
+    Inner(int value) {}
   }
 }
 

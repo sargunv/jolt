@@ -24,8 +24,7 @@ class LeadingCommentsBeforeBodyBraces /* leads a class body brace */ {
     };
 }
 
-interface LeadingCommentBeforeInterfaceBrace /* leads an interface body brace */ {
-}
+interface LeadingCommentBeforeInterfaceBrace /* leads an interface body brace */ {}
 
 enum LeadingCommentBeforeEnumBrace /* leads an enum body brace */ {
   CONSTANT /* leads an enum constant body brace */ {
@@ -35,11 +34,9 @@ enum LeadingCommentBeforeEnumBrace /* leads an enum body brace */ {
 
 record LeadingCommentBeforeRecordBrace(
   int value
-) /* leads a record body brace */ {
-}
+) /* leads a record body brace */ {}
 
-@interface LeadingCommentBeforeAnnotationBrace /* leads an annotation interface body brace */ {
-}
+@interface LeadingCommentBeforeAnnotationBrace /* leads an annotation interface body brace */ {}
 
 // A line comment there ends its own line, so the brace keeps the next line on
 // both passes.

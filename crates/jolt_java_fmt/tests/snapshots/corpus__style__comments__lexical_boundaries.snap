@@ -31,8 +31,7 @@ class CommentLexicalBoundaries {
     /* ***/
   }
 
-  void consume(Object value) {
-  }
+  void consume(Object value) {}
 }
 
 diagnostics:

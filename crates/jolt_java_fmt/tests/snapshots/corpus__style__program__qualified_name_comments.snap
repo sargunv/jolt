@@ -9,8 +9,7 @@ package com // root
 
 import z /* dot */ .Z;
 
-class Names {
-}
+class Names {}
 
 diagnostics:
 (none)

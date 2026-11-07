@@ -9,11 +9,9 @@ class Groups {
   int second;
   int third;
 
-  Groups() {
-  }
+  Groups() {}
 
-  Groups(int value) {
-  }
+  Groups(int value) {}
 
   static {
     initialize();
@@ -23,17 +21,13 @@ class Groups {
     warm();
   }
 
-  void a() {
-  }
+  void a() {}
 
-  void b() {
-  }
+  void b() {}
 
-  class Nested {
-  }
+  class Nested {}
 
-  interface NestedApi {
-  }
+  interface NestedApi {}
 }
 
 record Range(int start, int end) {
@@ -51,8 +45,7 @@ interface Api {
 
   String label();
 
-  class Helper {
-  }
+  class Helper {}
 }
 
 @interface Contract {
@@ -60,11 +53,9 @@ interface Api {
 
   boolean enabled();
 
-  class Helper {
-  }
+  class Helper {}
 
-  @interface Nested {
-  }
+  @interface Nested {}
 }
 
 diagnostics:

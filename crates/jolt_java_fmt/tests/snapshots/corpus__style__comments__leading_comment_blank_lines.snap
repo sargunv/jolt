@@ -43,8 +43,7 @@ class LeadingCommentBlankLines {
     call(local);
   }
 
-  void call(int value) {
-  }
+  void call(int value) {}
 }
 
 diagnostics:

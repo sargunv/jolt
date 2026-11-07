@@ -11,15 +11,12 @@ class LeadingCommentsOnConstructorInvocations {
     this(0);
   }
 
-  LeadingCommentsOnConstructorInvocations(int value) {
-  }
+  LeadingCommentsOnConstructorInvocations(int value) {}
 
   class Base {
-    Base(int value) {
-    }
+    Base(int value) {}
 
-    <T> Base(T value, int marker) {
-    }
+    <T> Base(T value, int marker) {}
   }
 
   class Inner extends Base {
@@ -99,8 +96,7 @@ class LeadingCommentsOnConstructorInvocations {
       <String>this("value", 0);
     }
 
-    <T> Generic(T value, int marker) {
-    }
+    <T> Generic(T value, int marker) {}
   }
 }
 

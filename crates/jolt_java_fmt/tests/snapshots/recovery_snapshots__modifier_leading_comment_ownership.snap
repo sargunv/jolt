@@ -24,12 +24,10 @@ transient class RecoveredType {}
 formatted:
 class ModifierLeadingCommentOwnership {
   // Malformed method modifier documentation.
-  transient void method() {
-  }
+  transient void method() {}
 
   // Malformed constructor modifier documentation.
-  volatile ModifierLeadingCommentOwnership() {
-  }
+  volatile ModifierLeadingCommentOwnership() {}
 
   // Malformed field modifier documentation.
   synchronized int field;
@@ -37,13 +35,11 @@ class ModifierLeadingCommentOwnership {
   void parameter(
     // Malformed parameter modifier documentation.
     transient String value
-  ) {
-  }
+  ) {}
 }
 
 // Malformed type modifier documentation.
-transient class RecoveredType {
-}
+transient class RecoveredType {}
 
 diagnostics:
 code=java.parse.unexpected_syntax range=88..97 message=invalid method modifier

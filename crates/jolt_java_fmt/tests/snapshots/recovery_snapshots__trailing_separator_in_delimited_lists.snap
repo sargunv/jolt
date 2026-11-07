@@ -35,27 +35,22 @@ formatted:
 class TrailingSeparatorInDelimitedLists<T,> {
   java.util.List<String,> typeArguments;
 
-  void parameters(int a,) {
-  }
+  void parameters(int a,) {}
 
-  void varargsParameters(int... values,) {
-  }
+  void varargsParameters(int... values,) {}
 
   void arguments() {
     consume(1,);
   }
 
-  void throwsClause() throws E, {
-  }
+  void throwsClause() throws E, {}
 
   void forUpdate() {
-    for (int i = 0; ; i++, ) {
-    }
+    for (int i = 0; ; i++, ) {}
   }
 
   void recordPattern(Object o) {
-    if (o instanceof R(int a,)) {
-    }
+    if (o instanceof R(int a,)) {}
   }
 
   void lambdaParameters() {
@@ -69,21 +64,16 @@ class TrailingSeparatorInDelimitedLists<T,> {
   @A(value = 1,)
   int annotationArguments;
 
-  void consume(Object... values) {
-  }
+  void consume(Object... values) {}
 }
 
-interface ExtendsList extends A, {
-}
+interface ExtendsList extends A, {}
 
-class ImplementsList implements A, {
-}
+class ImplementsList implements A, {}
 
-sealed class PermitsList permits A, {
-}
+sealed class PermitsList permits A, {}
 
-record RecordHeader(int a,) {
-}
+record RecordHeader(int a,) {}
 
 enum ValidTrailingSeparators {
   A,

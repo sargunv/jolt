@@ -11,8 +11,7 @@ class C {
 
   /* member */ + ;
 
-  void m() {
-  }
+  void m() {}
 }
 
 diagnostics:

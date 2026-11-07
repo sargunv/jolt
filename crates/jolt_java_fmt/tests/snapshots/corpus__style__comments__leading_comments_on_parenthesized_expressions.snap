@@ -7,11 +7,9 @@ class LeadingCommentsOnParenthesizedExpressions {
   int[] values = new int[4];
 
   class Base {
-    Base(int value) {
-    }
+    Base(int value) {}
 
-    <T> Base(T value, int marker) {
-    }
+    <T> Base(T value, int marker) {}
   }
 
   class Inner extends Base {
@@ -51,8 +49,7 @@ class LeadingCommentsOnParenthesizedExpressions {
     return total;
   }
 
-  void call(int value) {
-  }
+  void call(int value) {}
 
   int someLongMethodName(int first, int second) {
     return first + second;

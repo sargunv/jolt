@@ -8,8 +8,7 @@ class FormatterIgnoreCommentBeforeOn {
   void   raw( ) { }
   // owned by the next member
   // @formatter:on
-  static void formatted() {
-  }
+  static void formatted() {}
 }
 
 class FormatterIgnoreCommentBeforeOnAtBoundary {
@@ -24,8 +23,7 @@ class FormatterIgnoreRepeatedOffBeforeOn {
   void   raw( ) { }
   // @formatter:off
   // @formatter:on
-  static void formatted() {
-  }
+  static void formatted() {}
 }
 
 diagnostics:

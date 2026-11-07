@@ -129,14 +129,12 @@ class GoogleJavaFormatFaqSnippets {
   /**
    * Tests for {@link Foo}.
    */
-  static class Block17JavadocInput {
-  }
+  static class Block17JavadocInput {}
 
   /**
    * Tests for {@link Foo}.
    */
-  static class Block18JavadocOutput {
-  }
+  static class Block18JavadocOutput {}
 }
 
 diagnostics:

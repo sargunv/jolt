@@ -24,8 +24,8 @@ pub(crate) fn braced_body<'a>(
 
 /// `open`, then `content` and `owner`'s dangling comments one indent deeper
 /// on their own lines (a blank line between the two when the source had
-/// one), then `close` on its own line. An empty body prints `open close`
-/// until D1 is applied at integration.
+/// one), then `close` on its own line. A body with neither prints `{}`
+/// (D1).
 pub(crate) fn braced<'a>(
     f: &mut JavaFormatter<'a>,
     owner: Option<SyntaxNode<'a>>,
@@ -42,6 +42,9 @@ pub(crate) fn braced<'a>(
         let blank =
             !content.is_nil() && owner.is_some_and(|owner| f.blank_line_before_dangling(owner));
         inner.extend([if blank { f.empty_line() } else { f.hard_line() }, dangling]);
+    }
+    if inner.is_empty() {
+        return cat![f; open, close];
     }
     let inner = f.concat(inner);
     let inner = f.indent(inner);

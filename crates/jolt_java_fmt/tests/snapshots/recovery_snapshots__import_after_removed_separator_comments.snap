@@ -37,8 +37,7 @@ import a .;
 // Same, with the separator's comments and the import already adjacent.
 import b .;
 
-class ImportAfterRemovedSeparatorComments {
-}
+class ImportAfterRemovedSeparatorComments {}
 
 diagnostics:
 code=java.parse.unexpected_syntax range=407..408 message=unexpected token in import declaration

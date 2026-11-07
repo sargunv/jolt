@@ -13,8 +13,7 @@ import static java.utils.*;
 /*hunt*/
 import static abc.def.Something;
 
-class C {
-}
+class C {}
 
 diagnostics:
 (none)

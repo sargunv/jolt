@@ -5,8 +5,7 @@ expression: snapshot
 formatted:
 import java.util.*;
 
-class OnDemandImport {
-}
+class OnDemandImport {}
 
 diagnostics:
 (none)

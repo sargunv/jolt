@@ -46,8 +46,7 @@ class SymbolCrevices
       } /* JOLT-TRIVIA:array-before-semi */;
   }
 
-  void helper(String name, int... numbers) {
-  }
+  void helper(String name, int... numbers) {}
 }
 
 diagnostics:

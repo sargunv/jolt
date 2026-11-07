@@ -14,11 +14,9 @@ class DanglingElse {
     }
   }
 
-  void winner() {
-  }
+  void winner() {}
 
-  void loser() {
-  }
+  void loser() {}
 }
 
 diagnostics:

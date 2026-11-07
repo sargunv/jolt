@@ -7,11 +7,9 @@ class RemovedStraySemicolonCommentIdempotence {
   int field;
 
   /* JOLT-TRIVIA:stray-semicolon */
-  static {
-  }
+  static {}
 
-  void method() {
-  }
+  void method() {}
 
   /*
    * JOLT-TRIVIA:multiline-stray-semicolon

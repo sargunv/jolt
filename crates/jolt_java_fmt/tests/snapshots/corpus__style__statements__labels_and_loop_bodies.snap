@@ -16,13 +16,11 @@ class Example {
       process(value);
     }
     empty /* label */ : /* body */ ;
-    while (/* while */ ready()) {
-    }
+    while (/* while */ ready()) {}
     do {
       processNext();
     } while (/* done */ hasNext());
-    for (/* forever */;;) {
-    }
+    for (/* forever */;;) {}
     synchronized (/* lock */ this) {
       check();
     }

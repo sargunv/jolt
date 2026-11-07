@@ -18,8 +18,7 @@ import c.C;
 class C {
   void f(boolean ok) {
     if () ;
-    while (ok) {
-    }
+    while (ok) {}
   }
 }
 
