@@ -611,9 +611,11 @@ log(
 
 - **Comment text.** Trailing whitespace is removed. A multi-line block comment
   whose continuation lines start with `*` is re-aligned as a star block (`*`
-  under the opening `/*`, `*/` closing); other multi-line block comments have
-  each continuation line left-trimmed and re-indented. An own-line single-line
-  doc comment is expanded:
+  under the opening `/*`, `*/` closing); each line keeps its text after the `*`
+  and one space, so code in `<pre>` stays indented. Other multi-line block
+  comments are re-indented as a unit: the continuation lines lose only the
+  indentation they all share (C13). An own-line single-line doc comment is
+  expanded:
 
 ```java
 /**
@@ -904,6 +906,24 @@ print like every other dangling comment:
   int[
     /* c */
   ] x;
+```
+
+### C13. Comment lines keep their relative indentation
+
+The reference trimmed every line of a multi-line comment, which flattened code
+samples in Javadoc `<pre>` blocks, commented-out code and ASCII art. A star line
+now keeps its text after the `*` and one space, and the continuation lines of
+any other block comment keep their indentation relative to each other:
+
+```java
+// new
+  /**
+   * <pre>
+   *   if (ready) {
+   *       run();
+   *   }
+   * </pre>
+   */
 ```
 
 ### L1. No stray blank lines, and no merged switch groups

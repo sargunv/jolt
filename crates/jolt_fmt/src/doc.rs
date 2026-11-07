@@ -372,7 +372,7 @@ fn first_line(text: &str) -> &str {
 }
 
 /// Splits on `\r\n`, `\r` and `\n`.
-pub(crate) fn lines(text: &str) -> impl Iterator<Item = &str> {
+pub(crate) fn lines(text: &str) -> impl Iterator<Item = &str> + Clone {
     let mut rest = Some(text);
     std::iter::from_fn(move || {
         let text = rest?;
@@ -415,14 +415,20 @@ pub(crate) fn display_width(text: &str) -> u32 {
 /// a multi-line doc comment (`/**`), or any comment with `expand_doc`, is a
 /// star block whose opener text moves to its own line; a multi-line block
 /// comment whose continuation starts with `*` is a star block that keeps its
-/// opener text; any other comment has each line trimmed.
+/// opener text; any other comment keeps its continuation lines' indentation
+/// relative to each other. A star line keeps its text after the `*` and one
+/// space, so `<pre>` code stays indented.
 pub(crate) fn comment_lines<'t>(text: &'t str, expand_doc: bool, mut emit: impl FnMut(&[&'t str])) {
     let doc = text.starts_with("/**") && !text.starts_with("/**/");
     let content = strip_delimiters(text);
     let multiline = has_line_break(content);
     if !(doc && (multiline || expand_doc)) && !is_star_block(content) {
-        for line in lines(text.trim()) {
-            emit(&[line.trim()]);
+        let mut lines = lines(text.trim());
+        emit(&[lines.next().unwrap_or("").trim()]);
+        let shared = shared_indentation(lines.clone());
+        for line in lines {
+            let line = line.trim_end();
+            emit(&[line.get(shared..).unwrap_or("")]);
         }
         return;
     }
@@ -440,12 +446,13 @@ pub(crate) fn comment_lines<'t>(text: &'t str, expand_doc: bool, mut emit: impl 
     emit(&first);
     let mut blank_lines = 0;
     for line in lines {
-        let line = if multiline {
-            line.trim_start()
-                .strip_prefix('*')
-                .map_or_else(|| line.trim(), str::trim)
-        } else {
-            line.trim()
+        // A star line keeps its text after the `*` and one space.
+        let line = match line.trim_start().strip_prefix('*') {
+            Some(rest) if multiline => {
+                let rest = rest.trim_end();
+                rest.strip_prefix(' ').unwrap_or(rest)
+            }
+            _ => line.trim(),
         };
         if line.is_empty() {
             blank_lines += usize::from(has_content);
@@ -459,6 +466,24 @@ pub(crate) fn comment_lines<'t>(text: &'t str, expand_doc: bool, mut emit: impl 
         emit(&[" * ", line]);
     }
     emit(&[" */"]);
+}
+
+/// The byte length of the leading spaces and tabs all non-blank `lines`
+/// share.
+fn shared_indentation<'t>(lines: impl Iterator<Item = &'t str>) -> usize {
+    let mut shared: Option<&str> = None;
+    for line in lines.filter(|line| !line.trim().is_empty()) {
+        let indentation = &line[..line.len() - line.trim_start_matches([' ', '\t']).len()];
+        let common = shared.map_or(indentation.len(), |shared| {
+            shared
+                .bytes()
+                .zip(indentation.bytes())
+                .take_while(|(left, right)| left == right)
+                .count()
+        });
+        shared = Some(&indentation[..common]);
+    }
+    shared.map_or(0, str::len)
 }
 
 fn strip_delimiters(text: &str) -> &str {

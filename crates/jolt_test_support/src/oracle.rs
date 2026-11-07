@@ -109,9 +109,13 @@ pub fn comment_inventory(root: SyntaxNode<'_>) -> BTreeMap<String, usize> {
     comments
 }
 
-/// A comment's words, ignoring delimiters, star decoration, and whitespace.
+/// A comment's text, ignoring delimiters, star decoration, blank lines, and
+/// trailing whitespace. Indentation stays where re-indentation cannot change
+/// it: after the `*` (and one space) of a star line, and relative to the
+/// other continuation lines when no line starts with `*`.
 #[must_use]
-pub fn canonical_comment_text(text: &str) -> String {
+pub fn canonical_comment_text<'t>(text: &'t str) -> String {
+    let doc = text.starts_with("/**");
     let body = text
         .strip_prefix("//")
         .or_else(|| {
@@ -124,23 +128,48 @@ pub fn canonical_comment_text(text: &str) -> String {
         })
         .or_else(|| text.strip_prefix("/*"))
         .unwrap_or(text);
-    let multiline = body.contains(['\r', '\n']);
-    let mut canonical = String::new();
-    for line in body.split(['\r', '\n']) {
-        let line = line.trim();
-        let line = if multiline {
-            line.strip_prefix('*').unwrap_or(line)
+    let star_text = |line: &'t str| {
+        line.trim_start().strip_prefix('*').map_or_else(
+            || line.trim(),
+            |after| {
+                let after = after.trim_end();
+                after.strip_prefix(' ').unwrap_or(after)
+            },
+        )
+    };
+    let mut lines = body
+        .split(['\r', '\n'])
+        .filter(|line| !line.trim().is_empty());
+    let mut canonical: Vec<&str> = Vec::new();
+    if !body.contains(['\r', '\n']) {
+        canonical.push(body.trim());
+    } else if doc {
+        canonical.extend(lines.map(star_text));
+    } else {
+        let opener = body.split(['\r', '\n']).next().unwrap_or("").trim();
+        if !opener.is_empty() {
+            lines.next();
+        }
+        let rest: Vec<&str> = lines.collect();
+        canonical.push(opener);
+        if opener.starts_with('*') || rest.iter().any(|line| line.trim_start().starts_with('*')) {
+            canonical.extend(rest.iter().map(|line| star_text(line)));
         } else {
-            line
-        };
-        for word in line.split_whitespace() {
-            if !canonical.is_empty() {
-                canonical.push(' ');
-            }
-            canonical.push_str(word);
+            let indentation = |line: &str| line.len() - line.trim_start_matches([' ', '\t']).len();
+            let first = rest.first().copied().unwrap_or("");
+            let shared = rest.iter().fold(indentation(first), |shared, line| {
+                first
+                    .bytes()
+                    .zip(line.bytes())
+                    .take(shared)
+                    .take_while(|(left, right)| left == right)
+                    .count()
+            });
+            canonical.extend(rest.iter().map(|line| &line.trim_end()[shared..]));
         }
     }
-    canonical
+    canonical.retain(|line| !line.is_empty());
+    canonical.join("\n")
 }
 
 /// The tree edits a language's formatter may make, which the structure
