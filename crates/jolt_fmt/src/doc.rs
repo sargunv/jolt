@@ -98,6 +98,12 @@ impl Default for DocBuilder<'_> {
 impl<'a> DocBuilder<'a> {
     #[must_use]
     pub fn new() -> Self {
+        Self::with_capacity(0)
+    }
+
+    /// A builder sized for a tree of `tokens` tokens, so the arena rarely
+    /// grows while a file is formatted.
+    pub(crate) fn with_capacity(tokens: usize) -> Self {
         let fixed = [
             (Kind::Nil, false),
             (Kind::Space, false),
@@ -107,11 +113,17 @@ impl<'a> DocBuilder<'a> {
             (Kind::EmptyLine, true),
             (Kind::BreakParent, true),
         ];
+        let mut nodes = Vec::with_capacity(fixed.len() + tokens * 3);
+        let mut breaks = Vec::with_capacity(nodes.capacity());
+        for (kind, forced) in fixed {
+            nodes.push(kind);
+            breaks.push(forced);
+        }
         Self {
-            nodes: fixed.iter().map(|&(kind, _)| kind).collect(),
-            breaks: fixed.iter().map(|&(_, breaks)| breaks).collect(),
-            children: Vec::new(),
-            texts: Vec::new(),
+            nodes,
+            breaks,
+            children: Vec::with_capacity(tokens * 3),
+            texts: Vec::with_capacity(tokens + tokens / 4),
             groups: 0,
         }
     }
@@ -181,7 +193,9 @@ impl<'a> DocBuilder<'a> {
         reindent: Option<Reindent<'a>>,
         flags: u8,
     ) -> Doc {
+        let multiline = has_line_break(text);
         let width = match reindent {
+            None | Some(Reindent::Strip(_)) if !multiline => display_width(text),
             None | Some(Reindent::Strip(_)) => display_width(first_line(text)),
             Some(Reindent::Comment | Reindent::ExpandedDoc) => {
                 let mut width = None;
@@ -191,7 +205,7 @@ impl<'a> DocBuilder<'a> {
                 width.unwrap_or(0)
             }
         };
-        let multiline = reindent == Some(Reindent::ExpandedDoc) || has_line_break(text);
+        let multiline = multiline || reindent == Some(Reindent::ExpandedDoc);
         self.push_text(Text {
             text,
             width,
@@ -352,7 +366,9 @@ pub(crate) fn has_line_break(text: &str) -> bool {
 }
 
 fn first_line(text: &str) -> &str {
-    text.find(['\n', '\r']).map_or(text, |end| &text[..end])
+    text.bytes()
+        .position(|byte| matches!(byte, b'\n' | b'\r'))
+        .map_or(text, |end| &text[..end])
 }
 
 /// Splits on `\r\n`, `\r` and `\n`.
@@ -378,12 +394,11 @@ pub(crate) fn lines(text: &str) -> impl Iterator<Item = &str> {
 /// Display width with a tab counting one column, as in the reference.
 pub(crate) fn display_width(text: &str) -> u32 {
     if text.is_ascii() {
-        return u32::try_from(
-            text.bytes()
-                .filter(|byte| matches!(byte, b'\t' | b' '..=b'~'))
-                .count(),
-        )
-        .expect("width fits in u32");
+        let printable = text
+            .bytes()
+            .filter(|byte| matches!(byte, b'\t' | b' '..=b'~'))
+            .count();
+        return u32::try_from(printable).expect("width fits in u32");
     }
     text.chars()
         .map(|ch| {

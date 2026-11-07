@@ -895,6 +895,10 @@ impl<'source> Scanner<'source> {
     }
 
     fn peek_char(&self, offset: usize) -> Option<char> {
+        let ascii = self.source.as_bytes().get(self.pos..=self.pos + offset);
+        if let Some(ascii) = ascii.filter(|bytes| bytes.is_ascii()) {
+            return Some(char::from(ascii[offset]));
+        }
         self.source.get(self.pos..)?.chars().nth(offset)
     }
 

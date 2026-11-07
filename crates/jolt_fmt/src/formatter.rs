@@ -64,7 +64,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         let regions = ignore_regions::<L>(root, &comments);
         let count = comments.list.len();
         Self {
-            builder: DocBuilder::new(),
+            builder: DocBuilder::with_capacity(root.tree().token_count()),
             comments,
             regions,
             emitted: vec![0; count],

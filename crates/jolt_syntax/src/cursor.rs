@@ -24,18 +24,50 @@ impl Hash for TreeRef<'_> {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy)]
 pub struct SyntaxNode<'a> {
     tree: TreeRef<'a>,
     source: &'a str,
     id: NodeId,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy)]
 pub struct SyntaxToken<'a> {
     tree: TreeRef<'a>,
     source: &'a str,
     id: TokenId,
+}
+
+// Identity is the tree and the id: the source is the tree's, and comparing
+// or hashing it by content would cost a pass over the whole file.
+impl PartialEq for SyntaxNode<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.tree == other.tree && self.id == other.id
+    }
+}
+
+impl Eq for SyntaxNode<'_> {}
+
+impl Hash for SyntaxNode<'_> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.tree.hash(state);
+        self.id.hash(state);
+    }
+}
+
+impl PartialEq for SyntaxToken<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.tree == other.tree && self.id == other.id
+    }
+}
+
+impl Eq for SyntaxToken<'_> {}
+
+impl Hash for SyntaxToken<'_> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.tree.hash(state);
+        self.id.hash(state);
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

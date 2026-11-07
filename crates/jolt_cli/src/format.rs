@@ -7,6 +7,7 @@ use std::{
     fs,
     io::{self, Read as _, Write as _},
     num::NonZeroUsize,
+    ops::ControlFlow,
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
@@ -14,7 +15,7 @@ use std::{
 use clap::Args;
 use ignore::WalkBuilder;
 use jolt_config::FormatConfig;
-use jolt_formatter::{FormatOptions, FormatResult, Language, LineIndex, OnSyntaxError};
+use jolt_formatter::{FormatOptions, FormatResult, Language, LineIndex, OnSyntaxError, Sink};
 use rayon::prelude::*;
 
 use crate::{
@@ -163,14 +164,18 @@ fn run_stdin(cwd: &Path, args: &FormatArgs, sources: &Sources<'_>) -> Result<()>
     io::stdin()
         .read_to_string(&mut source)
         .map_err(|error| format!("failed to read stdin as UTF-8: {error}"))?;
-    let formatted = match format_source(&label, &source, language, options, args.format_with_errors)
-    {
-        Ok(formatted) => formatted,
-        Err(diagnostics) => {
-            eprint!("{diagnostics}");
-            return failure(0, 1);
-        }
-    };
+    let mut formatted = String::new();
+    if let Err(diagnostics) = format_source(
+        &label,
+        &source,
+        language,
+        options,
+        args.format_with_errors,
+        &mut formatted,
+    ) {
+        eprint!("{diagnostics}");
+        return failure(0, 1);
+    }
 
     if args.check {
         if formatted == source {
@@ -283,24 +288,40 @@ fn format_file(cwd: &Path, file: &Candidate, args: &FormatArgs) -> Report {
         Ok(source) => source,
         Err(error) => return Report::failed(format!("{label}: failed to read file: {error}\n")),
     };
-    let formatted = match format_source(
+    if args.check {
+        let mut compare = Compare {
+            source: &source,
+            at: 0,
+        };
+        return match format_source(
+            &label,
+            &source,
+            file.language,
+            file.options,
+            args.format_with_errors,
+            &mut compare,
+        ) {
+            Err(diagnostics) => Report::failed(diagnostics),
+            Ok(false) if compare.at == source.len() => Report::new(Status::Unchanged),
+            Ok(_) => Report {
+                stdout: format!("{label}\n"),
+                ..Report::new(Status::Changed)
+            },
+        };
+    }
+    let mut formatted = String::new();
+    if let Err(diagnostics) = format_source(
         &label,
         &source,
         file.language,
         file.options,
         args.format_with_errors,
+        &mut formatted,
     ) {
-        Ok(formatted) => formatted,
-        Err(diagnostics) => return Report::failed(diagnostics),
-    };
+        return Report::failed(diagnostics);
+    }
     if formatted == source {
         return Report::new(Status::Unchanged);
-    }
-    if args.check {
-        return Report {
-            stdout: format!("{label}\n"),
-            ..Report::new(Status::Changed)
-        };
     }
     match fs::write(&file.path, formatted) {
         Ok(()) => Report::new(Status::Changed),
@@ -310,22 +331,43 @@ fn format_file(cwd: &Path, file: &Candidate, args: &FormatArgs) -> Report {
     }
 }
 
-/// Formats `source`, or renders its syntax errors when they block formatting.
-fn format_source(
+/// Compares formatted output with the source as it is written, and stops the
+/// formatter at the first difference.
+struct Compare<'s> {
+    source: &'s str,
+    /// The length of the source prefix the output matched so far.
+    at: usize,
+}
+
+impl Sink for Compare<'_> {
+    fn write(&mut self, chunk: &str) -> ControlFlow<()> {
+        let end = self.at + chunk.len();
+        if self.source.as_bytes().get(self.at..end) == Some(chunk.as_bytes()) {
+            self.at = end;
+            ControlFlow::Continue(())
+        } else {
+            ControlFlow::Break(())
+        }
+    }
+}
+
+/// Formats `source` into `sink`, returning whether the sink stopped it
+/// early, or renders its syntax errors when they block formatting.
+fn format_source<S: Sink>(
     label: &str,
     source: &str,
     language: Language,
     options: FormatOptions,
     format_with_errors: bool,
-) -> std::result::Result<String, String> {
+    sink: &mut S,
+) -> std::result::Result<bool, String> {
     let on_error = if format_with_errors {
         OnSyntaxError::Format
     } else {
         OnSyntaxError::Refuse
     };
-    let mut output = String::new();
-    match jolt_formatter::format(source, language, &options, on_error, &mut output) {
-        FormatResult::Formatted { .. } => Ok(output),
+    match jolt_formatter::format(source, language, &options, on_error, sink) {
+        FormatResult::Formatted { halted } => Ok(halted),
         FormatResult::Refused(diagnostics) => {
             let lines = LineIndex::new(source);
             let mut text = String::new();

@@ -12,7 +12,9 @@ use crate::{Doc, DocBuilder, FormatOptions, Reindent, Sink};
 /// The most commands one fit check visits before answering "does not fit".
 pub const FIT_BUDGET: usize = 4096;
 
-const CHUNK: usize = 16 * 1024;
+/// Output is handed to the sink in chunks of about this size, so a sink that
+/// compares (check mode) can stop the printer soon after a difference.
+const CHUNK: usize = 1024;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Mode {
@@ -47,6 +49,8 @@ struct Printer<'p, 'a, S: Sink + ?Sized> {
     wrote_any: bool,
     after_line_comment: bool,
     suffixes: Vec<Command>,
+    /// The fit check's stack, kept to reuse its allocation.
+    fit_stack: Vec<Fit>,
     group_modes: Vec<Option<Mode>>,
     stack: Vec<Command>,
 }
@@ -72,6 +76,7 @@ pub(crate) fn print<S: Sink + ?Sized>(
         wrote_any: false,
         after_line_comment: false,
         suffixes: Vec::new(),
+        fit_stack: Vec::new(),
         group_modes: vec![None; docs.group_count() + 1],
         stack: vec![Command {
             indent: 0,
@@ -322,8 +327,16 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
 
     /// Whether `doc` fits flat on the rest of the current line, followed by
     /// the rest of the stack in its recorded modes. `indent` is the group's.
+    fn fits(&mut self, doc: Doc, indent: u32) -> bool {
+        let mut stack = std::mem::take(&mut self.fit_stack);
+        stack.clear();
+        let fits = self.measure(doc, indent, &mut stack);
+        self.fit_stack = stack;
+        fits
+    }
+
     #[allow(clippy::too_many_lines)]
-    fn fits(&self, doc: Doc, indent: u32) -> bool {
+    fn measure(&self, doc: Doc, indent: u32, stack: &mut Vec<Fit>) -> bool {
         let (start, mut space) = if self.pending_newlines > 0 {
             (self.indent_width(self.pending_indent), false)
         } else {
@@ -337,13 +350,13 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
         // would change where its text starts.
         let mut saw_line = false;
         let mut rest = self.stack.len();
-        let mut stack = vec![Fit {
+        stack.push(Fit {
             mode: Mode::Flat,
             doc,
             indent,
             in_rest: false,
             in_suffix: false,
-        }];
+        });
         let mut budget = FIT_BUDGET;
         loop {
             let entry = if let Some(entry) = stack.pop() {
