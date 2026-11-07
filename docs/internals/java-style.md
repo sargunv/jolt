@@ -11,10 +11,12 @@ The reference is, in order of precedence:
 1. The formatter snapshots at commit `53efc726`
    (`crates/jolt_java_fmt/tests/snapshots/corpus__*.snap`, the `formatted:`
    section), whose inputs are `fixtures/java/**`.
-2. The reference corpus outputs in `/tmp/jolt-ref-ScpJkX`: `old-output/` (line
-   width 80) and `old-output-w100/` (line width 100) for the inputs in `input/`,
-   produced by `jolt-old` at commit `de12e2cb`, whose Java output is identical
-   to `53efc726`.
+2. The reference corpus outputs in `tools/import/.imports/.jolt-ref/` (a durable
+   copy of `/tmp/jolt-ref-ScpJkX`): `old-output/` (line width 80) and
+   `old-output-w100/` (spring-framework at line width 100) for the inputs in
+   `input/`, produced by `jolt-old` at commit `de12e2cb`, whose Java output is
+   identical to `53efc726`. Files with syntax errors were left untouched by
+   `jolt-old` and are not part of the reference.
 3. This page, which summarizes 1 and 2 so rules can be written against it.
 
 Where this summary and the reference disagree, the reference wins. Any output
@@ -33,8 +35,9 @@ the default options and are taken from the snapshots unless noted.
   to a single newline.
 - At most one blank line anywhere. No blank line directly after an opening brace
   or before a closing brace.
-- A byte order mark at the start of the file and a trailing SUB (`\u001a`)
-  character are preserved.
+- A byte order mark at the start of the file is preserved as the first bytes of
+  the output, before any comment; a trailing SUB (`\u001a`) character is
+  preserved after the final newline.
 - Layout is "fit or break": a construct goes on one line if it fits, otherwise
   its parts break by the construct's rule. Lists break all-or-nothing: every
   element on its own line, no filling.
@@ -206,7 +209,8 @@ class Groups {
   annotation-interface members.
 - Redundant `;` members are removed; their comments stay in place.
 - Empty bodies (methods, constructors, initializers, types, blocks, anonymous
-  classes, lambda blocks) currently print as `{`, newline, `}` (see D1).
+  classes, lambda blocks, switch blocks, module bodies) currently print as `{`,
+  newline, `}` (see D1).
 
 ### Enums
 
@@ -534,25 +538,52 @@ return new String[] {
 
 ## Comments
 
-Comments are never dropped, duplicated, or moved across a token. Placement
-follows [the formatter's comment model](./formatter.md#comments); the visible
-rules are:
+Comments are never dropped, duplicated, or merged, and never move across a token
+except past a `,` or `;` (below) and into a control statement's body (C7).
+Placement follows [the formatter's comment model](./formatter.md#comments); the
+visible rules are:
 
 - **Own line.** A comment that starts its line in the source starts its line in
   the output, at the indentation of the code it precedes. Blank lines after it
   are preserved (one at most). A run of comments before a member or statement
   stays attached to it.
+- **Start of line.** A block comment that starts its line with code after it on
+  the same line keeps that code on its line (`/* lead */ static {`, C5).
 - **End of line.** A comment that ends its line stays at the end of the line,
-  after any `,` or `;` that follows its code (`user, // selected`). The line
-  always breaks after it.
+  after any `,` or `;` that follows its code (`user, // selected`,
+  `return x; // done`, C8). The line always breaks after it. A closing delimiter
+  is not pulled up: `foo(a // c` / `)` keeps `)` on the next line.
+- **After a keyword or operator.** An end-of-line comment after `=`, `return`,
+  `throw`, `yield`, `break`, `continue` or `assert` keeps its place, and the
+  value continues on the next line one indent deeper:
+
+```java
+int field = // a comment ends the line after the operator
+  1;
+return // a comment ends the line after the keyword
+  someLongMethodCall(firstArgumentName, secondArgumentName)
+    + anotherLongValue;
+```
+
 - **Inline.** A block comment with code on both sides stays inline with one
-  space on each side, except next to an opening delimiter (see C4).
+  space on each side, except none after an opening delimiter, `.`, `::` or `@`
+  and none before a closing delimiter, `,` or `;` (C4).
 - **Opening braces and parentheses.** An end-of-line comment after an opening
-  `{` or `(` moves to its own line as the first line inside: `class X { // c`
-  prints `class X {`, then `// c` one indent deeper.
-- **Dangling.** Comments in an otherwise empty body or argument list, and
-  comments on their own lines before a closing delimiter, print one per line
-  inside the delimiters at the inner indentation:
+  `{`, `(`, `[` or `<` moves to its own line as the first line inside:
+  `class X { // c` prints `class X {`, then `// c` one indent deeper (C6).
+- **Before a body's brace.** A block comment on its own line between a header
+  and its `{` moves onto the header line (`class X /* c */ {`,
+  `if (ready) /* c */ {`); a line comment there ends the header line and the
+  brace takes the next line (`class X // c` / `{`), except in control statements
+  (next rule).
+- **Control headers.** A comment that ends the header's line, and a line comment
+  on its own line, between a control statement's header and its body move to the
+  first line of the body (C7). After `else` followed by `if`, the comment stays:
+  `} else // c` / `if (…) {`.
+- **Dangling.** Comments in an otherwise empty body, argument list or other
+  delimited list, and comments on their own lines before a closing delimiter,
+  print one per line inside the delimiters at the inner indentation, after any
+  items, keeping one blank line before the first when the source had one:
 
 ```java
 log(
@@ -584,13 +615,19 @@ foo( a,b,c );
 - `// @formatter:off` and `// @formatter:on` (also as block comments) switch
   formatting off and on. Other spellings (`// prettier-ignore`,
   `// jolt-ignore`) have no effect.
-- Granularity is the list item: a member, statement, top-level declaration, or
-  module directive whose first token lies inside an off region prints exactly as
-  written, shifted to the current indentation (lines lose the indentation of the
-  item's first source line and get the current one). The markers and the
-  comments before an item are formatted normally.
-- An `off` without a matching `on` lasts to the end of its enclosing body (to
-  the end of the file at top level).
+- Granularity is the list item: a member, statement, top-level declaration,
+  switch group statement, or module directive whose first token lies inside an
+  off region prints exactly as written, shifted to the current indentation
+  (lines lose the indentation of the item's first source line and get the
+  current one; text block lines are never touched). The markers and the comments
+  around an item are formatted normally. Items in a region keep the source's
+  blank line or its absence between them, at most one (F1).
+- Markers count only between the items of one body (or at top level). An `off`
+  whose next `on` is in a different body has no effect, and neither has that
+  `on` (fixture `formatter-ignore-nested-member-body`). A marker inside an item,
+  such as in an argument list, has no effect.
+- An `off` with no later `on` anywhere lasts to the end of its body (to the end
+  of the file at top level).
 
 ## Code with syntax errors
 
@@ -620,11 +657,12 @@ The reference always breaks an empty body, even after a `throws` clause where
 A braced body with no members, statements, constants or comments prints `{}`:
 method, constructor and initializer bodies, blocks (including control statement
 bodies and `catch`/`finally`), type bodies, anonymous class bodies, and lambda
-block bodies. As a consequence, an assignment whose value ends in an empty body
-no longer has to break (`Runnable r = () -> {};`). A body containing only
-comments still breaks. Array initializers already printed `{}`. D1 is applied at
-integration as its own commit, after the rest of the output matches the
-reference.
+block bodies, and also switch blocks, module bodies and enum bodies (every body
+`braced_body` prints). As a consequence, an assignment whose value ends in an
+empty body no longer has to break (`Runnable r = () -> {};`). A body containing
+only comments still breaks. Array initializers already printed `{}`. D1 is
+applied at integration as its own commit, after the rest of the output matches
+the reference.
 
 ### C1. Own-line comments stay on their own line (#223)
 
@@ -647,7 +685,12 @@ and joined it to the previous line. Now it keeps its own line.
     1;
 ```
 
-### C2. Comments in an unclosed body stay inside it (#222)
+### C2. A comment after an unclosed opener is stable (#222)
+
+The reference indented the comment on the first pass and moved it to column 0 on
+the second. Now the first pass already prints the second pass's output: with the
+closer missing, the comment attaches to the end of the file, outside the
+unclosed body.
 
 ```java
 // input (no closing brace)
@@ -655,7 +698,7 @@ public @interface kHz { // No prefix defined in the annotation itself
 // reference: pass 1 indents the comment, pass 2 moves it to column 0
 // new (stable)
 public @interface kHz {
-  // No prefix defined in the annotation itself
+// No prefix defined in the annotation itself
 ```
 
 ### C3. Every comment is printed exactly once (#224)
@@ -664,27 +707,34 @@ The reference could drop an own-line comment after an annotation that had its
 own trailing comment, and could print a comment twice at a formatter-ignore
 boundary. Both are fixed; there is no visible style rule.
 
-### C4. No space between an opening delimiter and an inline comment
+### C4. Inline comments get one space on each side, except next to delimiters
 
 The reference inserted a space between `(`, `[`, `<`, `.` or `::` and a
-following inline block comment. Now the delimiter is followed directly by the
-comment, and the comment by one space:
+following inline block comment, and printed no space between an inline comment
+and a following `.`. Now an inline comment always has one space on each side,
+except none after `(`, `[`, `<`, `.`, `::` or `@` and none before `)`, `]`, `}`,
+`>`, `,` or `;`:
 
 ```java
 // reference
     if ( /* guard */ ready) {
     return values[ /* index */ index];
     builder. /* call */ add(first);
+    this /**/.field = 1;
 // new
     if (/* guard */ ready) {
     return values[/* index */ index];
     builder./* call */ add(first);
+    this /**/ .field = 1;
 ```
 
-### C5. A comment that starts its line keeps the code after it
+### C5. A block comment keeps the code after it on its line
 
-A block comment at the start of a line followed by code on the same line keeps
-that code on its line instead of pushing it to the next line:
+A block comment followed by code on the same line keeps that code on its line
+instead of pushing it to the next line, also when the layout puts the comment at
+the start of a line (`class C { /* c */ { body(); } }` now prints `/* c */ {` as
+the first line of the body, where the reference printed `/* c */` and `{` on
+separate lines):
 
 ```java
 // input
@@ -711,18 +761,21 @@ comment on the opening line, sometimes producing `for ( // c` then `;;)`):
 // reference
     for ( // keep going
     ;;) {
-// new
+// new: the comment forces the header to break, one part per line
     for (
       // keep going
-      ;;
+      ;
+      ;
     ) {
 ```
 
 ### C7. End-of-line comments after a control header move into the body
 
 An end-of-line comment after the `)` of an `if`/`while`/`for`/`switch`/
-`synchronized`/`catch` header, or after `else`, `do`, `try` or `finally`, moves
-to the first line of the body instead of staying before the brace:
+`synchronized`/`catch`/`try (…)` header, or after `else`, `do`, `try` or
+`finally`, and a line comment on its own line between such a header and its
+body, move to the first line of the body instead of staying before the brace
+(the reference printed `if (` / `ready` / `) // fast path` / `{`):
 
 ```java
 // input
@@ -734,3 +787,34 @@ to the first line of the body instead of staying before the brace:
       run();
     }
 ```
+
+The exception is `else` followed by `if`, which keeps the reference output
+`} else // c` / `if (…) {`.
+
+### C8. End-of-line comments before `;` move after it
+
+`,` already pulled an end-of-line comment past itself (`user, // selected`); `;`
+now does too, so a statement never ends with its `;` alone on a line:
+
+```java
+// reference
+    return // no value follows the keyword, so the terminator stays put
+    ;
+    return // a comment ends the line after the keyword
+      y // a comment before the terminator keeps it in the continuation
+      ;
+// new
+    return; // no value follows the keyword, so the terminator stays put
+    return // a comment ends the line after the keyword
+      y; // a comment before the terminator keeps it in the continuation
+```
+
+### F1. Formatter-ignore works item by item
+
+The reference spliced the raw source of a whole off region, including the text
+between items. Now each item in the region is printed as written, and what lies
+between items is formatted: comments between items are re-indented like any
+own-line comment, items that shared a source line each start their own line, and
+the source's blank lines between items are kept (one at most). A region whose
+items are one per line with ordinary indentation, as in every reference fixture,
+prints exactly as before.
