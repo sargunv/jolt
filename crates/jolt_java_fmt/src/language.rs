@@ -58,6 +58,25 @@ impl FormatLanguage for JavaFormat {
         }
     }
 
+    /// Identifier characters, the doubled operators (`++`, `--`, `&&`, `||`,
+    /// `<<`, `::`), `->`, comment openers, and an operator before `=`. Never
+    /// `>` `>`, which closes nested type arguments.
+    fn joins(left: char, right: char) -> bool {
+        let word = |ch: char| ch.is_alphanumeric() || ch == '_' || ch == '$' || ch == '\\';
+        (word(left) && word(right))
+            || matches!(
+                (left, right),
+                ('+', '+')
+                    | ('-', '-' | '>')
+                    | ('&', '&')
+                    | ('|', '|')
+                    | ('<', '<')
+                    | (':', ':')
+                    | ('/', '/' | '*')
+            )
+            || (right == '=' && "+-*/%&|^<>!=".contains(left))
+    }
+
     fn hugs_next(token: SyntaxToken<'_>) -> bool {
         Self::closer_for(token).is_some() || matches!(kind(token), K::Dot | K::DoubleColon | K::At)
     }
@@ -142,7 +161,9 @@ fn control_body_comment<'a>(
         SyntaxElement::Token(_) => parent,
     };
     let body = next_sibling(container, header_end)?.as_node()?;
-    if body.is_malformed() || body.first_token() != Some(context.next) {
+    // A missing body leaves the next clause (a list) after the header.
+    if body.is_malformed() || body.first_token() != Some(context.next) || node_kind(body).is_list()
+    {
         return None;
     }
     if kind(prev) == K::ElseKw && node_kind(body) == K::IfStatement {

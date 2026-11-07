@@ -62,6 +62,10 @@ pub trait FormatLanguage: Sized + 'static {
     /// closer.
     fn closer_for(token: SyntaxToken<'_>) -> Option<RawSyntaxKind>;
     fn is_closer(token: SyntaxToken<'_>) -> bool;
+    /// Whether text ending in `left` followed directly by text starting with
+    /// `right` would lex differently; the printer separates such texts with a
+    /// space.
+    fn joins(left: char, right: char) -> bool;
     /// Tokens after which an inline comment is printed with no space.
     fn hugs_next(token: SyntaxToken<'_>) -> bool;
     /// Language exceptions to comment placement, tried before the generic
@@ -94,7 +98,7 @@ pub fn format<L: FormatLanguage, S: Sink + ?Sized>(
     if let Some(bom) = special_trivia(root.first_token(), TriviaKind::ByteOrderMark) {
         sink.write(bom)?;
     }
-    printer::print(&builder, doc, *options, sink)?;
+    printer::print(&builder, doc, *options, L::joins, sink)?;
     if let Some(substitute) = special_trivia(root.last_token(), TriviaKind::TrailingSubstitute) {
         sink.write(substitute)?;
     }

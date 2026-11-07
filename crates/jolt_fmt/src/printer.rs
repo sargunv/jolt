@@ -48,6 +48,9 @@ struct Printer<'p, 'a, S: Sink + ?Sized> {
     at_line_start: bool,
     wrote_any: bool,
     after_line_comment: bool,
+    /// The last character written on the current line, if it is not a space.
+    last: Option<char>,
+    joins: fn(char, char) -> bool,
     suffixes: Vec<Command>,
     /// The fit check's stack, kept to reuse its allocation.
     fit_stack: Vec<Fit>,
@@ -59,6 +62,7 @@ pub(crate) fn print<S: Sink + ?Sized>(
     docs: &DocBuilder<'_>,
     root: Doc,
     options: FormatOptions,
+    joins: fn(char, char) -> bool,
     sink: &mut S,
 ) -> ControlFlow<()> {
     let mut printer = Printer {
@@ -75,6 +79,8 @@ pub(crate) fn print<S: Sink + ?Sized>(
         at_line_start: true,
         wrote_any: false,
         after_line_comment: false,
+        last: None,
+        joins,
         suffixes: Vec::new(),
         fit_stack: Vec::new(),
         group_modes: vec![None; docs.group_count() + 1],
@@ -198,6 +204,13 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
             self.pending_indent = command.indent;
         }
         self.flush_pending();
+        if let (Some(last), Some(first)) = (self.last, text.text.chars().next())
+            && (self.joins)(last, first)
+        {
+            self.out.push(' ');
+            self.column += 1;
+        }
+        self.last = text.text.chars().next_back().filter(|ch| *ch != ' ');
         if text.flags & VERBATIM_START != 0 {
             self.verbatim_base.clone_from(&self.line_ws);
         }
@@ -231,11 +244,13 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
             self.pending_space = false;
             self.at_line_start = true;
             self.after_line_comment = false;
+            self.last = None;
         }
         if self.pending_space {
             if !self.at_line_start {
                 self.out.push(' ');
                 self.column += 1;
+                self.last = None;
             }
             self.pending_space = false;
         }

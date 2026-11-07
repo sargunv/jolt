@@ -620,6 +620,11 @@ pub trait FormatLanguage: Sized + 'static {
     fn closer_for(token: SyntaxToken<'_>) -> Option<RawSyntaxKind>;
     /// `) ] }` and Java's type-argument and type-parameter `>`.
     fn is_closer(token: SyntaxToken<'_>) -> bool;
+    /// Whether text ending in `left` directly followed by text starting with
+    /// `right` would lex differently (`- -x`, `a b`, `/ /*c*/`, `< <` in
+    /// recovered type arguments). The printer writes a space between such
+    /// texts, so no rule has to; Java never joins `>` `>`.
+    fn joins(left: char, right: char) -> bool;
     /// Tokens after which an inline comment is printed with no space:
     /// openers (`closer_for` is `Some`), and Java's `.`, `::` and `@`.
     fn hugs_next(token: SyntaxToken<'_>) -> bool;
@@ -902,9 +907,9 @@ effective layout only:
 | Attachment | Layout                              | Printed as                                                                                                          |
 | ---------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | Leading    | `OwnLine`                           | `hard_line, C, (empty_line if lines_after ≥ 2 else hard_line)`                                                      |
-| Leading    | `StartOfLine`                       | `hard_line, C, space`                                                                                               |
+| Leading    | `StartOfLine`                       | `hard_line, C`, then `space` unless `next` is a closer or separator                                                 |
 | Leading    | `Inline`                            | `space` unless `L::hugs_next(prev)`, then `C`, then `space` unless `next` is a closer or separator                  |
-| Leading    | `EndOfLine`                         | `space` unless `L::hugs_next(prev)`, then `C, hard_line` (Runs)                                                     |
+| Leading    | `EndOfLine`                         | `space` unless `L::hugs_next(prev)`, then `C, (empty_line if lines_after ≥ 2 else hard_line)` (Runs)                |
 | Trailing   | `EndOfLine`, line comment           | `line_suffix(space, C), break_parent`                                                                               |
 | Trailing   | `EndOfLine` block comment, `Inline` | `space` unless `L::hugs_next(prev)`, then `C`, then `space` unless `next` is a closer or separator                  |
 | Dangling   | any                                 | by the owning rule via `Formatter::dangling`: one per line, except that comments that shared a source line share it |
@@ -1137,7 +1142,6 @@ crates/jolt_java_fmt/
   src/helpers/lists.rs          shared   delimited comma lists, one-element delimited nodes, list items
   src/helpers/bodies.rs         shared   braced bodies, member/statement item lists, blank-line policy
   src/helpers/assignment.rs     shared   `left = right` layout
-  src/helpers/tokens.rs         shared   join spacing between adjacent tokens
   src/rules/mod.rs              shared   declares the four area modules
   src/rules/declarations/**     Area A
   src/rules/statements/**       Area B
@@ -1327,12 +1331,6 @@ pub(crate) fn assignment_like<'a>(
     op: Option<SyntaxToken<'a>>,
     right: Doc,
 ) -> Doc;
-
-// helpers/tokens.rs
-/// Whether two adjacent tokens printed with no separator would lex as
-/// different tokens (`- -x`, `+ +x`, `a instanceof`…). Rules that join
-/// elements with nothing between them consult it.
-pub(crate) fn needs_space(left: SyntaxToken<'_>, right: SyntaxToken<'_>) -> bool;
 ```
 
 ### Cross-area layout contracts

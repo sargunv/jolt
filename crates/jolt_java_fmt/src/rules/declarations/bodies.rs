@@ -162,9 +162,10 @@ fn enum_constants<'a>(
     node: EnumBody<'a>,
     has_members: bool,
 ) -> ConstantSection {
-    let normalize = node
-        .constants()
-        .is_none_or(|constants| constants.syntax().is_recovery_free());
+    // The body owns the separators: when it is recovered (an unclosed body
+    // whose constants run into what follows), a synthesized comma could
+    // join the constants to the next tokens.
+    let normalize = node.syntax().is_recovery_free();
     let separator = node.body_separator();
     let elements: Vec<_> = node
         .constants()
