@@ -1,0 +1,26 @@
+class Commented<T extends First & // first bound
+    Second> {
+  public non /* a */ - /* b */ sealed class Open {}
+  public non // line
+  -sealed class OpenLine {}
+  int[/* empty */] dims;
+  int[ // line
+  ] lineDims;
+  java.util.List</* only */> diamond;
+  Map<String, // key
+      Integer> map;
+  @Ann(/* none */) int empty;
+  @Ann(
+      // own line
+  ) int ownLine;
+  @Ann({ /* inside */ }) int array;
+  @Ann(value = 1 // trailing
+  ) int trailing;
+  public /* kept */ static @Nonnull String typed;
+  void catches() {
+    try {
+    } catch (First | // union
+        Second e) {
+    }
+  }
+}
