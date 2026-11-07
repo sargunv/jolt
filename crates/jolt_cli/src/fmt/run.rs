@@ -5,18 +5,16 @@ use std::{
     fs,
     io::{self, Read as _, Write as _},
     num::NonZeroUsize,
+    ops::ControlFlow,
     path::{Path, PathBuf},
     thread,
     time::Instant,
 };
 
 use humanize_duration::{Truncate, prelude::DurationExt as _};
-use jolt_diagnostics::Diagnostic;
 use jolt_formatter::{
-    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink,
-    format_parsed_source_to_sink, parse_source,
+    Diagnostic, FormatOptions, FormatResult, Language, LineIndex, OnSyntaxError, Sink,
 };
-use jolt_text::{LineIndex, TextSize};
 use rayon::prelude::*;
 
 use crate::error::CliError;
@@ -285,20 +283,34 @@ fn format_candidate(cwd: &Path, candidate: &CandidateFile, args: &Args) -> FileF
     )
 }
 
-fn format_for_cli_to_sink<S: RenderSink + ?Sized>(
+enum FormatSinkResult {
+    Complete,
+    Halted,
+    Blocked { diagnostic: Diagnostic },
+}
+
+fn format_for_cli_to_sink<S: Sink + ?Sized>(
     source: &str,
     language: Language,
     options: FormatOptions,
     format_with_errors: bool,
     sink: &mut S,
 ) -> FormatSinkResult {
-    let parsed = parse_source(source, language);
-    if !format_with_errors && let Some(diagnostic) = parsed.diagnostics().first() {
-        return FormatSinkResult::Blocked {
-            diagnostic: diagnostic.clone(),
-        };
+    let on_error = if format_with_errors {
+        OnSyntaxError::Format
+    } else {
+        OnSyntaxError::Refuse
+    };
+    match jolt_formatter::format(source, language, &options, on_error, sink) {
+        FormatResult::Formatted { halted: false } => FormatSinkResult::Complete,
+        FormatResult::Formatted { halted: true } => FormatSinkResult::Halted,
+        FormatResult::Refused(diagnostics) => FormatSinkResult::Blocked {
+            diagnostic: diagnostics
+                .into_iter()
+                .next()
+                .expect("a refused source has diagnostics"),
+        },
     }
-    format_parsed_source_to_sink(&parsed, &options, sink)
 }
 
 fn format_file(
@@ -474,10 +486,10 @@ impl<W: io::Write> BufferedIoSink<W> {
     }
 }
 
-impl<W> RenderSink for BufferedIoSink<W> {
-    fn write_str(&mut self, text: &str) -> RenderControl {
+impl<W> Sink for BufferedIoSink<W> {
+    fn write(&mut self, text: &str) -> ControlFlow<()> {
         self.contents.push_str(text);
-        RenderControl::Continue
+        ControlFlow::Continue(())
     }
 }
 
@@ -501,19 +513,19 @@ impl<'a> CompareSink<'a> {
     }
 }
 
-impl RenderSink for CompareSink<'_> {
-    fn write_str(&mut self, text: &str) -> RenderControl {
+impl Sink for CompareSink<'_> {
+    fn write(&mut self, text: &str) -> ControlFlow<()> {
         if !self.matches {
             self.offset += text.len();
-            return RenderControl::Halt;
+            return ControlFlow::Break(());
         }
 
         compare_chunk(self.expected, &mut self.offset, &mut self.matches, text);
 
         if self.matches {
-            RenderControl::Continue
+            ControlFlow::Continue(())
         } else {
-            RenderControl::Halt
+            ControlFlow::Break(())
         }
     }
 }
@@ -561,11 +573,11 @@ impl<'a> BufferedFileSink<'a> {
     }
 }
 
-impl RenderSink for BufferedFileSink<'_> {
-    fn write_str(&mut self, text: &str) -> RenderControl {
+impl Sink for BufferedFileSink<'_> {
+    fn write(&mut self, text: &str) -> ControlFlow<()> {
         self.contents.push_str(text);
         compare_chunk(self.expected, &mut self.offset, &mut self.matches, text);
-        RenderControl::Continue
+        ControlFlow::Continue(())
     }
 }
 
@@ -585,24 +597,16 @@ fn diagnostics_text(label: &str, source: &str, diagnostics: &[Diagnostic]) -> St
     let line_index = LineIndex::new(source);
 
     for diagnostic in diagnostics {
-        if let Some(range) = diagnostic.range {
-            let position = line_index.line_col(TextSize::new(range.start().get()));
-            let _ = writeln!(
-                text,
-                "{}:{}:{}: {}: {}",
-                label,
-                position.line + 1,
-                position.column.get() + 1,
-                diagnostic.code,
-                diagnostic.message
-            );
-        } else {
-            let _ = writeln!(
-                text,
-                "{}: {}: {}",
-                label, diagnostic.code, diagnostic.message
-            );
-        }
+        let position = line_index.line_col(diagnostic.range.start());
+        let _ = writeln!(
+            text,
+            "{}:{}:{}: {}: {}",
+            label,
+            position.line + 1,
+            position.col + 1,
+            diagnostic.code,
+            diagnostic.message
+        );
     }
 
     text

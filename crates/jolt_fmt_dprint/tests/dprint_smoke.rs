@@ -5,8 +5,7 @@ use std::{
     sync::OnceLock,
 };
 
-use jolt_formatter::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
-use jolt_test_support::StringSink;
+use jolt_formatter::{FormatOptions, FormatResult, Language, OnSyntaxError};
 use tempfile::TempDir;
 
 static PLUGIN_PATH: OnceLock<PathBuf> = OnceLock::new();
@@ -157,14 +156,20 @@ struct CommandOutput {
 }
 
 fn direct_java_format(source: &str) -> String {
-    let mut sink = StringSink::default();
-    match format_source_to_sink(source, Language::Java, &FormatOptions::default(), &mut sink) {
-        FormatSinkResult::Complete => sink.into_string(),
-        FormatSinkResult::Halted => panic!("direct Java formatting unexpectedly halted"),
-        FormatSinkResult::Blocked { diagnostic } => {
-            panic!("direct Java formatting blocked: {diagnostic:?}")
-        }
-    }
+    let mut output = String::new();
+    let result = jolt_formatter::format(
+        source,
+        Language::Java,
+        &FormatOptions::default(),
+        OnSyntaxError::Refuse,
+        &mut output,
+    );
+    assert_eq!(
+        result,
+        FormatResult::Formatted { halted: false },
+        "direct Java formatting failed"
+    );
+    output
 }
 
 impl CommandOutput {

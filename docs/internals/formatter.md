@@ -613,6 +613,13 @@ pub trait FormatLanguage: Sized + 'static {
     /// Language exceptions to comment placement, tried before the generic
     /// rules. `None` falls through.
     fn place_comment<'a>(ctx: &CommentContext<'a>) -> Option<Placement<'a>>;
+    /// The item-list owner a formatter-ignore marker belongs to, given the
+    /// enclosing node of the marker: the owner when the marker sits between,
+    /// before or after the items of the owner's list, `None` when it is inside
+    /// an item. Java: compilation unit, type bodies, block, constructor body,
+    /// switch block statement group, module declaration (and their item list
+    /// nodes, which map to the owner).
+    fn ignore_scope(enclosing: SyntaxNode<'_>) -> Option<SyntaxNode<'_>>;
     /// Expand an own-line `/** text */` into a multi-line star block.
     const EXPAND_DOC_COMMENTS: bool;
 }
@@ -642,6 +649,7 @@ side table with their precomputed display width (ASCII fast path) and flags.
 | `if_break(broken, flat, id)`    | Chooses by the mode of group `id`, or of the enclosing group when `None`.                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `line_suffix(Doc)`              | Deferred until the next newline (or a non-sticky text; see printer).                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `break_parent()`                | Forces every enclosing group to break.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `will_break(Doc)` (query)       | Whether the doc contains a forced break; a rule may choose a layout from it (qualified names break every segment when a comment forces a break inside).                                                                                                                                                                                                                                                                                                                                           |
 | `Doc::NIL`                      | Nothing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 There is no `fill`, `align`, `force_flat`, `comment_prefix`, `literal_text`,
@@ -698,6 +706,9 @@ chunks for the sink. State that replaces the old line modes:
 - **End of input.** Flush suffixes, then exactly one `\n` (also for an empty
   file).
 
+Spaces collapse in the fit check as they do when printing (a run of `space` and
+flat `line` counts one column before the next text).
+
 Fit check for a group not already forced to break: Prettier's `fits` over the
 group's contents in flat mode followed by the rest of the stack in its recorded
 modes, with remaining width `line_width - column`. It returns `false` on width
@@ -735,7 +746,7 @@ pub struct Comment<'a> {
     pub kind: CommentKind,     // Line | Block | Doc (unterminated: Block)
     pub lines_before: u8,      // newlines since previous token/comment, capped at 2
     pub lines_after: u8,       // newlines until next comment/token, capped at 2
-    pub layout: CommentLayout, // effective, after hooks
+    pub layout: CommentLayout, // from the source; the effective layout is the placement's
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CommentLayout {
@@ -772,7 +783,10 @@ pub struct CommentContext<'a> {
     pub comment: Comment<'a>,
     pub prev: Option<SyntaxToken<'a>>,
     pub next: SyntaxToken<'a>,
-    pub enclosing: SyntaxNode<'a>,
+    root: SyntaxNode<'a>,
+}
+impl<'a> CommentContext<'a> {
+    pub fn enclosing(&self) -> SyntaxNode<'a>; // computed on demand
 }
 ```
 
@@ -795,23 +809,40 @@ Rules, first match wins:
    missing gets no special treatment: the comment falls through to the rules
    below, and attaches to `next` (often `Eof`) outside the unclosed node, which
    is stable and never hides a comment inside a node printed verbatim.
-3. **G2, end-of-line after an opener.** `prev` opens a region and the layout is
-   `EndOfLine`: `Leading(leading_target(next), OwnLine)`.
+3. **G2, end-of-line after an opener.** `prev` opens a region, the layout is
+   `EndOfLine`, and no other comment lies between `prev` and this comment:
+   `Leading(leading_target(next), OwnLine)`.
 4. **G3, own-line before a closer.** `next` is a closer (`is_closer`) and the
    layout is `OwnLine` or `StartOfLine`: `Dangling(next.parent())`.
 5. **S1, end-of-line before a separator.** The layout is `EndOfLine`, `next` is
-   a separator (`is_separator`), and no other comment lies between this comment
-   and `next`: let `s` be the last token of the run of consecutive separators
-   starting at `next` with no comments between them;
-   `Trailing(trailing_target(s), EndOfLine)`. This is the one placement that
-   moves a comment across tokens (`a // c` `,` prints `a, // c`); doing it in
-   placement rather than in the printer keeps the comment's `break_parent` at
-   the same depth in the document on every pass, which idempotence needs.
+   a separator (`is_separator`), `prev` is not one, and no other comment lies
+   between this comment and `next`:
+   `Trailing(trailing_target(next),
+   EndOfLine)`. This is the one placement
+   that moves a comment across a token (`a // c` `,` prints `a, // c`); doing it
+   in placement rather than in the printer keeps the comment's `break_parent` at
+   the same depth in the document on every pass, which idempotence needs. (An
+   earlier draft extended `next` to a run of separators; the corpus sweep showed
+   that moves comments onto removed `;` items after an import or statement, so
+   S1 moves past one separator only, and not at all when the comment already
+   follows one.)
 6. Defaults: `OwnLine`/`StartOfLine` → `Leading(leading_target(next), layout)`;
    `EndOfLine` → `Trailing(trailing_target(prev), EndOfLine)`; `Inline` →
    `Trailing(trailing_target(prev), Inline)` if `next` is a closer or a
    separator, else `Leading(leading_target(next), Inline)`. (`EndOfLine` and
    `Inline` imply a `prev`.)
+
+Two rules then keep the comments of one gap in order, whatever the rules above
+chose:
+
+- **Runs.** Once a comment of a gap is placed `Leading` or `Dangling`, a later
+  comment of the same gap that would be `Trailing` follows it instead: the same
+  target and side, with its own layout (so `Leading` can carry `EndOfLine` here:
+  `/* a */ /* b */` alone on a line before code keeps both on that line).
+- **After a trailing line comment.** S1 can put a comment after a trailing line
+  comment of the same element (`f // a` `;` `/* b */`). Nothing can follow a
+  line comment on its line, so such a second trailing comment is placed as if it
+  were `OwnLine`, where the next pass finds it.
 
 Hook constraints (checked by debug assertions in the pass): a hook may only
 target elements inside the enclosing node; `Leading` layouts are `OwnLine`,
@@ -844,27 +875,39 @@ depth and is large only at the head of a deep left-nested spine.
 The formatter, not the rules, prints leading and trailing comments, from the
 effective layout only:
 
-| Attachment | Layout        | Printed as                                                     |
-| ---------- | ------------- | -------------------------------------------------------------- |
-| Leading    | `OwnLine`     | `hard_line, C, (empty_line if lines_after ≥ 2 else hard_line)` |
-| Leading    | `StartOfLine` | `hard_line, C, space`                                          |
-| Leading    | `Inline`      | `space` unless `L::hugs_next(prev)`, then `C, space`           |
-| Trailing   | `EndOfLine`   | `line_suffix(space, C), break_parent`                          |
-| Trailing   | `Inline`      | `space, C`                                                     |
-| Dangling   | any           | by the owning rule via `Formatter::dangling`: one per line     |
+| Attachment | Layout        | Printed as                                                      |
+| ---------- | ------------- | --------------------------------------------------------------- |
+| Leading    | `OwnLine`     | `hard_line, C, (empty_line if lines_after ≥ 2 else hard_line)`  |
+| Leading    | `StartOfLine` | `hard_line, C, space`                                           |
+| Leading    | `Inline`      | `space` unless `L::hugs_next(prev)`, then `C, space`            |
+| Leading    | `EndOfLine`   | `space` unless `L::hugs_next(prev)`, then `C, hard_line` (Runs) |
+| Trailing   | `EndOfLine`   | `line_suffix(space, C), break_parent`                           |
+| Trailing   | `Inline`      | `space, C`                                                      |
+| Dangling   | any           | by the owning rule via `Formatter::dangling`: one per line      |
+
+An inline trailing block comment is flagged in the text table: for fitting, its
+width counts only when more text follows it on the line, exactly like the
+end-of-line comment it becomes on the next pass when a line break follows it.
 
 Because spaces collapse and are dropped at line start, these are correct
 whatever separator the rule itself put at that position: `a /* c */ + b`,
 `foo(/* c */ a)`, `a /* c */)`, `this /* c */ .field`.
 
-`C` is the comment doc: a line comment's text with trailing whitespace removed,
-flagged `line_comment`; a single-line block comment's text; a multi-line block
-comment as `reindented(text, Reindent::Comment)` (so continuation lines follow
-the indentation of the line the comment starts on, star lines get one space
-before the `*`, other lines are left-trimmed); with `EXPAND_DOC_COMMENTS`, a
-single-line `/** text */` that is printed on its own line (a `Leading` `OwnLine`
-comment, or a dangling comment that was `OwnLine` in the source) is expanded to
-`/**`, `* text`, `*/`. See [Java style](./java-style.md#comments).
+`C` is the comment doc (multi-line block comments follow the reference: a
+multi-line doc comment is a star block whose opener text moves to its own `*`
+line; a block comment whose continuation lines start with `*` is a star block
+that keeps its opener text; every star block ends with `*/` on its own line;
+other multi-line block comments have each line trimmed; an unterminated comment
+is written raw; dangling doc comments are always expanded, since they always
+print on their own lines): a line comment's text with trailing whitespace
+removed, flagged `line_comment`; a single-line block comment's text; a
+multi-line block comment as `reindented(text, Reindent::Comment)` (so
+continuation lines follow the indentation of the line the comment starts on,
+star lines get one space before the `*`, other lines are left-trimmed); with
+`EXPAND_DOC_COMMENTS`, a single-line `/** text */` that is printed on its own
+line (a `Leading` `OwnLine` comment, or a dangling comment that was `OwnLine` in
+the source) is expanded to `/**`, `* text`, `*/`. See
+[Java style](./java-style.md#comments).
 
 Why this is idempotent: printing preserves each comment's neighbours (no comment
 crosses a token, except across separators by S1, which is decided the same way
@@ -932,6 +975,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     pub fn has_dangling_comments(&self, node: SyntaxNode<'a>) -> bool;
     /// Any comment attached to the node or located inside its range.
     pub fn has_comments_within(&self, node: SyntaxNode<'a>) -> bool; // O(log comments)
+    /// The node is an item inside a formatter-ignore region, so a
+    /// normalization (N1, N3) must leave it in place.
+    pub fn in_ignore_region(&self, node: SyntaxNode<'a>) -> bool;
     /// The source has a blank line before the element's first leading comment
     /// (or its first token when it has none), counted from the previous token
     /// or comment. Used for `Separator::blank_line_in_source` and before the
@@ -976,11 +1022,18 @@ build its `Doc` once and reference the handle twice.
 - **Separators.** Between consecutive formatted items it calls `separator`; the
   language decides `hard_line` vs `empty_line` from the kinds and
   `blank_line_in_source`. Between two items that are both inside one ignore
-  region, `item_list` does not call `separator` and uses the source's choice
-  (`empty_line` iff `blank_line_in_source`). Nothing is emitted before the first
-  item or after the last, so bodies never start or end with a blank line.
+  region, and between the last item of a region and the item after it,
+  `item_list` does not call `separator` and uses the source's choice
+  (`empty_line` iff `blank_line_in_source`), so a region prints as written.
+  Nothing is emitted before the first item or after the last, so bodies never
+  start or end with a blank line.
 - **Elision.** An `Elide` item prints `removed(item)`; if that is NIL the item
-  vanishes (no separator), otherwise its comments stand in its place.
+  vanishes (no separator), otherwise its comments stand in its place. Its
+  trailing comments that lie before it in the source (moved onto it by S1, as in
+  `} // c` then a stray `;`) end the previous item's line: they are printed
+  before the separator, unless an item vanished in between. The last comment of
+  an elided item, when it is an own-line leading comment, is not followed by its
+  blank line (there is no element left to separate it from).
 - **Formatter-ignore.** An item (`Format` or `Elide`) whose first token's text
   starts inside an ignore region prints `node_with(item, verbatim(item))`: its
   own leading and trailing comments (including the markers) are formatted
@@ -1005,6 +1058,17 @@ regions are sorted and disjoint; membership is a binary search, `O(log regions)`
 per item, and finding a marker's list walks its ancestors once. Nested lists
 inside a verbatim item are never visited; nested lists inside a formatted item
 apply the same test to their own items.
+
+Two refinements make verbatim robust while placeholders (and lists formatted as
+units) are printed verbatim. First, `verbatim` also prints the comments attached
+to the descendants that begin or end at the node's first or last token (a list's
+first item's leading comments lie before the list), so a verbatim list never
+loses them. Second, a comment inside the slice can be attached outside the node
+by S1 (`return x // c` `;` with a verbatim `return`): verbatim marks the
+comments it prints, and attachment printing skips a comment verbatim already
+printed. Every verbatim piece of one node re-indents against the indentation of
+the output line the node starts on (recorded at its first text), also after a
+text block.
 
 Malformed nodes use the same `verbatim`: `node()` on a malformed node is
 `node_with(node, verbatim(node))`. Verbatim output covers exactly the comments
@@ -1073,10 +1137,12 @@ pub(crate) fn class_declaration<'a>(f: &mut JavaFormatter<'a>, node: ClassDeclar
 ```
 
 named after the kind in `snake_case`, and is re-exported from its area's
-`mod.rs`. `dispatch.rs` calls exactly these names, so an area can restructure
-its files freely as long as the entry points keep their names and signatures.
-`Bogus` has no rule: it is always `MALFORMED`, so `node()` prints it verbatim
-before dispatch, and its dispatch arm is `unreachable!`.
+`mod.rs`. `dispatch.rs` maps each kind to a small function that calls exactly
+these names (a table of function pointers rather than one large `match` frame,
+so the depth tests' 128 nesting levels fit the 1 MiB stack in debug builds), so
+an area can restructure its files freely as long as the entry points keep their
+names and signatures. `Bogus` has no rule: it is always `MALFORMED`, so `node()`
+prints it verbatim before dispatch, and its dispatch arm is `unreachable!`.
 
 List kinds never carry comments (placement attaches to their items) and are
 never malformed (factory rule 3), so a parent may iterate a list's elements
@@ -1508,6 +1574,18 @@ this stage; they remain the reference.
 
 This stage lands before the periphery agent branches, so its edits to
 periphery-owned files cannot conflict.
+
+As built, the exemplars also cover import grouping and sorting (N1, with the
+barrier/anchor rules of Java style), `package_declaration`,
+`import_declaration`, `throws_clause`, `block_statement`,
+`local_variable_declaration`, `binary_expression` (iterative chain with N7; N6
+is left to Area C), the member-chain spine walk over qualified calls and field
+accesses, `annotation_list`, `class_type_segment_node`,
+`qualified_name_segment_node`, `qualified_name` (every segment on its own line
+when a comment forces a break), `void_type`, `parameter_modifier_list` and the
+declarator rules. `tools/bench/driver` is not restored: it measured the deleted
+`bench` metrics; the periphery stage decides its future. The hk clippy step now
+runs with `--all-targets`, and the wasm check covers every formatter crate.
 
 Gates:
 

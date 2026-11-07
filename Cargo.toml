@@ -1,11 +1,15 @@
 [workspace]
 members = [
-  # TEMPORARY: the formatter foundation restores "crates/jolt_cli",
-  # "crates/jolt_fmt_dprint", "crates/jolt_formatter", "crates/jolt_java_fmt"
-  # and "tools/bench/driver" once they follow the new syntax API.
+  "crates/jolt_cli",
+  "crates/jolt_fmt",
+  "crates/jolt_fmt_dprint",
+  "crates/jolt_formatter",
+  "crates/jolt_java_fmt",
   "crates/jolt_java_syntax",
   "crates/jolt_syntax",
   "crates/jolt_test_support",
+  # TEMPORARY: "tools/bench/driver" stays out until the periphery stage
+  # decides its future; it measured the deleted `bench` metrics features.
 ]
 resolver = "3"
 

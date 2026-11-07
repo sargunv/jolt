@@ -139,6 +139,12 @@ impl<'a> SyntaxNode<'a> {
         self.id
     }
 
+    /// The tree this node belongs to.
+    #[must_use]
+    pub const fn tree(self) -> &'a SyntaxTree {
+        self.tree.0
+    }
+
     #[must_use]
     pub fn parent(self) -> Option<Self> {
         let parent = self.data().parent;

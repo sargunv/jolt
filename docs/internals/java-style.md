@@ -809,6 +809,22 @@ now does too, so a statement never ends with its `;` alone on a line:
       y; // a comment before the terminator keeps it in the continuation
 ```
 
+### C9. No blank lines inside operator chains after trailing comments
+
+The reference inserted a blank line after an operand that carried an end-of-line
+comment in a broken binary chain (corpus file `B20844369.java`). Blank lines are
+now kept only between list items, never inside an expression:
+
+```java
+// reference
+    "(?:(?<androidId>\\d+)\\+)?" // optional Android ID
+
+      + "(?<type>\\d+)" // type
+// new
+    "(?:(?<androidId>\\d+)\\+)?" // optional Android ID
+      + "(?<type>\\d+)" // type
+```
+
 ### F1. Formatter-ignore works item by item
 
 The reference spliced the raw source of a whole off region, including the text

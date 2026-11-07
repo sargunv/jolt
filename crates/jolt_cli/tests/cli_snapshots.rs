@@ -438,6 +438,7 @@ fn snapshot_normalized(output: &Output, files: &[PathBuf], temp: &Path) -> Strin
     rendered.replace(&temp.display().to_string(), "$TEMP")
 }
 
+#[cfg(feature = "docs-generation")]
 fn snapshot_without_trailing_whitespace(output: &Output, files: &[PathBuf]) -> String {
     let mut normalized = String::new();
     for line in snapshot(output, files).lines() {

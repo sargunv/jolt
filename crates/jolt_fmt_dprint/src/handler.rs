@@ -1,6 +1,6 @@
 //! dprint plugin handler for Jolt.
 
-use std::{fmt::Write as _, path::Path};
+use std::path::Path;
 
 use dprint_core::plugins::{FormatError, FormatResult};
 #[cfg(feature = "wasm")]
@@ -10,12 +10,7 @@ use dprint_core::{
         CheckConfigUpdatesMessage, ConfigChange, PluginInfo, PluginResolveConfigurationResult,
     },
 };
-use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
-use jolt_formatter::{
-    FormatOptions, FormatSinkResult, Language, RenderControl, RenderSink,
-    format_parsed_source_to_sink, parse_source,
-};
-use jolt_text::LineIndex;
+use jolt_formatter::{Diagnostic, FormatOptions, Language, LineIndex, OnSyntaxError, Sink};
 
 #[cfg(feature = "wasm")]
 use crate::configuration;
@@ -42,31 +37,20 @@ impl JoltDprintPlugin {
             FormatError::from(format!("Jolt formatter requires UTF-8 input: {error}"))
         })?;
         let language = language_for_path(file_path)?;
-        let parsed = parse_source(source, language);
-        if let Some(diagnostic) = parsed.diagnostics().first() {
-            let line_index = LineIndex::new(source);
-            return Err(FormatError::from(format_diagnostic(
-                source,
-                &line_index,
-                diagnostic,
-            )));
-        }
-
         let mut sink = DprintFormatSink::default();
-        let result = format_parsed_source_to_sink(&parsed, &options, &mut sink);
-        match result {
-            FormatSinkResult::Complete => {}
-            FormatSinkResult::Halted => {
+        match jolt_formatter::format(source, language, &options, OnSyntaxError::Refuse, &mut sink) {
+            jolt_formatter::FormatResult::Formatted { halted: false } => {}
+            jolt_formatter::FormatResult::Formatted { halted: true } => {
                 return Err(FormatError::from(
                     "Jolt formatter halted before producing complete output",
                 ));
             }
-            FormatSinkResult::Blocked { diagnostic } => {
+            jolt_formatter::FormatResult::Refused(diagnostics) => {
                 let line_index = LineIndex::new(source);
                 return Err(FormatError::from(format_diagnostic(
                     source,
                     &line_index,
-                    &diagnostic,
+                    &diagnostics[0],
                 )));
             }
         }
@@ -136,10 +120,10 @@ impl DprintFormatSink {
     }
 }
 
-impl RenderSink for DprintFormatSink {
-    fn write_str(&mut self, text: &str) -> RenderControl {
+impl Sink for DprintFormatSink {
+    fn write(&mut self, text: &str) -> std::ops::ControlFlow<()> {
         self.bytes.extend_from_slice(text.as_bytes());
-        RenderControl::Continue
+        std::ops::ControlFlow::Continue(())
     }
 }
 
@@ -161,44 +145,19 @@ fn language_for_path(file_path: &Path) -> Result<Language, FormatError> {
 }
 
 fn format_diagnostic(source: &str, line_index: &LineIndex, diagnostic: &Diagnostic) -> String {
+    let range = diagnostic.range;
+    let location = line_index.line_col(range.start());
     let mut text = format!(
-        "code={} severity={} stage={} message={}",
-        diagnostic.code.as_str(),
-        severity_name(diagnostic.severity),
-        stage_name(diagnostic.stage),
-        diagnostic.message
+        "code={} message={} line={} column={} range={range}",
+        diagnostic.code,
+        diagnostic.message,
+        location.line + 1,
+        location.col + 1
     );
-
-    if let Some(range) = diagnostic.range {
-        let location = line_index.line_col(range.start());
-        write!(
-            text,
-            " line={} column={} range={range}",
-            location.line + 1,
-            usize::from(location.column) + 1
-        )
-        .expect("writing to a String should not fail");
-        if range.start().get() > source.len() {
-            text.push_str(" location=out-of-bounds");
-        }
+    if range.start().get() > source.len() {
+        text.push_str(" location=out-of-bounds");
     }
-
     text
-}
-
-const fn severity_name(severity: Severity) -> &'static str {
-    match severity {
-        Severity::InternalError => "internal-error",
-        Severity::Error => "error",
-    }
-}
-
-const fn stage_name(stage: DiagnosticStage) -> &'static str {
-    match stage {
-        DiagnosticStage::Lexer => "lexer",
-        DiagnosticStage::Parser => "parser",
-        DiagnosticStage::Formatter => "formatter",
-    }
 }
 
 #[cfg(test)]

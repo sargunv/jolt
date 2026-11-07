@@ -53,6 +53,11 @@ depends = ["hunt:java"]
 description = "Sweep the imported Java corpora for formatter bugs"
 run = "cargo run --release -p jolt_java_fmt --example jhunt"
 
+[tasks.jref]
+description = "Compare formatter output with the reference outputs"
+raw_args = true
+run = "cargo run --release -p jolt_java_fmt --example jref --"
+
 
 [tasks.build]
 depends = ["build:jolt", "build:dprint-plugin"]

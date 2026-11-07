@@ -1,55 +1,19 @@
-//! Shared formatter facade for Jolt's CLI and dprint plugin.
+//! The formatter facade for the CLI and the dprint plugin: language detection
+//! and one `format` entry point.
 
 use std::path::Path;
 
-use jolt_diagnostics::Diagnostic;
+pub use jolt_fmt::{FormatOptions, Sink};
+pub use jolt_syntax::{Diagnostic, LineCol, LineIndex, TextRange, TextSize};
 
-pub use jolt_fmt_ir::{FormatOptions, FormatSinkResult, RenderControl, RenderSink};
-
-/// Source language to format.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+/// A source language Jolt formats.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Language {
-    /// Java source, typically `.java`.
     Java,
 }
 
-/// A source parsed by its selected language frontend.
-pub enum ParsedSource<'source> {
-    /// Parsed Java compilation unit.
-    Java(jolt_java_syntax::JavaParse<'source>),
-}
-
-impl ParsedSource<'_> {
-    /// Returns lexer and parser diagnostics without interpreting them.
-    #[must_use]
-    pub fn diagnostics(&self) -> &[Diagnostic] {
-        match self {
-            Self::Java(parse) => parse.diagnostics(),
-        }
-    }
-}
-
-/// Parses source text for a selected language.
-#[must_use]
-pub fn parse_source(source: &str, language: Language) -> ParsedSource<'_> {
-    match language {
-        Language::Java => ParsedSource::Java(jolt_java_syntax::parse_compilation_unit(source)),
-    }
-}
-
-/// Formats a previously parsed source without interpreting its diagnostics.
-pub fn format_parsed_source_to_sink<S: RenderSink + ?Sized>(
-    parsed: &ParsedSource<'_>,
-    options: &FormatOptions,
-    sink: &mut S,
-) -> FormatSinkResult {
-    match parsed {
-        ParsedSource::Java(parse) => jolt_java_fmt::format_parse_to_sink(parse, options, sink),
-    }
-}
-
 impl Language {
-    /// Detects a supported language from a file path's extension.
+    /// Detects a language from a file extension (`.java`).
     #[must_use]
     pub fn from_path(path: &Path) -> Option<Self> {
         match path.extension().and_then(|extension| extension.to_str()) {
@@ -59,13 +23,37 @@ impl Language {
     }
 }
 
-/// Formats source text for `language` into a render sink using `options`.
-pub fn format_source_to_sink<S: RenderSink + ?Sized>(
+/// What to do with a source that has syntax errors.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OnSyntaxError {
+    Refuse,
+    Format,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum FormatResult {
+    /// Output was written to the sink; `halted` when the sink broke early.
+    Formatted { halted: bool },
+    /// `Refuse` and the source has syntax errors; nothing was written.
+    Refused(Vec<Diagnostic>),
+}
+
+/// Formats `source` as `language` into `sink`.
+pub fn format<S: Sink + ?Sized>(
     source: &str,
     language: Language,
     options: &FormatOptions,
+    on_error: OnSyntaxError,
     sink: &mut S,
-) -> FormatSinkResult {
-    let parsed = parse_source(source, language);
-    format_parsed_source_to_sink(&parsed, options, sink)
+) -> FormatResult {
+    match language {
+        Language::Java => {
+            let parse = jolt_java_syntax::parse(source);
+            if on_error == OnSyntaxError::Refuse && !parse.diagnostics().is_empty() {
+                return FormatResult::Refused(parse.diagnostics().to_vec());
+            }
+            let halted = jolt_java_fmt::format(&parse, options, sink).is_break();
+            FormatResult::Formatted { halted }
+        }
+    }
 }

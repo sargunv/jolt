@@ -1,0 +1,18 @@
+[package]
+name = "jolt_fmt"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+jolt_syntax = { path = "../jolt_syntax" }
+serde = { version = "1.0", features = ["derive"], optional = true }
+unicode-width = "0.2.2"
+
+[features]
+serde = ["dep:serde"]
+
+[lints]
+workspace = true

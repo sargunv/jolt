@@ -6,6 +6,11 @@ Fast, opinionated Java formatter.
 
 - `.agents/docs/VISION.md`: product vision.
 - `crates/`: Rust workspace crates for the formatter engine and wrappers.
+- `docs/internals/formatter.md`: the formatter design contract (crates, APIs,
+  comment model, verification, build plan). Amend it in the same change when an
+  implementation has to deviate.
+- `docs/internals/java-style.md`: the normative Java output and its deliberate
+  changes from the reference.
 
 ## Useful Commands
 
@@ -22,10 +27,13 @@ Fast, opinionated Java formatter.
   Positions inside a string literal are excluded, since text there is content
   rather than trivia. Runs in release mode; too slow in debug for the normal
   test suite. Reports land in `target/hunt/`, capped per failure category. Exits
-  non-zero when a failure category is not in the `KNOWN_OPEN` list, and when a
-  `KNOWN_OPEN` entry stops firing and should be deleted, so the sweep is a
-  signal while carrying the debt it already has. The `jcheck` example re-runs
+  non-zero on any failure category not in `KNOWN_OPEN`, which must stay empty,
+  and on a `KNOWN_OPEN` entry that stops firing. The `jcheck` example re-runs
   one file, or one probe position for a repro, e.g. `.../File.java:ownline12`.
+- `mise run jref ...`: compare the formatter with the reference outputs
+  (`jref <dir>` checks `format(F) == F` for `.java` files and `.snap`
+  `formatted:` sections; `jref --input <in> --expected <out>` checks
+  `format(in) == out`). Mismatches list the placeholder kinds they hit.
 - `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
   plugin.
 - `mise x google-java-format -- google-java-format ...`: run the
@@ -60,6 +68,15 @@ Run `mise tasks ls --all` for the full task list.
 - A formatter must not panic, refuse, or validate syntax for
   malformed-but-represented trees. Format the represented pieces consistently
   and preserve all existing tokens/trivia.
+- Formatter rules emit source tokens only through `Formatter::token`, nodes only
+  through `Formatter::node`/`fmt`, and comments only through the chokepoints
+  (`node`, `token`, `verbatim`, `removed`, `dangling`, and
+  `node_with`/`leading_comments`/`trailing_comments` for spines and
+  normalization wrappers). Rules never choose how a comment prints; comment
+  placement is decided once, before layout, by `jolt_fmt`'s placement pass.
+  Debug builds assert every comment is emitted exactly once.
+- Normalizations are the closed list N1–N10 in `docs/internals/formatter.md`,
+  applied only to recovery-free nodes.
 - Formatter rules must not parse by inspecting token streams. Syntax crates own
   tree shape, recovery accessors, and token ownership; formatter crates consume
   those accessors for layout only.
@@ -75,7 +92,9 @@ Run `mise tasks ls --all` for the full task list.
   valid node must never select verbatim output. The parser/syntax layer owns
   malformed classification, and verbatim formatting must track every contained
   token and comment so the surrounding structured formatter cannot lose or
-  duplicate them.
+  duplicate them. TEMPORARY exception until the rule areas are integrated:
+  `jolt_java_fmt::helpers::placeholder` prints unported valid kinds verbatim
+  (grep `placeholder(`); integration deletes it.
 - Prefer integration tests with `insta` snapshots over inline tests and
   assertions where practical. Inline focused tests should be reserved only for
   important regressions and edge cases that are not possible to test with the

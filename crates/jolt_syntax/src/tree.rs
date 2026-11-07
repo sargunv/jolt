@@ -223,6 +223,20 @@ pub struct SyntaxTree {
 }
 
 impl SyntaxTree {
+    /// The number of nodes, so per-node tables can be indexed by
+    /// [`NodeId::index`].
+    #[must_use]
+    pub fn node_count(&self) -> usize {
+        self.nodes.len()
+    }
+
+    /// The number of tokens (including `Eof`), so per-token tables can be
+    /// indexed by [`TokenId::index`].
+    #[must_use]
+    pub fn token_count(&self) -> usize {
+        self.tokens.len()
+    }
+
     pub(crate) fn node(&self, id: NodeId) -> &NodeData {
         &self.nodes[id.index()]
     }

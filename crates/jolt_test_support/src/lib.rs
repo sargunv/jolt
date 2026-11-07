@@ -1,6 +1,22 @@
-//! Fixture collection and snapshot helpers shared by the syntax tests.
+//! Fixture collection and snapshot helpers, the formatter oracle, the fixture
+//! corpus drivers, and the corpus sweep.
 
 #![allow(clippy::missing_panics_doc)]
+
+mod corpus;
+mod oracle;
+mod sweep;
+
+pub use corpus::{ORACLE_WIDTHS, oracle_over_files, run_formatter_corpus, run_recovery_corpus};
+pub use oracle::{
+    CorpusLanguage, ParseFacts, StructurePolicy, canonical_comment_text, check_source,
+    comment_inventory, describe_divergence, diagnostic_codes, parse_facts, structure_fingerprint,
+};
+pub use sweep::{
+    CorpusSweep, PROBE_SHAPES, ProbePosition, ProbeShape, SweepFailure, catching,
+    parse_probe_argument, probe_boundaries, probed_source, run_corpus_sweep, sweep_source,
+    sweep_variant,
+};
 
 use std::fmt::Write as _;
 use std::fs;
