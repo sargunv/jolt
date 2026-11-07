@@ -7,7 +7,7 @@ module m { requires transitive static + a.b; }
 
 formatted:
 module m {
-  requires static transitive + a.b;
+  requires transitive static + a.b;
 }
 
 diagnostics:
