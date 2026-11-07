@@ -163,11 +163,15 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         cat![self; before, after]
     }
 
-    /// `removed`, for comments a normalization moves to lines of their own
-    /// (the comments of an enum's removed trailing comma): printed like
-    /// dangling comments, which is how the next pass reads them.
-    pub fn removed_on_own_lines(&mut self, element: SyntaxElement<'a>) -> Doc {
-        let indices = self.removed_indices(element);
+    /// `removed` for several elements, for comments a normalization moves to
+    /// lines of their own (those of an enum's moved `;`): in source order,
+    /// printed like dangling comments, which is how the next pass reads them.
+    pub fn removed_on_own_lines(&mut self, elements: &[SyntaxElement<'a>]) -> Doc {
+        let mut indices: Vec<usize> = elements
+            .iter()
+            .flat_map(|&element| self.removed_indices(element))
+            .collect();
+        indices.sort_unstable();
         self.own_lines(&indices)
     }
 

@@ -236,16 +236,18 @@ enum Color {
   after the last constant (`B;`). The constants' own comments stay with them,
   and no comma is added after a last constant with a trailing line comment
   (`B // c`).
-- When the constants end with `;`, the comments of a removed trailing comma and
-  the comments before the `;` move after `B;` and a blank line, where they lead
-  the members (or end the body). The `;`'s comments are followed by another
-  blank line; a comma's comments lead the first member directly:
+- When the constants end with `;`, the `;` moves up to the last constant past a
+  removed trailing comma, whose comments stay on that line (`B, // c` / `;`
+  prints `B; // c`, R4). Comments on their own line before the `;` (or before
+  the comma) move after `B;` and a blank line, followed by another blank line
+  before the members:
 
 ```java
 enum Mode {
   B;
 
-  // was after the comma: `B, // c`
+  // was on its own line before the `;`
+
   int code;
 }
 ```
@@ -1029,5 +1031,34 @@ if (a) /* inline */ {
 // new
 if (a) {
   /* inline */ run();
+}
+```
+
+### R4. A removed enum comma's comments stay on the constant's line
+
+When the constants end with `;`, the reference moved the comments of a removed
+trailing comma after `B;` and a blank line, where they led the members. They now
+stay on the line of the last constant, after the `;` that moves up to it.
+Comments on their own line before the `;` still move after a blank line:
+
+```java
+// input
+enum E {
+  B, // c
+  ;
+  int code;
+}
+// reference
+enum E {
+  B;
+
+  // c
+  int code;
+}
+// new
+enum E {
+  B; // c
+
+  int code;
 }
 ```
