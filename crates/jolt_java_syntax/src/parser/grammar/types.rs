@@ -301,7 +301,6 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_annotation_element_values(&mut self, stop: JavaSyntaxKind) {
-        let list = self.start();
         let arguments = self.start();
         self.parse_comma_separated(
             "expected annotation argument",
@@ -317,7 +316,6 @@ impl Parser<'_> {
             },
         );
         self.complete(arguments, JavaSyntaxKind::AnnotationElementArgumentList);
-        self.complete(list, JavaSyntaxKind::AnnotationElementList);
     }
 
     pub(super) fn parse_annotation_element_value_or_pair(&mut self, stop: JavaSyntaxKind) {

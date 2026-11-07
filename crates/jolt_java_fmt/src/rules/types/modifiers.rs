@@ -7,7 +7,7 @@ use jolt_java_syntax::{
     AnnotationList, JavaSyntaxKind as K, ModifierElement, ModifierList, ModifierPartition,
     NonSealedModifier, ParameterModifier, ParameterModifierList, is_contextual,
 };
-use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode, SyntaxToken};
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxToken};
 
 use crate::JavaFormatter;
 
@@ -189,19 +189,34 @@ pub(crate) fn non_sealed_modifier<'a>(
 
 /// Type-use annotations inline, each followed by a space; NIL when empty.
 pub(crate) fn annotation_list<'a>(f: &mut JavaFormatter<'a>, node: AnnotationList<'a>) -> Doc {
-    spaced_children(f, node.syntax())
-}
-
-/// Every child of a plain list (bogus items included), each followed by a
-/// space.
-fn spaced_children<'a>(f: &mut JavaFormatter<'a>, list: SyntaxNode<'a>) -> Doc {
     let mut docs = Vec::new();
-    for child in list.children() {
-        docs.push(match child {
-            SyntaxElement::Node(child) => f.node(child),
-            SyntaxElement::Token(token) => f.token(token),
-        });
-        docs.push(f.space());
+    for annotation in annotations(f, Some(node)) {
+        docs.extend([annotation, f.space()]);
     }
     f.concat(docs)
+}
+
+/// Declaration annotations of a package, module or enum constant, each on
+/// its own line, followed by a line break; NIL when empty.
+pub(crate) fn annotation_lines<'a>(
+    f: &mut JavaFormatter<'a>,
+    node: Option<AnnotationList<'a>>,
+) -> Doc {
+    let mut docs = Vec::new();
+    for annotation in annotations(f, node) {
+        docs.extend([annotation, f.hard_line()]);
+    }
+    f.concat(docs)
+}
+
+/// Every annotation of the list, bogus items included.
+fn annotations<'a>(f: &mut JavaFormatter<'a>, node: Option<AnnotationList<'a>>) -> Vec<Doc> {
+    node.into_iter()
+        .flat_map(AnnotationList::elements)
+        .filter_map(|element| match element {
+            ListElement::Item(annotation) => Some(f.fmt(annotation)),
+            ListElement::Bogus(bogus) => Some(f.node(bogus)),
+            ListElement::Separator(_) | ListElement::Missing => None,
+        })
+        .collect()
 }

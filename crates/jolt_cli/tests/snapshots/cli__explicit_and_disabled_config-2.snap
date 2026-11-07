@@ -9,6 +9,8 @@ Formatted 1 file in $TIME
 --- wrote A.java
 class A {
    void f() {
-      if (ready) { go(); }
+      if (ready) {
+         go();
+      }
    }
 }

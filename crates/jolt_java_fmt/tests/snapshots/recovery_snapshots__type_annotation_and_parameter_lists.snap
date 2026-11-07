@@ -13,6 +13,6 @@ class C<T, /* type */ , U> {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(22), end: TextSize(23) }) message=expected type parameter name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=expected annotation argument
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(84), end: TextSize(85) }) message=expected parameter
+code=java.parse.expected_syntax range=22..23 message=expected type parameter name
+code=java.parse.expected_syntax range=49..50 message=expected annotation argument
+code=java.parse.expected_syntax range=84..85 message=expected parameter

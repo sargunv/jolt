@@ -32,27 +32,17 @@ class ValidTrailingSeparatorInArrayInitializer { int[] values = {1,}; }
 class TrailingSeparatorAtEof { void m() { consume(1,
 
 formatted:
-class TrailingSeparatorInDelimitedLists<
-  T,
-> {
-  java.util.List<
-    String,
-  > typeArguments;
+class TrailingSeparatorInDelimitedLists<T,> {
+  java.util.List<String,> typeArguments;
 
-  void parameters(
-    int a,
-  ) {
+  void parameters(int a,) {
   }
 
-  void varargsParameters(
-    int... values,
-  ) {
+  void varargsParameters(int... values,) {
   }
 
   void arguments() {
-    consume(
-      1,
-    );
+    consume(1,);
   }
 
   void throwsClause() throws E, {
@@ -64,12 +54,7 @@ class TrailingSeparatorInDelimitedLists<
   }
 
   void recordPattern(Object o) {
-    if (
-      o
-        instanceof R(
-          int a,
-        )
-    ) {
+    if (o instanceof R(int a,)) {
     }
   }
 
@@ -81,9 +66,7 @@ class TrailingSeparatorInDelimitedLists<
     consume((int... a,) -> a);
   }
 
-  @A(
-    value = 1,
-  )
+  @A(value = 1,)
   int annotationArguments;
 
   void consume(Object... values) {
@@ -99,9 +82,7 @@ class ImplementsList implements A, {
 sealed class PermitsList permits A, {
 }
 
-record RecordHeader(
-  int a,
-) {
+record RecordHeader(int a,) {
 }
 
 enum ValidTrailingSeparators {
@@ -117,30 +98,28 @@ class ValidTrailingSeparatorInArrayInitializer {
 
 class TrailingSeparatorAtEof {
   void m() {
-    consume(
-      1,
-
+    consume(1,
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(42), end: TextSize(43) }) message=expected type parameter
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(68), end: TextSize(69) }) message=expected type argument
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(107), end: TextSize(108) }) message=expected parameter
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(148), end: TextSize(149) }) message=varargs parameter must be last
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(149), end: TextSize(150) }) message=expected parameter
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(183), end: TextSize(184) }) message=expected argument
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(218), end: TextSize(219) }) message=expected exception type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(261), end: TextSize(262) }) message=expected statement expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(324), end: TextSize(325) }) message=expected component pattern
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(369), end: TextSize(370) }) message=expected lambda parameter name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(430), end: TextSize(431) }) message=varargs lambda parameter must be last
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(431), end: TextSize(432) }) message=expected lambda parameter name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(455), end: TextSize(456) }) message=expected annotation argument
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(552), end: TextSize(553) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(591), end: TextSize(592) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(631), end: TextSize(632) }) message=expected name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(661), end: TextSize(662) }) message=expected record component
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected argument
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected `)` after arguments
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected `;` after expression statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected `}` after block
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(830), end: TextSize(830) }) message=expected `}` after type body
+code=java.parse.expected_syntax range=42..43 message=expected type parameter
+code=java.parse.expected_syntax range=68..69 message=expected type argument
+code=java.parse.expected_syntax range=107..108 message=expected parameter
+code=java.parse.expected_syntax range=148..149 message=varargs parameter must be last
+code=java.parse.expected_syntax range=149..150 message=expected parameter
+code=java.parse.expected_syntax range=183..184 message=expected argument
+code=java.parse.expected_syntax range=218..219 message=expected exception type
+code=java.parse.expected_syntax range=261..262 message=expected statement expression
+code=java.parse.expected_syntax range=324..325 message=expected component pattern
+code=java.parse.expected_syntax range=369..370 message=expected lambda parameter name
+code=java.parse.expected_syntax range=430..431 message=varargs lambda parameter must be last
+code=java.parse.expected_syntax range=431..432 message=expected lambda parameter name
+code=java.parse.expected_syntax range=455..456 message=expected annotation argument
+code=java.parse.expected_syntax range=552..553 message=expected type
+code=java.parse.expected_syntax range=591..592 message=expected type
+code=java.parse.expected_syntax range=631..632 message=expected name
+code=java.parse.expected_syntax range=661..662 message=expected record component
+code=java.parse.expected_syntax range=830..830 message=expected argument
+code=java.parse.expected_syntax range=830..830 message=expected `)` after arguments
+code=java.parse.expected_syntax range=830..830 message=expected `;` after expression statement
+code=java.parse.expected_syntax range=830..830 message=expected `}` after block
+code=java.parse.expected_syntax range=830..830 message=expected `}` after type body

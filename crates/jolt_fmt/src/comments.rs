@@ -445,9 +445,10 @@ fn generic_placement<'a, L: FormatLanguage>(
     if own_line && L::is_closer(next) {
         return Placement::Dangling(next.parent());
     }
-    // S1: an end-of-line comment moves past the separator that follows it
-    // (unless it already follows one).
+    // S1: an end-of-line line comment moves past the separator that follows
+    // it (unless it already follows one).
     if layout == CommentLayout::EndOfLine
+        && comment.kind == CommentKind::Line
         && last_before_next
         && L::is_separator(next)
         && !prev.is_some_and(L::is_separator)
@@ -459,7 +460,12 @@ fn generic_placement<'a, L: FormatLanguage>(
         (CommentLayout::EndOfLine, Some(prev)) => {
             Placement::Trailing(syntax_trail(prev), CommentLayout::EndOfLine)
         }
-        (CommentLayout::Inline, Some(prev)) if L::is_closer(next) || L::is_separator(next) => {
+        // An inline comment before a closer or separator trails the code
+        // before it, unless that is an opener: a separator after an opener
+        // may be removed, which would leave the comment alone in the region.
+        (CommentLayout::Inline, Some(prev))
+            if (L::is_closer(next) || L::is_separator(next)) && L::closer_for(prev).is_none() =>
+        {
             Placement::Trailing(syntax_trail(prev), CommentLayout::Inline)
         }
         _ => Placement::Leading(syntax_lead(next), layout),

@@ -2,15 +2,16 @@
 
 use jolt_fmt::{Doc, cat, indent};
 use jolt_java_syntax::{
-    CatchClause, CatchClauseList, CatchParameter, CatchTypeList, FinallyClause, ParameterModifier,
-    ParameterModifierList, Resource, ResourceList, ResourceSpecification,
-    ResourceVariableDeclaration, ResourceVariableType, TryStatement, TryWithResourcesStatement,
-    VariableAccess,
+    CatchClause, CatchClauseList, CatchParameter, CatchTypeList, FinallyClause, Resource,
+    ResourceList, ResourceSpecification, ResourceVariableDeclaration, ResourceVariableType,
+    TryStatement, TryWithResourcesStatement, VariableAccess,
 };
 use jolt_syntax::{AstNode, ListElement, SyntaxElement};
 
 use super::{parenthesized, with_dangling};
 use crate::JavaFormatter;
+use crate::helpers::lists::list_item;
+use crate::rules::types::inline_modifiers;
 
 /// `try {` … `} catch (…) {` … `} finally {` … `}`.
 pub(crate) fn try_statement<'a>(f: &mut JavaFormatter<'a>, node: TryStatement<'a>) -> Doc {
@@ -40,14 +41,8 @@ fn clauses<'a>(
     finally: Option<FinallyClause<'a>>,
 ) -> Doc {
     let mut docs = Vec::new();
-    let catches = catches.into_iter().flat_map(|catches| {
-        catches
-            .syntax()
-            .children()
-            .filter_map(SyntaxElement::as_node)
-    });
-    for clause in catches {
-        docs.extend([f.space(), f.node(clause)]);
+    for clause in catches.into_iter().flat_map(CatchClauseList::elements) {
+        docs.extend([f.space(), list_item(f, clause)]);
     }
     if let Some(finally) = finally {
         docs.extend([f.space(), f.fmt(finally)]);
@@ -78,22 +73,6 @@ pub(crate) fn catch_parameter<'a>(f: &mut JavaFormatter<'a>, node: CatchParamete
     let name = f.token_opt(node.name());
     let dimensions = f.fmt_opt(node.dimensions());
     cat![f; modifiers, types, f.space(), name, dimensions]
-}
-
-/// REQUEST(shared): a private copy of `types::inline_modifiers`, which the
-/// types area does not export. Every annotation and keyword on one line,
-/// each followed by a space.
-fn inline_modifiers<'a>(f: &mut JavaFormatter<'a>, node: ParameterModifierList<'a>) -> Doc {
-    let mut docs = Vec::new();
-    for modifier in node.items() {
-        docs.push(match modifier {
-            ParameterModifier::Annotation(annotation) => f.fmt(annotation),
-            ParameterModifier::Bogus(bogus) => f.fmt(bogus),
-            ParameterModifier::Token(token) => f.token(token),
-        });
-        docs.push(f.space());
-    }
-    f.concat(docs)
 }
 
 pub(crate) fn catch_type_list<'a>(f: &mut JavaFormatter<'a>, node: CatchTypeList<'a>) -> Doc {

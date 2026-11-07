@@ -13,4 +13,4 @@ class VariableDeclaratorRecovery {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(88) }) message=expected variable name
+code=java.parse.expected_syntax range=87..88 message=expected variable name

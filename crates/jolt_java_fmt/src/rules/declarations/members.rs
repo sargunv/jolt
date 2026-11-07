@@ -6,7 +6,7 @@ use jolt_java_syntax::{
     AnnotationElementDeclaration, BlockItem, CompactConstructorDeclaration, ConstructorBody,
     ConstructorBodyEntry, ConstructorDeclaration, ConstructorInvocation, DefaultValue,
     FieldDeclaration, FormalParameterList, InstanceInitializer, MethodBody, MethodDeclaration,
-    ParameterModifier, ParameterModifierList, RecordComponent, StaticInitializer,
+    RecordComponent, StaticInitializer,
 };
 use jolt_syntax::{AstNode, SyntaxNode, SyntaxToken};
 
@@ -14,6 +14,7 @@ use super::types::header;
 use crate::JavaFormatter;
 use crate::helpers::bodies::{braced_body, statement_separator};
 use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
+use crate::rules::types::inline_modifiers;
 
 const PARAMETERS: ListLayout = ListLayout {
     padded: false,
@@ -248,20 +249,4 @@ fn body_after_space<'a>(f: &mut JavaFormatter<'a>, body: Option<SyntaxNode<'a>>)
         }
         None => Doc::NIL,
     }
-}
-
-/// REQUEST(shared): `types::inline_modifiers` is not reachable from this area
-/// (its module is private); this is a copy. Every annotation and keyword on
-/// one line, each followed by a space; NIL when empty.
-fn inline_modifiers<'a>(f: &mut JavaFormatter<'a>, node: ParameterModifierList<'a>) -> Doc {
-    let mut docs = Vec::new();
-    for element in node.items() {
-        docs.push(match element {
-            ParameterModifier::Annotation(annotation) => f.fmt(annotation),
-            ParameterModifier::Bogus(bogus) => f.fmt(bogus),
-            ParameterModifier::Token(token) => f.token(token),
-        });
-        docs.push(f.space());
-    }
-    f.concat(docs)
 }

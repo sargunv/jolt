@@ -17,4 +17,4 @@ class C {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(52), end: TextSize(53) }) message=expected expression
+code=java.parse.expected_syntax range=52..53 message=expected expression

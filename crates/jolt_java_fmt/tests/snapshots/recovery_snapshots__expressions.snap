@@ -82,13 +82,16 @@ class RecoveredExpressions {
       (
         first,
         second
-      // lambda-close-leading
+        // lambda-close-leading
       ) -> first;
     int @Dimension [] array = new int[1] @Trailing [];
   }
 
   void methodReferences() {
-    Object parenthesized = ( /* receiver */ )::target;
+    Object parenthesized =
+      (
+        /* receiver */
+      )::target;
     Object primitive = void::target;
     Object postfix = value++::target;
     Object nested = value::target::nested;
@@ -130,22 +133,22 @@ class RecoveredExpressions {
 }
 
 diagnostics:
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(215), end: TextSize(216) }) message=unexpected token in expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(347), end: TextSize(348) }) message=expected lambda parameter name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(915), end: TextSize(916) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(949), end: TextSize(953) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(953), end: TextSize(955) }) message=expected valid method reference receiver
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(991), end: TextSize(993) }) message=expected valid method reference receiver
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1034), end: TextSize(1036) }) message=expected valid method reference receiver
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1158), end: TextSize(1163) }) message=expected type name before class literal
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1202), end: TextSize(1207) }) message=expected type name before class literal
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1257), end: TextSize(1262) }) message=expected type name before class literal
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1310), end: TextSize(1315) }) message=expected type name before class literal
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1343), end: TextSize(1348) }) message=expected type name before class literal
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1375), end: TextSize(1379) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1382), end: TextSize(1387) }) message=expected type name before class literal
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1747), end: TextSize(1748) }) message=expected pattern variable name
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1818), end: TextSize(1819) }) message=invalid type pattern declaration
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1870), end: TextSize(1873) }) message=expected reference type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1953), end: TextSize(1954) }) message=expected pattern variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(2005), end: TextSize(2008) }) message=expected class or interface type
+code=java.parse.unexpected_syntax range=215..216 message=unexpected token in expression
+code=java.parse.expected_syntax range=347..348 message=expected lambda parameter name
+code=java.parse.expected_syntax range=915..916 message=expected expression
+code=java.parse.expected_syntax range=949..953 message=expected expression
+code=java.parse.expected_syntax range=953..955 message=expected valid method reference receiver
+code=java.parse.expected_syntax range=991..993 message=expected valid method reference receiver
+code=java.parse.expected_syntax range=1034..1036 message=expected valid method reference receiver
+code=java.parse.expected_syntax range=1158..1163 message=expected type name before class literal
+code=java.parse.expected_syntax range=1202..1207 message=expected type name before class literal
+code=java.parse.expected_syntax range=1257..1262 message=expected type name before class literal
+code=java.parse.expected_syntax range=1310..1315 message=expected type name before class literal
+code=java.parse.expected_syntax range=1343..1348 message=expected type name before class literal
+code=java.parse.expected_syntax range=1375..1379 message=expected expression
+code=java.parse.expected_syntax range=1382..1387 message=expected type name before class literal
+code=java.parse.expected_syntax range=1747..1748 message=expected pattern variable name
+code=java.parse.unexpected_syntax range=1818..1819 message=invalid type pattern declaration
+code=java.parse.expected_syntax range=1870..1873 message=expected reference type
+code=java.parse.expected_syntax range=1953..1954 message=expected pattern variable name
+code=java.parse.expected_syntax range=2005..2008 message=expected class or interface type

@@ -46,7 +46,6 @@ fn rule(kind: K) -> Rule {
         K::AnnotationElementValuePair => {
             |f, node| types::annotation_element_value_pair(f, cast(node))
         }
-        K::AnnotationElementList => |f, node| types::annotation_element_list(f, cast(node)),
         K::AnnotationArrayInitializer => {
             |f, node| types::annotation_array_initializer(f, cast(node))
         }

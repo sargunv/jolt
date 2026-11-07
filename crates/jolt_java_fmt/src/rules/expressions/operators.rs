@@ -5,10 +5,11 @@ use jolt_java_syntax::{
     AssignmentExpression, CastExpression, ConditionalExpression, JavaSyntaxKind as K,
     ParenthesizedExpression, UnaryExpression,
 };
-use jolt_syntax::{AstNode, SyntaxNode, SyntaxToken};
+use jolt_syntax::AstNode;
 
 use crate::JavaFormatter;
 use crate::helpers::assignment::assignment_like;
+use crate::helpers::lists::enclosed;
 use crate::helpers::tokens::needs_space;
 
 pub(crate) fn assignment_expression<'a>(
@@ -96,31 +97,4 @@ pub(crate) fn parenthesized_expression<'a>(
     let inner = indent![f; f.soft_line(), inner];
     let close = f.token_opt(node.close_paren());
     group![f; open, inner, f.soft_line(), close]
-}
-
-/// `open inner close` with no line breaks of its own; `inner` is one indent
-/// deeper when `indent_inner` (brackets) or when the owner's dangling
-/// comments (own-line comments before `close`) print on their own lines
-/// after it.
-///
-/// REQUEST(shared): every delimited node with one inner element (brackets,
-/// casts, parentheses) needs this dangling-comment layout.
-pub(super) fn enclosed<'a>(
-    f: &mut JavaFormatter<'a>,
-    owner: SyntaxNode<'a>,
-    (open, close): (Option<SyntaxToken<'a>>, Option<SyntaxToken<'a>>),
-    inner: Doc,
-    indent_inner: bool,
-) -> Doc {
-    let open = f.token_opt(open);
-    let dangling = f.dangling(owner);
-    let (inner, before_close) = if dangling.is_nil() {
-        let inner = if indent_inner { f.indent(inner) } else { inner };
-        (inner, Doc::NIL)
-    } else {
-        let inner = indent![f; inner, f.hard_line(), dangling];
-        (inner, f.hard_line())
-    };
-    let close = f.token_opt(close);
-    cat![f; open, inner, before_close, close]
 }

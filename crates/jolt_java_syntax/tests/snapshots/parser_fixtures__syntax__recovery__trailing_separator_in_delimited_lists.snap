@@ -338,15 +338,14 @@ CompilationUnit
                   Identifier "A" @ 443..444
                 AnnotationArgumentList
                   LParen "(" @ 444..445
-                  AnnotationElementList
-                    AnnotationElementArgumentList
-                      AnnotationElementValuePair
-                        Identifier "value" @ 445..450 trailing=[Whitespace " "]
-                        Assign "=" @ 451..452 trailing=[Whitespace " "]
-                        AnnotationElementValue
-                          LiteralExpression
-                            IntegerLiteral "1" @ 453..454
-                      Comma "," @ 454..455
+                  AnnotationElementArgumentList
+                    AnnotationElementValuePair
+                      Identifier "value" @ 445..450 trailing=[Whitespace " "]
+                      Assign "=" @ 451..452 trailing=[Whitespace " "]
+                      AnnotationElementValue
+                        LiteralExpression
+                          IntegerLiteral "1" @ 453..454
+                    Comma "," @ 454..455
                   RParen ")" @ 455..456 trailing=[Whitespace " "]
             PrimitiveType
               AnnotationList

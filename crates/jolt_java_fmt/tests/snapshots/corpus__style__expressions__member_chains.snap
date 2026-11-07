@@ -6,7 +6,7 @@ formatted:
 class Example {
   void run(Builder builder, Object first, Object second) {
     builder.add(first).add(second).build();
-    builder. /* call */ add(first);
+    builder./* call */ add(first);
     builder.withFirstValue(first.reallyLongDisplayName())
       .withSecondValue(second.reallyLongDisplayName())
       .build();
@@ -26,7 +26,7 @@ class Example {
       .add("foo", foo_________________________________________)
       .add("bar", bar_________________________________________);
     this.field = builder.value;
-    this.field = builder. /* field */ value;
+    this.field = builder./* field */ value;
   }
 }
 

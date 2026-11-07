@@ -7,8 +7,7 @@ use jolt_syntax::{SyntaxNode, SyntaxToken};
 use crate::JavaFormatter;
 
 /// `{`, the items one indent deeper joined by `separator`, the owner's
-/// dangling comments, `}`. An empty body prints `{`, newline, `}` until D1
-/// is applied at integration.
+/// dangling comments, `}` (see [`braced`]).
 pub(crate) fn braced_body<'a>(
     f: &mut JavaFormatter<'a>,
     owner: SyntaxNode<'a>,
@@ -19,18 +18,33 @@ pub(crate) fn braced_body<'a>(
 ) -> Doc {
     let open = f.token_opt(open);
     let items = f.item_list(items, separator);
-    let dangling = f.dangling(owner);
+    let close = f.token_opt(close);
+    braced(f, Some(owner), open, items, close)
+}
+
+/// `open`, then `content` and `owner`'s dangling comments one indent deeper
+/// on their own lines (a blank line between the two when the source had
+/// one), then `close` on its own line. An empty body prints `open close`
+/// until D1 is applied at integration.
+pub(crate) fn braced<'a>(
+    f: &mut JavaFormatter<'a>,
+    owner: Option<SyntaxNode<'a>>,
+    open: Doc,
+    content: Doc,
+    close: Doc,
+) -> Doc {
+    let dangling = owner.map_or(Doc::NIL, |owner| f.dangling(owner));
     let mut inner = Vec::with_capacity(4);
-    if !items.is_nil() {
-        inner.extend([f.hard_line(), items]);
+    if !content.is_nil() {
+        inner.extend([f.hard_line(), content]);
     }
     if !dangling.is_nil() {
-        let blank = !items.is_nil() && f.blank_line_before_dangling(owner);
+        let blank =
+            !content.is_nil() && owner.is_some_and(|owner| f.blank_line_before_dangling(owner));
         inner.extend([if blank { f.empty_line() } else { f.hard_line() }, dangling]);
     }
     let inner = f.concat(inner);
     let inner = f.indent(inner);
-    let close = f.token_opt(close);
     cat![f; open, inner, f.hard_line(), close]
 }
 

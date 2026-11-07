@@ -111,52 +111,51 @@ CompilationUnit
       Identifier "JsonName" @ 213..221 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 222..223
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
-            AnnotationElementDeclaration
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 228..234 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "value" @ 235..240
-              LParen "(" @ 240..241
-              RParen ")" @ 241..242 trailing=[Whitespace " "]
-              DefaultValue
-                DefaultKw "default" @ 243..250 trailing=[Whitespace " "]
-                AnnotationElementValue
-                  LiteralExpression
-                    StringLiteral "\"\"" @ 251..253
-              Semicolon ";" @ 253..254
-            AnnotationElementDeclaration
-              ArrayType
-                PrimitiveType
+        AnnotationInterfaceBodyMemberList
+          AnnotationElementDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
                   AnnotationList
-                  IntKw "int" @ 259..262 leading=[Newline "\n", Whitespace "    "]
-                ArrayDimensions
-                  ArrayDimension
-                    AnnotationList
-                    LBracket "[" @ 262..263
-                    RBracket "]" @ 263..264 trailing=[Whitespace " "]
-              Identifier "flags" @ 265..270
-              LParen "(" @ 270..271
-              RParen ")" @ 271..272 trailing=[Whitespace " "]
-              DefaultValue
-                DefaultKw "default" @ 273..280 trailing=[Whitespace " "]
-                AnnotationElementValue
-                  AnnotationArrayInitializer
-                    LBrace "{" @ 281..282
-                    AnnotationElementValueList
-                      AnnotationElementValue
-                        LiteralExpression
-                          IntegerLiteral "1" @ 282..283
-                      Comma "," @ 283..284 trailing=[Whitespace " "]
-                      AnnotationElementValue
-                        LiteralExpression
-                          IntegerLiteral "2" @ 285..286
-                    RBrace "}" @ 286..287
-              Semicolon ";" @ 287..288
+                  Name
+                    Identifier "String" @ 228..234 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "value" @ 235..240
+            LParen "(" @ 240..241
+            RParen ")" @ 241..242 trailing=[Whitespace " "]
+            DefaultValue
+              DefaultKw "default" @ 243..250 trailing=[Whitespace " "]
+              AnnotationElementValue
+                LiteralExpression
+                  StringLiteral "\"\"" @ 251..253
+            Semicolon ";" @ 253..254
+          AnnotationElementDeclaration
+            ArrayType
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 259..262 leading=[Newline "\n", Whitespace "    "]
+              ArrayDimensions
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 262..263
+                  RBracket "]" @ 263..264 trailing=[Whitespace " "]
+            Identifier "flags" @ 265..270
+            LParen "(" @ 270..271
+            RParen ")" @ 271..272 trailing=[Whitespace " "]
+            DefaultValue
+              DefaultKw "default" @ 273..280 trailing=[Whitespace " "]
+              AnnotationElementValue
+                AnnotationArrayInitializer
+                  LBrace "{" @ 281..282
+                  AnnotationElementValueList
+                    AnnotationElementValue
+                      LiteralExpression
+                        IntegerLiteral "1" @ 282..283
+                    Comma "," @ 283..284 trailing=[Whitespace " "]
+                    AnnotationElementValue
+                      LiteralExpression
+                        IntegerLiteral "2" @ 285..286
+                  RBrace "}" @ 286..287
+            Semicolon ";" @ 287..288
         RBrace "}" @ 289..290 leading=[Newline "\n"]
   Eof "" @ 291..291 leading=[Newline "\n"]
 

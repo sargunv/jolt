@@ -12,6 +12,8 @@ Formatted 2 files in $TIME
 --- wrote B.java
 class A {
   void f() {
-    if (ready) { go(); }
+    if (ready) {
+      go();
+    }
   }
 }

@@ -163,11 +163,11 @@ fn with_body<'a>(
 /// clause on its own line one indent deeper when the header does not fit.
 /// `tail` is a closer that ends the head when there are no clauses.
 ///
-/// The header's first part (the first non-NIL doc of `head`) and the
-/// trailing comments of its last part (`tail` or the last clause) print
-/// outside the group. So a comment on its own line before the header (after
-/// declaration annotations), or an end-of-line comment before a brace on the
-/// next line, does not break the header, as in the reference.
+/// When the header's first part (the first non-NIL doc of `head`) contains a
+/// forced break, such as a comment on its own line before the header (after
+/// declaration annotations), it prints outside the group, and so do the
+/// trailing comments of the last part (`tail` or the last clause), so neither
+/// breaks the header, as in the reference.
 pub(super) fn header<'a>(
     f: &mut JavaFormatter<'a>,
     mut head: Vec<Doc>,
@@ -177,6 +177,7 @@ pub(super) fn header<'a>(
     let first = head
         .iter()
         .position(|doc| !doc.is_nil())
+        .filter(|&i| f.will_break(head[i]))
         .map_or(0, |i| i + 1);
     let mut rest = head.split_off(first);
     let first = f.concat(head);

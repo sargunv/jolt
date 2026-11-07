@@ -10,12 +10,9 @@ pub(crate) enum TrailingComma {
     /// Argument, parameter and type-argument lists (Java forbids one there).
     Never,
     /// Array and annotation-array initializers: a synthesized `,` when
-    /// broken; a trailing `,` in the source forces the broken layout and is
-    /// printed with `token`.
-    #[allow(
-        dead_code,
-        reason = "used by array initializers once Area C ports them"
-    )]
+    /// broken, except after a last element that carries a trailing line
+    /// comment (`last // c` / `}`, as in the reference); a trailing `,` in the
+    /// source forces the broken layout and is printed with `token`.
     IfBroken,
 }
 
@@ -45,6 +42,7 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     let mut docs = Vec::with_capacity(elements.len() * 2 + 2);
     let mut after_item = false;
     let mut has_items = false;
+    let mut last_commented = false;
     for (index, element) in elements.iter().enumerate() {
         let last = index + 1 == elements.len();
         match *element {
@@ -52,6 +50,7 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
                 if after_item {
                     docs.push(f.line());
                 }
+                last_commented = f.has_trailing_line_comment(SyntaxElement::Node(item.syntax()));
                 docs.push(f.fmt(item));
                 after_item = true;
                 has_items = true;
@@ -60,6 +59,7 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
                 if after_item {
                     docs.push(f.line());
                 }
+                last_commented = f.has_trailing_line_comment(SyntaxElement::Node(node));
                 docs.push(f.node(node));
                 after_item = true;
                 has_items = true;
@@ -78,7 +78,7 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     if has_items && layout.trailing_comma == TrailingComma::IfBroken {
         if trailing_separator {
             docs.push(f.break_parent());
-        } else {
+        } else if !last_commented {
             let comma = f.sticky(",");
             docs.push(f.if_break(comma, Doc::NIL, None));
         }
@@ -106,6 +106,43 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     let inner = f.indent(inner);
     let list = cat![f; open, inner, line, close];
     f.group(list)
+}
+
+/// `open inner close` for a node with one inner element (brackets, casts):
+/// no line breaks of its own; `inner` is one indent deeper when
+/// `indent_inner`, or when `owner`'s dangling comments (own-line comments
+/// before `close`) print on their own lines after it.
+pub(crate) fn enclosed<'a>(
+    f: &mut JavaFormatter<'a>,
+    owner: SyntaxNode<'a>,
+    (open, close): (Option<SyntaxToken<'a>>, Option<SyntaxToken<'a>>),
+    inner: Doc,
+    indent_inner: bool,
+) -> Doc {
+    let open = f.token_opt(open);
+    let dangling = f.dangling(owner);
+    let (inner, before_close) = if dangling.is_nil() {
+        let inner = if indent_inner { f.indent(inner) } else { inner };
+        (inner, Doc::NIL)
+    } else {
+        let inner = cat![f; inner, f.hard_line(), dangling];
+        (f.indent(inner), f.hard_line())
+    };
+    let close = f.token_opt(close);
+    cat![f; open, inner, before_close, close]
+}
+
+/// One item of a list: the item, or a bogus node in its place.
+pub(crate) fn list_item<'a, T: AstNode<'a>>(
+    f: &mut JavaFormatter<'a>,
+    element: ListElement<'a, T>,
+) -> Doc {
+    match element {
+        ListElement::Item(item) => f.fmt(item),
+        ListElement::Bogus(bogus) => f.node(bogus),
+        ListElement::Separator(token) => f.token(token),
+        ListElement::Missing => Doc::NIL,
+    }
 }
 
 /// A list kind that no rule formats as a unit: its children separated by

@@ -5,7 +5,7 @@ expression: snapshot
 formatted:
 class CommentLexicalBoundaries {
   int /**/ field = 0;
-  java.util.List /**/<String /**/> names;
+  java.util.List /**/ <String /**/> names;
 
   int operators(int left, int right) {
     int plus = left + /**/ +right;
@@ -14,14 +14,12 @@ class CommentLexicalBoundaries {
   }
 
   void delimiters() {
-    consume /**/( /**/"value" /**/);
-    this /**/.field = 1;
+    consume /**/ (/**/ "value" /**/);
+    this /**/ .field = 1;
   }
 
   void adjacent() {
-    /*alpha*/
-    /**/
-    /*beta*/
+    /*alpha*/ /**/ /*beta*/
     /**
      * *
      */
@@ -29,12 +27,8 @@ class CommentLexicalBoundaries {
      * **
      */
     /*/*/
-    /*
-     * *
-     */
-    /*
-     * **
-     */
+    /* **/
+    /* ***/
   }
 
   void consume(Object value) {

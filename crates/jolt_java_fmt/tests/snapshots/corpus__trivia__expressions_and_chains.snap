@@ -6,13 +6,12 @@ formatted:
 class ExpressionTrivia {
   void run(Service service, Object value) {
     int total =
-      1 /* JOLT-TRIVIA:binary-left */
-        + /* JOLT-TRIVIA:binary-operator */ 2
+      1
+        /* JOLT-TRIVIA:binary-left */ + /* JOLT-TRIVIA:binary-operator */ 2
           * /* JOLT-TRIVIA:multiply-operator */ 3;
     String text =
-      service /* JOLT-TRIVIA:chain-target */.first( /* JOLT-TRIVIA:first-open */
-        total /* JOLT-TRIVIA:first-arg */
-      )
+      service /* JOLT-TRIVIA:chain-target */
+        .first(/* JOLT-TRIVIA:first-open */ total /* JOLT-TRIVIA:first-arg */)
         .second() /* JOLT-TRIVIA:after-second */
         .third(value /* JOLT-TRIVIA:third-arg */);
     boolean ok =

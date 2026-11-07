@@ -1,0 +1,73 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Shapes<K extends Comparable<? super K>, V> {
+  Map<String, List<? extends Number>> wildcards;
+  Map<?, ?> unbounded;
+  java.util.Map.@Marker Entry<K, V>[] entries;
+  int @A [] @B [] annotatedDims;
+  @A
+  int primitive;
+  String[] values[];
+  List<int[]> arrays;
+  Map<
+    SomeVeryLongTypeNameForKeys,
+    Map<AnotherVeryLongTypeName, List<YetAnotherLongTypeName>>
+  > nested;
+
+  <T extends Object & Comparable<? super T> & java.io.Serializable> T max(
+    Collection<? extends T> c
+  ) {
+    return null;
+  }
+
+  <
+    T extends AVeryLongBoundTypeName
+      & AnotherVeryLongBoundTypeName
+      & AThirdBoundTypeName
+  > void bounded() {
+  }
+
+  class Inner {
+    Inner(@A Shapes Shapes.this) {
+    }
+
+    void receiver(@A Inner this, String... rest) {
+    }
+  }
+
+  void dims(int values[], String @A ... more) {
+  }
+
+  void unnamed(Object _) {
+  }
+
+  void diamond() {
+    Map<String, String> m = new HashMap<>();
+  }
+
+  void union() {
+    try {
+      run();
+    } catch (IllegalStateException | IllegalArgumentException e) {
+    }
+    try {
+      run();
+    } catch (final @Ann IllegalStateException e) {
+    }
+  }
+
+  void locals() {
+    @Ann
+    final int a = 1;
+    final @Ann int b = 2;
+    @Ann
+    int c;
+    var d = 3;
+  }
+}
+
+diagnostics:
+(none)

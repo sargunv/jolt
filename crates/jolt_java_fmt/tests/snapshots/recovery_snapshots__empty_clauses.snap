@@ -21,13 +21,13 @@ class D {
 }
 
 module m {
-  exports p to /* target */ ;
+  exports p to /* target */;
 
-  provides S with /* impl */ ;
+  provides S with /* impl */;
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(83), end: TextSize(84) }) message=expected exception type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(125), end: TextSize(126) }) message=expected identifier
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(154), end: TextSize(155) }) message=expected identifier
+code=java.parse.expected_syntax range=41..42 message=expected type
+code=java.parse.expected_syntax range=83..84 message=expected exception type
+code=java.parse.expected_syntax range=125..126 message=expected identifier
+code=java.parse.expected_syntax range=154..155 message=expected identifier

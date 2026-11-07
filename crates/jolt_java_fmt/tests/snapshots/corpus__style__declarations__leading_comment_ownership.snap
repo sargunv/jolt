@@ -78,7 +78,8 @@ class LeadingCommentOwnership {
 
     if (
       candidate
-        instanceof // Type pattern documentation.
+        instanceof
+        // Type pattern documentation.
         final String text
     ) {
     }

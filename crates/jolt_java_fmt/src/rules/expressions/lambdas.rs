@@ -123,7 +123,7 @@ pub(crate) fn lambda_parameter<'a>(f: &mut JavaFormatter<'a>, node: LambdaParame
     let ty = node.r#type();
     docs.push(f.fmt_opt(ty));
     if let Some(annotations) = node.varargs_annotations()
-        && annotations.syntax().children().next().is_some()
+        && annotations.elements().next().is_some()
     {
         docs.push(f.space());
         docs.push(f.fmt(annotations));

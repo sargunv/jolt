@@ -24,8 +24,7 @@ class CommentShapes {
   }
 
   void adjacentBlocks() {
-    /*alpha*/
-    /*beta*/
+    /*alpha*/ /*beta*/
     int /**/ first = 1;
     int /***/ second = 2;
     int /* ***/ third = 3;

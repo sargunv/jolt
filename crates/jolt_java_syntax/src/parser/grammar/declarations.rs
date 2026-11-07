@@ -188,9 +188,7 @@ impl Parser<'_> {
         if self.at(JavaSyntaxKind::LParen) {
             let arguments = self.start();
             self.bump();
-            if !self.at(JavaSyntaxKind::RParen) {
-                self.parse_annotation_element_values(JavaSyntaxKind::RParen);
-            }
+            self.parse_annotation_element_values(JavaSyntaxKind::RParen);
             self.expect(
                 JavaSyntaxKind::RParen,
                 "expected `)` after annotation arguments",
@@ -981,7 +979,6 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_annotation_interface_body_contents(&mut self) {
-        let list = self.start();
         let members = self.start();
         let mut guard = self.loop_guard();
         while !self.at(JavaSyntaxKind::RBrace) && self.check(&mut guard) {
@@ -995,7 +992,6 @@ impl Parser<'_> {
             }
         }
         self.complete(members, JavaSyntaxKind::AnnotationInterfaceBodyMemberList);
-        self.complete(list, JavaSyntaxKind::AnnotationElementList);
     }
 
     pub(super) fn consume_body_member_fragment(&mut self) {

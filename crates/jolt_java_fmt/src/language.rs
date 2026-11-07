@@ -1,5 +1,5 @@
 //! The Java `FormatLanguage`: separator and delimiter tables, the
-//! formatter-ignore scopes, and comment hooks H1–H3.
+//! formatter-ignore scopes, and comment hooks H1–H5.
 
 use jolt_fmt::{
     CommentContext, CommentKind, CommentLayout, Doc, FormatLanguage, Formatter, Placement,
@@ -64,7 +64,10 @@ impl FormatLanguage for JavaFormat {
 
     fn place_comment<'a>(context: &CommentContext<'a>) -> Option<Placement<'a>> {
         let prev = context.prev?;
-        control_body_comment(context, prev).or_else(|| comment_before_body_brace(context, prev))
+        control_body_comment(context, prev)
+            .or_else(|| crate::rules::statements::promoted_body_comment(context))
+            .or_else(|| comment_before_body_brace(context, prev))
+            .or_else(|| block_comment_after_opener(context, prev))
     }
 
     fn ignore_scope(enclosing: SyntaxNode<'_>) -> Option<SyntaxNode<'_>> {
@@ -205,5 +208,33 @@ fn comment_before_body_brace<'a>(
     Some(Placement::Trailing(
         trailing_target::<JavaLanguage>(prev),
         layout,
+    ))
+}
+
+/// H5: a block comment that ends the line after `(`, `[` or a type-argument
+/// `<` stays inline before the next token, as in the reference, instead of
+/// moving to its own line by G2 (which still applies after `{`).
+fn block_comment_after_opener<'a>(
+    context: &CommentContext<'a>,
+    prev: SyntaxToken<'a>,
+) -> Option<Placement<'a>> {
+    let comment = context.comment;
+    let next = context.next;
+    let opener = match kind(prev) {
+        K::LParen | K::LBracket => true,
+        K::Lt => is_angle_list(prev),
+        _ => false,
+    };
+    let empty = JavaFormat::is_closer(next) && next.parent() == prev.parent();
+    if comment.kind == CommentKind::Line
+        || comment.layout != CommentLayout::EndOfLine
+        || !opener
+        || empty
+    {
+        return None;
+    }
+    Some(Placement::Leading(
+        leading_target::<JavaLanguage>(next),
+        CommentLayout::Inline,
     ))
 }

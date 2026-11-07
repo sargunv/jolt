@@ -13,8 +13,8 @@ use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode, SyntaxToken};
 
 use super::calls::qualified_invocation_segment;
 use super::creation::object_creation_tail;
-use super::operators::enclosed;
 use crate::JavaFormatter;
+use crate::helpers::lists::enclosed;
 
 pub(crate) fn method_invocation_expression<'a>(
     f: &mut JavaFormatter<'a>,

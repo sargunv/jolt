@@ -28,6 +28,6 @@ module recovery.barriers {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(49) }) message=expected `to` before module target list
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(103), end: TextSize(109) }) message=expected `to` before module target list
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(168), end: TextSize(182) }) message=expected `with` in provides directive
+code=java.parse.expected_syntax range=43..49 message=expected `to` before module target list
+code=java.parse.expected_syntax range=103..109 message=expected `to` before module target list
+code=java.parse.expected_syntax range=168..182 message=expected `with` in provides directive

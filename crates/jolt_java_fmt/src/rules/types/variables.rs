@@ -43,7 +43,9 @@ pub(crate) fn receiver_parameter<'a>(
 }
 
 /// Declarators on one line if they fit, otherwise each after the first on
-/// its own line one indent deeper.
+/// its own line one indent deeper. With several declarators the whole list
+/// is one indent deeper, so a broken value of the first declarator is
+/// indented past the continuation declarators.
 pub(crate) fn variable_declarator_list<'a>(
     f: &mut JavaFormatter<'a>,
     node: VariableDeclaratorList<'a>,
@@ -69,9 +71,12 @@ pub(crate) fn variable_declarator_list<'a>(
             seen_item = true;
         }
     }
+    if rest.is_empty() {
+        return first;
+    }
     let rest = f.concat(rest);
-    let rest = f.indent(rest);
     let list = cat![f; first, rest];
+    let list = f.indent(list);
     f.group(list)
 }
 

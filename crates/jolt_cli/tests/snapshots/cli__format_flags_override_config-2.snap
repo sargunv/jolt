@@ -7,6 +7,8 @@ status: 0
 --- stdout
 class A {
     void f() {
-        if (ready) { go(); }
+        if (ready) {
+            go();
+        }
     }
 }

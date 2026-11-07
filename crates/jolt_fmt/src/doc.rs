@@ -69,10 +69,6 @@ pub(crate) const MULTILINE: u8 = 4;
 /// The first text of a verbatim node: the printer records the indentation of
 /// the current output line as the base its `Strip` pieces re-indent against.
 pub(crate) const VERBATIM_START: u8 = 8;
-/// An inline trailing comment: its width counts for fitting only when more
-/// text follows it on the line, as for the end-of-line comment it becomes when
-/// a line break follows it.
-pub(crate) const TRAILING_COMMENT: u8 = 16;
 
 #[derive(Clone, Copy, Debug)]
 #[allow(clippy::struct_field_names)]

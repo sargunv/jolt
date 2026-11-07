@@ -24,13 +24,13 @@ class CommentsBetweenStatementKeywordAndValue {
   }
 
   void returnsNothingAfterKeywordComment() {
-    return // no value follows the keyword, so the terminator stays put
-    ;
+    return; // no value follows the keyword, so the terminator stays put
   }
 
   int returnsBeforeTerminatorComment(int y) {
     return // a comment ends the line after the keyword
-      y // a comment before the terminator keeps it in the continuation
+      y
+      // a comment before the terminator keeps it in the continuation
       ;
   }
 
@@ -98,15 +98,13 @@ class CommentsBetweenStatementKeywordAndValue {
 
   void breaksWithoutLabelAfterKeywordComment() {
     while (ready()) {
-      break // no label follows the keyword, so the terminator stays put
-      ;
+      break; // no label follows the keyword, so the terminator stays put
     }
   }
 
   void continuesWithoutLabelAfterKeywordComment() {
     while (ready()) {
-      continue // no label follows the keyword, so the terminator stays put
-      ;
+      continue; // no label follows the keyword, so the terminator stays put
     }
   }
 

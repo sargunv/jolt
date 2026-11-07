@@ -9,18 +9,24 @@ Formatted 3 files in $TIME
 --- wrote project/Root.java
 class A {
     void f() {
-        if (ready) { go(); }
+        if (ready) {
+            go();
+        }
     }
 }
 --- wrote project/module/Module.java
 class A {
    void f() {
-      if (ready) { go(); }
+      if (ready) {
+         go();
+      }
    }
 }
 --- wrote project/module/lib/Lib.java
 class A {
   void f() {
-    if (ready) { go(); }
+    if (ready) {
+      go();
+    }
   }
 }

@@ -4,12 +4,12 @@ expression: snapshot
 ---
 formatted:
 /* JOLT-TRIVIA:file-header */
-package com /* JOLT-TRIVIA:package-mid */.example.trivia; // JOLT-TRIVIA:package-tail
+package com /* JOLT-TRIVIA:package-mid */ .example.trivia; // JOLT-TRIVIA:package-tail
 
 // JOLT-TRIVIA:before-imports
 import java.util.List; /* JOLT-TRIVIA:list-import */
 
-import static java.util.Collections /* JOLT-TRIVIA:static-import-mid */.emptyList;
+import static java.util.Collections /* JOLT-TRIVIA:static-import-mid */ .emptyList;
 
 // JOLT-TRIVIA:after-imports
 

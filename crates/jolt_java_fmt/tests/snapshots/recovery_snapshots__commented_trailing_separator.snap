@@ -21,4 +21,4 @@ class CommentedTrailingSeparator {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(90), end: TextSize(91) }) message=expected argument
+code=java.parse.expected_syntax range=90..91 message=expected argument

@@ -18,6 +18,6 @@ class C {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected expression
-code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected resource variable declaration or variable access
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(76), end: TextSize(77) }) message=expected class or interface type
+code=java.parse.expected_syntax range=45..46 message=expected expression
+code=java.parse.invalid_resource_variable_access range=45..46 message=expected resource variable declaration or variable access
+code=java.parse.expected_syntax range=76..77 message=expected class or interface type

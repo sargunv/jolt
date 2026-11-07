@@ -54,8 +54,7 @@ CompilationUnit
       Identifier "Marker" @ 76..82 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 83..84
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
+        AnnotationInterfaceBodyMemberList
         RBrace "}" @ 84..85
   Eof "" @ 86..86 leading=[Newline "\n"]
 

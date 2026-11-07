@@ -12,5 +12,5 @@ public class LruCache<K, V> {
     private final int capacity;
 
 diagnostics:
-code=java.lex.unterminated_block_comment severity=Error stage=Lexer range=Some(TextRange { start: TextSize(27), end: TextSize(28) }) message=unterminated block comment
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(63) }) message=expected `}` after type body
+code=java.lex.unterminated_block_comment range=27..28 message=unterminated block comment
+code=java.parse.expected_syntax range=63..63 message=expected `}` after type body

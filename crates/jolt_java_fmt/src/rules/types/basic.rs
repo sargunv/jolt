@@ -5,9 +5,10 @@ use jolt_java_syntax::{
     ArrayDimension, ArrayDimensions, ArrayType, ClassType, ClassTypeSegmentNode, PrimitiveType,
     VoidType,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement};
+use jolt_syntax::{AstNode, ListElement};
 
 use crate::JavaFormatter;
+use crate::helpers::lists::list_item;
 
 pub(crate) fn primitive_type<'a>(f: &mut JavaFormatter<'a>, node: PrimitiveType<'a>) -> Doc {
     let annotations = f.fmt_opt(node.annotations());
@@ -55,13 +56,10 @@ pub(crate) fn array_type<'a>(f: &mut JavaFormatter<'a>, node: ArrayType<'a>) -> 
 
 /// `[]` per dimension, joined without spaces.
 pub(crate) fn array_dimensions<'a>(f: &mut JavaFormatter<'a>, node: ArrayDimensions<'a>) -> Doc {
-    let mut docs = Vec::new();
-    for child in node.syntax().children() {
-        docs.push(match child {
-            SyntaxElement::Node(child) => f.node(child),
-            SyntaxElement::Token(token) => f.token(token),
-        });
-    }
+    let docs: Vec<_> = node
+        .elements()
+        .map(|element| list_item(f, element))
+        .collect();
     f.concat(docs)
 }
 

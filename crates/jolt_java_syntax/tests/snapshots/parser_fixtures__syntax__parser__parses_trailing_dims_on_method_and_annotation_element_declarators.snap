@@ -40,21 +40,20 @@ CompilationUnit
       Identifier "TrailingAnnotationElementDims" @ 61..90 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 91..92
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
-            AnnotationElementDeclaration
-              PrimitiveType
+        AnnotationInterfaceBodyMemberList
+          AnnotationElementDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 97..100 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "value" @ 101..106
+            LParen "(" @ 106..107
+            RParen ")" @ 107..108
+            ArrayDimensions
+              ArrayDimension
                 AnnotationList
-                IntKw "int" @ 97..100 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "value" @ 101..106
-              LParen "(" @ 106..107
-              RParen ")" @ 107..108
-              ArrayDimensions
-                ArrayDimension
-                  AnnotationList
-                  LBracket "[" @ 108..109
-                  RBracket "]" @ 109..110
-              Semicolon ";" @ 110..111
+                LBracket "[" @ 108..109
+                RBracket "]" @ 109..110
+            Semicolon ";" @ 110..111
         RBrace "}" @ 112..113 leading=[Newline "\n"]
   Eof "" @ 114..114 leading=[Newline "\n"]
 

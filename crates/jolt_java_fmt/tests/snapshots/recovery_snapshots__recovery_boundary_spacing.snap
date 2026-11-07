@@ -14,7 +14,9 @@ class Fields {
 formatted:
 public class LruCache<.K, V>
 
-class Registry<T : Any>
+class Registry<T
+
+: Any>
 
 class Fields {
   int .value;
@@ -23,11 +25,11 @@ class Fields {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(22), end: TextSize(23) }) message=expected type parameter name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(33) }) message=expected type body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected `>` after type parameters
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected type body
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=unexpected token at top level
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(74) }) message=expected variable name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(103), end: TextSize(104) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(161), end: TextSize(162) }) message=expected type
+code=java.parse.expected_syntax range=22..23 message=expected type parameter name
+code=java.parse.expected_syntax range=28..33 message=expected type body
+code=java.parse.expected_syntax range=45..46 message=expected `>` after type parameters
+code=java.parse.expected_syntax range=45..46 message=expected type body
+code=java.parse.unexpected_syntax range=45..46 message=unexpected token at top level
+code=java.parse.expected_syntax range=73..74 message=expected variable name
+code=java.parse.expected_syntax range=103..104 message=expected type
+code=java.parse.expected_syntax range=161..162 message=expected type

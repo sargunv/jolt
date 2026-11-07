@@ -302,10 +302,15 @@ fn render(schema: &Schema) -> String {
                         w,
                         "/// Items, separators, and missing elements in order.\npub fn elements(self) -> impl Iterator<Item = ListElement<'a, {item}>> + 'a {{ self.0.slots().enumerate().map(|(index, element)| ListElement::new(index, element, {cast})) }}"
                     );
+                } else if matches!(ty, Ty::Category(_) | Ty::Role(_)) {
+                    let _ = writeln!(
+                        w,
+                        "/// The items; the item type holds `Bogus` items.\npub fn items(self) -> impl Iterator<Item = {item}> + 'a {{ self.0.slots().flatten().filter_map({cast}) }}"
+                    );
                 } else {
                     let _ = writeln!(
                         w,
-                        "/// Present items; `Bogus` items are skipped unless the item type holds them.\npub fn items(self) -> impl Iterator<Item = {item}> + 'a {{ self.0.slots().flatten().filter_map({cast}) }}"
+                        "/// The items, with `Bogus` items as [`ListElement::Bogus`].\npub fn elements(self) -> impl Iterator<Item = ListElement<'a, {item}>> + 'a {{ self.0.slots().map(|element| ListElement::new(0, element, {cast})) }}"
                     );
                 }
                 w.push_str("}\n\n");

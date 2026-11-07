@@ -9,7 +9,7 @@ mod tries;
 
 use jolt_fmt::{Doc, ListItem, cat, group, indent};
 use jolt_java_syntax::{BlockItem, BlockStatement, BlockStatementList};
-use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode, SyntaxToken, TriviaKind};
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken, TriviaKind};
 
 use crate::JavaFormatter;
 use crate::helpers::bodies;
@@ -18,10 +18,6 @@ pub(crate) use blocks::{
     block, block_statement, empty_statement, expression_statement, labeled_statement,
     local_class_or_interface_declaration, local_variable_declaration,
 };
-#[allow(
-    unused_imports,
-    reason = "REQUEST(shared): hook H4, wired at integration"
-)]
 pub(crate) use control::promoted_body_comment;
 pub(crate) use control::{
     basic_for_statement, do_statement, enhanced_for_statement, enhanced_for_variable,
@@ -96,18 +92,16 @@ fn statement_items(list: Option<BlockStatementList<'_>>) -> Vec<ListItem<'_>> {
     let Some(list) = list else {
         return Vec::new();
     };
-    list.syntax()
-        .children()
-        .filter_map(SyntaxElement::as_node)
-        .map(|node| {
-            let empty = BlockStatement::cast(node)
-                .and_then(BlockStatement::item)
-                .is_some_and(|item| matches!(item, BlockItem::EmptyStatement(_)));
-            if empty {
-                ListItem::Elide(node)
-            } else {
-                ListItem::Format(node)
+    list.elements()
+        .filter_map(|element| match element {
+            ListElement::Item(statement)
+                if matches!(statement.item(), Some(BlockItem::EmptyStatement(_))) =>
+            {
+                Some(ListItem::Elide(statement.syntax()))
             }
+            ListElement::Item(statement) => Some(ListItem::Format(statement.syntax())),
+            ListElement::Bogus(bogus) => Some(ListItem::Format(bogus)),
+            ListElement::Separator(_) | ListElement::Missing => None,
         })
         .collect()
 }

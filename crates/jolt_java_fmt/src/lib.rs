@@ -25,6 +25,3 @@ pub fn format<S: Sink + ?Sized>(
 ) -> ControlFlow<()> {
     jolt_fmt::format::<JavaFormat, S>(parse.syntax(), options, sink)
 }
-
-#[doc(hidden)]
-pub use helpers::placeholder::take_placeholder_kinds;

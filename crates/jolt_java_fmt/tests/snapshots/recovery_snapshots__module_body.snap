@@ -7,12 +7,12 @@ module m { requires a; /* module */ + ; exports p; }
 
 formatted:
 module m {
-  requires a; /* module */
+  requires a;
 
-  + ;
+  /* module */ + ;
 
   exports p;
 }
 
 diagnostics:
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(36), end: TextSize(37) }) message=unexpected token in module declaration
+code=java.parse.unexpected_syntax range=36..37 message=unexpected token in module declaration

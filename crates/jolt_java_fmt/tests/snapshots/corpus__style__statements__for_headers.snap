@@ -32,11 +32,14 @@ class Example {
     for (;;) {
       run();
     }
-    for ( /* keep going */ ;;) {
+    for (/* keep going */;;) {
       run();
     }
-    for ( // keep going
-    ;;) {
+    for (
+      // keep going
+      ;
+      ;
+    ) {
       run();
     }
     for (;; /* close */) {

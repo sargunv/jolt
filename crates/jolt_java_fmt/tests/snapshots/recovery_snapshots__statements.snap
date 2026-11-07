@@ -78,7 +78,8 @@ class RecoveredStatements {
       AutoCloseable first = open(), /* resource-trailing */
     ) {
     }
-    try ( /* resource-missing-access */
+    try (
+      /* resource-missing-access */
     ) {
     }
     try (
@@ -90,27 +91,24 @@ class RecoveredStatements {
     ) {
     }
     try (
-      var malformed = /* resource-trailing */ ;
+      var malformed = /* resource-trailing */;
     ) {
     }
     try {
-    } catch (Exception exception /* catch-dimension */[]) {
+    } catch (Exception exception /* catch-dimension */ []) {
     }
   }
 
   void switches(int value) {
     switch (value) {
-      /* switch-unowned */
-      @;
+      /* switch-unowned */ @;
       case 1 when ready() -> use();
       case 2 /* case-junk */ @ -> use();
       case 3 -> /* switch-empty-rule */ ;
       case 4:
-      /* switch-label-sibling */
-      case :
+      /* switch-label-sibling */ case :
         use();
-      case String text when ( /* guard-open */ ? ? ? /* guard-close */ ) ->
-        use();
+      case String text when (/* guard-open */ ? ? ? /* guard-close */) -> use();
     }
   }
 
@@ -119,7 +117,8 @@ class RecoveredStatements {
   }
 
   void missingElse(boolean value) {
-    if (value) {} else
+    if (value) {
+    } else
   }
 
   void missingWhile(boolean value) {
@@ -159,36 +158,36 @@ class RecoveredStatements {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(111), end: TextSize(112) }) message=enhanced for variable must not have an initializer
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(144), end: TextSize(145) }) message=enhanced for statement must declare a single variable
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(205), end: TextSize(206) }) message=enhanced for statement must declare a single variable
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(349), end: TextSize(350) }) message=expected resource initializer
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(391), end: TextSize(392) }) message=resource declaration must declare a single variable
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(471), end: TextSize(472) }) message=resource declaration must declare a single variable
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(539), end: TextSize(540) }) message=expected resource
-code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(582), end: TextSize(583) }) message=unexpected token in resource variable access
-code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(633), end: TextSize(634) }) message=expected resource variable declaration or variable access
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(687), end: TextSize(688) }) message=expected expression
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(842), end: TextSize(843) }) message=expected switch label
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(843), end: TextSize(844) }) message=expected identifier
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(843), end: TextSize(844) }) message=expected expression after annotation
-code=java.parse.invalid_switch_guard severity=Error stage=Parser range=Some(TextRange { start: TextSize(858), end: TextSize(862) }) message=switch guard requires a pattern
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(910), end: TextSize(911) }) message=unexpected token in case constant
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(962), end: TextSize(963) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1016), end: TextSize(1017) }) message=expected switch label item
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1071), end: TextSize(1072) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1073), end: TextSize(1074) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1092), end: TextSize(1093) }) message=expected `:` in conditional expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1092), end: TextSize(1093) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1160), end: TextSize(1161) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1217), end: TextSize(1218) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1270), end: TextSize(1271) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1309), end: TextSize(1314) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1357), end: TextSize(1358) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1426), end: TextSize(1427) }) message=expected statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1477), end: TextSize(1478) }) message=expected switch block
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1541), end: TextSize(1542) }) message=expected synchronized body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1578), end: TextSize(1583) }) message=expected try body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1610), end: TextSize(1617) }) message=expected catch body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1620), end: TextSize(1621) }) message=expected finally body
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1698), end: TextSize(1703) }) message=expected try body
+code=java.parse.expected_syntax range=111..112 message=enhanced for variable must not have an initializer
+code=java.parse.unexpected_syntax range=144..145 message=enhanced for statement must declare a single variable
+code=java.parse.unexpected_syntax range=205..206 message=enhanced for statement must declare a single variable
+code=java.parse.expected_syntax range=349..350 message=expected resource initializer
+code=java.parse.unexpected_syntax range=391..392 message=resource declaration must declare a single variable
+code=java.parse.unexpected_syntax range=471..472 message=resource declaration must declare a single variable
+code=java.parse.expected_syntax range=539..540 message=expected resource
+code=java.parse.invalid_resource_variable_access range=582..583 message=unexpected token in resource variable access
+code=java.parse.invalid_resource_variable_access range=633..634 message=expected resource variable declaration or variable access
+code=java.parse.expected_syntax range=687..688 message=expected expression
+code=java.parse.unexpected_syntax range=842..843 message=expected switch label
+code=java.parse.expected_syntax range=843..844 message=expected identifier
+code=java.parse.expected_syntax range=843..844 message=expected expression after annotation
+code=java.parse.invalid_switch_guard range=858..862 message=switch guard requires a pattern
+code=java.parse.unexpected_syntax range=910..911 message=unexpected token in case constant
+code=java.parse.expected_syntax range=962..963 message=expected expression
+code=java.parse.expected_syntax range=1016..1017 message=expected switch label item
+code=java.parse.expected_syntax range=1071..1072 message=expected expression
+code=java.parse.expected_syntax range=1073..1074 message=expected expression
+code=java.parse.expected_syntax range=1092..1093 message=expected `:` in conditional expression
+code=java.parse.expected_syntax range=1092..1093 message=expected expression
+code=java.parse.expected_syntax range=1160..1161 message=expected statement
+code=java.parse.expected_syntax range=1217..1218 message=expected statement
+code=java.parse.expected_syntax range=1270..1271 message=expected statement
+code=java.parse.expected_syntax range=1309..1314 message=expected statement
+code=java.parse.expected_syntax range=1357..1358 message=expected statement
+code=java.parse.expected_syntax range=1426..1427 message=expected statement
+code=java.parse.expected_syntax range=1477..1478 message=expected switch block
+code=java.parse.expected_syntax range=1541..1542 message=expected synchronized body
+code=java.parse.expected_syntax range=1578..1583 message=expected try body
+code=java.parse.expected_syntax range=1610..1617 message=expected catch body
+code=java.parse.expected_syntax range=1620..1621 message=expected finally body
+code=java.parse.expected_syntax range=1698..1703 message=expected try body

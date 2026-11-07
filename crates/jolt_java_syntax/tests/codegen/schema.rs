@@ -544,7 +544,7 @@ pub fn java() -> Schema {
                 "AnnotationArgumentList",
                 vec![
                     req("open_paren", t("LParen")),
-                    opt("elements", n("AnnotationElementList")),
+                    req("elements", n("AnnotationElementArgumentList")),
                     req("close_paren", t("RParen")),
                 ],
             ),
@@ -580,13 +580,6 @@ pub fn java() -> Schema {
                     req("name", t("Identifier")),
                     req("assign", t("Assign")),
                     req("value", n("AnnotationElementValue")),
-                ],
-            ),
-            node(
-                "AnnotationElementList",
-                vec![
-                    opt("arguments", n("AnnotationElementArgumentList")),
-                    opt("declarations", n("AnnotationInterfaceBodyMemberList")),
                 ],
             ),
             node(
@@ -742,7 +735,7 @@ pub fn java() -> Schema {
                 "AnnotationInterfaceBody",
                 vec![
                     req("open_brace", t("LBrace")),
-                    opt("elements", n("AnnotationElementList")),
+                    req("members", n("AnnotationInterfaceBodyMemberList")),
                     req("close_brace", t("RBrace")),
                 ],
             ),

@@ -46,10 +46,9 @@ CompilationUnit
       Identifier "EmptyAnnotation" @ 85..100 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 101..102
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
-            EmptyDeclaration
-              Semicolon ";" @ 107..108 leading=[Newline "\n", Whitespace "    "]
+        AnnotationInterfaceBodyMemberList
+          EmptyDeclaration
+            Semicolon ";" @ 107..108 leading=[Newline "\n", Whitespace "    "]
         RBrace "}" @ 109..110 leading=[Newline "\n"]
   Eof "" @ 111..111 leading=[Newline "\n"]
 

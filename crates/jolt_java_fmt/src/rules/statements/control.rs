@@ -1,7 +1,7 @@
 //! `if`, loops and `synchronized`, with brace promotion (N4) of their
 //! bodies.
 
-use jolt_fmt::{CommentContext, CommentLayout, Doc, ListItem, Placement, cat, indent};
+use jolt_fmt::{CommentContext, CommentLayout, Doc, ListItem, Placement, cat};
 use jolt_java_syntax::JavaSyntaxKind as K;
 use jolt_java_syntax::{
     BasicForStatement, DoStatement, EnhancedForStatement, EnhancedForVariable,
@@ -12,6 +12,7 @@ use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, TriviaKind};
 
 use super::{blocks, jumps, parenthesized, statement_separator, switches, tries};
 use crate::JavaFormatter;
+use crate::helpers::bodies::braced;
 
 /// `if (condition) body`, then ` else body`. An `else if` chain stays flat.
 pub(crate) fn if_statement<'a>(f: &mut JavaFormatter<'a>, node: IfStatement<'a>) -> Doc {
@@ -236,17 +237,11 @@ fn body<'a>(f: &mut JavaFormatter<'a>, owner: SyntaxNode<'a>, body: Option<State
     cat![f; f.space(), body]
 }
 
-/// `{`, `content` one indent deeper on its own lines, `}`. Mirrors the empty
-/// layout of `braced_body`.
+/// A synthesized block around `content`.
 fn promoted_block(f: &mut JavaFormatter<'_>, content: Doc) -> Doc {
     let open = f.text("{");
-    let content = if content.is_nil() {
-        Doc::NIL
-    } else {
-        indent![f; f.hard_line(), content]
-    };
     let close = f.text("}");
-    cat![f; open, content, f.hard_line(), close]
+    braced(f, None, open, content, close)
 }
 
 /// The statement has leading comments, all on the line of the header before
@@ -286,13 +281,11 @@ fn statement_content<'a>(f: &mut JavaFormatter<'a>, statement: Statement<'a>) ->
     }
 }
 
-/// REQUEST(shared): comment hook "H4", to be tried in
-/// `JavaFormat::place_comment` after H1. An end-of-line comment after the
-/// last token of a control statement's final non-block body (`if (a)
-/// return; // c`) would trail the whole statement by the generic rules, so
-/// it would print after the synthesized `}` of brace promotion. It trails
-/// the body instead and stays inside the block, as in the reference.
-#[allow(dead_code, reason = "wired into place_comment at integration")]
+/// Comment hook H4, tried after H1. An end-of-line comment after the last
+/// token of a control statement's final non-block body (`if (a) return; //
+/// c`) would trail the whole statement by the generic rules, so it would
+/// print after the synthesized `}` of brace promotion. It trails the body
+/// instead and stays inside the block, as in the reference.
 pub(crate) fn promoted_body_comment<'a>(context: &CommentContext<'a>) -> Option<Placement<'a>> {
     if context.comment.layout != CommentLayout::EndOfLine {
         return None;

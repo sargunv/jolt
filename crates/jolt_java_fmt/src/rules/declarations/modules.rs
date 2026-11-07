@@ -9,11 +9,12 @@ use jolt_java_syntax::{
     ModuleImplementationClause, ModuleTargetClause, NameSyntax, OpensDirective, ProvidesDirective,
     RequiresDirective, UsesDirective,
 };
-use jolt_syntax::{AstNode, NodeId, SyntaxElement, SyntaxToken};
+use jolt_syntax::{AstNode, ListElement, NodeId, SyntaxElement, SyntaxToken};
 
 use super::types::header_clause;
 use crate::JavaFormatter;
 use crate::helpers::bodies::braced_body;
+use crate::rules::types::annotation_lines;
 
 /// Annotations one per line, `open module name {`, then the directives:
 /// grouped by kind, sorted by name within a group, groups separated by a
@@ -24,14 +25,7 @@ pub(crate) fn module_declaration<'a>(
     f: &mut JavaFormatter<'a>,
     node: ModuleDeclaration<'a>,
 ) -> Doc {
-    let mut docs = Vec::new();
-    for annotation in node
-        .annotations()
-        .into_iter()
-        .flat_map(jolt_java_syntax::AnnotationList::items)
-    {
-        docs.extend([f.fmt(annotation), f.hard_line()]);
-    }
+    let mut docs = vec![annotation_lines(f, node.annotations())];
     if let Some(open) = node.open_keyword() {
         docs.extend([f.token(open), f.space()]);
     }
@@ -131,20 +125,30 @@ pub(crate) fn requires_directive<'a>(
     node: RequiresDirective<'a>,
 ) -> Doc {
     let mut docs = vec![f.token_opt(node.requires_keyword()), f.space()];
-    let mut modifiers: Vec<SyntaxToken<'a>> = node
+    let mut modifiers: Vec<_> = node
         .modifiers()
         .into_iter()
-        .flat_map(jolt_java_syntax::RequiresModifierList::items)
+        .flat_map(jolt_java_syntax::RequiresModifierList::elements)
         .collect();
-    let sortable = modifiers.iter().all(|&modifier| {
-        let element = SyntaxElement::Token(modifier);
-        !f.has_leading_comments(element) && !f.has_trailing_comments(element)
+    let sortable = modifiers.iter().all(|&modifier| match modifier {
+        ListElement::Item(token) => {
+            let element = SyntaxElement::Token(token);
+            !f.has_leading_comments(element) && !f.has_trailing_comments(element)
+        }
+        _ => false,
     });
     if sortable {
-        modifiers.sort_by_key(|modifier| K::from_raw(modifier.kind()) != K::StaticKw);
+        modifiers.sort_by_key(|modifier| {
+            !matches!(modifier, ListElement::Item(token) if K::from_raw(token.kind()) == K::StaticKw)
+        });
     }
     for modifier in modifiers {
-        docs.extend([f.token(modifier), f.space()]);
+        let doc = match modifier {
+            ListElement::Item(token) => f.token(token),
+            ListElement::Bogus(bogus) => f.node(bogus),
+            ListElement::Separator(_) | ListElement::Missing => continue,
+        };
+        docs.extend([doc, f.space()]);
     }
     docs.push(f.fmt_opt(node.module()));
     docs.push(f.token_opt(node.semicolon()));

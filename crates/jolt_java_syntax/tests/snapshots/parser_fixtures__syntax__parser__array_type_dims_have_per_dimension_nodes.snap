@@ -55,8 +55,7 @@ CompilationUnit
       Identifier "A" @ 78..79 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 80..81
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
+        AnnotationInterfaceBodyMemberList
         RBrace "}" @ 81..82
     AnnotationInterfaceDeclaration
       At "@" @ 83..84 leading=[Newline "\n"]
@@ -64,8 +63,7 @@ CompilationUnit
       Identifier "B" @ 94..95 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 96..97
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
+        AnnotationInterfaceBodyMemberList
         RBrace "}" @ 97..98
   Eof "" @ 99..99 leading=[Newline "\n"]
 

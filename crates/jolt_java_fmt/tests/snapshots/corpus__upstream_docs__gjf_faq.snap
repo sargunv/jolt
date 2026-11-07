@@ -35,7 +35,8 @@ class GoogleJavaFormatFaqSnippets {
 
   void block08() {
     currentEstimate =
-      ( // This is a line comment.
+      (
+        // This is a line comment.
         currentEstimate + argument / currentEstimate
       )
         / 2.0f;
@@ -43,7 +44,8 @@ class GoogleJavaFormatFaqSnippets {
 
   void block09() {
     currentEstimate =
-      ( // This is a line comment.
+      (
+        // This is a line comment.
         currentEstimate + argument / currentEstimate
       )
         / 2.0f;

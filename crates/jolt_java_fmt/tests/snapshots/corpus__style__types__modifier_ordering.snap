@@ -1,0 +1,76 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@Deprecated
+public class Hoisted {
+  public static final @Nonnull String NAME = "x";
+  @Inject
+  protected final @Nullable Object field;
+
+  public static synchronized <T> T generic() {
+    return null;
+  }
+
+  public static @A <T> T annotatedGeneric() {
+    return null;
+  }
+
+  @Inject
+  public Hoisted() {
+  }
+
+  protected abstract static class Nested {
+  }
+
+  public static native void nativeMethod();
+
+  private transient volatile int flags;
+
+  abstract static final sealed strictfp class Shape permits Circle {
+  }
+
+  @Marker
+  static final non-sealed class Circle extends Shape {
+  }
+
+  public default void unused() {
+  }
+}
+
+interface Defaults {
+  public default void run() {
+  }
+
+  public static void helper() {
+  }
+}
+
+final /* first */ public static class Barrier {
+  public static final /* stays */ protected int value;
+
+  public // own line
+  static void split() {
+  }
+}
+
+enum Mode {
+  A;
+
+  public static final int X = 1;
+}
+
+record Point(int x, int y) {
+  @Inject
+  public Point {
+  }
+}
+
+@interface Config {
+  @Nonnull
+  public abstract String value();
+}
+
+diagnostics:
+(none)

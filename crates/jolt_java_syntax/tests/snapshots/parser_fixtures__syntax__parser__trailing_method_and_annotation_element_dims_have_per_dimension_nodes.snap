@@ -59,33 +59,32 @@ CompilationUnit
       Identifier "TrailingAnnotationElementPerDimensionDims" @ 101..142 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 143..144
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
-            AnnotationElementDeclaration
-              PrimitiveType
+        AnnotationInterfaceBodyMemberList
+          AnnotationElementDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 149..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Identifier "values" @ 153..159
+            LParen "(" @ 159..160
+            RParen ")" @ 160..161 trailing=[Whitespace " "]
+            ArrayDimensions
+              ArrayDimension
                 AnnotationList
-                IntKw "int" @ 149..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              Identifier "values" @ 153..159
-              LParen "(" @ 159..160
-              RParen ")" @ 160..161 trailing=[Whitespace " "]
-              ArrayDimensions
-                ArrayDimension
-                  AnnotationList
-                    Annotation
-                      At "@" @ 162..163
-                      Name
-                        Identifier "A" @ 163..164 trailing=[Whitespace " "]
-                  LBracket "[" @ 165..166
-                  RBracket "]" @ 166..167 trailing=[Whitespace " "]
-                ArrayDimension
-                  AnnotationList
-                    Annotation
-                      At "@" @ 168..169
-                      Name
-                        Identifier "B" @ 169..170 trailing=[Whitespace " "]
-                  LBracket "[" @ 171..172
-                  RBracket "]" @ 172..173
-              Semicolon ";" @ 173..174
+                  Annotation
+                    At "@" @ 162..163
+                    Name
+                      Identifier "A" @ 163..164 trailing=[Whitespace " "]
+                LBracket "[" @ 165..166
+                RBracket "]" @ 166..167 trailing=[Whitespace " "]
+              ArrayDimension
+                AnnotationList
+                  Annotation
+                    At "@" @ 168..169
+                    Name
+                      Identifier "B" @ 169..170 trailing=[Whitespace " "]
+                LBracket "[" @ 171..172
+                RBracket "]" @ 172..173
+            Semicolon ";" @ 173..174
         RBrace "}" @ 175..176 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 178..179 leading=[Newline "\n", Newline "\n"]
@@ -93,8 +92,7 @@ CompilationUnit
       Identifier "A" @ 189..190 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 191..192
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
+        AnnotationInterfaceBodyMemberList
         RBrace "}" @ 192..193
     AnnotationInterfaceDeclaration
       At "@" @ 194..195 leading=[Newline "\n"]
@@ -102,8 +100,7 @@ CompilationUnit
       Identifier "B" @ 205..206 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 207..208
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
+        AnnotationInterfaceBodyMemberList
         RBrace "}" @ 208..209
   Eof "" @ 210..210 leading=[Newline "\n"]
 

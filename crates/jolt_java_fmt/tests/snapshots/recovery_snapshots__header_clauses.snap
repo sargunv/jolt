@@ -15,7 +15,7 @@ sealed class C
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected class or interface type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(82), end: TextSize(83) }) message=expected class or interface type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(111), end: TextSize(112) }) message=expected identifier
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(149), end: TextSize(150) }) message=expected class or interface type
+code=java.parse.expected_syntax range=43..44 message=expected class or interface type
+code=java.parse.expected_syntax range=82..83 message=expected class or interface type
+code=java.parse.expected_syntax range=111..112 message=expected identifier
+code=java.parse.expected_syntax range=149..150 message=expected class or interface type

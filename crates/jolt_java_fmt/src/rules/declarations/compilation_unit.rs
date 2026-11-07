@@ -11,6 +11,7 @@ use jolt_java_syntax::{
 use jolt_syntax::{AstNode, NodeId, SyntaxElement, SyntaxNode};
 
 use crate::JavaFormatter;
+use crate::rules::types::annotation_lines;
 
 pub(crate) fn compilation_unit<'a>(f: &mut JavaFormatter<'a>, node: CompilationUnit<'a>) -> Doc {
     let items: Vec<CompilationUnitItem<'a>> = node
@@ -41,15 +42,7 @@ pub(crate) fn package_declaration<'a>(
     f: &mut JavaFormatter<'a>,
     node: PackageDeclaration<'a>,
 ) -> Doc {
-    let mut docs = Vec::new();
-    for annotation in node
-        .annotations()
-        .into_iter()
-        .flat_map(jolt_java_syntax::AnnotationList::items)
-    {
-        docs.push(f.fmt(annotation));
-        docs.push(f.hard_line());
-    }
+    let mut docs = vec![annotation_lines(f, node.annotations())];
     docs.push(f.token_opt(node.package_keyword()));
     docs.push(f.space());
     docs.push(f.fmt_opt(node.name()));

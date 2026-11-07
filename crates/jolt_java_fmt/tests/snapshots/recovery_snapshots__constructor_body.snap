@@ -8,12 +8,12 @@ class C { C() { this(); /* body */ + ; int value = 1; } }
 formatted:
 class C {
   C() {
-    this(); /* body */
-    +;
+    this();
+    /* body */ +;
     int value = 1;
   }
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(37), end: TextSize(38) }) message=expected expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(37), end: TextSize(38) }) message=expected statement expression
+code=java.parse.expected_syntax range=37..38 message=expected expression
+code=java.parse.invalid_statement_expression range=37..38 message=expected statement expression

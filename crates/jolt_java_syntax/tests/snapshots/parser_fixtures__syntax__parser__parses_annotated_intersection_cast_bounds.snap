@@ -24,8 +24,7 @@ CompilationUnit
       Identifier "NonNull" @ 11..18 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 19..20
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
+        AnnotationInterfaceBodyMemberList
         RBrace "}" @ 20..21
     InterfaceDeclaration
       InterfaceKw "interface" @ 23..32 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]

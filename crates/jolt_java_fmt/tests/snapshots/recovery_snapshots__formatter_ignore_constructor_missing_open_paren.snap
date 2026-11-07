@@ -29,4 +29,4 @@ class Example {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(23), end: TextSize(24) }) message=expected `(`
+code=java.parse.expected_syntax range=23..24 message=expected `(`

@@ -57,10 +57,8 @@ pub(crate) fn switch_block<'a>(f: &mut JavaFormatter<'a>, node: SwitchBlock<'a>)
         .entries()
         .map(|entries| {
             entries
-                .syntax()
-                .children()
-                .filter_map(SyntaxElement::as_node)
-                .map(ListItem::Format)
+                .items()
+                .map(|entry| ListItem::Format(entry.syntax()))
                 .collect()
         })
         .unwrap_or_default();
@@ -120,16 +118,16 @@ pub(crate) fn switch_block_statement_group<'a>(
     cat![f; labels, statements]
 }
 
-/// A block statement that may share the label line: a plain block with no
-/// leading comments, outside formatter-ignore. (A blank line before it in
-/// the source does not count: the other layout would drop it, so the next
-/// pass would choose this one.)
+/// A block statement that may share the label line: a plain block outside
+/// formatter-ignore with no leading comment that starts a line. (A blank
+/// line before it in the source does not count: the other layout would drop
+/// it, so the next pass would choose this one.)
 fn is_inline_block<'a>(f: &JavaFormatter<'a>, statement: SyntaxNode<'a>) -> bool {
     let element = SyntaxElement::Node(statement);
     BlockStatement::cast(statement)
         .and_then(BlockStatement::item)
         .is_some_and(|item| matches!(item, BlockItem::Block(_)))
-        && !f.has_leading_comments(element)
+        && !comments_break_before(f, element)
         && !f.in_ignore_region(statement)
 }
 

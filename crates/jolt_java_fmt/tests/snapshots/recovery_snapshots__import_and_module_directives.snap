@@ -14,5 +14,5 @@ module m {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(8) }) message=expected identifier
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(29), end: TextSize(30) }) message=expected identifier
+code=java.parse.expected_syntax range=7..8 message=expected identifier
+code=java.parse.expected_syntax range=29..30 message=expected identifier

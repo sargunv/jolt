@@ -9,7 +9,7 @@ use jolt_syntax::{
 };
 
 use crate::comments::{self, CommentKind, CommentLayout, Comments, Side};
-use crate::doc::{LINE_COMMENT, TRAILING_COMMENT, VERBATIM_START, has_line_break};
+use crate::doc::{LINE_COMMENT, VERBATIM_START, has_line_break};
 use crate::{Doc, DocBuilder, FormatLanguage, Reindent, cat};
 
 /// One item of an [`Formatter::item_list`].
@@ -286,8 +286,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         self.builder.text_with(text, reindent, flags)
     }
 
-    /// The node's dangling comments, each on its own line, with no line before
-    /// the first or after the last. NIL when none.
+    /// The node's dangling comments, each on its own line (comments that
+    /// shared a source line share it), with no line before the first or after
+    /// the last. NIL when none.
     pub fn dangling(&mut self, node: SyntaxNode<'a>) -> Doc {
         let indices: Vec<usize> = self
             .comments
@@ -299,8 +300,12 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             if position == 0 {
                 docs.push(self.builder.break_parent());
             } else {
-                let blank = self.comments.list[index].lines_before >= 2;
-                docs.push(self.line_or_blank(blank));
+                let lines_before = self.comments.list[index].lines_before;
+                docs.push(match lines_before {
+                    0 => Doc::SPACE,
+                    1 => Doc::HARD_LINE,
+                    _ => self.builder.empty_line(),
+                });
             }
             // Dangling comments always print on their own lines.
             docs.push(self.comment_doc(index, true));
@@ -324,6 +329,14 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .attached(element, Side::Trailing)
             .next()
             .is_some()
+    }
+
+    /// The element has a trailing line comment, which ends its line.
+    #[must_use]
+    pub fn has_trailing_line_comment(&self, element: SyntaxElement<'a>) -> bool {
+        self.comments
+            .attached(element, Side::Trailing)
+            .any(|index| self.comments.list[index].kind == CommentKind::Line)
     }
 
     #[must_use]
@@ -517,27 +530,40 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             (Side::Leading, _) => {
                 let hug = self.comments.prev[index].is_some_and(L::hugs_next);
                 let before = if hug { Doc::NIL } else { Doc::SPACE };
-                let space = Doc::SPACE;
+                let next = self.comments.next[index];
+                let after = if L::is_closer(next) || L::is_separator(next) {
+                    Doc::NIL
+                } else {
+                    Doc::SPACE
+                };
                 let text = self.comment_doc(index, false);
-                cat![self; before, text, space]
+                cat![self; before, text, after]
             }
-            (_, CommentLayout::EndOfLine) => {
+            // A block comment at the end of a line trails its code like an
+            // inline one: it does not force the line to break.
+            (_, CommentLayout::EndOfLine)
+                if self.comments.list[index].kind == CommentKind::Line =>
+            {
                 let (space, break_parent) = (Doc::SPACE, Doc::BREAK_PARENT);
                 let text = self.comment_doc(index, false);
                 let suffix = cat![self; space, text];
                 let suffix = self.builder.line_suffix(suffix);
                 cat![self; suffix, break_parent]
             }
-            (_, CommentLayout::Inline | CommentLayout::StartOfLine) => {
-                let space = Doc::SPACE;
-                let comment = self.comments.list[index];
-                let text = if comment.kind == CommentKind::Line || has_line_break(comment.text) {
-                    self.comment_doc(index, false)
+            (_, CommentLayout::Inline | CommentLayout::StartOfLine | CommentLayout::EndOfLine) => {
+                let hug = self.comments.prev[index].is_some_and(L::hugs_next);
+                let before = if hug { Doc::NIL } else { Doc::SPACE };
+                // Code may follow on the line (after a block comment that
+                // ended its line in the source), spaced as it would be after
+                // a leading inline comment.
+                let next = self.comments.next[index];
+                let after = if L::is_closer(next) || L::is_separator(next) {
+                    Doc::NIL
                 } else {
-                    self.emitted[index] += 1;
-                    self.builder.comment_text(comment.text, TRAILING_COMMENT)
+                    Doc::SPACE
                 };
-                cat![self; space, text]
+                let text = self.comment_doc(index, false);
+                cat![self; before, text, after]
             }
             (_, CommentLayout::OwnLine) => {
                 let (hard_line, after) = (Doc::HARD_LINE, Doc::HARD_LINE);

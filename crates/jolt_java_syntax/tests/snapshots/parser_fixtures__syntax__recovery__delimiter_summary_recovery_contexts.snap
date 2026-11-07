@@ -48,21 +48,19 @@ CompilationUnit
             Identifier "A" @ 56..57
           AnnotationArgumentList
             LParen "(" @ 57..58
-            AnnotationElementList
-              AnnotationElementArgumentList
-                AnnotationElementValue
-                  Annotation
-                    At "@" @ 58..59
-                    Name
-                      Identifier "B" @ 59..60
+            AnnotationElementArgumentList
+              AnnotationElementValue
+                Annotation
+                  At "@" @ 58..59
+                  Name
+                    Identifier "B" @ 59..60
             RParen ")" @ 60..61
       At "@" @ 62..63 leading=[Newline "\n"]
       InterfaceKw "interface" @ 63..72 trailing=[Whitespace " "]
       Identifier "ValidNestedAnnotation" @ 73..94 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 95..96
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
+        AnnotationInterfaceBodyMemberList
         RBrace "}" @ 96..97
     AnnotationInterfaceDeclaration
       ModifierList
@@ -73,8 +71,7 @@ CompilationUnit
       Identifier "RecoveredAnnotationInterface" @ 112..140 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 141..142
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
+        AnnotationInterfaceBodyMemberList
         RBrace "}" @ 142..143
     ClassDeclaration
       ClassKw "class" @ 145..150 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]

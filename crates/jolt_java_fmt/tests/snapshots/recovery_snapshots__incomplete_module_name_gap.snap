@@ -19,5 +19,5 @@ module recovered. {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(16), end: TextSize(17) }) message=expected identifier
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(60), end: TextSize(61) }) message=expected identifier
+code=java.parse.expected_syntax range=16..17 message=expected identifier
+code=java.parse.expected_syntax range=60..61 message=expected identifier

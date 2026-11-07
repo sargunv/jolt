@@ -36,23 +36,22 @@ CompilationUnit
                   Identifier "A" @ 30..31
                 AnnotationArgumentList
                   LParen "(" @ 31..32
-                  AnnotationElementList
-                    AnnotationElementArgumentList
-                      AnnotationElementValuePair
-                        Identifier "x" @ 32..33 trailing=[Whitespace " "]
-                        Assign "=" @ 34..35 trailing=[Whitespace " "]
-                        AnnotationElementValue
-                          LiteralExpression
-                            IntegerLiteral "1" @ 36..37
-                      Comma "," @ 37..38 trailing=[Whitespace " ", BlockComment "/* ann */", Whitespace " "]
-                      Bogus
-                      Comma "," @ 49..50 trailing=[Whitespace " "]
-                      AnnotationElementValuePair
-                        Identifier "y" @ 51..52 trailing=[Whitespace " "]
-                        Assign "=" @ 53..54 trailing=[Whitespace " "]
-                        AnnotationElementValue
-                          LiteralExpression
-                            IntegerLiteral "2" @ 55..56
+                  AnnotationElementArgumentList
+                    AnnotationElementValuePair
+                      Identifier "x" @ 32..33 trailing=[Whitespace " "]
+                      Assign "=" @ 34..35 trailing=[Whitespace " "]
+                      AnnotationElementValue
+                        LiteralExpression
+                          IntegerLiteral "1" @ 36..37
+                    Comma "," @ 37..38 trailing=[Whitespace " ", BlockComment "/* ann */", Whitespace " "]
+                    Bogus
+                    Comma "," @ 49..50 trailing=[Whitespace " "]
+                    AnnotationElementValuePair
+                      Identifier "y" @ 51..52 trailing=[Whitespace " "]
+                      Assign "=" @ 53..54 trailing=[Whitespace " "]
+                      AnnotationElementValue
+                        LiteralExpression
+                          IntegerLiteral "2" @ 55..56
                   RParen ")" @ 56..57 trailing=[Whitespace " "]
             VoidType
               VoidKw "void" @ 58..62 trailing=[Whitespace " "]

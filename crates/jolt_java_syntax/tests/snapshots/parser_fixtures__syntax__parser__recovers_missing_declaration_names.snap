@@ -53,15 +53,14 @@ CompilationUnit
       Identifier "MissingAnnotationElementName" @ 74..102 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 103..104
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
-            AnnotationElementDeclaration
-              PrimitiveType
-                AnnotationList
-                IntKw "int" @ 109..112 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-              LParen "(" @ 113..114
-              RParen ")" @ 114..115
-              Semicolon ";" @ 115..116
+        AnnotationInterfaceBodyMemberList
+          AnnotationElementDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 109..112 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            LParen "(" @ 113..114
+            RParen ")" @ 114..115
+            Semicolon ";" @ 115..116
         RBrace "}" @ 117..118 leading=[Newline "\n"]
     EnumDeclaration
       EnumKw "enum" @ 120..124 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]

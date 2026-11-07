@@ -7,9 +7,8 @@
 //!   `format(in) == out` file by file.
 //!
 //! Prints totals and writes each mismatch's actual output plus a summary to
-//! `--out` (default `target/jref`). Every mismatch lists the placeholder kinds
-//! its run hit, so a mismatch without placeholders is a real bug. Inputs with
-//! syntax errors are skipped and counted.
+//! `--out` (default `target/jref`). Inputs with syntax errors are skipped and
+//! counted.
 
 use std::fmt::Write as _;
 use std::fs;
@@ -138,9 +137,7 @@ fn main() {
                         skipped.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }
-                    let _ = jolt_java_fmt::take_placeholder_kinds();
                     let actual = common::format(&case.input, options);
-                    let placeholders = jolt_java_fmt::take_placeholder_kinds();
                     if actual == case.expected {
                         matched.fetch_add(1, Ordering::Relaxed);
                         continue;
@@ -158,11 +155,10 @@ fn main() {
                         let _ = fs::create_dir_all(parent);
                     }
                     let _ = fs::write(&path, &actual);
-                    mismatches.lock().expect("mismatch list").push((
-                        case.relative.clone(),
-                        line,
-                        placeholders,
-                    ));
+                    mismatches
+                        .lock()
+                        .expect("mismatch list")
+                        .push((case.relative.clone(), line));
                 }
             });
         }
@@ -170,28 +166,18 @@ fn main() {
     let mut mismatches = mismatches.into_inner().expect("mismatch list");
     mismatches.sort();
     let mut summary = String::new();
-    let mut real = 0;
-    for (path, line, placeholders) in &mismatches {
-        if placeholders.is_empty() {
-            real += 1;
-        }
+    for (path, line) in &mismatches {
         let _ = writeln!(
             summary,
-            "{}: first difference at line {line}; placeholders: {}",
-            path.display(),
-            if placeholders.is_empty() {
-                "none (bug)".to_owned()
-            } else {
-                placeholders.join(", ")
-            }
+            "{}: first difference at line {line}",
+            path.display()
         );
     }
     let totals = format!(
-        "files {}, matched {}, mismatched {} ({} without placeholders), skipped (syntax errors) {}",
+        "files {}, matched {}, mismatched {}, skipped (syntax errors) {}",
         cases.len(),
         matched.load(Ordering::Relaxed),
         mismatches.len(),
-        real,
         skipped.load(Ordering::Relaxed)
     );
     let _ = writeln!(summary, "\n{totals}");

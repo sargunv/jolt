@@ -1,0 +1,41 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class RedundantParentheses {
+  void binary(int a, int b, int c, int d) {
+    int flattened = a + b - c + d;
+    int right = a - (b - c);
+    int mixed = (a * b) / c;
+    int same = a * b * c;
+    int remainder = (a % b) % c;
+    int shifted = (a << b) << c;
+    int bitwise = (a & b) | (c ^ d);
+    int commented = (/* keep */ a + b) + c;
+    int trailing =
+      (
+        a + b // keep
+      )
+        + c;
+    boolean chain = (a < b) == (c < d);
+    boolean logic = (a < b) && (c < d) && a == d;
+  }
+
+  void lambdas() {
+    Function<String, String> single = value -> value;
+    Function<String, String> typed = (String value) -> value;
+    Function<String, String> inferred = (var value) -> value;
+    Function<String, String> modified = (final var value) -> value;
+    Function<String, String> commented = (/* keep */ value) -> value;
+    BiFunction<String, String, String> pair = (left, right) -> left + right;
+    Supplier<String> empty = () -> "value";
+    Runnable block =
+      () -> {
+        run();
+      };
+  }
+}
+
+diagnostics:
+(none)

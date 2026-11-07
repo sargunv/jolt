@@ -10,8 +10,8 @@ mod patterns;
 mod variables;
 
 pub(crate) use annotations::{
-    annotation, annotation_argument_list, annotation_array_initializer, annotation_element_list,
-    annotation_element_value, annotation_element_value_pair,
+    annotation, annotation_argument_list, annotation_array_initializer, annotation_element_value,
+    annotation_element_value_pair,
 };
 pub(crate) use basic::{
     array_dimension, array_dimensions, array_type, class_type, class_type_segment_node,
@@ -21,13 +21,9 @@ pub(crate) use generics::{
     intersection_type, type_argument, type_argument_list, type_bound_list, type_parameter,
     type_parameter_list, union_type, wildcard_type,
 };
-#[allow(
-    unused_imports,
-    reason = "the inline parameter-modifier layout for areas A (record components) and B (catch parameters)"
-)]
-pub(crate) use modifiers::inline_modifiers;
 pub(crate) use modifiers::{
-    annotation_list, modifier_list, non_sealed_modifier, parameter_modifier_list,
+    annotation_lines, annotation_list, inline_modifiers, modifier_list, non_sealed_modifier,
+    parameter_modifier_list,
 };
 pub(crate) use names::{name, qualified_name, qualified_name_segment_node};
 pub(crate) use patterns::{component_pattern, match_all_pattern, record_pattern, type_pattern};

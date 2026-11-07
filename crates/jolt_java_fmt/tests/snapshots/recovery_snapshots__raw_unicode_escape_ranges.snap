@@ -27,4 +27,4 @@ s\u0065aled class EscapedContextualModifier {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(81), end: TextSize(82) }) message=expected expression
+code=java.parse.expected_syntax range=81..82 message=expected expression

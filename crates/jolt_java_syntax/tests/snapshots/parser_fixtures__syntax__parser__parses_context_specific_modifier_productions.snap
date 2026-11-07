@@ -85,24 +85,23 @@ CompilationUnit
       Identifier "ModifiedAnnotation" @ 187..205 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 206..207
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
-            AnnotationElementDeclaration
-              ModifierList
-                Annotation
-                  At "@" @ 212..213 leading=[Newline "\n", Whitespace "    "]
+        AnnotationInterfaceBodyMemberList
+          AnnotationElementDeclaration
+            ModifierList
+              Annotation
+                At "@" @ 212..213 leading=[Newline "\n", Whitespace "    "]
+                Name
+                  Identifier "Marker" @ 213..219 trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
                   Name
-                    Identifier "Marker" @ 213..219 trailing=[Whitespace " "]
-              ClassType
-                ClassTypeSegmentList
-                  ClassTypeSegmentNode
-                    AnnotationList
-                    Name
-                      Identifier "String" @ 220..226 trailing=[Whitespace " "]
-              Identifier "value" @ 227..232
-              LParen "(" @ 232..233
-              RParen ")" @ 233..234
-              Semicolon ";" @ 234..235
+                    Identifier "String" @ 220..226 trailing=[Whitespace " "]
+            Identifier "value" @ 227..232
+            LParen "(" @ 232..233
+            RParen ")" @ 233..234
+            Semicolon ";" @ 234..235
         RBrace "}" @ 236..237 leading=[Newline "\n"]
     AnnotationInterfaceDeclaration
       At "@" @ 239..240 leading=[Newline "\n", Newline "\n"]
@@ -110,8 +109,7 @@ CompilationUnit
       Identifier "Marker" @ 250..256 trailing=[Whitespace " "]
       AnnotationInterfaceBody
         LBrace "{" @ 257..258
-        AnnotationElementList
-          AnnotationInterfaceBodyMemberList
+        AnnotationInterfaceBodyMemberList
         RBrace "}" @ 258..259
   Eof "" @ 260..260 leading=[Newline "\n"]
 

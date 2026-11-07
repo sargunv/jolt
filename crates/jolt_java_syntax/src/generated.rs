@@ -141,7 +141,6 @@ pub enum JavaSyntaxKind {
     AnnotationElementDeclaration,
     AnnotationElementValue,
     AnnotationElementValuePair,
-    AnnotationElementList,
     AnnotationArrayInitializer,
     DefaultValue,
     ClassDeclaration,
@@ -307,7 +306,7 @@ pub enum JavaSyntaxKind {
 
 const TOKEN_COUNT: u16 = 111;
 
-const KINDS: [JavaSyntaxKind; 290] = [
+const KINDS: [JavaSyntaxKind; 289] = [
     JavaSyntaxKind::Eof,
     JavaSyntaxKind::Unknown,
     JavaSyntaxKind::Identifier,
@@ -436,7 +435,6 @@ const KINDS: [JavaSyntaxKind; 290] = [
     JavaSyntaxKind::AnnotationElementDeclaration,
     JavaSyntaxKind::AnnotationElementValue,
     JavaSyntaxKind::AnnotationElementValuePair,
-    JavaSyntaxKind::AnnotationElementList,
     JavaSyntaxKind::AnnotationArrayInitializer,
     JavaSyntaxKind::DefaultValue,
     JavaSyntaxKind::ClassDeclaration,
@@ -600,7 +598,7 @@ const KINDS: [JavaSyntaxKind; 290] = [
     JavaSyntaxKind::Bogus,
 ];
 
-const NAMES: [&str; 290] = [
+const NAMES: [&str; 289] = [
     "Eof",
     "Unknown",
     "Identifier",
@@ -729,7 +727,6 @@ const NAMES: [&str; 290] = [
     "AnnotationElementDeclaration",
     "AnnotationElementValue",
     "AnnotationElementValuePair",
-    "AnnotationElementList",
     "AnnotationArrayInitializer",
     "DefaultValue",
     "ClassDeclaration",
@@ -1208,21 +1205,6 @@ pub struct AnnotationElementValuePair<'a>(SyntaxNode<'a>);
 impl<'a> AstNode<'a> for AnnotationElementValuePair<'a> {
     fn can_cast(kind: RawSyntaxKind) -> bool {
         kind == K::AnnotationElementValuePair.to_raw()
-    }
-    fn cast(node: SyntaxNode<'a>) -> Option<Self> {
-        Self::can_cast(node.kind()).then_some(Self(node))
-    }
-    fn syntax(self) -> SyntaxNode<'a> {
-        self.0
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct AnnotationElementList<'a>(SyntaxNode<'a>);
-
-impl<'a> AstNode<'a> for AnnotationElementList<'a> {
-    fn can_cast(kind: RawSyntaxKind) -> bool {
-        kind == K::AnnotationElementList.to_raw()
     }
     fn cast(node: SyntaxNode<'a>) -> Option<Self> {
         Self::can_cast(node.kind()).then_some(Self(node))
@@ -3815,7 +3797,7 @@ impl<'a> ModuleImplementationClause<'a> {
 }
 
 impl<'a> ModifierList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = ModifierElement<'a>> + 'a {
         self.0
             .slots()
@@ -3840,8 +3822,10 @@ impl<'a> AnnotationArgumentList<'a> {
     pub fn open_paren(self) -> Option<SyntaxToken<'a>> {
         self.0.slot(0).and_then(SyntaxElement::as_token)
     }
-    pub fn elements(self) -> Option<AnnotationElementList<'a>> {
-        self.0.slot(1).and_then(cast::<AnnotationElementList<'a>>)
+    pub fn elements(self) -> Option<AnnotationElementArgumentList<'a>> {
+        self.0
+            .slot(1)
+            .and_then(cast::<AnnotationElementArgumentList<'a>>)
     }
     pub fn close_paren(self) -> Option<SyntaxToken<'a>> {
         self.0.slot(2).and_then(SyntaxElement::as_token)
@@ -3892,19 +3876,6 @@ impl<'a> AnnotationElementValuePair<'a> {
     }
     pub fn value(self) -> Option<AnnotationElementValue<'a>> {
         self.0.slot(2).and_then(cast::<AnnotationElementValue<'a>>)
-    }
-}
-
-impl<'a> AnnotationElementList<'a> {
-    pub fn arguments(self) -> Option<AnnotationElementArgumentList<'a>> {
-        self.0
-            .slot(0)
-            .and_then(cast::<AnnotationElementArgumentList<'a>>)
-    }
-    pub fn declarations(self) -> Option<AnnotationInterfaceBodyMemberList<'a>> {
-        self.0
-            .slot(1)
-            .and_then(cast::<AnnotationInterfaceBodyMemberList<'a>>)
     }
 }
 
@@ -4171,8 +4142,10 @@ impl<'a> AnnotationInterfaceBody<'a> {
     pub fn open_brace(self) -> Option<SyntaxToken<'a>> {
         self.0.slot(0).and_then(SyntaxElement::as_token)
     }
-    pub fn elements(self) -> Option<AnnotationElementList<'a>> {
-        self.0.slot(1).and_then(cast::<AnnotationElementList<'a>>)
+    pub fn members(self) -> Option<AnnotationInterfaceBodyMemberList<'a>> {
+        self.0
+            .slot(1)
+            .and_then(cast::<AnnotationInterfaceBodyMemberList<'a>>)
     }
     pub fn close_brace(self) -> Option<SyntaxToken<'a>> {
         self.0.slot(2).and_then(SyntaxElement::as_token)
@@ -5180,12 +5153,11 @@ impl<'a> WildcardType<'a> {
 }
 
 impl<'a> ArrayDimensions<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = ArrayDimension<'a>> + 'a {
+    /// The items, with `Bogus` items as [`ListElement::Bogus`].
+    pub fn elements(self) -> impl Iterator<Item = ListElement<'a, ArrayDimension<'a>>> + 'a {
         self.0
             .slots()
-            .flatten()
-            .filter_map(cast::<ArrayDimension<'a>>)
+            .map(|element| ListElement::new(0, element, cast::<ArrayDimension<'a>>))
     }
 }
 
@@ -5702,7 +5674,7 @@ impl<'a> UnqualifiedMethodInvocation<'a> {
 }
 
 impl<'a> CompilationUnitItemList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = CompilationUnitItem<'a>> + 'a {
         self.0
             .slots()
@@ -5712,14 +5684,16 @@ impl<'a> CompilationUnitItemList<'a> {
 }
 
 impl<'a> AnnotationList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = Annotation<'a>> + 'a {
-        self.0.slots().flatten().filter_map(cast::<Annotation<'a>>)
+    /// The items, with `Bogus` items as [`ListElement::Bogus`].
+    pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Annotation<'a>>> + 'a {
+        self.0
+            .slots()
+            .map(|element| ListElement::new(0, element, cast::<Annotation<'a>>))
     }
 }
 
 impl<'a> ModuleDirectiveList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = ModuleDirective<'a>> + 'a {
         self.0
             .slots()
@@ -5729,9 +5703,11 @@ impl<'a> ModuleDirectiveList<'a> {
 }
 
 impl<'a> RequiresModifierList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = SyntaxToken<'a>> + 'a {
-        self.0.slots().flatten().filter_map(SyntaxElement::as_token)
+    /// The items, with `Bogus` items as [`ListElement::Bogus`].
+    pub fn elements(self) -> impl Iterator<Item = ListElement<'a, SyntaxToken<'a>>> + 'a {
+        self.0
+            .slots()
+            .map(|element| ListElement::new(0, element, SyntaxElement::as_token))
     }
 }
 
@@ -5791,7 +5767,7 @@ impl<'a> AnnotationElementArgumentList<'a> {
 }
 
 impl<'a> AnnotationInterfaceBodyMemberList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = AnnotationInterfaceBodyMember<'a>> + 'a {
         self.0
             .slots()
@@ -5856,7 +5832,7 @@ impl<'a> TypeList<'a> {
 }
 
 impl<'a> ClassBodyMemberList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = ClassBodyMember<'a>> + 'a {
         self.0
             .slots()
@@ -5866,7 +5842,7 @@ impl<'a> ClassBodyMemberList<'a> {
 }
 
 impl<'a> RecordBodyMemberList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = ClassBodyMember<'a>> + 'a {
         self.0
             .slots()
@@ -5876,7 +5852,7 @@ impl<'a> RecordBodyMemberList<'a> {
 }
 
 impl<'a> InterfaceBodyMemberList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = InterfaceBodyMember<'a>> + 'a {
         self.0
             .slots()
@@ -5886,7 +5862,7 @@ impl<'a> InterfaceBodyMemberList<'a> {
 }
 
 impl<'a> ParameterModifierList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = ParameterModifier<'a>> + 'a {
         self.0
             .slots()
@@ -5896,7 +5872,7 @@ impl<'a> ParameterModifierList<'a> {
 }
 
 impl<'a> ConstructorBodyEntryList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = ConstructorBodyEntry<'a>> + 'a {
         self.0
             .slots()
@@ -5906,17 +5882,16 @@ impl<'a> ConstructorBodyEntryList<'a> {
 }
 
 impl<'a> BlockStatementList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = BlockStatement<'a>> + 'a {
+    /// The items, with `Bogus` items as [`ListElement::Bogus`].
+    pub fn elements(self) -> impl Iterator<Item = ListElement<'a, BlockStatement<'a>>> + 'a {
         self.0
             .slots()
-            .flatten()
-            .filter_map(cast::<BlockStatement<'a>>)
+            .map(|element| ListElement::new(0, element, cast::<BlockStatement<'a>>))
     }
 }
 
 impl<'a> SwitchEntryList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = SwitchEntrySyntax<'a>> + 'a {
         self.0
             .slots()
@@ -5962,9 +5937,11 @@ impl<'a> SwitchLabelItemList<'a> {
 }
 
 impl<'a> CatchClauseList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = CatchClause<'a>> + 'a {
-        self.0.slots().flatten().filter_map(cast::<CatchClause<'a>>)
+    /// The items, with `Bogus` items as [`ListElement::Bogus`].
+    pub fn elements(self) -> impl Iterator<Item = ListElement<'a, CatchClause<'a>>> + 'a {
+        self.0
+            .slots()
+            .map(|element| ListElement::new(0, element, cast::<CatchClause<'a>>))
     }
 }
 
@@ -6059,12 +6036,11 @@ impl<'a> NameSegmentDotList<'a> {
 }
 
 impl<'a> DimExpressionList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = DimExpression<'a>> + 'a {
+    /// The items, with `Bogus` items as [`ListElement::Bogus`].
+    pub fn elements(self) -> impl Iterator<Item = ListElement<'a, DimExpression<'a>>> + 'a {
         self.0
             .slots()
-            .flatten()
-            .filter_map(cast::<DimExpression<'a>>)
+            .map(|element| ListElement::new(0, element, cast::<DimExpression<'a>>))
     }
 }
 
@@ -6088,7 +6064,7 @@ impl<'a> VariableInitializerList<'a> {
 }
 
 impl<'a> LambdaModifierList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
+    /// The items; the item type holds `Bogus` items.
     pub fn items(self) -> impl Iterator<Item = LambdaModifier<'a>> + 'a {
         self.0
             .slots()
@@ -9300,11 +9276,11 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 } else {
                     FactorySlot::Missing
                 };
-                let s1 = if node(i, c) == Some(K::AnnotationElementList) {
+                let s1 = if node(i, c) == Some(K::AnnotationElementArgumentList) {
                     c += 1;
                     FactorySlot::Child(c - 1)
                 } else {
-                    FactorySlot::Absent
+                    FactorySlot::Missing
                 };
                 let s2 = if token(i, c) == Some(K::RParen) {
                     c += 1;
@@ -9414,26 +9390,6 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 };
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
-                } else {
-                    sink.raw(raw, true)
-                }
-            }
-            K::AnnotationElementList => {
-                let mut c = 0;
-                let s0 = if node(i, c) == Some(K::AnnotationElementArgumentList) {
-                    c += 1;
-                    FactorySlot::Child(c - 1)
-                } else {
-                    FactorySlot::Absent
-                };
-                let s1 = if node(i, c) == Some(K::AnnotationInterfaceBodyMemberList) {
-                    c += 1;
-                    FactorySlot::Child(c - 1)
-                } else {
-                    FactorySlot::Absent
-                };
-                if c == i.len() {
-                    sink.fixed(raw, [s0, s1])
                 } else {
                     sink.raw(raw, true)
                 }
@@ -9993,11 +9949,11 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 } else {
                     FactorySlot::Missing
                 };
-                let s1 = if node(i, c) == Some(K::AnnotationElementList) {
+                let s1 = if node(i, c) == Some(K::AnnotationInterfaceBodyMemberList) {
                     c += 1;
                     FactorySlot::Child(c - 1)
                 } else {
-                    FactorySlot::Absent
+                    FactorySlot::Missing
                 };
                 let s2 = if token(i, c) == Some(K::RBrace) {
                     c += 1;

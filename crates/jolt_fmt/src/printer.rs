@@ -4,8 +4,8 @@
 use std::ops::ControlFlow;
 
 use crate::doc::{
-    Kind, LINE_COMMENT, MULTILINE, STICKY, TRAILING_COMMENT, Text, VERBATIM_START, comment_lines,
-    display_width, lines,
+    Kind, LINE_COMMENT, MULTILINE, STICKY, Text, VERBATIM_START, comment_lines, display_width,
+    lines,
 };
 use crate::{Doc, DocBuilder, FormatOptions, Reindent, Sink};
 
@@ -119,7 +119,7 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                 Kind::Group(child, id) => {
                     let mode = if self.docs.breaks(doc) {
                         Mode::Break
-                    } else if mode == Mode::Flat || self.fits(child) {
+                    } else if mode == Mode::Flat || self.fits(child, indent) {
                         Mode::Flat
                     } else {
                         Mode::Break
@@ -321,22 +321,32 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
     }
 
     /// Whether `doc` fits flat on the rest of the current line, followed by
-    /// the rest of the stack in its recorded modes.
-    fn fits(&self, doc: Doc) -> bool {
+    /// the rest of the stack in its recorded modes. `indent` is the group's.
+    #[allow(clippy::too_many_lines)]
+    fn fits(&self, doc: Doc, indent: u32) -> bool {
         let (start, mut space) = if self.pending_newlines > 0 {
             (self.indent_width(self.pending_indent), false)
         } else {
             (self.column, self.pending_space && !self.at_line_start)
         };
+        // Spaces at the start of a line are dropped, as when printing.
+        let mut line_start = self.pending_newlines > 0 || self.at_line_start;
         let mut width = i64::from(self.options.line_width) - i64::from(start);
-        // The width of trailing comments that only counts if text follows.
-        let mut deferred = 0;
         let mut suffix_pending = !self.suffixes.is_empty();
+        // A flat line was measured inside the group, so breaking the group
+        // would change where its text starts.
+        let mut saw_line = false;
         let mut rest = self.stack.len();
-        let mut stack: Vec<(Mode, Doc, bool)> = vec![(Mode::Flat, doc, false)];
+        let mut stack = vec![Fit {
+            mode: Mode::Flat,
+            doc,
+            indent,
+            in_rest: false,
+            in_suffix: false,
+        }];
         let mut budget = FIT_BUDGET;
         loop {
-            let (mode, doc, in_rest) = if let Some(entry) = stack.pop() {
+            let entry = if let Some(entry) = stack.pop() {
                 entry
             } else {
                 if rest == 0 {
@@ -344,27 +354,40 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                 }
                 rest -= 1;
                 let command = self.stack[rest];
-                (command.mode, command.doc, true)
+                Fit {
+                    mode: command.mode,
+                    doc: command.doc,
+                    indent: command.indent,
+                    in_rest: true,
+                    in_suffix: false,
+                }
             };
             if budget == 0 {
                 return false;
             }
             budget -= 1;
+            let Fit {
+                mode, doc, in_rest, ..
+            } = entry;
             match self.docs.kind(doc) {
                 Kind::Nil => {}
                 Kind::Text(index) => {
                     let text = &self.docs.texts[index as usize];
-                    if suffix_pending && text.flags & STICKY == 0 {
-                        return in_rest;
-                    }
-                    if text.flags & TRAILING_COMMENT != 0 {
-                        deferred += i64::from(text.width) + i64::from(space);
+                    if suffix_pending && !entry.in_suffix && text.flags & STICKY == 0 {
+                        // The text starts a new line after the pending
+                        // comment. If breaking the group cannot move it,
+                        // measure the group on from that line.
+                        if in_rest || saw_line {
+                            return in_rest;
+                        }
+                        suffix_pending = false;
                         space = false;
-                        continue;
+                        width = i64::from(self.options.line_width)
+                            - i64::from(self.indent_width(entry.indent));
                     }
-                    width -= i64::from(text.width) + i64::from(space) + deferred;
+                    width -= i64::from(text.width) + i64::from(space);
                     space = false;
-                    deferred = 0;
+                    line_start = false;
                     if width < 0 {
                         return false;
                     }
@@ -372,9 +395,12 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                         return in_rest;
                     }
                 }
-                Kind::Space => space = true,
-                Kind::Line if mode == Mode::Flat => space = true,
-                Kind::SoftLine if mode == Mode::Flat => {}
+                Kind::Space => space = !line_start,
+                Kind::Line if mode == Mode::Flat => {
+                    space = !line_start;
+                    saw_line |= !in_rest;
+                }
+                Kind::SoftLine if mode == Mode::Flat => saw_line |= !in_rest,
                 Kind::Line | Kind::SoftLine | Kind::HardLine | Kind::EmptyLine => {
                     return in_rest;
                 }
@@ -385,16 +411,24 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                 }
                 Kind::Concat(start, len) => {
                     let children = &self.docs.children[start as usize..(start + len) as usize];
-                    stack.extend(children.iter().rev().map(|&child| (mode, child, in_rest)));
+                    stack.extend(children.iter().rev().map(|&doc| Fit { doc, ..entry }));
                 }
-                Kind::Indent(child) => stack.push((mode, child, in_rest)),
+                Kind::Indent(child) => stack.push(Fit {
+                    doc: child,
+                    indent: entry.indent + 1,
+                    ..entry
+                }),
                 Kind::Group(child, _) => {
                     let mode = if self.docs.breaks(doc) {
                         Mode::Break
                     } else {
                         mode
                     };
-                    stack.push((mode, child, in_rest));
+                    stack.push(Fit {
+                        mode,
+                        doc: child,
+                        ..entry
+                    });
                 }
                 Kind::IfBreak(broken, flat, id) => {
                     let chosen = if id == 0 {
@@ -402,16 +436,35 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                     } else {
                         self.group_modes[id as usize].unwrap_or(Mode::Flat)
                     };
-                    stack.push((
-                        mode,
-                        if chosen == Mode::Break { broken } else { flat },
-                        in_rest,
-                    ));
+                    stack.push(Fit {
+                        doc: if chosen == Mode::Break { broken } else { flat },
+                        ..entry
+                    });
                 }
-                Kind::LineSuffix(_) => suffix_pending = true,
+                // The suffix (an end-of-line comment) counts toward the width
+                // of the line it ends, as in the reference.
+                Kind::LineSuffix(child) => {
+                    suffix_pending = true;
+                    stack.push(Fit {
+                        mode: Mode::Flat,
+                        doc: child,
+                        in_suffix: true,
+                        ..entry
+                    });
+                }
             }
         }
     }
+}
+
+/// One entry of the fit check's stack.
+#[derive(Clone, Copy)]
+struct Fit {
+    mode: Mode,
+    doc: Doc,
+    indent: u32,
+    in_rest: bool,
+    in_suffix: bool,
 }
 
 fn leading_ws(line: &str) -> &str {
