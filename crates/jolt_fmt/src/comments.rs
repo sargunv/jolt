@@ -156,8 +156,7 @@ pub fn leading_target<L: Language>(token: SyntaxToken<'_>) -> SyntaxElement<'_> 
 /// list node, and never a recovered node that is missing a piece after
 /// `token` (unless it also begins there): its layout may put a line break
 /// for that piece, which would separate the comment from `token`.
-#[must_use]
-pub fn trailing_target<L: Language>(token: SyntaxToken<'_>) -> SyntaxElement<'_> {
+fn trailing_target<L: Language>(token: SyntaxToken<'_>) -> SyntaxElement<'_> {
     target::<L>(token, SyntaxNode::last_token, |node, token| {
         !node.is_recovery_free()
             && node.first_token() != Some(token)

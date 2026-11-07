@@ -169,9 +169,8 @@ pub(crate) fn switch_rule<'a>(f: &mut JavaFormatter<'a>, node: SwitchRule<'a>) -
         }
         // A comment on its own line before a `throw` keeps the statement
         // one indent deeper, like an expression body. A block stays at the
-        // label's indent: H3 moves a comment on its own line before `{` to
-        // the arrow's line, so only comments that already share a line with
-        // the arrow lead it.
+        // label's indent: H1 moves a comment before its `{` into it, so only
+        // inline comments lead it.
         Some(body @ SwitchRuleBody::ThrowStatement(_))
             if f.leading_comments_break(SyntaxElement::Node(body.syntax())) =>
         {

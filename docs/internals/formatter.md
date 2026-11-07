@@ -849,8 +849,7 @@ value prints `x =`, a line, nothing), and the comment, printed after the node,
 would land past it and read differently on the next pass. A node that begins at
 the token is entered anyway, so a comment before it (S1) never attaches inside
 it. Recovery-free trees are unaffected. Comments therefore never move across a
-token, except by S1 (past `,`/`;`) and hook H1 (into a control statement's
-body).
+token, except by S1 (past `,`/`;`) and hook H1 (into a body).
 
 Rules, first match wins:
 
@@ -1192,7 +1191,7 @@ comment multiset catches that.
 ```text
 crates/jolt_java_fmt/
   src/lib.rs                    shared   pub fn format, JavaFormat, type JavaFormatter
-  src/language.rs               shared   impl FormatLanguage: separator/delimiter tables, hooks H1–H3, H5 (H4 is in rules/statements/control.rs)
+  src/language.rs               shared   impl FormatLanguage: separator/delimiter tables, hooks H1, H2, H5 (H4 is in rules/statements/control.rs)
   src/dispatch.rs               shared   total match: node kind → rule function
   src/helpers/mod.rs            shared
   src/helpers/lists.rs          shared   delimited comma lists, one-element delimited nodes, list items
@@ -1251,38 +1250,35 @@ formats the children separated by spaces (`dispatch.rs`).
 `JavaFormat::place_comment` implements only these exceptions to the generic
 rules. "Header end" below means the `)` closing the header of `if`, `while`,
 `for` (basic or enhanced), `switch` (statement or expression), `synchronized`,
-`catch`, or the resource specification of a `try`, or the keyword `else`, `do`,
-`try`, or `finally`, and "the body" is the statement or block that follows it.
+`catch`, or the resource specification of a `try`, or the keyword `else` or
+`do`, and "the body" is the statement that follows it.
 
-- **H1, comment between a control header and its body.** `prev` is a header end,
-  `next` is the first token of the body, the body is not malformed, and the
-  comment is an `EndOfLine` comment or an `OwnLine`/`StartOfLine` line comment:
-  `Leading(t, OwnLine)`, where `t` is `leading_target` of the first token inside
-  the body block when the block has one, or the body statement itself when it is
-  not a block (brace promotion will wrap it); if the body block is empty,
-  `Dangling(body)`. Exception: after `else` whose body is an `if` (an `else if`
-  chain), H1 does not apply and the generic rules give `} else // c` / `if (…)`.
-  This moves the comment across the body's `{` (C7); it is stable because on the
-  next pass the comment is own-line inside the body. All comments between a
-  header end and its body go the same way, so their order is kept.
+- **H1, comment between a header and its body.** Two cases, both
+  `Leading(t, OwnLine)` into the body, where `t` is `leading_target` of the
+  first token inside the body block, or `Dangling(body)` when the block is
+  empty:
+  - `next` is the `{` of a body that follows a header in the same parent (a
+    type, method, constructor, lambda, switch-rule or initializer body, an
+    anonymous class or enum constant body, a switch block, a control statement
+    body block), the body is not malformed, no opener in the header before
+    `prev` is unclosed (recovery), and the comment is not `Inline` (an inline
+    comment leads the `{`: `class X /* c */ {`). An end-of-line line comment
+    before a separator that the `{` follows (a trailing separator, recovery)
+    goes in too, since S1 would move it past the separator. A `{` that starts
+    its parent (a nested block, `case 1: {`) or a labeled statement's body has
+    no header before it, so H1 does not apply.
+  - `prev` is a header end, `next` is the first token of a non-block body, and
+    the comment is an `EndOfLine` comment or an `OwnLine`/`StartOfLine` line
+    comment: `t` is the body statement itself (brace promotion will wrap it).
+    Exception: after `else` whose body is an `if` (an `else if` chain), H1 does
+    not apply and the generic rules give `} else // c` / `if (…)`.
+
+  This moves the comment across the body's `{` (C7, R2); it is stable because on
+  the next pass the comment is own-line inside the body. All comments between a
+  header and its body go the same way, so their order is kept.
 - **H2, type-argument angles.** `<`/`>` of `TypeArgumentList` and
   `TypeParameterList` are openers/closers (via `closer_for`/`is_closer`); `<`
   and `>` as operators are not.
-- **H3, comment on its own line before a body's `{`.** `next` is the `{` of a
-  body or block that follows a header in the same parent (a type body, method,
-  constructor or lambda body, an initializer block, an anonymous class or enum
-  constant body, a switch block, a control statement body block) and the layout
-  is `OwnLine` or `StartOfLine`, and H1 did not apply: a block comment becomes
-  `Trailing(trailing_target(prev), Inline)` and a line comment
-  `Trailing(trailing_target(prev), EndOfLine)`. This reproduces the reference
-  (`class X` / `/* c */` / `{` prints `class X /* c */ {`; `class X` / `// c` /
-  `{` prints `class X // c` / `{`; fixture
-  `leading-comments-before-body-braces`) and is stable: on the next pass the
-  block comment is `Inline` before `{` and leads the body inline, and the line
-  comment is `EndOfLine` after the header. A `{` that starts a statement (a
-  nested block, `case 1: {`) has no header before it in the same parent, so H3
-  does not apply and the comment leads the statement on its own line.
-
 - **H4, end-of-line comment after a promoted body.** The comment is `EndOfLine`
   and `prev` is the last token of the final non-block body of an `if`, `else`,
   `while`, `for` or enhanced `for` (not an `else if` chain):
@@ -1739,10 +1735,9 @@ them unless this page is amended.
 5. **Inline comment spacing.** One space on each side, none after `L::hugs_next`
    tokens, none before a closer or separator. `this /* c */.x` becomes
    `this /* c */ .x` (listed under C4).
-6. **Comments before a body brace.** H3 keeps the reference's hoisting of an
-   own-line comment before `{` onto the header line; H1 keeps C7. A block
-   comment before a control statement's `{` is hoisted like a declaration's
-   (reference: `if (a) /* c */ {`); a line comment there moves into the body.
+6. **Comments before a body brace.** Every comment between a header and its
+   body's `{` but an inline one moves into the body (H1, C7, R2), declarations
+   and control statements alike. An inline comment stays before the `{`.
 7. **Formatter-ignore scope.** Regions pair markers within one item list only;
    pairs that cross a body boundary are dropped, matching the reference. Items
    in a region keep their source separation (blank line or not) but each starts

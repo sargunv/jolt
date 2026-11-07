@@ -16,7 +16,8 @@ public /* JOLT-TRIVIA:public-final-gap */ final /* JOLT-TRIVIA:final-class-gap *
     T /* JOLT-TRIVIA:annotated-method-type-param */
   > T identity /* JOLT-TRIVIA:generic-method-name-before-paren */ (
     final /* JOLT-TRIVIA:param-final-type-gap */ T /* JOLT-TRIVIA:param-type-name-gap */ value
-  ) /* JOLT-TRIVIA:method-close-before-body */ {
+  ) {
+    /* JOLT-TRIVIA:method-close-before-body */
     return value /* JOLT-TRIVIA:return-expression-before-semi */;
   }
 

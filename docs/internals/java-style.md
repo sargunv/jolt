@@ -550,7 +550,7 @@ return new String[] {
 ## Comments
 
 Comments are never dropped, duplicated, or merged, and never move across a token
-except past a `,` or `;` (below) and into a control statement's body (C7).
+except past a `,` or `;` (below) and into a body after its header (C7, R2).
 Placement follows [the formatter's comment model](./formatter.md#comments); the
 visible rules are:
 
@@ -588,14 +588,11 @@ return // a comment ends the line after the keyword
   `class X { // c` prints `class X {`, then `// c` one indent deeper (C6). An
   end-of-line block comment after `(`, `[` or `<` instead stays inline before
   what follows (`run( /* d */` / `a)` prints `run(/* d */ a)`).
-- **Before a body's brace.** A block comment on its own line between a header
-  and its `{` moves onto the header line (`class X /* c */ {`,
-  `if (ready) /* c */ {`); a line comment there ends the header line and the
-  brace takes the next line (`class X // c` / `{`), except in control statements
-  (next rule).
-- **Control headers.** A comment that ends the header's line, and a line comment
-  on its own line, between a control statement's header and its body move to the
-  first line of the body (C7). After `else` followed by `if`, the comment stays:
+- **Between a header and its body.** A comment between a header and its body's
+  `{` moves to the first line of the body, unless it is inline
+  (`class X /* c */ {` stays). Before a control statement's non-block body, a
+  comment that ends the header's line, and a line comment on its own line, move
+  there too (C7, R2). After `else` followed by `if`, the comment stays:
   `} else // c` / `if (…) {`.
 - **Dangling.** Comments in an otherwise empty body, argument list or other
   delimited list, and comments on their own lines before a closing delimiter,
@@ -668,7 +665,10 @@ formatter-ignore item). No token is added to repair the code and none is lost.
 ## Deliberate changes
 
 These are the only intended differences from the reference. Each is visible in
-the snapshot diff at integration and must be explainable by one entry here.
+the snapshot diff at integration and must be explainable by one entry here. The
+R entries came later, from deleting special cases that only reproduced the
+reference or the first rewrite; each is numbered after the change that removed
+its special case.
 
 ### D1. Empty bodies print `{}`
 
@@ -979,3 +979,35 @@ own-line comment, items that shared a source line each start their own line, and
 the source's blank lines between items are kept (one at most). A region whose
 items are one per line with ordinary indentation, as in every reference fixture,
 prints exactly as before.
+
+### R2. A comment between any header and its body's brace moves into the body
+
+The reference, and the first rewrite, treated comments before a body's `{`
+differently by header kind: after a control header an end-of-line comment moved
+into the body (C7), but after a declaration header it stayed and pushed the
+brace onto its own line, and an own-line comment there was pulled up onto the
+header line. Now every comment between a header and its body's `{`, except an
+inline one, moves to the first line of the body, so own-line comments stay on
+their own line (C1) and the brace stays on the header line:
+
+```java
+// input
+class Example extends Base // trailing
+{
+  void run()
+  /* before the body */
+  {}
+}
+// reference
+class Example extends Base // trailing
+{
+  void run() /* before the body */ {}
+}
+// new
+class Example extends Base {
+  // trailing
+  void run() {
+    /* before the body */
+  }
+}
+```

@@ -184,10 +184,11 @@ pub(super) enum HeaderEnd<'a> {
 /// of `head`) begins with, has a leading comment that breaks the line, such
 /// as a comment on its own line before the header (after declaration
 /// annotations), or a trailing line comment, that part prints outside the
-/// group, and so do the trailing comments of the last part (`tail` or the
-/// last clause), so neither breaks the header, as in the reference. (Breaks
-/// inside the first part, such as a broken return type, keep it in the
-/// group.)
+/// group, as in the reference. The trailing comments of the last part
+/// (`tail` or the last clause) print outside it too, so a multi-line comment
+/// before a `;` (a JSNI body, `native void m() /*-{ … }-*/;`) does not break
+/// the header. (Breaks inside the first part, such as a broken return type,
+/// keep it in the group.)
 pub(super) fn header<'a>(
     f: &mut JavaFormatter<'a>,
     lead: Option<SyntaxElement<'a>>,
