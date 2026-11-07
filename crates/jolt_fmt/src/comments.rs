@@ -416,7 +416,8 @@ fn classify_layouts<L: Language>(
     for index in 0..list.len() {
         let comment = &mut list[index];
         let last_before_next = next.get(index + 1) != Some(&next[index]);
-        let newline_before = prev[index].is_none() || comment.lines_before > 0;
+        // The file start counts as a line break before the first comment.
+        let newline_before = (index == 0 && prev[index].is_none()) || comment.lines_before > 0;
         let newline_after = comment.lines_after > 0
             || (last_before_next && next[index].kind() == eof)
             || (!newline_before && line_ends[index]);
