@@ -9,11 +9,6 @@ checksum = "sha256:0a18362361ad05465118cd8eeb72edaeec89de6894bc283576ef4e07aa3ba
 url = "https://github.com/WebAssembly/binaryen/releases/download/version_130/binaryen-version_130-x86_64-linux.tar.gz"
 url_api = "https://api.github.com/repos/WebAssembly/binaryen/releases/assets/435610959"
 
-[tools."aqua:WebAssembly/binaryen"."platforms.linux-x64-musl"]
-checksum = "sha256:0a18362361ad05465118cd8eeb72edaeec89de6894bc283576ef4e07aa3babcc"
-url = "https://github.com/WebAssembly/binaryen/releases/download/version_130/binaryen-version_130-x86_64-linux.tar.gz"
-url_api = "https://api.github.com/repos/WebAssembly/binaryen/releases/assets/435610959"
-
 [tools."aqua:WebAssembly/binaryen"."platforms.macos-arm64"]
 checksum = "sha256:79d3ab9f417d9e215f15f598f523d001a7d9ac1e59367e5c869fbdabd1cba72e"
 url = "https://github.com/WebAssembly/binaryen/releases/download/version_130/binaryen-version_130-arm64-macos.tar.gz"
@@ -37,15 +32,7 @@ backend = "aqua:dprint/dprint"
 checksum = "sha256:9a66b5931ca30402a3dd2933c432c6b6316eedd08037ab0aeb8d24cd17b2a301"
 url = "https://github.com/dprint/dprint/releases/download/0.54.0/dprint-aarch64-unknown-linux-musl.zip"
 
-[tools."aqua:dprint/dprint"."platforms.linux-arm64-musl"]
-checksum = "sha256:9a66b5931ca30402a3dd2933c432c6b6316eedd08037ab0aeb8d24cd17b2a301"
-url = "https://github.com/dprint/dprint/releases/download/0.54.0/dprint-aarch64-unknown-linux-musl.zip"
-
 [tools."aqua:dprint/dprint"."platforms.linux-x64"]
-checksum = "sha256:859ae94e596105201faa59a3fb4bedc8316e226e3e154ae410f9373461e1e41c"
-url = "https://github.com/dprint/dprint/releases/download/0.54.0/dprint-x86_64-unknown-linux-musl.zip"
-
-[tools."aqua:dprint/dprint"."platforms.linux-x64-musl"]
 checksum = "sha256:859ae94e596105201faa59a3fb4bedc8316e226e3e154ae410f9373461e1e41c"
 url = "https://github.com/dprint/dprint/releases/download/0.54.0/dprint-x86_64-unknown-linux-musl.zip"
 
@@ -69,15 +56,7 @@ backend = "aqua:google/google-java-format"
 checksum = "sha256:a69b2e85deb681f3eae4c946b948908e162e76ef27d752fa31830866dd7aa764"
 url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_linux-arm64"
 
-[tools."aqua:google/google-java-format"."platforms.linux-arm64-musl"]
-checksum = "sha256:a69b2e85deb681f3eae4c946b948908e162e76ef27d752fa31830866dd7aa764"
-url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_linux-arm64"
-
 [tools."aqua:google/google-java-format"."platforms.linux-x64"]
-checksum = "sha256:e0f95ad6d26b8fbd5b1e3fd3014f8306c4eb3b29d2a6b15fab62d0a364629437"
-url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_linux-x86-64"
-
-[tools."aqua:google/google-java-format"."platforms.linux-x64-musl"]
 checksum = "sha256:e0f95ad6d26b8fbd5b1e3fd3014f8306c4eb3b29d2a6b15fab62d0a364629437"
 url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_linux-x86-64"
 
@@ -90,32 +69,32 @@ checksum = "sha256:2451e70f7805ce51dc026c0ca6b76b689b20c99c5e5769412ae5235f59f3a
 url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_windows-x86-64.exe"
 
 [[tools."aqua:jdx/hk"]]
-version = "1.48.0"
+version = "2.11.1"
 backend = "aqua:jdx/hk"
 
 [tools."aqua:jdx/hk"."platforms.linux-arm64"]
-checksum = "sha256:d72463103d9682094e9b1fb2f20ef8824d1ec7a9b23f79163921bac7785fcd51"
-url = "https://github.com/jdx/hk/releases/download/v1.48.0/hk-aarch64-unknown-linux-gnu.tar.gz"
-
-[tools."aqua:jdx/hk"."platforms.linux-arm64-musl"]
-checksum = "sha256:c6ba1ed78e6d205f442e013ffb20e815ff6498ae12aac0705fd3132a9a9b92a0"
-url = "https://github.com/jdx/hk/releases/download/v1.48.0/hk-aarch64-unknown-linux-musl.tar.gz"
+checksum = "sha256:b94d3b405a9e392d0286491693fd22386d3c5be086bf4b8698df33623bfe91a9"
+checksum_source = "mise-versions"
+url = "https://github.com/jdx/hk/releases/download/v2.11.1/hk-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/jdx/hk/releases/assets/706553730"
 
 [tools."aqua:jdx/hk"."platforms.linux-x64"]
-checksum = "sha256:6b7f9a28391a8b13b88208d723cbde7b945d095cbb03455c7dd5f8df551ed380"
-url = "https://github.com/jdx/hk/releases/download/v1.48.0/hk-x86_64-unknown-linux-gnu.tar.gz"
-
-[tools."aqua:jdx/hk"."platforms.linux-x64-musl"]
-checksum = "sha256:bde5bcaab4035488520ab977f23bfe0b1b639152c6ed7200c9592724e2afe88d"
-url = "https://github.com/jdx/hk/releases/download/v1.48.0/hk-x86_64-unknown-linux-musl.tar.gz"
+checksum = "sha256:b9330bd4b9326c3e1aefd757ff923fdf6d1b060074bcb4e54e16ec0a81fde7ec"
+checksum_source = "mise-versions"
+url = "https://github.com/jdx/hk/releases/download/v2.11.1/hk-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/jdx/hk/releases/assets/706553774"
 
 [tools."aqua:jdx/hk"."platforms.macos-arm64"]
-checksum = "sha256:e3985a14f41ba5eb849bf79502ad19201d0a582114a5ebe35a9afff16742024b"
-url = "https://github.com/jdx/hk/releases/download/v1.48.0/hk-aarch64-apple-darwin.tar.gz"
+checksum = "sha256:95f89e6eef60e0c690b0d439b30e3b8558f47235a1a45cbff7b5351d294e4322"
+checksum_source = "mise-versions"
+url = "https://github.com/jdx/hk/releases/download/v2.11.1/hk-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/jdx/hk/releases/assets/706553739"
 
 [tools."aqua:jdx/hk"."platforms.windows-x64"]
-checksum = "sha256:6349ab27cd7a9c07e68edc7c2af0859c8a540482e97a5b7306e9e88460a5ca43"
-url = "https://github.com/jdx/hk/releases/download/v1.48.0/hk-x86_64-pc-windows-msvc.zip"
+checksum = "sha256:60b925d9734cd6bec5fab78b9c825b39b2ad9b1c9d9f03b685423c2d21ae9a8c"
+checksum_source = "mise-versions"
+url = "https://github.com/jdx/hk/releases/download/v2.11.1/hk-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/jdx/hk/releases/assets/706553733"
 
 [[tools."aqua:pnpm/pnpm"]]
 version = "11.9.0"
@@ -126,19 +105,9 @@ checksum = "sha256:7981d0109fffdf8f15b838243240c8c9f9114dd4b7111d4227c1453522d75
 url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-linux-arm64.tar.gz"
 provenance = "github-attestations"
 
-[tools."aqua:pnpm/pnpm"."platforms.linux-arm64-musl"]
-checksum = "sha256:3622d3010d6af601190e7b63994fb0fe297e805699145aec949f4879f2672fb5"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-linux-arm64-musl.tar.gz"
-provenance = "github-attestations"
-
 [tools."aqua:pnpm/pnpm"."platforms.linux-x64"]
 checksum = "sha256:8d987d82585453bcf260ea5d0bae346d298f1a5e71bcde8d99976521408ad895"
 url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-linux-x64.tar.gz"
-provenance = "github-attestations"
-
-[tools."aqua:pnpm/pnpm"."platforms.linux-x64-musl"]
-checksum = "sha256:655fcf2609e3145cfd7c2f05113429523706d0a618f2957eaa6c3562f6a5998b"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-linux-x64-musl.tar.gz"
 provenance = "github-attestations"
 
 [tools."aqua:pnpm/pnpm"."platforms.macos-arm64"]
@@ -161,23 +130,11 @@ checksum_source = "mise-versions"
 url = "https://github.com/sharkdp/hyperfine/releases/download/v2.0.0/hyperfine-v2.0.0-aarch64-unknown-linux-gnu.tar.gz"
 url_api = "https://api.github.com/repos/sharkdp/hyperfine/releases/assets/619832203"
 
-[tools."aqua:sharkdp/hyperfine"."platforms.linux-arm64-musl"]
-checksum = "sha256:f0591c2cb8f66f2d2624d23979cf96dc99a67cb935f9925c82b9a4e3ffe5b2e1"
-checksum_source = "mise-versions"
-url = "https://github.com/sharkdp/hyperfine/releases/download/v2.0.0/hyperfine-v2.0.0-aarch64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/sharkdp/hyperfine/releases/assets/619832413"
-
 [tools."aqua:sharkdp/hyperfine"."platforms.linux-x64"]
 checksum = "sha256:ae2beda2ac99c098427e4f755244552daf20e514422889cca6d44421e2d93c87"
 checksum_source = "mise-versions"
 url = "https://github.com/sharkdp/hyperfine/releases/download/v2.0.0/hyperfine-v2.0.0-x86_64-unknown-linux-gnu.tar.gz"
 url_api = "https://api.github.com/repos/sharkdp/hyperfine/releases/assets/619831673"
-
-[tools."aqua:sharkdp/hyperfine"."platforms.linux-x64-musl"]
-checksum = "sha256:38e59087bd65520930a13cf513d8a493b7043741e8ad62349a8a9929eb61bc5c"
-checksum_source = "mise-versions"
-url = "https://github.com/sharkdp/hyperfine/releases/download/v2.0.0/hyperfine-v2.0.0-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/sharkdp/hyperfine/releases/assets/619832904"
 
 [tools."aqua:sharkdp/hyperfine"."platforms.macos-arm64"]
 checksum = "sha256:590b839cfea386b384ce0b42d16daf2910277cf30950656194bb3a5f20dea81e"
@@ -209,34 +166,6 @@ backend = "cargo:cargo-machete"
 version = "0.9.138"
 backend = "cargo:cargo-nextest"
 
-[[tools.google-java-format]]
-version = "1.35.0"
-backend = "aqua:google/google-java-format"
-
-[tools.google-java-format."platforms.linux-arm64"]
-checksum = "sha256:a69b2e85deb681f3eae4c946b948908e162e76ef27d752fa31830866dd7aa764"
-url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_linux-arm64"
-
-[tools.google-java-format."platforms.linux-arm64-musl"]
-checksum = "sha256:a69b2e85deb681f3eae4c946b948908e162e76ef27d752fa31830866dd7aa764"
-url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_linux-arm64"
-
-[tools.google-java-format."platforms.linux-x64"]
-checksum = "sha256:e0f95ad6d26b8fbd5b1e3fd3014f8306c4eb3b29d2a6b15fab62d0a364629437"
-url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_linux-x86-64"
-
-[tools.google-java-format."platforms.linux-x64-musl"]
-checksum = "sha256:e0f95ad6d26b8fbd5b1e3fd3014f8306c4eb3b29d2a6b15fab62d0a364629437"
-url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_linux-x86-64"
-
-[tools.google-java-format."platforms.macos-arm64"]
-checksum = "sha256:563f066c324687885b5f4039325f8952fbb9aaf3d67c68e0b2eafccc8069d3b8"
-url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_darwin-arm64"
-
-[tools.google-java-format."platforms.windows-x64"]
-checksum = "sha256:2451e70f7805ce51dc026c0ca6b76b689b20c99c5e5769412ae5235f59f3a427"
-url = "https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format_windows-x86-64.exe"
-
 [[tools.java]]
 version = "zulu-25.34.17.0"
 backend = "core:java"
@@ -245,17 +174,9 @@ backend = "core:java"
 checksum = "sha256:2610e5c64df94cee5fb591d70183c5bf8532d8e1d394c754e8ba06751bcceb1b"
 url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-linux_aarch64.tar.gz"
 
-[tools.java."platforms.linux-arm64-musl"]
-checksum = "sha256:a19b1c5cad474b6fe7309769da35786f2ca7059c32ce175eddb06148bce85872"
-url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-linux_musl_aarch64.tar.gz"
-
 [tools.java."platforms.linux-x64"]
 checksum = "sha256:3a93235f4e5b313232647916219e91dc5cca0b9835c9b52a404ba58c43571697"
 url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-linux_x64.tar.gz"
-
-[tools.java."platforms.linux-x64-musl"]
-checksum = "sha256:f0b9cf36db2742e1d8f350bd9884b2d32c6391dd3b2bc9cd10c3c4d4856931aa"
-url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-linux_musl_x64.tar.gz"
 
 [tools.java."platforms.macos-arm64"]
 checksum = "sha256:74847e7ac930ad143950607421dd6c0a7ccb3d1cbbd8b1665f24ab62b8b7de42"
@@ -277,17 +198,9 @@ backend = "core:node"
 checksum = "sha256:6b4484c2190274175df9aa8f28e2d758a819cb1c1fe6ab481e2f95b463ab8508"
 url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-arm64.tar.gz"
 
-[tools.node."platforms.linux-arm64-musl"]
-checksum = "sha256:b1c6c2dc31b46dd8fb2322f4fe75b07e775c5120bc37251deeea28f529d4567b"
-url = "https://unofficial-builds.nodejs.org/download/release/v24.18.0/node-v24.18.0-linux-arm64-musl.tar.gz"
-
 [tools.node."platforms.linux-x64"]
 checksum = "sha256:783130984963db7ba9cbd01089eaf2c2efb055c7c1693c943174b967b3050cb8"
 url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.gz"
-
-[tools.node."platforms.linux-x64-musl"]
-checksum = "sha256:ea58409911e141ec6b19d9178efa2d9185a13295005b1cbf5521b3157eed1d95"
-url = "https://unofficial-builds.nodejs.org/download/release/v24.18.0/node-v24.18.0-linux-x64-musl.tar.gz"
 
 [tools.node."platforms.macos-arm64"]
 checksum = "sha256:e1a97e14c99c803e96c7339403282ea05a499c32f8d83defe9ef5ec66f979ed1"
@@ -301,40 +214,6 @@ url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-darwin-x64.tar.gz"
 checksum = "sha256:0ae68406b42d7725661da979b1403ec9926da205c6770827f33aac9d8f26e821"
 url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-win-x64.zip"
 
-[[tools.pnpm]]
-version = "11.9.0"
-backend = "aqua:pnpm/pnpm"
-
-[tools.pnpm."platforms.linux-arm64"]
-checksum = "sha256:7981d0109fffdf8f15b838243240c8c9f9114dd4b7111d4227c1453522d75b61"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-linux-arm64.tar.gz"
-provenance = "github-attestations"
-
-[tools.pnpm."platforms.linux-arm64-musl"]
-checksum = "sha256:3622d3010d6af601190e7b63994fb0fe297e805699145aec949f4879f2672fb5"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-linux-arm64-musl.tar.gz"
-provenance = "github-attestations"
-
-[tools.pnpm."platforms.linux-x64"]
-checksum = "sha256:8d987d82585453bcf260ea5d0bae346d298f1a5e71bcde8d99976521408ad895"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-linux-x64.tar.gz"
-provenance = "github-attestations"
-
-[tools.pnpm."platforms.linux-x64-musl"]
-checksum = "sha256:655fcf2609e3145cfd7c2f05113429523706d0a618f2957eaa6c3562f6a5998b"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-linux-x64-musl.tar.gz"
-provenance = "github-attestations"
-
-[tools.pnpm."platforms.macos-arm64"]
-checksum = "sha256:ca6f98a8911ec975509464026205e2b54aed74cecd36c5ae9932e5997bd7de2a"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-darwin-arm64.tar.gz"
-provenance = "github-attestations"
-
-[tools.pnpm."platforms.windows-x64"]
-checksum = "sha256:82c130717a59f237c49e8eaa8a7ed75c1d8d351a5b6dedeee3196b8e1b597c6e"
-url = "https://github.com/pnpm/pnpm/releases/download/v11.9.0/pnpm-win32-x64.zip"
-provenance = "github-attestations"
-
 [[tools.python]]
 version = "3.14.5"
 backend = "core:python"
@@ -344,19 +223,9 @@ checksum = "sha256:1d3ea1b3cd9b8f3d53afb629e82e9bc8f6dab6cbb1a7d23524bd86ba5bc22
 url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-aarch64-unknown-linux-gnu-install_only_stripped.tar.gz"
 provenance = "github-attestations"
 
-[tools.python."platforms.linux-arm64-musl"]
-checksum = "sha256:23dfd69917f1c693b7ce857f014a72da546c8132c277bb6ac98fdbe12334e221"
-url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-aarch64-unknown-linux-musl-install_only_stripped.tar.gz"
-provenance = "github-attestations"
-
 [tools.python."platforms.linux-x64"]
 checksum = "sha256:982a60fc7f11bbe405ab54afcd4eb145f1134797bbbffac9f5c49df4ec98b13e"
 url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz"
-provenance = "github-attestations"
-
-[tools.python."platforms.linux-x64-musl"]
-checksum = "sha256:09fb97b20df0ed9336d39468007619b3458489c33fa4166b43155587b382f84a"
-url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-x86_64-unknown-linux-musl-install_only_stripped.tar.gz"
 provenance = "github-attestations"
 
 [tools.python."platforms.macos-arm64"]

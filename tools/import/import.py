@@ -65,6 +65,13 @@ IMPORTS_CONFIG = [
 
 
 def main() -> int:
+    # Git hooks run with GIT_DIR, GIT_INDEX_FILE, ... pointing at this repo
+    # (mise runs this import from the pre-commit hook). Drop them so git
+    # commands act on the corpus clones instead.
+    for name in subprocess.check_output(
+        ["git", "rev-parse", "--local-env-vars"], text=True
+    ).split():
+        os.environ.pop(name, None)
     with import_lock():
         sync_repos(IMPORTS_CONFIG)
         clear_imports(IMPORTS_CONFIG)
