@@ -170,8 +170,7 @@ fn enum_constants<'a>(
         .rposition(|element| matches!(element, ListElement::Item(_) | ListElement::Bogus(_)));
     let mut constants = Vec::new();
     let mut removed_comma = None;
-    // A comma is synthesized after the last constant unless one follows it,
-    // or, as in the reference, it ends its line with a line comment.
+    // A comma is synthesized after the last constant unless one follows it.
     let synthesize_comma = normalize && separator.is_none() && !has_members;
     let mut needs_comma = false;
     for (index, element) in elements.into_iter().enumerate() {
@@ -196,8 +195,7 @@ fn enum_constants<'a>(
             constants.push(f.hard_line());
         }
         constants.push(f.node(constant));
-        needs_comma =
-            synthesize_comma && !f.has_trailing_line_comment(SyntaxElement::Node(constant));
+        needs_comma = synthesize_comma;
     }
     let mut semicolon_comments = Doc::NIL;
     match separator {

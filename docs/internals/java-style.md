@@ -234,8 +234,8 @@ enum Color {
   by a comma, including the last. With members, the last constant is followed by
   `;`, then a blank line and the members. A source `;` with no members is kept
   after the last constant (`B;`). The constants' own comments stay with them,
-  and no comma is added after a last constant with a trailing line comment
-  (`B // c`).
+  and the comma added after the last constant goes before its trailing line
+  comment (`B, // c`, R7).
 - When the constants end with `;`, the `;` moves up to the last constant past a
   removed trailing comma, whose comments stay on that line (`B, // c` / `;`
   prints `B; // c`, R4). Comments on their own line before the `;` (or before
@@ -523,10 +523,10 @@ return new String[] {
 ```
 
 - Initializers are padded when flat (`{ 1, 2 }`), `{}` when empty, and when
-  broken put each element on its own line with a trailing comma, closing brace
-  on its own line. A trailing comma in the source forces the broken layout
-  (`int[] b = {1, 2,};` prints broken, after `=`); the same holds for annotation
-  element arrays.
+  broken put each element on its own line with a trailing comma (before a
+  trailing line comment of the last element, R7), closing brace on its own line.
+  A trailing comma in the source forces the broken layout (`int[] b = {1, 2,};`
+  prints broken, after `=`); the same holds for annotation element arrays.
 - Dimensions: `new int[size][count]`, `String[][].class`, `int[] a`.
 
 ### Other expressions
@@ -1082,4 +1082,24 @@ Assert.notNull(
   method,
   () -> "Method '%s' could not be found.".formatted(name)
 );
+```
+
+### R7. The synthesized trailing comma goes before a last line comment
+
+The reference added no trailing comma to a broken array initializer, annotation
+array or enum constant list when the last element ended its line with a line
+comment. The synthesized comma is now always added; like every synthesized
+separator it goes before the comment:
+
+```java
+// reference
+String[] values = {
+  "first",
+  "last" // c
+};
+// new
+String[] values = {
+  "first",
+  "last", // c
+};
 ```

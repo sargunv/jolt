@@ -1052,7 +1052,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     pub fn has_leading_comments(&self, element: SyntaxElement<'a>) -> bool;
     pub fn has_trailing_comments(&self, element: SyntaxElement<'a>) -> bool;
     pub fn has_dangling_comments(&self, node: SyntaxNode<'a>) -> bool;
-    /// A trailing line comment (no trailing comma is synthesized after it).
+    /// A trailing line comment.
     pub fn has_trailing_line_comment(&self, element: SyntaxElement<'a>) -> bool;
     /// Some leading comment prints a line break between the code before the
     /// element and the element (its effective layout is not `Inline`).
@@ -1314,10 +1314,10 @@ the generic rules; a new hook requires a fixture and an entry here.
 pub(crate) enum TrailingComma {
     /// Argument, parameter and type-argument lists (Java forbids one there).
     Never,
-    /// Array and annotation-array initializers: a synthesized `,` when broken,
-    /// except after a last element with a trailing line comment (`last // c`
-    /// / `}`, as in the reference); a trailing `,` in the source forces the
-    /// broken layout and is printed with `token`.
+    /// Array and annotation-array initializers: a synthesized `,` when broken
+    /// (sticky, so it goes before the last element's trailing line comment:
+    /// `last, // c`); a trailing `,` in the source forces the broken layout and
+    /// is printed with `token`.
     IfBroken,
 }
 pub(crate) struct ListLayout {
