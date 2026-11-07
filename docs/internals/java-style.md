@@ -1115,3 +1115,10 @@ move past it, so this is stable:
 commented: /* nothing */
 ;
 ```
+
+### R9. Out-of-range decimal literals format
+
+`2147483648` and `9223372036854775808L` are valid tokens that Java accepts only
+as the operand of unary minus. The parser enforced that value rule and the CLI
+refused such files as having syntax errors; that is a compiler's check, not a
+formatter's, so they now format like any literal (`int x = 2147483648;`).

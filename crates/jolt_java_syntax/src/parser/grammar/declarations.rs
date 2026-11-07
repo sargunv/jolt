@@ -465,7 +465,7 @@ impl Parser<'_> {
         // Unguarded: every further iteration first eats a `,`.
         loop {
             self.parse_variable_declarator_until(stops, allow_unnamed);
-            if stops.contains(&self.current()) || self.at_contextual("when") {
+            if stops.contains(&self.current()) {
                 break;
             }
             if !self.eat(JavaSyntaxKind::Comma) {
@@ -489,7 +489,6 @@ impl Parser<'_> {
         let at_boundary = self.at_eof()
             || self.at(JavaSyntaxKind::Comma)
             || self.at(JavaSyntaxKind::RBrace)
-            || self.at_contextual("when")
             || stops.contains(&self.current());
         if !has_name
             && !at_boundary
@@ -502,7 +501,6 @@ impl Parser<'_> {
             while !self.at_eof()
                 && !self.at(JavaSyntaxKind::Comma)
                 && !self.at(JavaSyntaxKind::RBrace)
-                && !self.at_contextual("when")
                 && !stops.contains(&self.current())
             {
                 self.bump();
@@ -859,7 +857,7 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_constructor_invocation_primary_qualifier(&mut self) {
-        let mut expression = self.parse_primary_expression(false);
+        let mut expression = self.parse_primary_expression();
 
         let mut guard = self.loop_guard();
         while self.check(&mut guard) {

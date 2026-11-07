@@ -18,9 +18,7 @@ impl Parser<'_> {
                 self.parse_module_declaration();
             } else if self.starts_type_declaration() {
                 self.parse_type_declaration();
-            } else if self.starts_misspelled_non_sealed_type_declaration() {
-                self.error_unexpected_top_level_token();
-            } else if self.starts_compact_member_declaration() {
+            } else if self.starts_method_declaration() || self.starts_field_declaration() {
                 self.parse_compact_member_declaration();
             } else {
                 self.error_unexpected_top_level_token();

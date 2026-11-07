@@ -259,26 +259,14 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_unary_expression(&mut self) -> jolt_syntax::CompletedMarker {
-        self.parse_unary_expression_with_decimal_boundary_literal(false)
-    }
-
-    pub(super) fn parse_unary_expression_with_decimal_boundary_literal(
-        &mut self,
-        allow_decimal_boundary_literal: bool,
-    ) -> jolt_syntax::CompletedMarker {
-        if let Some(expression) = self
-            .nested(|parser| parser.parse_unary_expression_inner(allow_decimal_boundary_literal))
-        {
+        if let Some(expression) = self.nested(Self::parse_unary_expression_inner) {
             return expression;
         }
 
         self.recover_too_deep(EXPRESSION_STOPS)
     }
 
-    fn parse_unary_expression_inner(
-        &mut self,
-        allow_decimal_boundary_literal: bool,
-    ) -> jolt_syntax::CompletedMarker {
+    fn parse_unary_expression_inner(&mut self) -> jolt_syntax::CompletedMarker {
         if matches!(
             self.current(),
             JavaSyntaxKind::PlusPlus
@@ -289,14 +277,11 @@ impl Parser<'_> {
                 | JavaSyntaxKind::Tilde
         ) {
             let unary = self.start();
-            let operator = self.current();
             self.bump();
             if Self::is_expression_recovery_boundary(self.current()) {
                 self.expected_bogus_expression("expected expression", false);
             } else {
-                self.parse_unary_expression_with_decimal_boundary_literal(
-                    operator == JavaSyntaxKind::Minus,
-                );
+                self.parse_unary_expression();
             }
             return self.complete(unary, JavaSyntaxKind::UnaryExpression);
         }
@@ -305,7 +290,7 @@ impl Parser<'_> {
             return self.parse_cast_expression();
         }
 
-        self.parse_postfix_expression(allow_decimal_boundary_literal)
+        self.parse_postfix_expression()
     }
 
     /// Delimiters owned by the surrounding grammar must remain available when
@@ -332,22 +317,17 @@ impl Parser<'_> {
         self.parse_intersection_type();
         self.expect(JavaSyntaxKind::RParen, "expected `)` after cast type");
 
-        if is_primitive_cast {
-            self.parse_unary_expression();
-        } else if self.starts_lambda_expression() {
+        if !is_primitive_cast && self.starts_lambda_expression() {
             self.parse_lambda_expression();
         } else {
-            self.parse_unary_expression_with_decimal_boundary_literal(false);
+            self.parse_unary_expression();
         }
 
         self.complete(cast, JavaSyntaxKind::CastExpression)
     }
 
-    pub(super) fn parse_postfix_expression(
-        &mut self,
-        allow_decimal_boundary_literal: bool,
-    ) -> jolt_syntax::CompletedMarker {
-        let mut expression = self.parse_primary_expression(allow_decimal_boundary_literal);
+    pub(super) fn parse_postfix_expression(&mut self) -> jolt_syntax::CompletedMarker {
+        let mut expression = self.parse_primary_expression();
         let mut type_name_like =
             JavaSyntaxKind::from_raw(expression.kind()) == JavaSyntaxKind::NameExpression;
 
@@ -455,10 +435,7 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn parse_primary_expression(
-        &mut self,
-        allow_decimal_boundary_literal: bool,
-    ) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_primary_expression(&mut self) -> jolt_syntax::CompletedMarker {
         if self.at_contextual("yield") && self.nth(1) == JavaSyntaxKind::LParen {
             let error = self.start();
             self.error(
@@ -471,7 +448,7 @@ impl Parser<'_> {
         }
 
         if self.starts_literal_expression() {
-            return self.parse_literal_expression(allow_decimal_boundary_literal);
+            return self.parse_literal_expression();
         }
 
         if self.at(JavaSyntaxKind::ThisKw) {
@@ -976,32 +953,9 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn parse_literal_expression(
-        &mut self,
-        allow_decimal_boundary_literal: bool,
-    ) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_literal_expression(&mut self) -> jolt_syntax::CompletedMarker {
         let literal = self.start();
-        if !allow_decimal_boundary_literal && self.at_decimal_integer_boundary_literal() {
-            self.error(
-                codes::DECIMAL_INTEGER_BOUNDARY_LITERAL,
-                "decimal integer boundary literal may appear only as the operand of unary minus",
-            );
-        }
         self.bump();
         self.complete(literal, JavaSyntaxKind::LiteralExpression)
-    }
-
-    pub(super) fn at_decimal_integer_boundary_literal(&mut self) -> bool {
-        if self.current() != JavaSyntaxKind::IntegerLiteral {
-            return false;
-        }
-
-        let normalized = self.current_text().replace('_', "");
-
-        normalized == "2147483648"
-            || matches!(
-                normalized.strip_suffix(['l', 'L']),
-                Some("9223372036854775808")
-            )
     }
 }

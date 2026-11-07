@@ -18,18 +18,10 @@ CompilationUnit
       VariableDeclaratorList
         VariableDeclarator
           Identifier "ｔｒｕｅ" @ 7..19 trailing=[Whitespace " "]
-    FieldDeclaration
-      ClassType
-        ClassTypeSegmentList
-          ClassTypeSegmentNode
-            AnnotationList
-            Name
-              Identifier "ｎｕｌｌ" @ 20..32
-      VariableDeclaratorList
-        VariableDeclarator
+    Bogus
+      Identifier "ｎｕｌｌ" @ 20..32
   Eof "" @ 32..32
 
 diagnostics:
 code=java.parse.expected_syntax range=20..32 message=expected `;` after field declaration
-code=java.parse.expected_syntax range=32..32 message=expected variable name
-code=java.parse.expected_syntax range=32..32 message=expected `;` after field declaration
+code=java.parse.unexpected_syntax range=20..32 message=unexpected token at top level

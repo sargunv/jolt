@@ -77,18 +77,10 @@ CompilationUnit
             AnnotationList
             Identifier "FIRST" @ 88..93 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
         ClassBodyMemberList
-    FieldDeclaration
-      ClassType
-        ClassTypeSegmentList
-          ClassTypeSegmentNode
-            AnnotationList
-            Name
-              Identifier "SECOND" @ 94..100
-      VariableDeclaratorList
-        VariableDeclarator
-        Comma "," @ 100..101 trailing=[Whitespace " "]
-        VariableDeclarator
-          Identifier "THIRD" @ 102..107
+    Bogus
+      Identifier "SECOND" @ 94..100
+      Comma "," @ 100..101 trailing=[Whitespace " "]
+      Identifier "THIRD" @ 102..107
     ClassDeclaration
       ClassKw "class" @ 109..114 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
       Identifier "AfterUnclosed" @ 115..128 trailing=[Whitespace " "]
@@ -208,8 +200,7 @@ code=java.parse.expected_syntax range=43..44 message=expected type
 code=java.parse.expected_syntax range=64..65 message=expected type body
 code=java.parse.unexpected_syntax range=64..65 message=unexpected token at top level
 code=java.parse.expected_syntax range=94..100 message=expected `}` after type body
-code=java.parse.expected_syntax range=100..101 message=expected variable name
-code=java.parse.expected_syntax range=109..114 message=expected `;` after field declaration
+code=java.parse.unexpected_syntax range=94..100 message=unexpected token at top level
 code=java.parse.expected_syntax range=194..199 message=expected try body
 code=java.parse.expected_syntax range=322..323 message=expected expression
 code=java.parse.expected_syntax range=324..325 message=expected expression

@@ -8,17 +8,9 @@ input:
 syntax:
 CompilationUnit
   CompilationUnitItemList
-    FieldDeclaration
-      ClassType
-        ClassTypeSegmentList
-          ClassTypeSegmentNode
-            AnnotationList
-            Name
-              Identifier "¢value" @ 0..7
-      VariableDeclaratorList
-        VariableDeclarator
+    Bogus
+      Identifier "¢value" @ 0..7
   Eof "" @ 7..7
 
 diagnostics:
-code=java.parse.expected_syntax range=7..7 message=expected variable name
-code=java.parse.expected_syntax range=7..7 message=expected `;` after field declaration
+code=java.parse.unexpected_syntax range=0..7 message=unexpected token at top level

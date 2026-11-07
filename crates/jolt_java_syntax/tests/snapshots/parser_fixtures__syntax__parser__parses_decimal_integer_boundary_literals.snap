@@ -179,8 +179,4 @@ CompilationUnit
   Eof "" @ 474..474 leading=[Newline "\n"]
 
 diagnostics:
-code=java.parse.decimal_integer_boundary_literal range=108..121 message=decimal integer boundary literal may appear only as the operand of unary minus
-code=java.parse.decimal_integer_boundary_literal range=159..169 message=decimal integer boundary literal may appear only as the operand of unary minus
-code=java.parse.decimal_integer_boundary_literal range=247..273 message=decimal integer boundary literal may appear only as the operand of unary minus
-code=java.parse.decimal_integer_boundary_literal range=303..323 message=decimal integer boundary literal may appear only as the operand of unary minus
-code=java.parse.decimal_integer_boundary_literal range=421..431 message=decimal integer boundary literal may appear only as the operand of unary minus
+(none)

@@ -8,29 +8,21 @@ a >>>= b >>> c >>= d >> e >= f > g
 syntax:
 CompilationUnit
   CompilationUnitItemList
-    FieldDeclaration
-      ClassType
-        ClassTypeSegmentList
-          ClassTypeSegmentNode
-            AnnotationList
-            Name
-              Identifier "a" @ 0..1 trailing=[Whitespace " "]
-      VariableDeclaratorList
-        VariableDeclarator
-          UnsignedRShiftEq ">>>=" @ 2..6 trailing=[Whitespace " "]
-          Identifier "b" @ 7..8 trailing=[Whitespace " "]
-          UnsignedRShift ">>>" @ 9..12 trailing=[Whitespace " "]
-          Identifier "c" @ 13..14 trailing=[Whitespace " "]
-          RShiftEq ">>=" @ 15..18 trailing=[Whitespace " "]
-          Identifier "d" @ 19..20 trailing=[Whitespace " "]
-          RShift ">>" @ 21..23 trailing=[Whitespace " "]
-          Identifier "e" @ 24..25 trailing=[Whitespace " "]
-          GtEq ">=" @ 26..28 trailing=[Whitespace " "]
-          Identifier "f" @ 29..30 trailing=[Whitespace " "]
-          Gt ">" @ 31..32 trailing=[Whitespace " "]
-          Identifier "g" @ 33..34
+    Bogus
+      Identifier "a" @ 0..1 trailing=[Whitespace " "]
+      UnsignedRShiftEq ">>>=" @ 2..6 trailing=[Whitespace " "]
+      Identifier "b" @ 7..8 trailing=[Whitespace " "]
+      UnsignedRShift ">>>" @ 9..12 trailing=[Whitespace " "]
+      Identifier "c" @ 13..14 trailing=[Whitespace " "]
+      RShiftEq ">>=" @ 15..18 trailing=[Whitespace " "]
+      Identifier "d" @ 19..20 trailing=[Whitespace " "]
+      RShift ">>" @ 21..23 trailing=[Whitespace " "]
+      Identifier "e" @ 24..25 trailing=[Whitespace " "]
+      GtEq ">=" @ 26..28 trailing=[Whitespace " "]
+      Identifier "f" @ 29..30 trailing=[Whitespace " "]
+      Gt ">" @ 31..32 trailing=[Whitespace " "]
+      Identifier "g" @ 33..34
   Eof "" @ 34..34
 
 diagnostics:
-code=java.parse.expected_syntax range=2..6 message=expected variable name
-code=java.parse.expected_syntax range=34..34 message=expected `;` after field declaration
+code=java.parse.unexpected_syntax range=0..1 message=unexpected token at top level
