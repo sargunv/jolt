@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class FormatterIgnoreTextBlock {
+  // @formatter:off
+  String text = String.join(
+     """
+    first
+    """, "second");
+  // @formatter:on
+}
+
+diagnostics:
+(none)

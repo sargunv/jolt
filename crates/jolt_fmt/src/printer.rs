@@ -284,7 +284,9 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                         line
                     };
                     self.out.push('\n');
-                    if line.trim().is_empty() {
+                    // A blank line gets no indentation; the last line is never
+                    // blank, since a text block follows it on the same line.
+                    if line.trim().is_empty() && lines.peek().is_some() {
                         self.line_ws.clear();
                         self.column = 0;
                         continue;

@@ -102,7 +102,22 @@ pub(crate) fn switch_block_statement_group<'a>(
         label_count += 1;
     }
     let labels = f.concat(labels);
-    let statements = statement_items(node.statements());
+    let mut statements = statement_items(node.statements());
+    // N5 keeps one `;` of a group that has nothing else when another group
+    // follows: removing it would merge the labels into that group.
+    let last = node
+        .syntax()
+        .parent()
+        .and_then(|entries| entries.children().last())
+        .is_none_or(|entry| entry == SyntaxElement::Node(node.syntax()));
+    if !last
+        && statements
+            .iter()
+            .all(|item| matches!(item, ListItem::Elide(_)))
+        && let Some(ListItem::Elide(first)) = statements.first().copied()
+    {
+        statements[0] = ListItem::Format(first);
+    }
     if label_count == 1
         && let [ListItem::Format(statement)] = statements[..]
         && is_inline_block(f, statement)

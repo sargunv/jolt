@@ -906,11 +906,21 @@ print like every other dangling comment:
   ] x;
 ```
 
-### L1. No stray blank lines in `for` headers and empty switch groups
+### L1. No stray blank lines, and no merged switch groups
 
 A broken `for` header with an empty update part (`for (init; cond;)`), and a
 switch whose last group has no statements (`default:` before `}`), printed a
-blank line in the reference. Neither does now.
+blank line in the reference. Neither does now. The reference also removed the
+only `;` of a switch group followed by another group (`case 1: ;` then
+`case 2:`), which merged the two groups and moved comments on the next pass;
+that `;` is now kept:
+
+```java
+case 1:
+  ;
+case 2:
+  run();
+```
 
 ### F1. Formatter-ignore works item by item
 
