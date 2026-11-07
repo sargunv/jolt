@@ -1651,9 +1651,6 @@ This design keeps every invariant in `AGENTS.md` and makes these precise:
   verifies every comment is emitted once.
 - Normalizations are the closed list N1–N10, gated on `is_recovery_free()`.
 
-The temporary exception for `helpers::placeholder` ended at integration, which
-deleted it.
-
 ## Decisions
 
 Recommended defaults for questions this page would otherwise leave open. Follow
