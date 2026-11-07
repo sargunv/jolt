@@ -30,7 +30,6 @@ fn main() {
                 "spring-framework",
             ],
             extensions: &["java"],
-            skip_suffixes: &["B26952926.java"],
             out_dir: "java",
             known_open: KNOWN_OPEN,
         },

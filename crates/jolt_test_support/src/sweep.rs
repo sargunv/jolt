@@ -200,8 +200,6 @@ pub struct CorpusSweep<'a> {
     /// Directories under `tools/import/.imports`.
     pub suites: &'a [&'a str],
     pub extensions: &'a [&'a str],
-    /// Paths to skip, matched as a suffix.
-    pub skip_suffixes: &'a [&'a str],
     /// Directory under `target/hunt`.
     pub out_dir: &'a str,
     /// Failure categories already known to fire.
@@ -280,12 +278,6 @@ pub fn run_corpus_sweep<C: CorpusLanguage>(
         collect_files(&dir, sweep.extensions, &mut files);
     }
     files.sort();
-    files.retain(|path| {
-        !sweep
-            .skip_suffixes
-            .iter()
-            .any(|suffix| path.ends_with(suffix))
-    });
     let out_dir = repo_root.join("target/hunt").join(sweep.out_dir);
     let _ = fs::remove_dir_all(&out_dir);
     fs::create_dir_all(&out_dir).expect("create hunt output directory");
