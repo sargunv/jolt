@@ -7,8 +7,12 @@ module m { requires transitive static + a.b; }
 
 formatted:
 module m {
-  requires transitive static + a.b;
+  requires transitive static +
+
+  a.b;
 }
 
 diagnostics:
 code=java.parse.expected_syntax range=38..39 message=expected identifier
+code=java.parse.expected_syntax range=40..41 message=expected `;` after requires directive
+code=java.parse.unexpected_syntax range=40..41 message=unexpected token in module declaration

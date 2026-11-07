@@ -13,7 +13,9 @@ formatted:
 module recovered. {
   uses z.Service;
 
-  requires transitive + static a.module;
+  requires transitive + static
+
+  a.module;
 
   uses a.Service;
 }
@@ -21,3 +23,5 @@ module recovered. {
 diagnostics:
 code=java.parse.expected_syntax range=16..17 message=expected identifier
 code=java.parse.expected_syntax range=60..61 message=expected identifier
+code=java.parse.expected_syntax range=69..70 message=expected `;` after requires directive
+code=java.parse.unexpected_syntax range=69..70 message=unexpected token in module declaration

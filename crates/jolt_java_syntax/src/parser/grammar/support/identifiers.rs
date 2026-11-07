@@ -41,7 +41,7 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn consume_qualified_name_required(&mut self) -> bool {
-        if self.consume_qualified_name_contents(|_, _| false).is_some() {
+        if self.consume_qualified_name_contents().is_some() {
             true
         } else {
             self.error_expected("expected identifier");
@@ -49,17 +49,15 @@ impl Parser<'_> {
         }
     }
 
-    pub(in crate::parser::grammar) fn consume_qualified_name_required_until<F>(
+    /// A qualified name, then (when anything but a `stops` token or the next
+    /// name follows) a `Bogus` up to one of those: a name ends where another
+    /// name, such as a contextual keyword or the next directive, starts.
+    pub(in crate::parser::grammar) fn consume_qualified_name_required_until(
         &mut self,
         stops: &[JavaSyntaxKind],
-        contextual_boundary: F,
-        stop_at_name_segment: bool,
-    ) where
-        F: Fn(&mut Self, usize) -> bool + Copy,
-    {
-        let parsed_name = self.consume_qualified_name_contents(contextual_boundary);
-        let at_boundary =
-            self.at_qualified_name_boundary(stops, contextual_boundary, stop_at_name_segment);
+    ) {
+        let parsed_name = self.consume_qualified_name_contents();
+        let at_boundary = self.at_qualified_name_boundary(stops);
 
         if parsed_name.is_some() && at_boundary {
             return;
@@ -74,52 +72,32 @@ impl Parser<'_> {
             None => self.start(),
         };
         self.error_expected("expected identifier");
-        while !self.at_qualified_name_boundary(stops, contextual_boundary, stop_at_name_segment) {
+        while !self.at_qualified_name_boundary(stops) {
             self.bump();
         }
         self.complete(name, JavaSyntaxKind::Bogus);
     }
 
-    fn at_qualified_name_boundary<F>(
-        &mut self,
-        stops: &[JavaSyntaxKind],
-        contextual_boundary: F,
-        stop_at_name_segment: bool,
-    ) -> bool
-    where
-        F: Fn(&mut Self, usize) -> bool,
-    {
-        self.at_eof()
-            || stops.contains(&self.current())
-            || stop_at_name_segment && self.at_name_segment()
-            || contextual_boundary(self, 0)
+    fn at_qualified_name_boundary(&mut self, stops: &[JavaSyntaxKind]) -> bool {
+        self.at_eof() || stops.contains(&self.current()) || self.at_name_segment()
     }
 
     /// Returns whether a name was consumed; reports a diagnostic otherwise.
     pub(in crate::parser::grammar) fn consume_qualified_name_or_report(&mut self) -> bool {
-        let consumed = self.consume_qualified_name_contents(|_, _| false).is_some();
+        let consumed = self.consume_qualified_name_contents().is_some();
         if !consumed {
             self.error_expected("expected identifier");
         }
         consumed
     }
 
-    fn consume_qualified_name_contents<F>(
-        &mut self,
-        contextual_boundary: F,
-    ) -> Option<CompletedMarker>
-    where
-        F: Fn(&mut Self, usize) -> bool,
-    {
+    fn consume_qualified_name_contents(&mut self) -> Option<CompletedMarker> {
         if !self.at_name_segment() {
             return None;
         }
 
         let name = self.start();
-        if self.nth(1) != JavaSyntaxKind::Dot
-            || !self.nth_is_name_segment(2)
-            || contextual_boundary(self, 2)
-        {
+        if self.nth(1) != JavaSyntaxKind::Dot || !self.nth_is_name_segment(2) {
             self.bump();
             return Some(self.complete(name, JavaSyntaxKind::Name));
         }
@@ -136,10 +114,7 @@ impl Parser<'_> {
             self.parse_annotations();
             self.bump();
             self.complete(segment, JavaSyntaxKind::QualifiedNameSegmentNode);
-            if !self.at(JavaSyntaxKind::Dot)
-                || !self.nth_is_name_segment(1)
-                || contextual_boundary(self, 1)
-            {
+            if !self.at(JavaSyntaxKind::Dot) || !self.nth_is_name_segment(1) {
                 break;
             }
             self.bump();

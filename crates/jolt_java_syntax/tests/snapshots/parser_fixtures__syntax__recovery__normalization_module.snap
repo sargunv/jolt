@@ -45,9 +45,10 @@ CompilationUnit
           Bogus
             Plus "+" @ 77..78 trailing=[Whitespace " "]
             StaticKw "static" @ 79..85 trailing=[Whitespace " "]
-            Identifier "a" @ 86..87
-            Dot "." @ 87..88
-            Identifier "module" @ 88..94
+        Bogus
+          Identifier "a" @ 86..87
+          Dot "." @ 87..88
+          Identifier "module" @ 88..94
           Semicolon ";" @ 94..95
         UsesDirective
           Identifier "uses" @ 100..104 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
@@ -66,3 +67,5 @@ CompilationUnit
 
 diagnostics:
 code=java.parse.expected_syntax range=77..78 message=expected identifier
+code=java.parse.expected_syntax range=86..87 message=expected `;` after requires directive
+code=java.parse.unexpected_syntax range=86..87 message=unexpected token in module declaration

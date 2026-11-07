@@ -553,7 +553,11 @@ precedence by token kind, contextual keyword tests, modifier partitioning
   only when a type and a name start it; a member that is no declaration
   (`consume_body_member_fragment`) is one `Bogus` that ends after a `;` or a
   balanced braced body, so a malformed constructor (`Example) {…}`) is one bogus
-  member and the next member parses normally.
+  member and the next member parses normally. In a module declaration a name
+  ends where the next name starts, with no keyword matching: junk after a name
+  is one `Bogus` up to `;`, `}` or the next name (`requires a + b;` recovers `b`
+  as the next item), and a dangling `.` joins the next word into the name
+  (`exports a. to b;` exports `a.to`), as the grammar reads it.
 - Recovery has exactly three representations: an empty required slot (missing),
   a `Bogus` node at a category or list position (unexpected tokens), and a
   `MALFORMED` node whose children did not fit its shape. There is no other.
