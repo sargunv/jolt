@@ -6,8 +6,7 @@ formatted:
 enum Planet {
   MERCURY(1),
   VENUS(2) {
-    void override() {
-    }
+    void override() {}
   };
 
   final int order;
@@ -16,8 +15,7 @@ enum Planet {
     this.order = order;
   }
 
-  void override() {
-  }
+  void override() {}
 }
 
 diagnostics:

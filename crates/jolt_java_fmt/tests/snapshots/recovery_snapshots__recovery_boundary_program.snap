@@ -13,4 +13,4 @@ formatted:
 }
 
 diagnostics:
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unexpected token at top level
+code=java.parse.unexpected_syntax range=0..1 message=unexpected token at top level

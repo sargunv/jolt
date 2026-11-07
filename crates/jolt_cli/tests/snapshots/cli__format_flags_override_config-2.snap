@@ -1,0 +1,14 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--use-tabs\", \"false\", \"-\"], NESTED)"
+---
+$ jolt fmt --use-tabs false -
+status: 0
+--- stdout
+class A {
+    void f() {
+        if (ready) {
+            go();
+        }
+    }
+}

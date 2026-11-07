@@ -1,36 +1,29 @@
 # What is Jolt?
 
-Jolt is a high-performance Java and Kotlin source formatter.
+Jolt is a fast, opinionated Java formatter.
 
-The CLI is a static binary with no runtime dependency. The same engine also
-builds to WebAssembly for dprint, editors, and other WASM hosts. You can run it
-in CI, from a plugin, or on the command line without installing a JVM to drive
-the formatter.
+The CLI is one static binary with no JVM. The same formatter builds to
+WebAssembly as a dprint plugin, which is also what runs the playground on the
+home page.
 
 ## Approach
 
-Jolt is aimed at large Java and Kotlin codebases and editor integrations. A slow
-formatter in pre-commit or editor save hooks adds noticeable latency on every
-run. Jolt is built so that latency stays miniscule even on large codebases.
+A formatter in a pre-commit hook or on editor save runs constantly, so Jolt is
+built to stay fast on large codebases: a lossless syntax tree that borrows the
+source, and a single-pass
+[Wadler/Prettier](https://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf)-style
+document printer. See [how the formatter works](/internals/formatter) for the
+design and [Java style](/internals/java-style) for the output it produces.
 
-The layout model is meant to be uniform: the same wrapping and indentation rules
-apply to method calls, annotation arguments, arrays, enum constants, records,
-switch rules, and the rest, without special exceptions for any particular
-symbols.
-
-Like other modern anti-bikeshedding formatters, configuration stays small. You
-set line width, indent width, and tabs vs. spaces.
+Configuration stays small: line width, indent width, and tabs or spaces.
 
 ## Performance
 
-On the [Spring Framework](https://github.com/spring-projects/spring-framework)
-Java sources (~9,200 files):
+Formatting the
+[Spring Framework](https://github.com/spring-projects/spring-framework) sources:
 
 <ClientOnly>
   <BenchStrip />
 </ClientOnly>
 
-Jolt’s formatter builds on the
-[Wadler/Prettier](https://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf)
-document-IR tradition; see [how the formatter works](/internals/formatter) for
-details and full references.
+`mise run bench` measures this on your machine.

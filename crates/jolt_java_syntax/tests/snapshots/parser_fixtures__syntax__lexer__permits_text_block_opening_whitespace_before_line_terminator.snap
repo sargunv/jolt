@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+""" 	
+hello
+"""
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      TextBlockLiteral "\"\"\" \t\u{c}\r\nhello\r\n\"\"\"" @ 0..18
+  Eof "" @ 18..18
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..18 message=unexpected token at top level

@@ -1,10 +1,10 @@
 // Answers declaration-level grammar questions before the parser commits to a branch.
-use super::{JavaLookahead, JavaParserExt, JavaSyntaxKind, Parser};
+use super::{JavaLookahead, JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn at_header_clause_end(&mut self) -> bool {
         matches!(
-            self.current_kind(),
+            self.current(),
             JavaSyntaxKind::LBrace
                 | JavaSyntaxKind::LParen
                 | JavaSyntaxKind::Semicolon
@@ -18,7 +18,7 @@ impl Parser<'_> {
         type_name: Option<usize>,
     ) -> bool {
         let member_header_ends_with_block = self.member_header_ends_with_block();
-        let type_name = type_name.and_then(|index| self.text_at(index));
+        let type_name = type_name.map(|index| self.text_at(index));
         let mut lookahead = self.lookahead();
         lookahead.skip_type_modifiers();
         if lookahead.at(JavaSyntaxKind::Lt) {
@@ -29,9 +29,8 @@ impl Parser<'_> {
             return true;
         }
 
-        let has_constructor_name =
-            matches!(type_name, Some(name) if lookahead.text() == Some(name));
-        if lookahead.nth_kind(1) == JavaSyntaxKind::LParen
+        let has_constructor_name = type_name.is_some_and(|name| lookahead.text() == name);
+        if lookahead.nth(1) == JavaSyntaxKind::LParen
             && (has_constructor_name
                 || (lookahead.at_name_segment() && member_header_ends_with_block))
         {
@@ -57,13 +56,13 @@ impl Parser<'_> {
         &mut self,
         type_name: Option<usize>,
     ) -> bool {
-        let type_name = type_name.and_then(|index| self.text_at(index));
+        let type_name = type_name.map(|index| self.text_at(index));
         let mut lookahead = self.lookahead();
         lookahead.skip_type_modifiers();
         if lookahead.at(JavaSyntaxKind::Lt) {
             lookahead.skip_type_parameters();
         }
-        if !matches!(type_name, Some(name) if lookahead.text() == Some(name)) {
+        if type_name.is_none_or(|name| lookahead.text() != name) {
             return false;
         }
 
@@ -75,11 +74,11 @@ impl Parser<'_> {
         &mut self,
         type_name: Option<usize>,
     ) -> bool {
-        let type_name = type_name.and_then(|index| self.text_at(index));
+        let type_name = type_name.map(|index| self.text_at(index));
         let mut lookahead = self.lookahead();
         lookahead.skip_type_modifiers();
-        matches!(type_name, Some(name) if lookahead.text() == Some(name))
-            && lookahead.nth_kind(1) == JavaSyntaxKind::LBrace
+        type_name.is_some_and(|name| lookahead.text() == name)
+            && lookahead.nth(1) == JavaSyntaxKind::LBrace
     }
 
     pub(in crate::parser::grammar) fn starts_method_declaration(&mut self) -> bool {
@@ -92,7 +91,7 @@ impl Parser<'_> {
 
         if lookahead.at(JavaSyntaxKind::VoidKw) {
             return matches!(
-                (lookahead.nth_kind(1), lookahead.nth_kind(2)),
+                (lookahead.nth(1), lookahead.nth(2)),
                 (JavaSyntaxKind::Identifier, JavaSyntaxKind::LParen) | (JavaSyntaxKind::LParen, _)
             );
         }
@@ -103,7 +102,7 @@ impl Parser<'_> {
 
         lookahead.skip_type();
         lookahead.at(JavaSyntaxKind::LParen)
-            || (lookahead.at_name_segment() && lookahead.nth_kind(1) == JavaSyntaxKind::LParen)
+            || (lookahead.at_name_segment() && lookahead.nth(1) == JavaSyntaxKind::LParen)
     }
 
     pub(in crate::parser::grammar) fn starts_annotation_element(&mut self) -> bool {
@@ -114,42 +113,10 @@ impl Parser<'_> {
         }
 
         lookahead.skip_type();
-        (lookahead.at(JavaSyntaxKind::LParen) && lookahead.nth_kind(1) == JavaSyntaxKind::RParen)
+        (lookahead.at(JavaSyntaxKind::LParen) && lookahead.nth(1) == JavaSyntaxKind::RParen)
             || (lookahead.at_name_segment()
-                && lookahead.nth_kind(1) == JavaSyntaxKind::LParen
-                && lookahead.nth_kind(2) == JavaSyntaxKind::RParen)
-    }
-
-    pub(in crate::parser::grammar) fn starts_constructor_invocation_statement(&mut self) -> bool {
-        let mut index = self.position();
-        let mut saw_constructor_keyword = false;
-        while !matches!(
-            self.kind_at(index),
-            JavaSyntaxKind::Eof | JavaSyntaxKind::Semicolon | JavaSyntaxKind::RBrace
-        ) {
-            if let Some(next) = self.skip_balanced_delimiter_at(index) {
-                index = next;
-                continue;
-            }
-
-            if matches!(
-                self.kind_at(index),
-                JavaSyntaxKind::LBrace | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket
-            ) && index == self.position()
-            {
-                return false;
-            }
-
-            if matches!(
-                self.kind_at(index),
-                JavaSyntaxKind::ThisKw | JavaSyntaxKind::SuperKw
-            ) && self.kind_at(index + 1) == JavaSyntaxKind::LParen
-            {
-                saw_constructor_keyword = true;
-            }
-            index += 1;
-        }
-        saw_constructor_keyword && self.kind_at(index) == JavaSyntaxKind::Semicolon
+                && lookahead.nth(1) == JavaSyntaxKind::LParen
+                && lookahead.nth(2) == JavaSyntaxKind::RParen)
     }
 
     pub(in crate::parser::grammar) fn starts_expression_name_qualified_constructor_invocation(
@@ -161,9 +128,7 @@ impl Parser<'_> {
 
         let mut lookahead = self.lookahead();
         lookahead.bump();
-        while lookahead.at(JavaSyntaxKind::Dot)
-            && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier
-        {
+        while lookahead.at(JavaSyntaxKind::Dot) && lookahead.nth(1) == JavaSyntaxKind::Identifier {
             lookahead.bump();
             lookahead.bump();
         }
@@ -177,7 +142,7 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn dot_starts_constructor_super_suffix(&mut self) -> bool {
-        if self.current_kind() != JavaSyntaxKind::Dot {
+        if self.current() != JavaSyntaxKind::Dot {
             return false;
         }
 
@@ -191,7 +156,7 @@ impl Parser<'_> {
             lookahead.skip_type_arguments();
         }
 
-        lookahead.at(JavaSyntaxKind::SuperKw) && lookahead.nth_kind(1) == JavaSyntaxKind::LParen
+        lookahead.at(JavaSyntaxKind::SuperKw) && lookahead.nth(1) == JavaSyntaxKind::LParen
     }
 
     pub(in crate::parser::grammar) fn starts_package_declaration(&mut self) -> bool {
@@ -213,12 +178,11 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn starts_misspelled_non_sealed_type_declaration(
         &mut self,
     ) -> bool {
-        if self.current_text() != Some("non") || self.nth_kind(1) != JavaSyntaxKind::Minus {
+        if self.current_text() != "non" || self.nth(1) != JavaSyntaxKind::Minus {
             return false;
         }
         let index = self.position() + 2;
-        matches!(self.text_at(index), Some(text) if text.starts_with("sealed"))
-            && self.nth_is_name_segment(3)
+        self.text_at(index).starts_with("sealed") && self.nth_is_name_segment(3)
     }
 
     pub(in crate::parser::grammar) fn starts_type_declaration(&mut self) -> bool {
@@ -227,10 +191,8 @@ impl Parser<'_> {
         matches!(
             lookahead.kind(),
             JavaSyntaxKind::ClassKw | JavaSyntaxKind::InterfaceKw | JavaSyntaxKind::EnumKw
-        ) || (lookahead.at_contextual("record")
-            && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier)
-            || (lookahead.at(JavaSyntaxKind::At)
-                && lookahead.nth_kind(1) == JavaSyntaxKind::InterfaceKw)
+        ) || (lookahead.at_contextual("record") && lookahead.nth(1) == JavaSyntaxKind::Identifier)
+            || (lookahead.at(JavaSyntaxKind::At) && lookahead.nth(1) == JavaSyntaxKind::InterfaceKw)
     }
 
     pub(in crate::parser::grammar) fn starts_compact_member_declaration(&mut self) -> bool {
@@ -238,8 +200,8 @@ impl Parser<'_> {
         lookahead.skip_type_modifiers();
         lookahead.at_non_void_type_start()
             || (lookahead.at(JavaSyntaxKind::VoidKw)
-                && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier
-                && lookahead.nth_kind(2) == JavaSyntaxKind::LParen)
+                && lookahead.nth(1) == JavaSyntaxKind::Identifier
+                && lookahead.nth(2) == JavaSyntaxKind::LParen)
     }
 
     pub(in crate::parser::grammar) fn starts_field_declaration(&mut self) -> bool {
@@ -248,28 +210,10 @@ impl Parser<'_> {
         lookahead.skip_type() && lookahead.at_variable_identifier()
     }
 
-    pub(in crate::parser::grammar) fn member_header_ends_with_block(&mut self) -> bool {
-        let mut index = self.position();
-        while self.kind_at(index) != JavaSyntaxKind::Eof {
-            if let Some(next) = self.skip_balanced_delimiter_at(index) {
-                index = next;
-                continue;
-            }
-
-            match self.kind_at(index) {
-                JavaSyntaxKind::LBrace => return true,
-                JavaSyntaxKind::Semicolon => return false,
-                _ => index += 1,
-            }
-        }
-
-        false
-    }
-
     pub(in crate::parser::grammar) fn at_module_directive_start(&mut self) -> bool {
         matches!(
             self.current_text(),
-            Some("requires" | "exports" | "opens" | "uses" | "provides")
+            "requires" | "exports" | "opens" | "uses" | "provides"
         )
     }
 }

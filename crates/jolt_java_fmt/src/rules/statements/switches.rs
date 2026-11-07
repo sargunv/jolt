@@ -1,611 +1,282 @@
-use super::control_flow::{
-    format_parenthesized_statement_expression, format_statement_header_body_separator,
-};
-use super::simple::format_statement_keyword;
-use super::{
-    BlockItem, BlockStatement, Doc, LeadingTrivia, SwitchBlock, SwitchBlockStatementGroup,
-    SwitchLabel, SwitchRule, SwitchStatement, TrailingTrivia, comment_forces_line, format_block,
-    format_block_statement_item, format_expression, format_pattern, format_separator_with_comments,
-    format_statement_semicolon, format_throw_statement, format_token, format_token_with_comments,
-    join_body_items,
-};
-use crate::helpers::blocks::BodyItem;
-use crate::helpers::comments::token_has_comments;
-use crate::helpers::comments::trailing_comments_force_line;
-use crate::helpers::recovery::{
-    JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_malformed, resolve_list_part,
-    resolve_optional_field, resolve_required_delimiter, resolve_required_field,
-};
-use jolt_fmt_ir::DocBuilder;
+//! Switch statements and expressions, their blocks, groups, rules, labels
+//! and guards.
+
+use jolt_fmt::{Doc, ListItem, cat, indent};
 use jolt_java_syntax::{
-    JavaSyntaxListPart, JavaSyntaxView, Pattern, SwitchEntrySyntax, SwitchGuardSyntax,
-    SwitchLabelItemSyntax, SwitchRuleBodySyntax,
+    BlockItem, BlockStatement, CaseConstant, CasePattern, Expression, Guard, SwitchBlock,
+    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelColonList,
+    SwitchLabelItem, SwitchLabelItemList, SwitchRule, SwitchRuleBody, SwitchStatement,
 };
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
-pub(super) fn format_switch_statement<'source>(
-    statement: &SwitchStatement<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let close = resolve_required_delimiter(statement.close_paren(), doc);
-    let separator = format_statement_header_body_separator(close.source(), doc);
-    let selector = match resolve_required_field(statement.selector(), doc) {
-        JavaFormatField::Present(selector) => format_expression(&selector, doc),
-        JavaFormatField::Malformed(malformed) => malformed,
-    };
-    let open = resolve_required_delimiter(statement.open_paren(), doc);
-    let selector = format_parenthesized_statement_expression(doc, open, selector, close);
-    let body = match resolve_required_field(statement.body(), doc) {
-        JavaFormatField::Present(block) => format_switch_block(&block, doc),
-        JavaFormatField::Malformed(malformed) => malformed,
-    };
-    doc_concat!(
-        doc,
-        [
-            format_statement_keyword(statement.switch_keyword(), doc),
-            doc.space(),
-            selector,
-            separator,
-            body,
-        ]
+use super::{parenthesized, statement_items, statement_separator};
+use crate::JavaFormatter;
+use crate::helpers::bodies::braced_body;
+
+pub(crate) fn switch_statement<'a>(f: &mut JavaFormatter<'a>, node: SwitchStatement<'a>) -> Doc {
+    switch(
+        f,
+        node.syntax(),
+        node.switch_keyword(),
+        node.selector(),
+        [node.open_paren(), node.close_paren()],
+        node.body(),
     )
 }
 
-pub(crate) fn format_switch_block<'source>(
-    block: &SwitchBlock<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let entries = block.entries();
-    let malformed_is_visible = matches!(
-        &entries,
-        jolt_java_syntax::JavaSyntaxField::Malformed(malformed)
-            if malformed.first_token().is_some()
-    );
-    let entries = match resolve_required_field(entries, doc) {
-        JavaFormatField::Present(entries) => entries,
-        JavaFormatField::Malformed(malformed) => {
-            return braced_switch_block(block, malformed, malformed_is_visible, doc);
-        }
-    };
-    let mut has_body = false;
-    let body = doc.concat_list(|docs| {
-        for part in entries.parts() {
-            let part = resolve_list_part(part, docs);
-            let visible = part.is_visible(|item| item.first_token().is_some(), |_| true);
-            let entry = match part {
-                JavaFormatListPart::Item(entry) => match entry {
-                    SwitchEntrySyntax::SwitchBlockStatementGroup(group) => {
-                        format_switch_statement_group(&group, docs)
-                    }
-                    SwitchEntrySyntax::SwitchRule(rule) => format_switch_rule(&rule, docs),
-                    SwitchEntrySyntax::BogusSwitchEntry(bogus) => format_malformed(&bogus, docs),
-                },
-                JavaFormatListPart::Recovery(malformed) => malformed.doc(),
-                JavaFormatListPart::Separator(separator) => {
-                    docs.block_on_invariant("unseparated switch entry list had a separator");
-                    format_token_with_comments(docs, &separator)
-                }
-            };
-            if visible && has_body {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
-            }
-            docs.push(entry);
-            has_body |= visible;
-        }
-    });
-    braced_switch_block(block, body, has_body, doc)
+pub(crate) fn switch_expression<'a>(f: &mut JavaFormatter<'a>, node: SwitchExpression<'a>) -> Doc {
+    switch(
+        f,
+        node.syntax(),
+        node.switch_keyword(),
+        node.selector(),
+        [node.open_paren(), node.close_paren()],
+        node.body(),
+    )
 }
 
-fn braced_switch_block<'source>(
-    block: &SwitchBlock<'source>,
-    body: Doc<'source>,
-    body_is_visible: bool,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let open = match resolve_required_field(block.open_brace(), doc) {
-        JavaFormatField::Present(token) => format_token_with_comments(doc, &token),
-        JavaFormatField::Malformed(malformed) => malformed,
-    };
-    let body = if body_is_visible {
-        let body = doc_concat!(doc, [doc.hard_line_boundary(), body]);
-        doc_concat!(doc, [doc_indent!(doc, body), doc.hard_line()])
-    } else {
-        doc_concat!(doc, [body, doc.hard_line_boundary()])
-    };
-    let close = match resolve_required_field(block.close_brace(), doc) {
-        JavaFormatField::Present(token) => format_token_with_comments(doc, &token),
-        JavaFormatField::Malformed(malformed) => malformed,
-    };
-    doc_concat!(doc, [open, body, close])
+/// `switch (selector) {` … `}`.
+fn switch<'a>(
+    f: &mut JavaFormatter<'a>,
+    owner: SyntaxNode<'a>,
+    keyword: Option<SyntaxToken<'a>>,
+    selector: Option<Expression<'a>>,
+    [open, close]: [Option<SyntaxToken<'a>>; 2],
+    body: Option<SwitchBlock<'a>>,
+) -> Doc {
+    let keyword = f.token_opt(keyword);
+    let selector = f.fmt_opt(selector);
+    let header = parenthesized(f, owner, open, selector, close);
+    let body = f.fmt_opt(body);
+    cat![f; keyword, f.space(), header, f.space(), body]
 }
 
-fn format_switch_statement_group<'source>(
-    group: &SwitchBlockStatementGroup<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let (labels_doc, label_count, single_label) = match resolve_required_field(group.labels(), doc)
-    {
-        JavaFormatField::Present(labels) => format_switch_group_labels(labels.parts(), doc),
-        JavaFormatField::Malformed(malformed) => (malformed, 0, None),
-    };
-    let statements = match resolve_required_field(group.statements(), doc) {
-        JavaFormatField::Present(statements) => statements,
-        JavaFormatField::Malformed(malformed) => {
-            return doc_concat!(doc, [labels_doc, doc.hard_line(), malformed]);
-        }
-    };
-    let statement_parts = statements.parts().collect::<Vec<_>>();
-    if let [JavaSyntaxListPart::Item(statement)] = statement_parts.as_slice()
-        && let Some(single) = format_single_block_switch_statement_group(
-            label_count,
-            single_label,
-            std::slice::from_ref(statement),
-            doc,
-        )
-    {
-        return single;
-    }
-
-    let items = statement_parts
-        .iter()
-        .map(|part| match part {
-            JavaSyntaxListPart::Item(statement) => format_block_statement_item(statement, doc),
-            JavaSyntaxListPart::Malformed(malformed) => {
-                BodyItem::new(format_malformed(malformed, doc), false)
-            }
-            JavaSyntaxListPart::Missing(missing) => BodyItem::new(
-                crate::helpers::recovery::format_missing(missing, doc),
-                false,
-            ),
-            JavaSyntaxListPart::Separator(token) => {
-                doc.block_on_invariant("unseparated switch statement list had a separator");
-                BodyItem::new(format_token_with_comments(doc, token), false)
-            }
+/// `{`, one entry per line one indent deeper (no blank lines), `}`.
+pub(crate) fn switch_block<'a>(f: &mut JavaFormatter<'a>, node: SwitchBlock<'a>) -> Doc {
+    let entries: Vec<_> = node
+        .entries()
+        .map(|entries| {
+            entries
+                .items()
+                .map(|entry| ListItem::Format(entry.syntax()))
+                .collect()
         })
-        .collect::<Vec<_>>();
-    doc_concat!(
-        doc,
-        [
-            labels_doc,
-            if items.is_empty() {
-                Doc::nil()
-            } else {
-                let body = doc_concat!(doc, [doc.hard_line(), join_body_items(doc, items)]);
-                doc_indent!(doc, body)
-            },
-        ]
+        .unwrap_or_default();
+    braced_body(
+        f,
+        node.syntax(),
+        node.open_brace(),
+        entries,
+        node.close_brace(),
+        |f, _| f.hard_line(),
     )
 }
 
-fn format_switch_group_labels<'source>(
-    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, SwitchLabel<'source>>>,
-    doc: &mut DocBuilder<'source>,
-) -> (Doc<'source>, usize, Option<Doc<'source>>) {
+/// Each `case …:` label on its own line, then the statements one indent
+/// deeper. A single label whose single statement is a block keeps the block
+/// on the label line: `case 1: {`.
+pub(crate) fn switch_block_statement_group<'a>(
+    f: &mut JavaFormatter<'a>,
+    node: SwitchBlockStatementGroup<'a>,
+) -> Doc {
+    let mut labels = Vec::new();
     let mut label_count = 0;
-    let mut single_label = None;
-    let mut has_visible_output = false;
-    let labels_doc = doc.concat_list(|docs| {
-        let mut pending: Option<(Doc<'source>, bool)> = None;
-        for part in parts {
-            let part = resolve_list_part(part, docs);
-            let part_is_visible = part.is_visible(|item| item.first_token().is_some(), |_| true);
-            match part {
-                JavaFormatListPart::Item(label) => {
-                    if let Some((previous, previous_is_visible)) = pending.take() {
-                        if previous_is_visible && has_visible_output {
-                            let line = docs.hard_line();
-                            docs.push(line);
-                        }
-                        docs.push(previous);
-                        has_visible_output |= previous_is_visible;
-                    }
-                    let formatted = format_switch_label(&label, docs);
-                    if part_is_visible {
-                        label_count += 1;
-                        single_label = Some(formatted);
-                    }
-                    pending = Some((formatted, part_is_visible));
-                }
-                JavaFormatListPart::Separator(colon) => {
-                    let (label, label_is_visible) = pending.take().unwrap_or((Doc::nil(), false));
-                    let formatted =
-                        doc_concat!(docs, [label, format_token_with_comments(docs, &colon)]);
-                    if label_is_visible {
-                        single_label = Some(formatted);
-                    }
-                    if has_visible_output {
-                        let line = docs.hard_line();
-                        docs.push(line);
-                    }
-                    docs.push(formatted);
-                    has_visible_output = true;
-                }
-                JavaFormatListPart::Recovery(malformed) => {
-                    if let Some((previous, previous_is_visible)) = pending.take() {
-                        docs.push(previous);
-                        has_visible_output |= previous_is_visible;
-                    }
-                    docs.push(malformed.doc());
-                    has_visible_output |= part_is_visible;
-                }
+    for element in node
+        .labels()
+        .into_iter()
+        .flat_map(SwitchLabelColonList::elements)
+    {
+        let label = match element {
+            ListElement::Item(label) => f.fmt(label),
+            ListElement::Bogus(bogus) => f.node(bogus),
+            ListElement::Separator(colon) => {
+                labels.push(f.token(colon));
+                continue;
             }
-        }
-        if let Some((pending, _)) = pending {
-            docs.push(pending);
-        }
-    });
-    (labels_doc, label_count, single_label)
-}
-
-fn format_single_block_switch_statement_group<'source>(
-    label_count: usize,
-    label: Option<Doc<'source>>,
-    statements: &[BlockStatement<'source>],
-    doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
-    if label_count != 1 || statements.len() != 1 || statements[0].starts_after_blank_line() {
-        return None;
-    }
-    let jolt_java_syntax::JavaSyntaxField::Present(item) = statements[0].item() else {
-        return None;
-    };
-    let BlockItem::Block(block) = item else {
-        return None;
-    };
-    Some(doc_concat!(
-        doc,
-        [label?, doc.space(), format_block(&block, doc)]
-    ))
-}
-
-fn format_switch_rule<'source>(
-    rule: &SwitchRule<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let label = match resolve_required_field(rule.label(), doc) {
-        JavaFormatField::Present(label) => format_switch_label(&label, doc),
-        JavaFormatField::Malformed(malformed) => malformed,
-    };
-    let body = match resolve_required_field(rule.body(), doc) {
-        JavaFormatField::Present(body) => body,
-        JavaFormatField::Malformed(malformed) => {
-            return doc_concat!(
-                doc,
-                [
-                    label,
-                    format_switch_rule_arrow(rule, doc),
-                    malformed,
-                    format_switch_rule_semicolon(rule, doc),
-                ]
-            );
-        }
-    };
-    match body.classify() {
-        Ok(SwitchRuleBodySyntax::Expression(expression)) => doc_concat!(
-            doc,
-            [
-                label,
-                doc_group!(
-                    doc,
-                    doc_concat!(
-                        doc,
-                        [
-                            format_switch_rule_arrow_head(rule, doc),
-                            doc_indent!(
-                                doc,
-                                doc_concat!(
-                                    doc,
-                                    [
-                                        format_switch_rule_arrow_body_separator(rule, doc),
-                                        format_expression(&expression, doc),
-                                        format_statement_semicolon(rule.semicolon(), doc),
-                                    ]
-                                )
-                            ),
-                        ]
-                    )
-                ),
-            ]
-        ),
-        Ok(body) => doc_concat!(
-            doc,
-            [
-                label,
-                format_switch_rule_arrow(rule, doc),
-                format_switch_rule_body(body, doc),
-                format_switch_rule_semicolon(rule, doc),
-            ]
-        ),
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            label
-        }
-    }
-}
-
-fn format_switch_rule_semicolon<'source>(
-    rule: &SwitchRule<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    crate::helpers::recovery::format_optional_field(rule.semicolon(), doc, |semicolon, doc| {
-        format_statement_semicolon(jolt_java_syntax::JavaSyntaxField::Present(semicolon), doc)
-    })
-}
-
-fn switch_arrow<'source>(
-    rule: &SwitchRule<'source>,
-) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
-    match rule.arrow() {
-        jolt_java_syntax::JavaSyntaxField::Present(arrow) => Some(arrow),
-        _ => None,
-    }
-}
-
-fn format_switch_rule_arrow_head<'source>(
-    rule: &SwitchRule<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let Some(arrow) = switch_arrow(rule) else {
-        return match resolve_required_field(rule.arrow(), doc) {
-            JavaFormatField::Malformed(doc) => doc,
-            JavaFormatField::Present(_) => Doc::nil(),
+            ListElement::Missing => continue,
         };
-    };
-    if arrow.trailing_comments().next().is_none() {
-        doc_concat!(doc, [doc.space(), format_token_with_comments(doc, &arrow)])
-    } else {
-        doc_concat!(
-            doc,
-            [
-                doc.space(),
-                format_token(
-                    doc,
-                    &arrow,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::BeforeLineBreak
-                )
-            ]
-        )
+        if label_count > 0 {
+            labels.push(f.hard_line());
+        }
+        labels.push(label);
+        label_count += 1;
     }
-}
-
-fn format_switch_rule_arrow_body_separator<'source>(
-    rule: &SwitchRule<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    if switch_arrow(rule).is_some_and(|arrow| {
-        arrow
-            .trailing_comments()
-            .any(|comment| comment_forces_line(&comment))
-    }) {
-        doc.hard_line()
-    } else {
-        doc.line()
+    let labels = f.concat(labels);
+    let mut statements = statement_items(node.statements());
+    // N5 keeps one `;` of a group that has nothing else when another group
+    // follows: removing it would merge the labels into that group.
+    let last = node
+        .syntax()
+        .parent()
+        .and_then(|entries| entries.children().last())
+        .is_none_or(|entry| entry == SyntaxElement::Node(node.syntax()));
+    if !last
+        && statements
+            .iter()
+            .all(|item| matches!(item, ListItem::Elide(_)))
+        && let Some(ListItem::Elide(first)) = statements.first().copied()
+    {
+        statements[0] = ListItem::Format(first);
     }
-}
-
-fn format_switch_rule_arrow<'source>(
-    rule: &SwitchRule<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let Some(arrow) = switch_arrow(rule) else {
-        return match resolve_required_field(rule.arrow(), doc) {
-            JavaFormatField::Malformed(doc) => doc,
-            JavaFormatField::Present(_) => Doc::nil(),
-        };
-    };
-    let forced = arrow
-        .trailing_comments()
-        .any(|comment| comment_forces_line(&comment));
-    doc_concat!(
-        doc,
-        [
-            doc.space(),
-            format_token(
-                doc,
-                &arrow,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::BeforeLineBreak
-            ),
-            if forced { doc.hard_line() } else { doc.space() }
-        ]
-    )
-}
-
-fn format_switch_label<'source>(
-    label: &SwitchLabel<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let (keyword_doc, is_bare_default) = match resolve_required_field(label.keyword(), doc) {
-        JavaFormatField::Present(keyword) => (
-            format_token_with_comments(doc, &keyword),
-            keyword.kind() == jolt_java_syntax::JavaSyntaxKind::DefaultKw,
-        ),
-        JavaFormatField::Malformed(malformed) => (malformed, false),
-    };
-    let (items_doc, items_are_empty) = match resolve_required_field(label.items(), doc) {
-        JavaFormatField::Present(items) => {
-            let items_are_empty = items.parts().next().is_none();
-            (
-                format_switch_label_items(items.parts(), doc),
-                items_are_empty,
-            )
-        }
-        JavaFormatField::Malformed(malformed) => (malformed, false),
-    };
-    let guard = match resolve_optional_field(label.guard(), doc) {
-        JavaFormatField::Present(Some(SwitchGuardSyntax::Guard(guard))) => {
-            format_guard(&guard, doc)
-        }
-        JavaFormatField::Present(Some(SwitchGuardSyntax::BogusSwitchGuard(bogus))) => {
-            format_malformed(&bogus, doc)
-        }
-        JavaFormatField::Present(None) => Doc::nil(),
-        JavaFormatField::Malformed(malformed) => malformed,
-    };
-    if is_bare_default && items_are_empty {
-        doc_concat!(doc, [keyword_doc, guard])
-    } else {
-        doc_concat!(
-            doc,
-            [
-                keyword_doc,
-                doc.space(),
-                doc_group!(doc, doc_indent!(doc, items_doc)),
-                guard
-            ]
-        )
+    if label_count == 1
+        && let [ListItem::Format(statement)] = statements[..]
+        && is_inline_block(f, statement)
+    {
+        let block = f.node(statement);
+        return cat![f; labels, f.space(), block];
     }
+    // The comments of removed `;` after the last statement print at the
+    // labels' indent, where the next pass reads them (leading the next group
+    // or dangling in the switch block).
+    let kept = statements
+        .iter()
+        .rposition(|item| matches!(item, ListItem::Format(_)))
+        .map_or(0, |last| last + 1);
+    let removed = statements.split_off(kept);
+    let statements = f.item_list(statements, statement_separator);
+    let removed = f.item_list(removed, |f, _| f.hard_line());
+    if statements.is_nil() {
+        return cat![f; labels, removed];
+    }
+    let statements = indent![f; f.hard_line(), statements];
+    cat![f; labels, statements, removed]
 }
 
-fn format_switch_label_items<'source>(
-    parts: impl IntoIterator<
-        Item = JavaSyntaxListPart<'source, jolt_java_syntax::SwitchLabelItem<'source>>,
-    >,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let mut need_line = false;
-    doc.concat_list(|docs| {
-        for part in parts {
-            match resolve_list_part(part, docs) {
-                JavaFormatListPart::Item(item) => {
-                    if need_line {
-                        let line = docs.line_boundary();
-                        docs.push(line);
-                    }
-                    let formatted = match item.classify() {
-                        Ok(SwitchLabelItemSyntax::CaseConstant(constant)) => {
-                            match resolve_required_field(constant.expression(), docs) {
-                                JavaFormatField::Present(value) => format_expression(&value, docs),
-                                JavaFormatField::Malformed(value) => value,
-                            }
-                        }
-                        Ok(SwitchLabelItemSyntax::CasePattern(pattern)) => {
-                            match resolve_required_field(pattern.pattern(), docs) {
-                                JavaFormatField::Present(role) => match role {
-                                    Pattern::TypePattern(value) => {
-                                        format_pattern(&value.into(), docs)
-                                    }
-                                    Pattern::RecordPattern(value) => {
-                                        format_pattern(&value.into(), docs)
-                                    }
-                                    Pattern::MatchAllPattern(value) => {
-                                        format_pattern(&value.into(), docs)
-                                    }
-                                    Pattern::BogusPattern(value) => format_malformed(&value, docs),
-                                },
-                                JavaFormatField::Malformed(value) => value,
-                            }
-                        }
-                        Ok(SwitchLabelItemSyntax::BogusSwitchLabelItem(value)) => {
-                            format_malformed(&value, docs)
-                        }
-                        Ok(SwitchLabelItemSyntax::Default(token)) => {
-                            // Nothing between this item and the arrow, colon or
-                            // next item supplies the break `BeforeLineBreak`
-                            // promises, so a line comment would swallow it.
-                            let ends_line = trailing_comments_force_line(&token);
-                            let item = format_token(
-                                docs,
-                                &token,
-                                LeadingTrivia::Preserve,
-                                TrailingTrivia::BeforeLineBreak,
-                            );
-                            if ends_line {
-                                let line = docs.hard_line();
-                                docs.concat([item, line])
-                            } else {
-                                item
-                            }
-                        }
-                        Err(error) => {
-                            docs.block_on_invariant(error.to_string());
-                            Doc::nil()
-                        }
-                    };
-                    docs.push(formatted);
-                    need_line = true;
-                }
-                JavaFormatListPart::Separator(comma) => {
-                    let line = docs.line_boundary();
-                    let comma = format_separator_with_comments(docs, &comma, line);
-                    docs.push(comma);
-                    need_line = false;
-                }
-                JavaFormatListPart::Recovery(value) => {
-                    if need_line {
-                        let line = docs.line_boundary();
-                        docs.push(line);
-                    }
-                    docs.push(value.doc());
-                    need_line = true;
-                }
-            }
+/// A block statement that may share the label line: a plain block outside
+/// formatter-ignore with no leading comment that starts a line. (A blank
+/// line before it in the source does not count: the other layout would drop
+/// it, so the next pass would choose this one.)
+fn is_inline_block<'a>(f: &JavaFormatter<'a>, statement: SyntaxNode<'a>) -> bool {
+    let element = SyntaxElement::Node(statement);
+    BlockStatement::cast(statement)
+        .and_then(BlockStatement::item)
+        .is_some_and(|item| matches!(item, BlockItem::Block(_)))
+        && !f.leading_comments_break(element)
+        && !f.in_ignore_region(statement)
+}
+
+/// `label -> body`. An expression body that does not fit continues on the
+/// next line one indent deeper.
+pub(crate) fn switch_rule<'a>(f: &mut JavaFormatter<'a>, node: SwitchRule<'a>) -> Doc {
+    let label = f.fmt_opt(node.label());
+    let arrow = f.token_opt(node.arrow());
+    let body = match node.body() {
+        Some(SwitchRuleBody::Expression(expression)) => {
+            let expression = f.fmt(expression);
+            let semicolon = f.token_opt(node.semicolon());
+            let body = indent![f; f.line(), expression, semicolon];
+            f.group(body)
         }
-    })
-}
-
-fn format_guard<'source>(
-    guard: &jolt_java_syntax::Guard<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let when = match resolve_required_field(guard.when_keyword(), doc) {
-        JavaFormatField::Present(value) => format_token_with_comments(doc, &value),
-        JavaFormatField::Malformed(value) => value,
-    };
-    let open = resolve_optional_field(guard.open_paren(), doc);
-    let close = resolve_optional_field(guard.close_paren(), doc);
-    let condition = match resolve_required_field(guard.condition(), doc) {
-        JavaFormatField::Present(value) => format_expression(&value, doc),
-        JavaFormatField::Malformed(value) => value,
-    };
-    let condition = match (open, close) {
-        (JavaFormatField::Present(Some(open)), JavaFormatField::Present(Some(close)))
-            if !token_has_comments(&open) && !token_has_comments(&close) =>
+        // A comment on its own line before a `throw` keeps the statement
+        // one indent deeper, like an expression body. A block stays at the
+        // label's indent: H3 moves a comment on its own line before `{` to
+        // the arrow's line, so only comments that already share a line with
+        // the arrow lead it.
+        Some(body @ SwitchRuleBody::ThrowStatement(_))
+            if f.leading_comments_break(SyntaxElement::Node(body.syntax())) =>
         {
-            let removals = guard.redundant_parenthesis_removal_claims();
-            match (removals.open, removals.close) {
-                (Some(open), Some(close)) => doc_concat!(
-                    doc,
-                    [
-                        doc.removed_source(open),
-                        condition,
-                        doc.removed_source(close)
-                    ]
-                ),
-                _ => format_parenthesized_statement_expression(
-                    doc,
-                    JavaFormatDelimiter::Source(open),
-                    condition,
-                    JavaFormatDelimiter::Source(close),
-                ),
-            }
+            let body = f.fmt(body);
+            let semicolon = f.token_opt(node.semicolon());
+            let body = indent![f; body, semicolon];
+            cat![f; f.space(), body]
         }
-        (JavaFormatField::Present(Some(open)), JavaFormatField::Present(Some(close))) => {
-            format_parenthesized_statement_expression(
-                doc,
-                JavaFormatDelimiter::Source(open),
-                condition,
-                JavaFormatDelimiter::Source(close),
-            )
+        Some(body) => {
+            let body = f.fmt(body);
+            let semicolon = f.token_opt(node.semicolon());
+            cat![f; f.space(), body, semicolon]
         }
-        (JavaFormatField::Malformed(open), JavaFormatField::Malformed(close)) => {
-            doc_concat!(doc, [open, condition, close])
-        }
-        (JavaFormatField::Malformed(open), _) => doc_concat!(doc, [open, condition]),
-        (_, JavaFormatField::Malformed(close)) => doc_concat!(doc, [condition, close]),
-        _ => condition,
+        None => f.token_opt(node.semicolon()),
     };
-    doc_concat!(doc, [doc.space(), when, doc.space(), condition])
+    cat![f; label, f.space(), arrow, body]
 }
 
-fn format_switch_rule_body<'source>(
-    body: SwitchRuleBodySyntax<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    match body {
-        SwitchRuleBodySyntax::Block(block) => format_block(&block, doc),
-        SwitchRuleBodySyntax::ThrowStatement(statement) => format_throw_statement(&statement, doc),
-        SwitchRuleBodySyntax::Expression(expression) => format_expression(&expression, doc),
+/// `case a, b when guard` or `default`. Items that do not fit break one per
+/// line, one indent deeper.
+pub(crate) fn switch_label<'a>(f: &mut JavaFormatter<'a>, node: SwitchLabel<'a>) -> Doc {
+    let keyword = f.token_opt(node.keyword());
+    let mut items = Vec::new();
+    for element in node
+        .items()
+        .into_iter()
+        .flat_map(SwitchLabelItemList::elements)
+    {
+        match element {
+            ListElement::Item(item) => items.push(match item {
+                SwitchLabelItem::CaseConstant(constant) => f.fmt(constant),
+                SwitchLabelItem::CasePattern(pattern) => f.fmt(pattern),
+                SwitchLabelItem::Bogus(bogus) => f.fmt(bogus),
+                SwitchLabelItem::Token(token) => f.token(token),
+            }),
+            ListElement::Bogus(bogus) => items.push(f.node(bogus)),
+            ListElement::Separator(comma) => items.extend([f.token(comma), f.line()]),
+            ListElement::Missing => {}
+        }
     }
+    let items = if items.is_empty() {
+        Doc::NIL
+    } else {
+        let items = f.concat(items);
+        let items = f.indent(items);
+        let items = f.group(items);
+        cat![f; f.space(), items]
+    };
+    let guard = match node.guard() {
+        Some(guard) => {
+            let guard = f.fmt(guard);
+            cat![f; f.space(), guard]
+        }
+        None => Doc::NIL,
+    };
+    cat![f; keyword, items, guard]
+}
+
+pub(crate) fn case_constant<'a>(f: &mut JavaFormatter<'a>, node: CaseConstant<'a>) -> Doc {
+    f.fmt_opt(node.expression())
+}
+
+pub(crate) fn case_pattern<'a>(f: &mut JavaFormatter<'a>, node: CasePattern<'a>) -> Doc {
+    f.fmt_opt(node.pattern())
+}
+
+/// `when condition`. Parentheses around the condition are removed (N6)
+/// unless comments are involved.
+pub(crate) fn guard<'a>(f: &mut JavaFormatter<'a>, node: Guard<'a>) -> Doc {
+    let when = f.token_opt(node.when_keyword());
+    let condition = f.fmt_opt(node.condition());
+    let (open, close) = (node.open_paren(), node.close_paren());
+    let condition = match (open, close) {
+        (None, None) => condition,
+        (Some(open), Some(close)) if removable_parentheses(f, node, open, close) => {
+            let open = f.removed(SyntaxElement::Token(open));
+            let close = f.removed(SyntaxElement::Token(close));
+            cat![f; open, condition, close]
+        }
+        _ => parenthesized(f, node.syntax(), open, condition, close),
+    };
+    cat![f; when, f.space(), condition]
+}
+
+/// N6 for a guard: the guard is recovery-free, its parentheses carry no
+/// comments, and no comment sits between `(` and the condition or on its own
+/// line before `)`. Comments inside the condition, and an inline comment
+/// after it (`when (i > 0 /* c */)`), stay with the condition.
+fn removable_parentheses<'a>(
+    f: &JavaFormatter<'a>,
+    node: Guard<'a>,
+    open: SyntaxToken<'a>,
+    close: SyntaxToken<'a>,
+) -> bool {
+    let token_comments = |token| {
+        f.has_leading_comments(SyntaxElement::Token(token))
+            || f.has_trailing_comments(SyntaxElement::Token(token))
+    };
+    let condition_comments = node.condition().is_some_and(|condition| {
+        let condition = SyntaxElement::Node(condition.syntax());
+        f.has_leading_comments(condition) || f.trailing_comments_break(condition)
+    });
+    node.syntax().is_recovery_free()
+        && !token_comments(open)
+        && !token_comments(close)
+        && !f.has_dangling_comments(node.syntax())
+        && !condition_comments
 }

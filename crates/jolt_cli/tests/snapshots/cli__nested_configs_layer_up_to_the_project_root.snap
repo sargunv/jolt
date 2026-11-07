@@ -1,0 +1,32 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run_in(\"project/module\", &[\"fmt\", \"--threads\", \"2\", \"..\"], \"\")"
+---
+$ jolt fmt --threads 2 ..
+status: 0
+--- stderr
+Formatted 3 files in $TIME
+--- wrote project/Root.java
+class A {
+    void f() {
+        if (ready) {
+            go();
+        }
+    }
+}
+--- wrote project/module/Module.java
+class A {
+   void f() {
+      if (ready) {
+         go();
+      }
+   }
+}
+--- wrote project/module/lib/Lib.java
+class A {
+  void f() {
+    if (ready) {
+      go();
+    }
+  }
+}

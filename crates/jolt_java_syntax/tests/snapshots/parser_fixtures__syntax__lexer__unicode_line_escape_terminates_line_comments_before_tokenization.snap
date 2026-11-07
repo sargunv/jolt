@@ -1,0 +1,30 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+int a; // comment \u000a int b;
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 0..3 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "a" @ 4..5
+      Semicolon ";" @ 5..6 trailing=[Whitespace " ", LineComment "// comment "]
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 25..28 leading=[Newline "\\u000a", Whitespace " "] trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "b" @ 29..30
+      Semicolon ";" @ 30..31
+  Eof "" @ 31..31
+
+diagnostics:
+(none)

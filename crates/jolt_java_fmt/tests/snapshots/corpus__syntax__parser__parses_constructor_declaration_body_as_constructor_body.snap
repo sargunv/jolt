@@ -8,8 +8,7 @@ class ConstructorBodyShape {
     this(0);
   }
 
-  ConstructorBodyShape(int value) {
-  }
+  ConstructorBodyShape(int value) {}
 }
 
 diagnostics:

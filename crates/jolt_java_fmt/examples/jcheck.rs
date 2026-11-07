@@ -1,70 +1,61 @@
-// Single-file checker: runs the same conservation sweep as jhunt against the
-// files passed on the command line and prints failures with details.
-// Run with `cargo run -p jolt_java_fmt --example jcheck --release -- <files...>`.
-//
-// `<path>:<shape><n>` replays one probe position instead of the whole sweep and
-// prints the probed source, for minimizing a repro jhunt reported. The shape
-// names are `jolt_test_support::PROBE_SHAPES`, e.g. `Foo.java:ownline12`. Both
-// the sweep and this replay read probe placement from `probe_boundaries`, so the
-// position always matches the one jhunt used.
+//! Replays the sweep for the files on the command line, or one variant with
+//! `<path>:<variant>` (e.g. `Foo.java:ownline12`, `Foo.java:comment3@40`,
+//! `Foo.java:delete7`), printing the variant's source and every failure
+//! (`--mutate` adds the deletions to a whole-file check). Run
+//! with `cargo run --release -p jolt_java_fmt --example jcheck -- <args>`.
 
 use std::fs;
-use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
 
-use jolt_test_support::{
-    CorpusLanguage, SweepFailure, parse_probe_argument, probe_boundaries, probed_source,
-    sweep_source, sweep_variant,
-};
+use jolt_fmt::FormatOptions;
+use jolt_test_support::{Depth, Variant, catching, sweep_source, sweep_variant};
 
-// The corpus policy is the test suite's, so the check cannot drift onto a
-// stale one.
 #[path = "../tests/common/mod.rs"]
 mod common;
+
+/// The depth of the sweep suite holding `path` (sampled outside every suite).
+fn depth_of(path: &Path) -> Depth {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .nth(2)
+        .expect("repository root above the crate directory");
+    let path = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    common::SWEEP_SUITES
+        .iter()
+        .find(|suite| fs::canonicalize(root.join(suite.dir)).is_ok_and(|dir| path.starts_with(dir)))
+        .map_or(Depth::Sampled, |suite| suite.depth)
+}
 
 fn main() {
     std::panic::set_hook(Box::new(|_| {}));
     let mut any = false;
-    for arg in std::env::args().skip(1) {
+    let mutate = std::env::args().any(|arg| arg == "--mutate");
+    for arg in std::env::args().skip(1).filter(|arg| arg != "--mutate") {
         let replay = arg
             .rsplit_once(':')
-            .and_then(|(file, probe)| parse_probe_argument(probe).map(|probe| (file, probe)));
-        let failures = match replay {
-            Some((file, (shape, probe))) => {
-                let path = PathBuf::from(file);
-                let source = fs::read_to_string(&path).expect("read input");
-                let boundaries = common::JavaCorpus.token_end_offsets(&source);
-                let selected = probe_boundaries(shape, &source, boundaries.len());
-                let Some(&boundary) = selected.get(probe) else {
-                    println!(
-                        "{}: probe {}{probe} is out of range; this file has {} probe position(s) for that shape",
-                        path.display(),
-                        shape.name,
-                        selected.len()
-                    );
-                    continue;
-                };
-                let probed = probed_source(&source, boundaries[boundary], shape);
-                println!(
-                    "=== probed source ({}{probe} at boundary {boundary} of {}):",
-                    shape.name,
-                    boundaries.len()
-                );
-                println!("{probed}");
-                check(&path, move || {
-                    sweep_variant(
-                        &common::JavaCorpus,
-                        &probed,
-                        &jolt_fmt_ir::FormatOptions::default(),
-                        &format!("{}{probe}", shape.name),
-                    )
-                })
-            }
-            None => {
-                let path = PathBuf::from(&arg);
-                let source = fs::read_to_string(&path).expect("read input");
-                check(&path, move || sweep_source(&common::JavaCorpus, &source))
-            }
+            .and_then(|(file, label)| Variant::parse(label).map(|variant| (file, variant)));
+        let failures = if let Some((file, variant)) = replay {
+            let path = PathBuf::from(file);
+            let source = fs::read_to_string(&path).expect("read input");
+            let Some(varied) = variant.source(&common::JavaCorpus, &source, depth_of(&path)) else {
+                println!("{}: {} is out of range", path.display(), variant.label());
+                continue;
+            };
+            println!("=== variant source ({}):\n{varied}", variant.label());
+            let options = FormatOptions {
+                line_width: variant.width(),
+                ..FormatOptions::default()
+            };
+            catching(&path, || {
+                sweep_variant(&common::JavaCorpus, &varied, &options, &variant.label())
+            })
+        } else {
+            let path = PathBuf::from(&arg);
+            let source = fs::read_to_string(&path).expect("read input");
+            let depth = depth_of(&path);
+            catching(&path, || {
+                sweep_source(&common::JavaCorpus, &source, depth, mutate)
+            })
         };
         for failure in failures {
             any = true;
@@ -74,18 +65,4 @@ fn main() {
     if !any {
         println!("no failures");
     }
-}
-
-fn check(path: &Path, run: impl FnOnce() -> Vec<SweepFailure> + Send) -> Vec<SweepFailure> {
-    catch_unwind(AssertUnwindSafe(run)).unwrap_or_else(|payload| {
-        let message = payload
-            .downcast_ref::<String>()
-            .map(String::as_str)
-            .or_else(|| payload.downcast_ref::<&str>().copied())
-            .unwrap_or("<non-string panic>");
-        vec![SweepFailure {
-            category: "panic".to_owned(),
-            detail: format!("{}: {message}", path.display()),
-        }]
-    })
 }

@@ -13,8 +13,7 @@ formatted:
     "last" // A synthesized comma here would become comment text.
   }
 )
-class AnnotationValues {
-}
+class AnnotationValues {}
 
 class ArrayValues {
   String[] values =

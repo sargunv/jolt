@@ -66,7 +66,7 @@ want, then put `jolt` on your `PATH`.
 jolt --version
 ```
 
-Format Java and Kotlin files from the project root:
+Format Java files from the project root:
 
 ```sh
 jolt fmt .

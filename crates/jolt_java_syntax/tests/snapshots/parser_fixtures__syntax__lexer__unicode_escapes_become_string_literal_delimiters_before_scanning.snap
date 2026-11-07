@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"\u0022"
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      TextBlockLiteral "\"\\u0022\"" @ 0..8
+  Eof "" @ 8..8
+
+diagnostics:
+code=java.lex.missing_text_block_line_terminator range=0..8 message=text block opening delimiter must be followed by a line terminator
+code=java.lex.unterminated_text_block range=0..8 message=unterminated text block
+code=java.parse.unexpected_syntax range=0..8 message=unexpected token at top level

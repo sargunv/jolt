@@ -7,8 +7,8 @@ module m { requires transitive static + a.b; }
 
 formatted:
 module m {
-  requires static transitive + a.b;
+  requires transitive static + a.b;
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(38), end: TextSize(39) }) message=expected identifier
+code=java.parse.expected_syntax range=38..39 message=expected identifier

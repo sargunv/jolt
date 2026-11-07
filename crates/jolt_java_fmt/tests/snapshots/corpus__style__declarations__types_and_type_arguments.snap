@@ -3,8 +3,8 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-class Types< /* params */
-  @Marker T extends Number
+class Types<
+  /* params */ @Marker T extends Number
     & // numeric
       Comparable<T>, // first
   U
@@ -13,16 +13,14 @@ class Types< /* params */
   java.util.@Marker List<@Marker String> @Marker [] names;
 
   void use(
-    java.util.Map< /* args */
-      String, // key
+    java.util.Map<
+      /* args */ String, // key
       ? super T
       // before args close
     > value
-  ) {
-  }
+  ) {}
 
-  void read(java.util.List<? extends Number> numbers) {
-  }
+  void read(java.util.List<? extends Number> numbers) {}
 }
 
 diagnostics:

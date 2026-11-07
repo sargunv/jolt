@@ -20,11 +20,9 @@ class ContextualKeywordIdentifiers {
   int record;
   int var;
 
-  void when() {
-  }
+  void when() {}
 
-  void requires() {
-  }
+  void requires() {}
 
   void method() {
     int when = this.when;

@@ -9,8 +9,7 @@ enum ModifiedEnum {
 }
 
 class ModifiedConstructor {
-  public ModifiedConstructor() {
-  }
+  public ModifiedConstructor() {}
 }
 
 interface ModifiedInterface {
@@ -22,8 +21,7 @@ interface ModifiedInterface {
   String value();
 }
 
-@interface Marker {
-}
+@interface Marker {}
 
 diagnostics:
 (none)

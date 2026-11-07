@@ -12,7 +12,7 @@ class Example {
   }
 
   Object casted(Object value) {
-    return ( /* target */ String) /* cast */ value;
+    return (/* target */ String) /* cast */ value;
   }
 
   Object intersection(Object value) {
@@ -32,8 +32,8 @@ class Example {
   }
 
   Object qualified(Inner inner) {
-    return Example. /* this */ this == inner.superValue
-      ? Example. /* super */ super.toString()
+    return Example./* this */ this == inner.superValue
+      ? Example./* super */ super.toString()
       : this.toString();
   }
 }

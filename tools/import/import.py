@@ -61,24 +61,6 @@ IMPORTS_CONFIG = [
         "globs": ["**/*.java"],
         "keep_path": True,
     },
-    {
-        "name": "ktfmt/source",
-        "repo": "facebook/ktfmt",
-        "tag": "v0.64",
-        "commit": "682a5cd32d741bd7126183714aa4ee2e3246defe",
-        "path": ".",
-        "globs": ["**/*.kt", "**/*.kts"],
-        "keep_path": True,
-    },
-    {
-        "name": "maplibre-compose/source",
-        "repo": "maplibre/maplibre-compose",
-        "tag": "v0.13.0",
-        "commit": "db32283a8fdb7838ffc6e3fc333b7b10b57df0f5",
-        "path": ".",
-        "globs": ["**/*.kt", "**/*.kts"],
-        "keep_path": True,
-    },
 ]
 
 

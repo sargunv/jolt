@@ -1,0 +1,50 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class SwitchGuardsAndLabels {
+  int guards(Object value) {
+    return switch (value) {
+      case String s when s.isEmpty() -> 0;
+      case Integer i when i > 0 /* positive */ -> i;
+      case Long l when (/* kept */ l > 0) -> 1;
+      case String s when s.length() > 10
+        && s.startsWith("prefix")
+        && s.endsWith("suffix") -> 2;
+      case CharSequence first,
+        StringBuilder second,
+        StringBuffer third,
+        Appendable fourth -> 3;
+      case null, default -> -1;
+    };
+  }
+
+  void groups(int value) {
+    switch (value) {
+      case 1: // one
+      {
+        run();
+      }
+      case 2: {
+        run();
+      }
+      case 3:
+        // three
+        {
+          run();
+        }
+      case 4:
+      case 5:
+        {
+          run();
+        }
+      case 6:
+        run(); // stray
+      default:
+    }
+  }
+}
+
+diagnostics:
+(none)

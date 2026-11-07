@@ -9,8 +9,7 @@ class Bounds {
       & SecondBound
       & ThirdBound
       & FourthBound
-  > void run() {
-  }
+  > void run() {}
 }
 
 diagnostics:

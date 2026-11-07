@@ -8,8 +8,7 @@ class FormatterIgnoreBlankBeforeOn {
   void   raw( ) { }
 
   // @formatter:on
-  static void formatted() {
-  }
+  static void formatted() {}
 }
 
 diagnostics:

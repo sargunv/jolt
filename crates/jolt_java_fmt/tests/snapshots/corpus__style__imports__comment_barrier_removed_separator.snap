@@ -8,8 +8,7 @@ import one.last;
 
 import static java.utils.*;
 
-class C {
-}
+class C {}
 
 diagnostics:
 (none)

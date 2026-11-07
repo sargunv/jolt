@@ -8,8 +8,7 @@ import z.Zed;
 import m.Middle;
 import a.Alpha;
 
-class C {
-}
+class C {}
 
 diagnostics:
 (none)

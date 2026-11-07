@@ -15,8 +15,9 @@ class C {
 formatted:
 class C {
   int before;
-  /* member */
-  + ;
+
+  /* member */ + ;
+
   // @formatter:off
   int raw=1+2;
   // @formatter:on
@@ -24,4 +25,4 @@ class C {
 }
 
 diagnostics:
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(40) }) message=unexpected token in type body
+code=java.parse.unexpected_syntax range=39..40 message=unexpected token in type body

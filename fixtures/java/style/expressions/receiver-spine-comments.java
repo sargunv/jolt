@@ -1,0 +1,29 @@
+class ReceiverSpineComments {
+  void chains(Builder builder, Object[][] grid, Outer outer) {
+    builder.first() // after first
+        .second() // after second
+        .third();
+    builder
+        // before the first call
+        .first()
+        .second();
+    builder.items[0] // after index
+        .get();
+    grid[0][1] /* inline */ [2] = null;
+    counter++ /* after postfix */;
+    outer.new Inner() // after qualified new
+        .run();
+    Outer.this.value // after qualified this
+        .run();
+    Outer.super.toString();
+    java.lang.String.class.getName();
+    Object reference = builder.first()::apply;
+  }
+
+  void longSpines(Builder builder) {
+    builder.withFirstValue(firstArgumentValue).items[0].withSecondValue(secondArgumentValue).build();
+    builder.factory().new Inner(firstArgumentValue, secondArgumentValue).withThirdValue(third).run();
+    this.firstFieldName.secondFieldName.thirdFieldName.fourthFieldName.call(argument);
+    getBuilder().firstCallWithLongName(argumentOne).secondCallWithLongName(argumentTwo);
+  }
+}

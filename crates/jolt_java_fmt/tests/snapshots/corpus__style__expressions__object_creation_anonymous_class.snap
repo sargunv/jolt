@@ -6,8 +6,7 @@ formatted:
 class Example {
   Runnable make() {
     return new Runnable() {
-      public void run() {
-      }
+      public void run() {}
 
       private int value() {
         return 1;

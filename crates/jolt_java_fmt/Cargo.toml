@@ -7,17 +7,13 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-jolt_diagnostics = { path = "../jolt_diagnostics" }
-jolt_fmt_ir = { path = "../jolt_fmt_ir" }
+jolt_fmt = { path = "../jolt_fmt" }
 jolt_java_syntax = { path = "../jolt_java_syntax" }
-jolt_text = { path = "../jolt_text" }
+jolt_syntax = { path = "../jolt_syntax" }
 
 [dev-dependencies]
 insta = "1.48"
 jolt_test_support = { path = "../jolt_test_support" }
-
-[features]
-bench = ["jolt_fmt_ir/bench", "jolt_java_syntax/bench"]
 
 [lints]
 workspace = true

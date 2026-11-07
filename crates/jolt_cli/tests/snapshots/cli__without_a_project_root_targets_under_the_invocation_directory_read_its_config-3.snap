@@ -1,0 +1,16 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"a/A.java\"], \"\")"
+---
+$ jolt fmt a/A.java
+status: 0
+--- stderr
+Formatted 1 file in $TIME
+--- wrote a/A.java
+class A {
+    void f() {
+        if (ready) {
+            go();
+        }
+    }
+}

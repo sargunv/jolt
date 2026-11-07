@@ -19,4 +19,4 @@ class UnterminatedComment {
  * with a star body
 
 diagnostics:
-code=java.lex.unterminated_block_comment severity=Error stage=Lexer range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=unterminated block comment
+code=java.lex.unterminated_block_comment range=63..64 message=unterminated block comment

@@ -1,12 +1,7 @@
-pub(crate) mod annotations;
+//! The layout rules, one module per area (see the build plan in
+//! `docs/internals/formatter.md`).
+
 pub(crate) mod declarations;
 pub(crate) mod expressions;
-pub(crate) mod imports;
-pub(crate) mod modifiers;
-pub(crate) mod modules;
-pub(crate) mod names;
-pub(crate) mod patterns;
-pub(crate) mod program;
 pub(crate) mod statements;
 pub(crate) mod types;
-pub(crate) mod variables;

@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"a\u000ab"
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StringLiteral "\"a" @ 0..2
+      Identifier "b" @ 8..9 leading=[Newline "\\u000a"]
+      StringLiteral "\"" @ 9..10
+  Eof "" @ 10..10
+
+diagnostics:
+code=java.lex.unterminated_string_literal range=0..2 message=unterminated string literal
+code=java.lex.unterminated_string_literal range=9..10 message=unterminated string literal
+code=java.parse.unexpected_syntax range=0..2 message=unexpected token at top level

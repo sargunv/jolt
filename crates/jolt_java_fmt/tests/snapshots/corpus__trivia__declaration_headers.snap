@@ -16,19 +16,16 @@ public /* JOLT-TRIVIA:after-public */ final class DeclarationHeaders<
     "x";
 
   DeclarationHeaders(
-    /* JOLT-TRIVIA:ctor-param-leading */
-    String name /* JOLT-TRIVIA:ctor-param-trailing */
+    /* JOLT-TRIVIA:ctor-param-leading */ String name /* JOLT-TRIVIA:ctor-param-trailing */
   ) {
     this.name = name;
   }
 
   @Override
-  public void run() {
-  }
+  public void run() {}
 }
 
-class Base {
-}
+class Base {}
 
 diagnostics:
 (none)

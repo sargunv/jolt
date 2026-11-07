@@ -10,8 +10,7 @@ enum Color {
 
   private final int code;
 
-  public int code() {
-  }
+  public int code() {}
 }
 
 diagnostics:

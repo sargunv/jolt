@@ -1,0 +1,41 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+module com.example.repeated { requires static /* JOLT-TRIVIA:repeated-requires-static */ static dependency; }
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ModuleDeclaration
+      AnnotationList
+      Identifier "module" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "com" @ 7..10
+        Dot "." @ 10..11
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "example" @ 11..18
+          Dot "." @ 18..19
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "repeated" @ 19..27 trailing=[Whitespace " "]
+      LBrace "{" @ 28..29 trailing=[Whitespace " "]
+      ModuleDirectiveList
+        RequiresDirective
+          Identifier "requires" @ 30..38 trailing=[Whitespace " "]
+          RequiresModifierList
+            StaticKw "static" @ 39..45 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:repeated-requires-static */", Whitespace " "]
+            StaticKw "static" @ 89..95 trailing=[Whitespace " "]
+          Name
+            Identifier "dependency" @ 96..106
+          Semicolon ";" @ 106..107 trailing=[Whitespace " "]
+      RBrace "}" @ 108..109
+  Eof "" @ 110..110 leading=[Newline "\n"]
+
+diagnostics:
+(none)

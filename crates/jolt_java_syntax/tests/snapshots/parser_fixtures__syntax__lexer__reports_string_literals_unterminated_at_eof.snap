@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"abc
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StringLiteral "\"abc" @ 0..4
+  Eof "" @ 4..4
+
+diagnostics:
+code=java.lex.unterminated_string_literal range=0..4 message=unterminated string literal
+code=java.parse.unexpected_syntax range=0..4 message=unexpected token at top level

@@ -8,8 +8,7 @@ import z.Zed;
 import a.Adapter;
 import m.Middle;
 
-class A {
-}
+class A {}
 
 diagnostics:
 (none)

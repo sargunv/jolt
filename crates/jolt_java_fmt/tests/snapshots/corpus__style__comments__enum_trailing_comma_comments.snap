@@ -16,8 +16,7 @@ enum EnumTrailingCommaLineComment {
 }
 
 enum EnumBodyTrailingCommaComment {
-  FIRST {
-  };
+  FIRST {};
 
   /* JOLT-TRIVIA:enum-body-comma */
 }

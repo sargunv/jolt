@@ -1,0 +1,41 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+static void
+classinterface
+enum	assertwhile
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StaticKw "static" @ 0..6 trailing=[Whitespace " "]
+      VoidKw "void" @ 7..11
+    ClassDeclaration
+      ClassKw "class" @ 12..17 leading=[Newline "\n"]
+      ClassBody
+        ClassBodyMemberList
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 18..27 leading=[Newline "\r"]
+      InterfaceBody
+        InterfaceBodyMemberList
+    EnumDeclaration
+      EnumKw "enum" @ 29..33 leading=[Newline "\r\n"] trailing=[Whitespace "\t"]
+      EnumBody
+        ClassBodyMemberList
+    Bogus
+      AssertKw "assert" @ 34..40 trailing=[Whitespace "\u{c}"]
+      WhileKw "while" @ 41..46
+  Eof "" @ 46..46
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..6 message=unexpected token at top level
+code=java.parse.expected_syntax range=18..27 message=expected type name
+code=java.parse.expected_syntax range=18..27 message=expected type body
+code=java.parse.expected_syntax range=29..33 message=expected type name
+code=java.parse.expected_syntax range=29..33 message=expected type body
+code=java.parse.expected_syntax range=34..40 message=expected type name
+code=java.parse.expected_syntax range=34..40 message=expected type body
+code=java.parse.unexpected_syntax range=34..40 message=unexpected token at top level

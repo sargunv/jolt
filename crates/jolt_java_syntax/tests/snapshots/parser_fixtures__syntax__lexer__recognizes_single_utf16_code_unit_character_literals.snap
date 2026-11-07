@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+'\uFFFF' '\uD800'
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      CharacterLiteral "'\\uFFFF'" @ 0..8 trailing=[Whitespace " "]
+      CharacterLiteral "'\\uD800'" @ 9..17
+  Eof "" @ 17..17
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..8 message=unexpected token at top level

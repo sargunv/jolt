@@ -1,0 +1,8 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--config\", \"missing.toml\", \"-\"], NESTED)"
+---
+$ jolt fmt --config missing.toml -
+status: 1
+--- stderr
+$TEMP/missing.toml: config file does not exist

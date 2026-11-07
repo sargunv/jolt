@@ -1,0 +1,8 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"config\", \"init\"], \"\")"
+---
+$ jolt config init
+status: 1
+--- stderr
+$TEMP/jolt.toml: config already exists

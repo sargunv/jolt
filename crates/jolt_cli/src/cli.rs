@@ -1,23 +1,21 @@
 use std::{
-    env, fs,
-    io::{self, Write as _},
+    env, fs, io,
     path::{Path, PathBuf},
 };
 
-use clap::{Args as ClapArgs, CommandFactory as _, Parser, Subcommand};
-use clap_complete::{Shell, generate};
+use clap::{CommandFactory as _, Parser, Subcommand};
+use clap_complete::Shell;
+use jolt_config::FormatConfig;
+use jolt_formatter::Language;
 
 use crate::{
-    config_schema::{self, SchemaKind},
-    error::CliError,
-    fmt::{
-        self,
-        config::{self as fmt_config, default_file_config},
-        detect_language,
-    },
+    Result,
+    config::{CONFIG_FILES, ConfigFile, Resolver, Settings, absolute},
+    format::{self, ConfigArgs, FormatArgs},
+    schema,
 };
 
-pub(crate) const VERSION: &str = concat!(
+const VERSION: &str = concat!(
     env!("CARGO_PKG_VERSION"),
     " (",
     env!("JOLT_COMMIT_SHORT"),
@@ -25,8 +23,7 @@ pub(crate) const VERSION: &str = concat!(
 );
 
 #[derive(Debug, Parser)]
-#[command(name = "jolt", version = VERSION)]
-#[command(about = "Fast, opinionated JVM and Kotlin Multiplatform project tooling.")]
+#[command(name = "jolt", version = VERSION, about = "Fast, opinionated Java formatter.")]
 pub(crate) struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -36,7 +33,7 @@ pub(crate) struct Cli {
 enum Command {
     /// Format source files.
     #[command(visible_alias = "fmt")]
-    Format(fmt::Args),
+    Format(FormatArgs),
 
     /// Inspect Jolt configuration.
     Config {
@@ -57,169 +54,104 @@ enum ConfigCommand {
     Init,
 
     /// List config files that apply to a path.
-    List(ConfigTargetArgs),
+    List {
+        /// File or directory to inspect.
+        path: Option<PathBuf>,
+    },
 
     /// Print the effective config for a path.
-    Resolve(ConfigTargetArgs),
+    Resolve {
+        /// File or directory to inspect.
+        path: Option<PathBuf>,
+    },
 
     /// Print a JSON schema for configuration files.
-    Schema(ConfigSchemaArgs),
+    Schema {
+        /// Print the dprint plugin configuration schema.
+        #[arg(long)]
+        dprint: bool,
+    },
 }
 
-#[derive(Debug, ClapArgs)]
-struct ConfigTargetArgs {
-    /// File or directory to inspect.
-    path: Option<PathBuf>,
-}
-
-#[derive(Debug, ClapArgs)]
-struct ConfigSchemaArgs {
-    /// Print the dprint plugin configuration schema.
-    #[arg(long)]
-    dprint: bool,
-}
-
-pub(crate) fn run(cli: Cli) -> Result<(), CliError> {
+pub(crate) fn run(cli: Cli) -> Result<()> {
     match cli.command {
-        Command::Format(args) => fmt::run(&args),
+        Command::Format(args) => format::run(&args),
         Command::Config { command } => match command {
-            ConfigCommand::Init => init_config(),
-            ConfigCommand::List(args) => config_list(&args),
-            ConfigCommand::Resolve(args) => config_resolve(&args),
-            ConfigCommand::Schema(args) => {
-                let kind = if args.dprint {
-                    SchemaKind::Dprint
-                } else {
-                    SchemaKind::Jolt
-                };
-                let mut stdout = io::stdout().lock();
-                config_schema::write_schema(kind, &mut stdout)?;
-                stdout.flush()?;
+            ConfigCommand::Init => init(),
+            ConfigCommand::List { path } => {
+                for source in settings_for(path.as_deref())?.0.sources {
+                    println!("{}", source.display());
+                }
+                Ok(())
+            }
+            ConfigCommand::Resolve { path } => {
+                let (settings, file) = settings_for(path.as_deref())?;
+                print!("{}", to_toml(&settings.to_file())?);
+                if let Some(file) = file {
+                    let status = if settings.selects(&file) {
+                        "selected"
+                    } else {
+                        "not selected"
+                    };
+                    println!("\n# target {} is {status}", file.display());
+                }
+                Ok(())
+            }
+            ConfigCommand::Schema { dprint } => {
+                println!("{}", schema::render(dprint));
                 Ok(())
             }
         },
         Command::Completions { shell } => {
-            let mut command = Cli::command();
-            generate(shell, &mut command, "jolt", &mut io::stdout());
+            clap_complete::generate(shell, &mut Cli::command(), "jolt", &mut io::stdout());
             Ok(())
         }
     }
 }
 
-fn config_list(args: &ConfigTargetArgs) -> Result<(), CliError> {
+fn init() -> Result<()> {
     let cwd = current_dir()?;
-    let target = ConfigTarget::new(&cwd, args.path.as_deref());
-    let paths = fmt_config::discovered_config_paths_for_dir(&target.dir, &target.dir)?;
-
-    let mut stdout = io::stdout().lock();
-    for path in paths {
-        writeln!(stdout, "{}", path.display())?;
+    if let Some(existing) = CONFIG_FILES
+        .iter()
+        .map(|name| cwd.join(name))
+        .find(|path| path.exists())
+    {
+        return Err(format!("{}: config already exists", existing.display()));
     }
-    stdout.flush()?;
-    Ok(())
-}
-
-fn config_resolve(args: &ConfigTargetArgs) -> Result<(), CliError> {
-    let cwd = current_dir()?;
-    let target = ConfigTarget::new(&cwd, args.path.as_deref());
-    let mut config_graph = fmt_config::ConfigGraph::new(
-        &cwd,
-        target.dir.clone(),
-        fmt_config::FormatOptionsPatch::default(),
-        &[],
-        &[],
-        None,
-        false,
-    )?;
-    let config = config_graph.resolve_for_dir(&target.dir)?;
-    let rendered = fmt_config::render_resolved_config(&config, target.file.as_deref())?;
-
-    let mut stdout = io::stdout().lock();
-    stdout.write_all(rendered.as_bytes())?;
-    stdout.flush()?;
-    Ok(())
-}
-
-fn init_config() -> Result<(), CliError> {
-    let cwd = current_dir()?;
-    if let Some(existing) = existing_config_path(&cwd) {
-        return Err(CliError::new(format!(
-            "{}: config already exists",
-            existing.display()
-        )));
-    }
-
+    let schema_url = format!(
+        "{}/releases/download/{}/jolt-schema.json",
+        env!("CARGO_PKG_REPOSITORY"),
+        env!("CARGO_PKG_VERSION"),
+    );
     let path = cwd.join("jolt.toml");
-    fs::write(&path, initial_config_contents()?)?;
+    let contents = format!(
+        "#:schema {schema_url}\n{}",
+        to_toml(&ConfigFile::initial())?
+    );
+    fs::write(&path, contents).map_err(|error| format!("{}: {error}", path.display()))?;
     eprintln!("Created {}", path.display());
     Ok(())
 }
 
-fn current_dir() -> Result<PathBuf, CliError> {
-    env::current_dir()
-        .map_err(|error| CliError::new(format!("failed to read current directory: {error}")))
+/// The settings for a directory, or for a file (existing or not) and the file.
+fn settings_for(path: Option<&Path>) -> Result<(Settings, Option<PathBuf>)> {
+    let cwd = current_dir()?;
+    let path = path.map_or_else(|| cwd.clone(), |path| absolute(&cwd, path));
+    let (dir, file) = if path.is_file() || Language::from_path(&path).is_some() {
+        (path.parent().unwrap_or(&cwd).to_path_buf(), Some(path))
+    } else {
+        (path, None)
+    };
+    let none = ConfigArgs::none();
+    let settings =
+        Resolver::new(&none.sources(&cwd, FormatConfig::default()), &dir)?.settings(&dir)?;
+    Ok((settings, file))
 }
 
-struct ConfigTarget {
-    dir: PathBuf,
-    file: Option<PathBuf>,
+fn to_toml(config: &ConfigFile) -> Result<String> {
+    toml::to_string(config).map_err(|error| format!("failed to serialize config: {error}"))
 }
 
-impl ConfigTarget {
-    fn new(cwd: &Path, path: Option<&Path>) -> Self {
-        let path = path.map_or_else(
-            || cwd.to_path_buf(),
-            |path| fmt_config::absolutize(cwd, path),
-        );
-
-        if path.is_file() || is_supported_source_path(&path) {
-            let dir = path
-                .parent()
-                .map_or_else(|| cwd.to_path_buf(), Path::to_path_buf);
-            return Self {
-                dir,
-                file: Some(path),
-            };
-        }
-
-        Self {
-            dir: path,
-            file: None,
-        }
-    }
-}
-
-fn is_supported_source_path(path: &Path) -> bool {
-    detect_language(path).is_some()
-}
-
-fn existing_config_path(cwd: &Path) -> Option<PathBuf> {
-    [
-        cwd.join("jolt.toml"),
-        cwd.join(".config/jolt.toml"),
-        cwd.join(".config/jolt/config.toml"),
-    ]
-    .into_iter()
-    .find(|path| path.exists())
-}
-
-fn initial_config_contents() -> Result<String, CliError> {
-    let config = default_file_config();
-    let toml = toml_edit::ser::to_string_pretty(&config)
-        .map_err(|error| CliError::new(format!("failed to serialize default config: {error}")))?;
-    let mut document = toml
-        .parse::<toml_edit::DocumentMut>()
-        .map_err(|error| CliError::new(format!("failed to parse default config: {error}")))?;
-    document
-        .decor_mut()
-        .set_prefix(format!("#:schema {}\n", jolt_schema_url()));
-    Ok(document.to_string())
-}
-
-fn jolt_schema_url() -> String {
-    format!(
-        "{}/releases/download/{}/jolt-schema.json",
-        env!("CARGO_PKG_REPOSITORY"),
-        env!("CARGO_PKG_VERSION"),
-    )
+fn current_dir() -> Result<PathBuf> {
+    env::current_dir().map_err(|error| format!("failed to read current directory: {error}"))
 }

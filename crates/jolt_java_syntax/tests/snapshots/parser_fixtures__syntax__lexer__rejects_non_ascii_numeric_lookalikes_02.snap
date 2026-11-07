@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+0xＡ
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      IntegerLiteral "0x" @ 0..2
+      Identifier "Ａ" @ 2..5
+  Eof "" @ 5..5
+
+diagnostics:
+code=java.lex.invalid_numeric_literal range=0..2 message=invalid numeric literal
+code=java.parse.unexpected_syntax range=0..2 message=unexpected token at top level

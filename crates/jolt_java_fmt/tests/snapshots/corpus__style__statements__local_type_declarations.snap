@@ -8,8 +8,7 @@ class Example {
     class Local {
       int value;
 
-      void touch() {
-      }
+      void touch() {}
     }
 
     interface Worker {

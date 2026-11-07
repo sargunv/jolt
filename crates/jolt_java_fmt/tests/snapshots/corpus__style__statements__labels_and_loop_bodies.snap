@@ -5,8 +5,8 @@ expression: snapshot
 formatted:
 class Example {
   void run(java.util.List<String> values) {
-    retry /* label */:
-    for ( /* each */ String value : values) {
+    retry /* label */ :
+    for (/* each */ String value : values) {
       if (skip(value)) {
         continue retry /* again */;
       }
@@ -15,16 +15,13 @@ class Example {
       }
       process(value);
     }
-    empty /* label */: /* body */
-    ;
-    while ( /* while */ ready()) {
-    }
+    empty /* label */ : /* body */ ;
+    while (/* while */ ready()) {}
     do {
       processNext();
-    } while ( /* done */ hasNext());
-    for ( /* forever */ ;;) {
-    }
-    synchronized ( /* lock */ this) {
+    } while (/* done */ hasNext());
+    for (/* forever */;;) {}
+    synchronized (/* lock */ this) {
       check();
     }
   }

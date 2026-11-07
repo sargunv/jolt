@@ -6,17 +6,14 @@ formatted:
 sealed interface Shape extends Drawable permits Circle {
   int SIDES = 0;
 
-  private static void helper() {
-  }
+  private static void helper() {}
 
   void draw();
 }
 
-non-sealed interface Circle extends Shape {
-}
+non-sealed interface Circle extends Shape {}
 
-interface Drawable {
-}
+interface Drawable {}
 
 @interface JsonName {
   String value() default "";

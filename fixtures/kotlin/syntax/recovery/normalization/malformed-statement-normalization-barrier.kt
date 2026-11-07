@@ -1,5 +1,0 @@
-fun f() {
-first;
-);
-second;
-}

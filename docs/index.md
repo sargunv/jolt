@@ -1,6 +1,6 @@
 ---
 layout: home
 title: Jolt
-titleTemplate: Java and Kotlin formatter
+titleTemplate: Java formatter
 markdownStyles: false
 ---

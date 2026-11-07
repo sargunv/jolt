@@ -1,27 +1,17 @@
 <script setup lang="ts">
-import benchmark from "../../../../tools/bench/reports/machines/linux-x86-64-2b358ab7aaf1.json";
+import bench from "../../../bench.json";
 
 /**
- * Benchmark readout: one row per tool, bars on a linear scale against the
- * slowest tool. Jolt's bars are meant to look almost absent — that thinness
- * is the measurement, not a styling accident.
+ * Benchmark readout from docs/bench.json (`mise run bench`): one row per
+ * tool, bars on a linear scale against the slowest tool.
  */
-
-const corpus = benchmark.corpora.realistic;
-
-const rows = Object.entries(corpus.whole_cli.tools)
-  .map(([id, tool]) => ({
-    id,
-    label: tool.label,
-    seconds: tool.timing.summary.median_ns / 1_000_000_000,
-  }))
+const rows = Object.entries(bench.medianSeconds)
+  .map(([label, seconds]) => ({ label, seconds }))
   .sort((a, b) => a.seconds - b.seconds);
 
 const slowest = rows[rows.length - 1].seconds;
-
-const machine = benchmark.machine.processor.replace(/ w\/ .*/, "");
-const fileCount = corpus.manifest.files.toLocaleString("en-US");
-const megabytes = (corpus.manifest.source_bytes / 1_000_000).toFixed(1);
+const fileCount = bench.files.toLocaleString("en-US");
+const megabytes = (bench.bytes / 1_000_000).toFixed(1);
 </script>
 
 <template>
@@ -29,9 +19,9 @@ const megabytes = (corpus.manifest.source_bytes / 1_000_000).toFixed(1);
     <div class="bench-rows">
       <div
         v-for="row in rows"
-        :key="row.id"
+        :key="row.label"
         class="bench-row"
-        :class="{ 'bench-row--jolt': row.id.startsWith('jolt') }"
+        :class="{ 'bench-row--jolt': row.label.startsWith('jolt') }"
       >
         <span class="bench-label">{{ row.label }}</span>
         <span class="bench-track">
@@ -44,9 +34,9 @@ const megabytes = (corpus.manifest.source_bytes / 1_000_000).toFixed(1);
       </div>
     </div>
     <figcaption class="bench-caption">
-      Spring Framework sources, {{ fileCount }} files, {{ megabytes }}&hairsp;MB.
-      Whole-CLI median of five runs on {{ machine }}. Linear scale; lower is
-      better.
+      Formatting the Spring Framework sources, {{ fileCount }} files,
+      {{ megabytes }}&hairsp;MB. Median wall time on {{ bench.machine }}, at
+      {{ bench.commit }}. Linear scale; lower is better.
     </figcaption>
   </figure>
 </template>

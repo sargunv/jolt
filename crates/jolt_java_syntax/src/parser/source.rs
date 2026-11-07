@@ -1,97 +1,90 @@
 use std::ops::{Deref, DerefMut};
 
-use jolt_syntax::{NodeAnchor, PendingDiagnostic};
+use jolt_syntax::{LoopGuard, ParseOutput};
 
-use crate::JavaSyntaxKind;
-use crate::language::JavaLanguage;
+use crate::lexer::JavaLexer;
+use crate::{JavaLanguage, JavaSyntaxKind};
 
-use super::JavaParseDiagnosticCode;
+use super::codes;
+use super::grammar::ScanTables;
 
-pub(super) type ParseEvents = jolt_syntax::ParseEvents;
-pub(super) type TokenBuffer<'source> = jolt_syntax::TokenBuffer<'source, JavaLanguage>;
-pub(super) use jolt_syntax::TokenCursor;
+pub(super) use jolt_syntax::MAX_DEPTH;
 
-// Resource budget for simultaneously active recursive grammar owners. This is
-// not source depth: one construct may activate more than one owner. The value
-// is calibrated with headroom for the optimized plugin's 1 MiB WASM stack.
-pub(super) const MAX_RECURSIVE_PARSE_OWNERS: usize = 128;
-
+/// The Java parser: the shared parser plus the Java lookahead table and the
+/// generic nesting depth of the current speculative scan.
 pub(super) struct Parser<'source> {
     pub(super) inner: jolt_syntax::Parser<'source, JavaLanguage>,
     pub(super) lookahead_summary: LookaheadSummary,
+    pub(super) scan_tables: ScanTables,
     pub(super) generic_depth: usize,
-    syntax_nesting_depth: usize,
 }
 
 #[derive(Default)]
 pub(super) struct LookaheadSummary {
     pub(super) base: usize,
     pub(super) boundaries: Option<Vec<usize>>,
+    /// Per token: one past the end of the modifier run starting there, or
+    /// zero when unknown. Allocated on the first modifier query.
+    pub(super) modifier_ends: Vec<usize>,
 }
 
 impl<'source> Parser<'source> {
     pub(super) fn new(source: &'source str) -> Self {
         Self {
-            inner: jolt_syntax::Parser::new(source),
+            inner: jolt_syntax::Parser::new(source, JavaLexer::new(source)),
             lookahead_summary: LookaheadSummary::default(),
+            scan_tables: ScanTables::default(),
             generic_depth: 0,
-            syntax_nesting_depth: 0,
         }
     }
 
-    pub(super) fn finish(self) -> ParseEvents {
+    pub(super) fn finish(self) -> ParseOutput {
         debug_assert_eq!(self.generic_depth, 0, "generic depth must unwind at EOF");
-        debug_assert_eq!(
-            self.syntax_nesting_depth, 0,
-            "syntax nesting depth must unwind at EOF"
-        );
         self.inner.finish()
     }
 
-    pub(super) fn with_syntax_nesting<T>(
-        &mut self,
-        parse: impl FnOnce(&mut Self) -> T,
-    ) -> Option<T> {
-        if self.syntax_nesting_depth >= MAX_RECURSIVE_PARSE_OWNERS {
-            return None;
-        }
-
-        self.syntax_nesting_depth += 1;
-        let parsed = parse(self);
-        self.syntax_nesting_depth -= 1;
-        Some(parsed)
+    pub(super) fn at_eof(&self) -> bool {
+        self.at(JavaSyntaxKind::Eof)
     }
 
-    pub(super) fn pending_excessive_syntax_nesting(&mut self) -> PendingDiagnostic {
-        self.pending_error(
-            JavaParseDiagnosticCode::ExcessiveSyntaxNesting.id(),
-            "syntax is too deeply nested to parse safely",
-        )
-    }
-
-    pub(super) fn expect_required(
-        &mut self,
-        kind: JavaSyntaxKind,
-        message: &str,
-        owner: NodeAnchor,
-        slot: u16,
-    ) {
-        if !self.eat(kind) {
-            let diagnostic = self.pending_expected(message);
-            self.missing_required_slot(owner, slot, [diagnostic]);
+    /// Consumes tokens up to (not including) index `end`, stopping at EOF.
+    pub(super) fn bump_to(&mut self, end: usize) {
+        while self.position() < end && !self.at_eof() {
+            self.bump();
         }
     }
 
-    pub(super) fn expect_contextual_required(
-        &mut self,
-        text: &str,
-        message: &str,
-        owner: NodeAnchor,
-        slot: u16,
-    ) {
+    pub(super) fn current_text(&self) -> &'source str {
+        self.nth_text(0)
+    }
+
+    pub(super) fn error_expected(&mut self, message: &str) {
+        self.error(codes::EXPECTED, message);
+    }
+
+    pub(super) fn error_expected_at(&mut self, n: usize, message: &str) {
+        self.error_at(n, codes::EXPECTED, message);
+    }
+
+    pub(super) fn error_unexpected(&mut self, message: &str) {
+        self.error(codes::UNEXPECTED, message);
+    }
+
+    pub(super) fn eat_contextual(&mut self, text: &str) -> bool {
+        let at = self.at_contextual(text);
+        if at {
+            self.bump();
+        }
+        at
+    }
+
+    pub(super) fn at_contextual(&self, text: &str) -> bool {
+        self.at(JavaSyntaxKind::Identifier) && self.current_text() == text
+    }
+
+    pub(super) fn expect_contextual(&mut self, text: &str, message: &str) {
         if !self.eat_contextual(text) {
-            let diagnostic = self.pending_expected(message);
-            self.missing_required_slot(owner, slot, [diagnostic]);
+            self.error_expected(message);
         }
     }
 }
@@ -110,39 +103,20 @@ impl DerefMut for Parser<'_> {
     }
 }
 
-pub(super) trait JavaParserExt {
-    fn eat_contextual(&mut self, text: &str) -> bool;
-    fn at_contextual(&mut self, text: &str) -> bool;
-    fn decimal_integer_boundary_literal_here(&mut self, message: &str);
-    fn restricted_type_identifier_here(&mut self, message: &str) -> PendingDiagnostic;
+impl<'source> AsMut<jolt_syntax::Parser<'source, JavaLanguage>> for Parser<'source> {
+    fn as_mut(&mut self) -> &mut jolt_syntax::Parser<'source, JavaLanguage> {
+        &mut self.inner
+    }
 }
 
-impl JavaParserExt for Parser<'_> {
-    fn eat_contextual(&mut self, text: &str) -> bool {
-        if self.at_contextual(text) {
-            self.bump();
-            true
-        } else {
-            false
-        }
+impl Parser<'_> {
+    /// See [`jolt_syntax::Parser::nested`].
+    pub(super) fn nested<T>(&mut self, parse: impl FnOnce(&mut Self) -> T) -> Option<T> {
+        jolt_syntax::Parser::nested(self, parse)
     }
 
-    fn at_contextual(&mut self, text: &str) -> bool {
-        self.current_kind() == JavaSyntaxKind::Identifier && self.current_text() == Some(text)
-    }
-
-    fn decimal_integer_boundary_literal_here(&mut self, message: &str) {
-        let diagnostic = self.pending_error(
-            JavaParseDiagnosticCode::DecimalIntegerBoundaryLiteral.id(),
-            message,
-        );
-        self.report_non_structural(diagnostic);
-    }
-
-    fn restricted_type_identifier_here(&mut self, message: &str) -> PendingDiagnostic {
-        self.pending_error(
-            JavaParseDiagnosticCode::RestrictedTypeIdentifier.id(),
-            message,
-        )
+    /// Runs `guard` against the shared parser; see [`LoopGuard::check`].
+    pub(super) fn check(&mut self, guard: &mut LoopGuard) -> bool {
+        guard.check(&mut self.inner)
     }
 }

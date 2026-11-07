@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { LanguageSupport } from "@codemirror/language";
 import { java } from "@codemirror/lang-java";
 import SourceEditor from "./SourceEditor.vue";
 import ColumnRuler from "./ColumnRuler.vue";
 import CodeFrame from "./CodeFrame.vue";
-import { kotlinLanguage } from "../kotlinLanguage";
 import { useJoltFormatter } from "../composables/useJoltFormatter";
 import {
   formatErrorSummary,
@@ -14,43 +12,10 @@ import {
 } from "../parseFormatError";
 
 /**
- * The fit-or-break instrument. Two scrollable sample files, formatted live
+ * The fit-or-break instrument. A scrollable sample file, formatted live
  * by the real WASM engine, at a line width the reader sets by dragging the
  * column edge.
  */
-
-const WORKSPACE_KT = `package dev.sargunv.jolt.playground
-
-class Registry<T : Any> {
-  private val entries = mutableMapOf<String, T>()
-
-  fun register(name: String, entry: T): T? {
-    require(name.isNotBlank()) { "blank name" }
-    return entries.put(name, entry)
-  }
-
-  inline fun <reified R : T> find(name: String, fallback: R? = null): R? {
-    return entries[name] as? R ?: fallback
-  }
-}
-
-data class Artifact(val group: String, val name: String, val version: Version, val targets: Set<Target>)
-
-fun <K, V> Map<K, V>.invert(): Map<V, K> = entries.associate { (key, value) -> value to key }
-
-val workspace = project(group = "dev.sargunv", name = "jolt") {
-  targets {
-    jvm { toolchain = 21 }
-    androidLibrary { minSdk = 26; compileSdk = 35 }
-  }
-  dependencies {
-    implementation("com.squareup.okio:okio:3.9.0")
-    testImplementation(kotlin("test"))
-  }
-}
-
-fun describe(a: Artifact) = a.targets.sortedBy { it.ordinal }.joinToString(separator = "|", prefix = "\${a.group}:") { it.name.lowercase() }
-`;
 
 const RESOLVER_JAVA = `package dev.sargunv.jolt.playground;
 
@@ -84,15 +49,7 @@ public final class Resolver {
 }
 `;
 
-const kotlin = new LanguageSupport(kotlinLanguage);
-
 const SAMPLES = [
-  {
-    label: "WORKSPACE.KT",
-    path: "Example.kt",
-    language: kotlin,
-    source: WORKSPACE_KT,
-  },
   {
     label: "RESOLVER.JAVA",
     path: "Resolver.java",
@@ -127,7 +84,10 @@ const sample = computed(() => SAMPLES[activeSample.value]);
 const lintDiagnostics = computed(() => {
   if (!formatError.value) return [];
 
-  const diagnostics = toLintDiagnostics(parseFormatError(formatError.value));
+  const diagnostics = toLintDiagnostics(
+    parseFormatError(formatError.value),
+    sample.value.source,
+  );
   if (diagnostics.length > 0) return diagnostics;
 
   return [

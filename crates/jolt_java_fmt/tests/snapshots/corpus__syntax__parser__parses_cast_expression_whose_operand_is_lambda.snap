@@ -5,10 +5,7 @@ expression: snapshot
 formatted:
 class CastLambda {
   void method() {
-    Runnable runnable =
-      (Runnable)
-        () -> {
-        };
+    Runnable runnable = (Runnable) () -> {};
   }
 }
 

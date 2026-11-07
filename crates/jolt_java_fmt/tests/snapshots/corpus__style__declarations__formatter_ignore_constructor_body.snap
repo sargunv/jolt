@@ -12,8 +12,7 @@ class Example {
     int after = 3;
   }
 
-  Example(int a, int b) {
-  }
+  Example(int a, int b) {}
 }
 
 diagnostics:

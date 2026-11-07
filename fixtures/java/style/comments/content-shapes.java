@@ -24,6 +24,24 @@ last line after a blank
 */
 void plainMultiline() {}
 
+/**
+ * Code in a doc comment keeps its indentation:
+ * <pre>
+ *   if (ready) {
+ *       run();
+ *   }
+ * </pre>
+ */
+void preformatted() {}
+
+void art() {
+        /*
+           +---+
+           | a |
+           +---+
+        */
+}
+
 String markers="/* not a comment */ // /**/";
 String unicode="Καλημέρα 世界";
 }

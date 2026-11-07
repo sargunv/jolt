@@ -1,0 +1,43 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@SuppressWarnings({ "unchecked", "rawtypes" })
+@Retention(RetentionPolicy.RUNTIME)
+@Target({})
+@Marker()
+@Nested(@Inner(value = 1, other = @Leaf))
+@Mapping(
+  name = "averyveryverylongname",
+  path = "/some/very/long/request/path",
+  method = RequestMethod.GET
+)
+@Values(
+  names = {
+    "averyveryverylongname",
+    "anotherveryverylongname",
+    "athirdveryverylongname",
+  }
+)
+@Trailing(
+  values = {
+    1,
+    2,
+  }
+)
+@Expression(value = Constants.PREFIX + "suffix", count = 1 << 4)
+class Annotated {
+  @Override
+  public String toString() {
+    return "";
+  }
+
+  void params(
+    @Named("a") String a,
+    @Deprecated @Named(value = "b") final String b
+  ) {}
+}
+
+diagnostics:
+(none)

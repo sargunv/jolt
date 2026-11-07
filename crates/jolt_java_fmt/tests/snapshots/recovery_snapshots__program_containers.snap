@@ -16,14 +16,11 @@ package alpha;
 
 package beta;
 
-module first {
-}
+module first {}
 
-module second {
-}
+module second {}
 
-class AfterModules {
-}
+class AfterModules {}
 
 diagnostics:
 (none)

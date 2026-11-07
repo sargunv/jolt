@@ -1,0 +1,22 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"hello\
+world"
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StringLiteral "\"hello\\" @ 0..7
+      Identifier "world" @ 8..13 leading=[Newline "\n"]
+      StringLiteral "\"" @ 13..14
+  Eof "" @ 14..14
+
+diagnostics:
+code=java.lex.invalid_escape_sequence range=7..8 message=invalid escape sequence
+code=java.lex.unterminated_string_literal range=0..7 message=unterminated string literal
+code=java.lex.unterminated_string_literal range=13..14 message=unterminated string literal
+code=java.parse.unexpected_syntax range=0..7 message=unexpected token at top level

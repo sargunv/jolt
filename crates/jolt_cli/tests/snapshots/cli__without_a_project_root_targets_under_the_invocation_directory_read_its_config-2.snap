@@ -1,0 +1,16 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"config\", \"resolve\", \"a/A.java\"], \"\")"
+---
+$ jolt config resolve a/A.java
+status: 0
+--- stdout
+[format]
+line-width = 80
+indent-width = 4
+use-tabs = false
+
+[files]
+include = ["**/*.java"]
+
+# target $TEMP/a/A.java is selected

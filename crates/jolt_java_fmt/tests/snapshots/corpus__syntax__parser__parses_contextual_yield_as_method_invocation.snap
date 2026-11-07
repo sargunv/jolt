@@ -8,8 +8,7 @@ class ContextualYield {
     this.yield();
   }
 
-  void yield() {
-  }
+  void yield() {}
 }
 
 diagnostics:

@@ -5,8 +5,7 @@ expression: snapshot
 formatted:
 import module java.base;
 
-class ModuleImportName {
-}
+class ModuleImportName {}
 
 diagnostics:
 (none)

@@ -3,8 +3,7 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-class varfilename {
-}
+class varfilename {}
 
 class ContextualKeywordAdjacency {
   void method(int non, int sealedclass) {

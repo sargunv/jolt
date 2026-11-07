@@ -1,0 +1,8 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"-\"], NESTED)"
+---
+$ jolt fmt -
+status: 1
+--- stderr
+$TEMP/jolt.toml: invalid glob pattern `[`: error parsing glob '[': unclosed character class; missing ']'

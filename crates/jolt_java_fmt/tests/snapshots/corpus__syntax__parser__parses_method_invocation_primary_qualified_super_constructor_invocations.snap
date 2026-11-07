@@ -20,14 +20,11 @@ class MethodInvocationQualifiedSuper {
 }
 
 class Base {
-  Base() {
-  }
+  Base() {}
 
-  Base(int value) {
-  }
+  Base(int value) {}
 
-  <T> Base(T value) {
-  }
+  <T> Base(T value) {}
 }
 
 diagnostics:

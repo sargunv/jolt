@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class UnterminatedTextBlockAtEof {
+  String s = """
+    abc
+
+formatted:
+class UnterminatedTextBlockAtEof {
+  String s =
+    """
+    abc
+
+diagnostics:
+code=java.lex.unterminated_text_block range=48..59 message=unterminated text block
+code=java.parse.expected_syntax range=59..59 message=expected `;` after field declaration
+code=java.parse.expected_syntax range=59..59 message=expected `}` after type body

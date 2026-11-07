@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+true false
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      BooleanLiteral "true" @ 0..4 trailing=[Whitespace " "]
+      BooleanLiteral "false" @ 5..10
+  Eof "" @ 10..10
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..4 message=unexpected token at top level

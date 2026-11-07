@@ -37,8 +37,7 @@ class KeywordCommentWithoutOperand {
 formatted:
 class KeywordCommentWithoutOperand {
   void throwsNothing() {
-    throw // a comment ends the line and no operand follows it
-      ;
+    throw ; // a comment ends the line and no operand follows it
   }
 
   void throwsRecoveredOperand() {
@@ -47,8 +46,7 @@ class KeywordCommentWithoutOperand {
   }
 
   void assertsNothing() {
-    assert // a comment ends the line and no condition follows it
-      ;
+    assert ; // a comment ends the line and no condition follows it
   }
 
   void assertsNothingWithMessage() {
@@ -67,10 +65,10 @@ class KeywordCommentWithoutOperand {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(129), end: TextSize(130) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(244), end: TextSize(245) }) message=expected expression
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(244), end: TextSize(245) }) message=unexpected token in expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(348), end: TextSize(349) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(466), end: TextSize(467) }) message=expected expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(655), end: TextSize(656) }) message=expected expression
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(655), end: TextSize(656) }) message=unexpected token in expression
+code=java.parse.expected_syntax range=129..130 message=expected expression
+code=java.parse.expected_syntax range=244..245 message=expected expression
+code=java.parse.unexpected_syntax range=244..245 message=unexpected token in expression
+code=java.parse.expected_syntax range=348..349 message=expected expression
+code=java.parse.expected_syntax range=466..467 message=expected expression
+code=java.parse.expected_syntax range=655..656 message=expected expression
+code=java.parse.unexpected_syntax range=655..656 message=unexpected token in expression

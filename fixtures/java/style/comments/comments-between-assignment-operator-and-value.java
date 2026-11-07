@@ -26,4 +26,7 @@ class CommentsBetweenAssignmentAndValue {
   int someLongMethodCall(int first, int second) {
     return first + second;
   }
+
+  java.util.function.BiFunction<Integer, Integer, Integer> longDeclaration = /* c */
+      (x, y) -> y;
 }

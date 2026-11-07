@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+0e-999999 0x0p-999999 0e999999 0x0p999999 0f 0d
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      FloatingPointLiteral "0e-999999" @ 0..9 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x0p-999999" @ 10..21 trailing=[Whitespace " "]
+      FloatingPointLiteral "0e999999" @ 22..30 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x0p999999" @ 31..41 trailing=[Whitespace " "]
+      FloatingPointLiteral "0f" @ 42..44 trailing=[Whitespace " "]
+      FloatingPointLiteral "0d" @ 45..47
+  Eof "" @ 47..47
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..9 message=unexpected token at top level

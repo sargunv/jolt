@@ -1,0 +1,19 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"config\", \"init\"], \"\")"
+---
+$ jolt config init
+status: 0
+--- stderr
+Created $TEMP/jolt.toml
+--- wrote jolt.toml
+#:schema https://github.com/sargunv/jolt/releases/download/0.20260721.0/jolt-schema.json
+root = true
+
+[format]
+line-width = 80
+indent-width = 2
+use-tabs = false
+
+[files]
+include = ["**/*.java"]

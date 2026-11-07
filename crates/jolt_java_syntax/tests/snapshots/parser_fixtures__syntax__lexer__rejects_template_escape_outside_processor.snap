@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"Hello \{name}"
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StringLiteral "\"Hello \\{name}\"" @ 0..15
+  Eof "" @ 16..16 leading=[Newline "\n"]
+
+diagnostics:
+code=java.lex.invalid_escape_sequence range=8..9 message=invalid escape sequence
+code=java.parse.unexpected_syntax range=0..15 message=unexpected token at top level

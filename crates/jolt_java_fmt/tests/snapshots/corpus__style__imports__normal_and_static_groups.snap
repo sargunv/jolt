@@ -11,8 +11,7 @@ import module.foo.Bar;
 import static a.Alpha.alpha;
 import static z.Zed.z;
 
-class A {
-}
+class A {}
 
 diagnostics:
 (none)

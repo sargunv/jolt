@@ -5,8 +5,7 @@ expression: snapshot
 formatted:
 class ReceiverOuter {
   class ReceiverInner {
-    void method(ReceiverOuter ReceiverOuter.this) {
-    }
+    void method(ReceiverOuter ReceiverOuter.this) {}
   }
 }
 

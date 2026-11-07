@@ -1,0 +1,39 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Patterns {
+  record Point(int x, int y) {}
+
+  record Line(Point start, Point end) {}
+
+  boolean check(Object o) {
+    if (o instanceof final String s) {
+      return s.isEmpty();
+    }
+    if (o instanceof Point(int x, var y)) {
+      return x == y;
+    }
+    if (o instanceof Line(Point(var x1, _), Point _)) {
+      return x1 > 0;
+    }
+    return o instanceof int[] array && array.length > 0;
+  }
+
+  String describe(Object o) {
+    return switch (o) {
+      case Point(int x, int y) when x == y -> "diagonal";
+      case Line(Point(var x1, var y1), Point(var x2, var y2)) -> "line";
+      case Line(
+          Point(var firstStartCoordinate, var secondStartCoordinate),
+          Point endPoint
+        ) -> "long";
+      case String _ -> "string";
+      default -> "other";
+    };
+  }
+}
+
+diagnostics:
+(none)

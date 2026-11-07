@@ -1,5 +1,6 @@
-use super::{JavaParserExt, JavaSyntaxKind, Parser, StopSet, support::SeparatedElement};
-use jolt_syntax::{Marker, NodeAnchor, PendingDiagnostic};
+use super::{EXPRESSION_STOPS, JavaSyntaxKind, Parser, StopSet, support::SeparatedElement};
+use crate::parser::codes;
+use jolt_syntax::CompletedMarker;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) enum LambdaParameterStyle {
@@ -15,82 +16,56 @@ pub(super) struct ParsedLambdaParameter {
 }
 
 impl Parser<'_> {
-    fn complete_bogus_expression(
-        &mut self,
-        expression: Marker,
-        diagnostic: PendingDiagnostic,
-    ) -> jolt_syntax::CompletedMarker {
-        self.complete_recovery(expression, JavaSyntaxKind::BogusExpression, [diagnostic])
-    }
-
-    fn complete_bogus_recovery(
-        &mut self,
-        node: Marker,
-        diagnostic: PendingDiagnostic,
-        kind: JavaSyntaxKind,
-    ) -> jolt_syntax::CompletedMarker {
-        self.complete_recovery(node, kind, [diagnostic])
-    }
-
-    fn pending_invalid_statement_expression(&mut self, message: &str) -> PendingDiagnostic {
-        self.pending_error(
-            crate::parser::JavaParseDiagnosticCode::InvalidStatementExpression.id(),
-            message,
-        )
-    }
-
-    fn pending_unqualified_yield_method_invocation(&mut self, message: &str) -> PendingDiagnostic {
-        self.pending_error(
-            crate::parser::JavaParseDiagnosticCode::UnqualifiedYieldMethodInvocation.id(),
-            message,
-        )
-    }
-
     fn expected_bogus_expression(
         &mut self,
         message: &str,
         consume: bool,
     ) -> jolt_syntax::CompletedMarker {
         let expression = self.start();
-        let diagnostic = self.pending_expected(message);
+        self.error_expected(message);
         if consume && !self.at_eof() {
             self.bump();
         }
-        self.complete_bogus_expression(expression, diagnostic)
+        self.complete(expression, JavaSyntaxKind::Bogus)
     }
 
-    fn completed_is_bogus_expression(expression: &jolt_syntax::CompletedMarker) -> bool {
-        JavaSyntaxKind::from_raw(expression.kind()) == Some(JavaSyntaxKind::BogusExpression)
+    fn completed_is_bogus_expression(expression: CompletedMarker) -> bool {
+        JavaSyntaxKind::from_raw(expression.kind()) == JavaSyntaxKind::Bogus
     }
 
     pub(super) fn consume_statement_expression_until(&mut self, stops: &[JavaSyntaxKind]) {
-        if self.at_eof() || stops.contains(&self.current_kind()) {
+        if self.at_eof() || stops.contains(&self.current()) {
             let error = self.start();
-            let diagnostic =
-                self.pending_invalid_statement_expression("expected statement expression");
-            self.complete_bogus_expression(error, diagnostic);
+            self.error(
+                codes::INVALID_STATEMENT_EXPRESSION,
+                "expected statement expression",
+            );
+            self.complete(error, JavaSyntaxKind::Bogus);
             return;
         }
 
-        let start_kind = self.current_kind();
+        let start_kind = self.current();
         let mut expression = self.parse_expression();
         if !Self::is_statement_expression(expression.kind(), start_kind)
-            && !Self::completed_is_bogus_expression(&expression)
+            && !Self::completed_is_bogus_expression(expression)
         {
             let error = self.precede(expression);
-            let diagnostic =
-                self.pending_invalid_statement_expression("expected statement expression");
-            expression = self.complete_bogus_expression(error, diagnostic);
+            self.error(
+                codes::INVALID_STATEMENT_EXPRESSION,
+                "expected statement expression",
+            );
+            expression = self.complete(error, JavaSyntaxKind::Bogus);
         }
 
-        if !self.at_eof() && !stops.contains(&self.current_kind()) {
+        let stop = |kind| kind == JavaSyntaxKind::RBrace || stops.contains(&kind);
+        if !self.at_eof() && !stop(self.current()) {
             let error = self.precede(expression);
-            let diagnostic = self
-                .pending_invalid_statement_expression("unexpected token in statement expression");
-            while !self.at_eof() && !stops.contains(&self.current_kind()) {
-                self.bump();
-            }
-            self.complete_bogus_expression(error, diagnostic);
+            self.error(
+                codes::INVALID_STATEMENT_EXPRESSION,
+                "unexpected token in statement expression",
+            );
+            self.skip_balanced(stop);
+            self.complete(error, JavaSyntaxKind::Bogus);
         }
     }
 
@@ -100,13 +75,11 @@ impl Parser<'_> {
     ) -> bool {
         matches!(
             JavaSyntaxKind::from_raw(expression),
-            Some(
-                JavaSyntaxKind::AssignmentExpression
-                    | JavaSyntaxKind::MethodInvocationExpression
-                    | JavaSyntaxKind::ObjectCreationExpression
-                    | JavaSyntaxKind::PostfixExpression
-            )
-        ) || JavaSyntaxKind::from_raw(expression) == Some(JavaSyntaxKind::UnaryExpression)
+            JavaSyntaxKind::AssignmentExpression
+                | JavaSyntaxKind::MethodInvocationExpression
+                | JavaSyntaxKind::ObjectCreationExpression
+                | JavaSyntaxKind::PostfixExpression
+        ) || JavaSyntaxKind::from_raw(expression) == JavaSyntaxKind::UnaryExpression
             && matches!(
                 start_kind,
                 JavaSyntaxKind::PlusPlus | JavaSyntaxKind::MinusMinus
@@ -115,20 +88,20 @@ impl Parser<'_> {
 
     pub(super) fn parse_expression_until<'a>(&mut self, stops: impl Into<StopSet<'a>>) {
         let stops = stops.into();
-        if self.at_eof() || stops.contains(self.current_kind()) {
+        if self.at_eof() || stops.contains(self.current()) {
             self.expected_bogus_expression("expected expression", false);
             return;
         }
 
         let expression = self.parse_expression();
 
-        if !self.at_eof() && !stops.contains(self.current_kind()) {
+        // A `}` at this level closes an enclosing block or body.
+        let stop = |kind| kind == JavaSyntaxKind::RBrace || stops.contains(kind);
+        if !self.at_eof() && !stop(self.current()) {
             let error = self.precede(expression);
-            let diagnostic = self.pending_unexpected("unexpected token in expression");
-            while !self.at_eof() && !stops.contains(self.current_kind()) {
-                self.bump();
-            }
-            self.complete_bogus_expression(error, diagnostic);
+            self.error_unexpected("unexpected token in expression");
+            self.skip_balanced(stop);
+            self.complete(error, JavaSyntaxKind::Bogus);
         }
     }
 
@@ -137,20 +110,20 @@ impl Parser<'_> {
         stops: impl Into<StopSet<'a>>,
     ) {
         let stops = stops.into();
-        if self.at_eof() || stops.contains(self.current_kind()) {
+        if self.at_eof() || stops.contains(self.current()) {
             self.expected_bogus_expression("expected expression", false);
             return;
         }
 
         let expression = self.parse_assignment_expression_without_leading_lambda();
 
-        if !self.at_eof() && !stops.contains(self.current_kind()) {
+        // A `}` at this level closes an enclosing block or body.
+        let stop = |kind| kind == JavaSyntaxKind::RBrace || stops.contains(kind);
+        if !self.at_eof() && !stop(self.current()) {
             let error = self.precede(expression);
-            let diagnostic = self.pending_unexpected("unexpected token in expression");
-            while !self.at_eof() && !stops.contains(self.current_kind()) {
-                self.bump();
-            }
-            self.complete_bogus_expression(error, diagnostic);
+            self.error_unexpected("unexpected token in expression");
+            self.skip_balanced(stop);
+            self.complete(error, JavaSyntaxKind::Bogus);
         }
     }
 
@@ -159,12 +132,11 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_assignment_expression(&mut self) -> jolt_syntax::CompletedMarker {
-        if let Some(expression) = self.with_syntax_nesting(Self::parse_assignment_expression_inner)
-        {
+        if let Some(expression) = self.nested(Self::parse_assignment_expression_inner) {
             return expression;
         }
 
-        self.parse_excessive_expression(None)
+        self.recover_too_deep(EXPRESSION_STOPS)
     }
 
     fn parse_assignment_expression_inner(&mut self) -> jolt_syntax::CompletedMarker {
@@ -173,73 +145,42 @@ impl Parser<'_> {
         }
 
         let lhs = self.parse_conditional_expression();
-        let Some(operator_len) = self.assignment_operator_len() else {
-            return lhs;
-        };
-
-        let lhs = if Self::is_assignment_left_hand_side(lhs.kind())
-            || Self::completed_is_bogus_expression(&lhs)
-        {
-            lhs
-        } else {
-            let error = self.precede(lhs);
-            let diagnostic = self.pending_expected("expected assignment left-hand side");
-            self.complete_bogus_recovery(error, diagnostic, JavaSyntaxKind::BogusAssignmentTarget)
-        };
-
-        let assignment = self.precede(lhs);
-        self.parse_assignment_operator(operator_len);
-        self.parse_assignment_expression();
-        self.complete(assignment, JavaSyntaxKind::AssignmentExpression)
+        self.parse_assignment_rest(lhs)
     }
 
-    pub(super) fn parse_assignment_expression_without_leading_lambda(
-        &mut self,
-    ) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_assignment_expression_without_leading_lambda(&mut self) -> CompletedMarker {
         let lhs = self.parse_conditional_expression();
-        let Some(operator_len) = self.assignment_operator_len() else {
+        self.parse_assignment_rest(lhs)
+    }
+
+    /// Parses `= value` after `lhs` when an assignment operator follows.
+    fn parse_assignment_rest(&mut self, lhs: CompletedMarker) -> CompletedMarker {
+        if !self.at_assignment_operator() {
             return lhs;
-        };
+        }
 
         let lhs = if Self::is_assignment_left_hand_side(lhs.kind())
-            || Self::completed_is_bogus_expression(&lhs)
+            || Self::completed_is_bogus_expression(lhs)
         {
             lhs
         } else {
             let error = self.precede(lhs);
-            let diagnostic = self.pending_expected("expected assignment left-hand side");
-            self.complete_bogus_recovery(error, diagnostic, JavaSyntaxKind::BogusAssignmentTarget)
+            self.error_expected("expected assignment left-hand side");
+            self.complete(error, JavaSyntaxKind::Bogus)
         };
 
         let assignment = self.precede(lhs);
-        self.parse_assignment_operator(operator_len);
+        self.bump();
         self.parse_assignment_expression();
         self.complete(assignment, JavaSyntaxKind::AssignmentExpression)
-    }
-
-    fn parse_assignment_operator(&mut self, operator_len: usize) {
-        let composite_kind = match operator_len {
-            3 => Some(JavaSyntaxKind::RightShiftAssignmentOperator),
-            4 => Some(JavaSyntaxKind::UnsignedRightShiftAssignmentOperator),
-            _ => None,
-        };
-        let composite = composite_kind.map(|_| self.start());
-        for _ in 0..operator_len {
-            self.bump();
-        }
-        if let (Some(operator), Some(kind)) = (composite, composite_kind) {
-            self.complete(operator, kind);
-        }
     }
 
     pub(super) fn is_assignment_left_hand_side(kind: jolt_syntax::RawSyntaxKind) -> bool {
         matches!(
             JavaSyntaxKind::from_raw(kind),
-            Some(
-                JavaSyntaxKind::NameExpression
-                    | JavaSyntaxKind::FieldAccessExpression
-                    | JavaSyntaxKind::ArrayAccessExpression
-            )
+            JavaSyntaxKind::NameExpression
+                | JavaSyntaxKind::FieldAccessExpression
+                | JavaSyntaxKind::ArrayAccessExpression
         )
     }
 
@@ -251,11 +192,9 @@ impl Parser<'_> {
 
         let conditional = self.precede(condition);
         self.parse_expression();
-        self.expect_required(
+        self.expect(
             JavaSyntaxKind::Colon,
             "expected `:` in conditional expression",
-            conditional.anchor(),
-            crate::shape::conditional_expression::Slot::colon as u16,
         );
         self.parse_assignment_expression();
         self.complete(conditional, JavaSyntaxKind::ConditionalExpression)
@@ -267,14 +206,15 @@ impl Parser<'_> {
     ) -> jolt_syntax::CompletedMarker {
         let mut lhs = self.parse_unary_expression();
 
-        while let Some(operator_info) = self.binary_operator() {
-            if operator_info.precedence < minimum_precedence {
+        let mut guard = self.loop_guard();
+        while let Some(precedence) = self.binary_operator() {
+            if precedence < minimum_precedence || !self.check(&mut guard) {
                 break;
             }
 
             let binary = self.precede(lhs);
-            let operator = self.current_kind();
-            self.parse_binary_operator(operator_info.len);
+            let operator = self.current();
+            self.bump();
 
             if operator == JavaSyntaxKind::InstanceofKw {
                 if let Some(pattern_start) = self.pattern_start() {
@@ -295,7 +235,7 @@ impl Parser<'_> {
                     self.parse_reference_type();
                 }
             } else {
-                self.parse_binary_expression(operator_info.precedence + 1);
+                self.parse_binary_expression(precedence + 1);
             }
 
             let expression_kind = if operator == JavaSyntaxKind::InstanceofKw {
@@ -309,24 +249,6 @@ impl Parser<'_> {
         lhs
     }
 
-    fn parse_binary_operator(&mut self, operator_len: usize) {
-        let composite_kind = match operator_len {
-            2 if self.nth_kind(1) == JavaSyntaxKind::Assign => {
-                Some(JavaSyntaxKind::GreaterThanOrEqualOperator)
-            }
-            2 => Some(JavaSyntaxKind::RightShiftOperator),
-            3 => Some(JavaSyntaxKind::UnsignedRightShiftOperator),
-            _ => None,
-        };
-        let composite = composite_kind.map(|_| self.start());
-        for _ in 0..operator_len {
-            self.bump();
-        }
-        if let (Some(operator), Some(kind)) = (composite, composite_kind) {
-            self.complete(operator, kind);
-        }
-    }
-
     pub(super) fn parse_unary_expression(&mut self) -> jolt_syntax::CompletedMarker {
         self.parse_unary_expression_with_decimal_boundary_literal(false)
     }
@@ -335,13 +257,13 @@ impl Parser<'_> {
         &mut self,
         allow_decimal_boundary_literal: bool,
     ) -> jolt_syntax::CompletedMarker {
-        if let Some(expression) = self.with_syntax_nesting(|parser| {
-            parser.parse_unary_expression_inner(allow_decimal_boundary_literal)
-        }) {
+        if let Some(expression) = self
+            .nested(|parser| parser.parse_unary_expression_inner(allow_decimal_boundary_literal))
+        {
             return expression;
         }
 
-        self.parse_excessive_expression(None)
+        self.recover_too_deep(EXPRESSION_STOPS)
     }
 
     fn parse_unary_expression_inner(
@@ -349,7 +271,7 @@ impl Parser<'_> {
         allow_decimal_boundary_literal: bool,
     ) -> jolt_syntax::CompletedMarker {
         if matches!(
-            self.current_kind(),
+            self.current(),
             JavaSyntaxKind::PlusPlus
                 | JavaSyntaxKind::MinusMinus
                 | JavaSyntaxKind::Plus
@@ -358,9 +280,9 @@ impl Parser<'_> {
                 | JavaSyntaxKind::Tilde
         ) {
             let unary = self.start();
-            let operator = self.current_kind();
+            let operator = self.current();
             self.bump();
-            if Self::is_expression_recovery_boundary(self.current_kind()) {
+            if Self::is_expression_recovery_boundary(self.current()) {
                 self.expected_bogus_expression("expected expression", false);
             } else {
                 self.parse_unary_expression_with_decimal_boundary_literal(
@@ -375,84 +297,6 @@ impl Parser<'_> {
         }
 
         self.parse_postfix_expression(allow_decimal_boundary_literal)
-    }
-
-    fn parse_excessive_expression(
-        &mut self,
-        extra_stop: Option<JavaSyntaxKind>,
-    ) -> jolt_syntax::CompletedMarker {
-        self.parse_excessive_expression_with_policy(extra_stop, false)
-    }
-
-    pub(super) fn parse_excessive_annotation_expression(
-        &mut self,
-        stop: JavaSyntaxKind,
-    ) -> jolt_syntax::CompletedMarker {
-        self.parse_excessive_expression_with_policy(Some(stop), true)
-    }
-
-    fn parse_excessive_expression_with_policy(
-        &mut self,
-        extra_stop: Option<JavaSyntaxKind>,
-        annotation_value: bool,
-    ) -> jolt_syntax::CompletedMarker {
-        let expression = self.start();
-        let diagnostic = self.pending_excessive_syntax_nesting();
-        let end = self.excessive_expression_end(extra_stop, annotation_value);
-        while self.position() < end {
-            self.bump();
-        }
-        self.complete_bogus_expression(expression, diagnostic)
-    }
-
-    fn excessive_expression_end(
-        &mut self,
-        extra_stop: Option<JavaSyntaxKind>,
-        annotation_value: bool,
-    ) -> usize {
-        let mut index = self.position();
-        let (mut parens, mut braces, mut brackets) = (0usize, 0usize, 0usize);
-        let mut questions = 0usize;
-        loop {
-            let kind = self.kind_at(index);
-            let outside = parens == 0 && braces == 0 && brackets == 0;
-            if kind == JavaSyntaxKind::Eof
-                || kind == JavaSyntaxKind::RParen && parens == 0
-                || kind == JavaSyntaxKind::RBrace && braces == 0
-                || kind == JavaSyntaxKind::RBracket && brackets == 0
-                || outside
-                    && (extra_stop == Some(kind)
-                        || matches!(kind, JavaSyntaxKind::Comma | JavaSyntaxKind::Semicolon)
-                        || !annotation_value
-                            && (kind == JavaSyntaxKind::Colon && questions == 0
-                                || matches!(
-                                    kind,
-                                    JavaSyntaxKind::Arrow
-                                        | JavaSyntaxKind::ElseKw
-                                        | JavaSyntaxKind::CaseKw
-                                        | JavaSyntaxKind::DefaultKw
-                                )
-                                || kind == JavaSyntaxKind::Identifier
-                                    && self.text_at(index) == Some("when")))
-            {
-                return index;
-            }
-
-            match kind {
-                JavaSyntaxKind::LParen => parens += 1,
-                JavaSyntaxKind::RParen => parens -= 1,
-                JavaSyntaxKind::LBrace => braces += 1,
-                JavaSyntaxKind::RBrace => braces -= 1,
-                JavaSyntaxKind::LBracket => brackets += 1,
-                JavaSyntaxKind::RBracket => brackets -= 1,
-                JavaSyntaxKind::Question if outside => questions += 1,
-                JavaSyntaxKind::Colon if outside => {
-                    questions = questions.saturating_sub(1);
-                }
-                _ => {}
-            }
-            index += 1;
-        }
     }
 
     /// Delimiters owned by the surrounding grammar must remain available when
@@ -472,22 +316,12 @@ impl Parser<'_> {
 
     pub(super) fn parse_cast_expression(&mut self) -> jolt_syntax::CompletedMarker {
         let cast = self.start();
-        self.expect_required(
-            JavaSyntaxKind::LParen,
-            "expected `(` in cast expression",
-            cast.anchor(),
-            crate::shape::cast_expression::Slot::open_paren as u16,
-        );
+        self.expect(JavaSyntaxKind::LParen, "expected `(` in cast expression");
         let mut lookahead = self.lookahead();
         lookahead.skip_annotations();
         let is_primitive_cast = lookahead.at_primitive_type_start();
         self.parse_intersection_type();
-        self.expect_required(
-            JavaSyntaxKind::RParen,
-            "expected `)` after cast type",
-            cast.anchor(),
-            crate::shape::cast_expression::Slot::close_paren as u16,
-        );
+        self.expect(JavaSyntaxKind::RParen, "expected `)` after cast type");
 
         if is_primitive_cast {
             self.parse_unary_expression();
@@ -506,10 +340,11 @@ impl Parser<'_> {
     ) -> jolt_syntax::CompletedMarker {
         let mut expression = self.parse_primary_expression(allow_decimal_boundary_literal);
         let mut type_name_like =
-            JavaSyntaxKind::from_raw(expression.kind()) == Some(JavaSyntaxKind::NameExpression);
+            JavaSyntaxKind::from_raw(expression.kind()) == JavaSyntaxKind::NameExpression;
 
-        loop {
-            match self.current_kind() {
+        let mut guard = self.loop_guard();
+        while self.check(&mut guard) {
+            match self.current() {
                 JavaSyntaxKind::Lt if self.type_arguments_are_followed_by_double_colon() => {
                     self.parse_optional_type_argument_list();
                 }
@@ -522,19 +357,14 @@ impl Parser<'_> {
                         self.complete(invocation, JavaSyntaxKind::MethodInvocationExpression);
                     type_name_like = false;
                 }
-                JavaSyntaxKind::LBracket if self.nth_kind(1) == JavaSyntaxKind::RBracket => {
+                JavaSyntaxKind::LBracket if self.nth(1) == JavaSyntaxKind::RBracket => {
                     self.parse_array_dimensions();
                 }
                 JavaSyntaxKind::LBracket => {
                     let access = self.precede(expression);
                     self.bump();
                     self.parse_expression_until(&[JavaSyntaxKind::RBracket]);
-                    self.expect_required(
-                        JavaSyntaxKind::RBracket,
-                        "expected `]` after array index",
-                        access.anchor(),
-                        crate::shape::array_access_expression::Slot::close_bracket as u16,
-                    );
+                    self.expect(JavaSyntaxKind::RBracket, "expected `]` after array index");
                     expression = self.complete(access, JavaSyntaxKind::ArrayAccessExpression);
                     type_name_like = false;
                 }
@@ -542,12 +372,12 @@ impl Parser<'_> {
                     expression = self.parse_dot_suffix(expression, type_name_like);
                     type_name_like = type_name_like
                         && JavaSyntaxKind::from_raw(expression.kind())
-                            == Some(JavaSyntaxKind::FieldAccessExpression);
+                            == JavaSyntaxKind::FieldAccessExpression;
                 }
                 JavaSyntaxKind::DoubleColon => {
                     expression = self.method_reference_receiver(expression);
                     let reference = self.precede(expression);
-                    self.parse_method_reference_suffix(reference.anchor());
+                    self.parse_method_reference_suffix();
                     expression =
                         self.complete(reference, JavaSyntaxKind::MethodReferenceExpression);
                     type_name_like = false;
@@ -566,7 +396,7 @@ impl Parser<'_> {
     }
 
     pub(super) fn can_call_with_argument_list(kind: jolt_syntax::RawSyntaxKind) -> bool {
-        JavaSyntaxKind::from_raw(kind) == Some(JavaSyntaxKind::NameExpression)
+        JavaSyntaxKind::from_raw(kind) == JavaSyntaxKind::NameExpression
     }
 
     pub(super) fn parse_dot_suffix(
@@ -574,7 +404,7 @@ impl Parser<'_> {
         expression: jolt_syntax::CompletedMarker,
         type_name_like: bool,
     ) -> jolt_syntax::CompletedMarker {
-        if self.nth_kind(1) == JavaSyntaxKind::ClassKw {
+        if self.nth(1) == JavaSyntaxKind::ClassKw {
             let target = self.class_literal_target(expression, type_name_like);
             let suffix = self.precede(target);
             self.bump();
@@ -586,7 +416,7 @@ impl Parser<'_> {
 
         if self.at(JavaSyntaxKind::NewKw) {
             let suffix = self.precede(expression);
-            self.parse_object_creation_after_new(suffix.anchor());
+            self.parse_object_creation_after_new();
             return self.complete(suffix, JavaSyntaxKind::ObjectCreationExpression);
         }
 
@@ -602,12 +432,7 @@ impl Parser<'_> {
 
         let suffix = self.precede(expression);
         self.parse_optional_type_argument_list();
-        let name_slot = if self.at(JavaSyntaxKind::LParen) {
-            crate::shape::qualified_method_invocation::Slot::name as u16
-        } else {
-            crate::shape::field_access_expression::Slot::name as u16
-        };
-        self.expect_named_identifier_required("expected member name", suffix.anchor(), name_slot);
+        self.expect_named_identifier("expected member name");
         if self.at(JavaSyntaxKind::Lt) && self.type_arguments_are_followed_by_double_colon() {
             self.parse_optional_type_argument_list();
         }
@@ -625,14 +450,15 @@ impl Parser<'_> {
         &mut self,
         allow_decimal_boundary_literal: bool,
     ) -> jolt_syntax::CompletedMarker {
-        if self.at_contextual("yield") && self.nth_kind(1) == JavaSyntaxKind::LParen {
+        if self.at_contextual("yield") && self.nth(1) == JavaSyntaxKind::LParen {
             let error = self.start();
-            let diagnostic = self.pending_unqualified_yield_method_invocation(
+            self.error(
+                codes::UNQUALIFIED_YIELD_METHOD_INVOCATION,
                 "unqualified `yield` method invocation is not allowed",
             );
             self.bump();
             self.parse_argument_list();
-            return self.complete_bogus_expression(error, diagnostic);
+            return self.complete(error, JavaSyntaxKind::Bogus);
         }
 
         if self.starts_literal_expression() {
@@ -663,21 +489,11 @@ impl Parser<'_> {
             let parenthesized = self.start();
             self.bump();
             if self.at(JavaSyntaxKind::RParen) {
-                let diagnostic = self.pending_expected("expected expression");
-                self.missing_required_slot(
-                    parenthesized.anchor(),
-                    crate::shape::parenthesized_expression::Slot::expression as u16,
-                    [diagnostic],
-                );
+                self.error_expected("expected expression");
             } else {
                 self.parse_expression_until(&[JavaSyntaxKind::RParen]);
             }
-            self.expect_required(
-                JavaSyntaxKind::RParen,
-                "expected `)` after expression",
-                parenthesized.anchor(),
-                crate::shape::parenthesized_expression::Slot::close_paren as u16,
-            );
+            self.expect(JavaSyntaxKind::RParen, "expected `)` after expression");
             return self.complete(parenthesized, JavaSyntaxKind::ParenthesizedExpression);
         }
 
@@ -695,22 +511,12 @@ impl Parser<'_> {
                 self.complete(primitive, JavaSyntaxKind::PrimitiveType);
                 self.parse_array_dimensions();
             }
-            self.expect_required(
-                JavaSyntaxKind::Dot,
-                "expected `.` in class literal",
-                literal.anchor(),
-                crate::shape::class_literal_expression::Slot::dot as u16,
-            );
-            self.expect_required(
-                JavaSyntaxKind::ClassKw,
-                "expected `class` in class literal",
-                literal.anchor(),
-                crate::shape::class_literal_expression::Slot::class_keyword as u16,
-            );
+            self.expect(JavaSyntaxKind::Dot, "expected `.` in class literal");
+            self.expect(JavaSyntaxKind::ClassKw, "expected `class` in class literal");
             return self.complete(literal, JavaSyntaxKind::ClassLiteralExpression);
         }
 
-        if self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
+        if self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw {
             let annotated = self.start();
             self.parse_annotations();
             if self.at_name_segment() {
@@ -718,8 +524,8 @@ impl Parser<'_> {
                 return self.complete(annotated, JavaSyntaxKind::NameExpression);
             }
 
-            let diagnostic = self.pending_expected("expected expression after annotation");
-            return self.complete_bogus_expression(annotated, diagnostic);
+            self.error_expected("expected expression after annotation");
+            return self.complete(annotated, JavaSyntaxKind::Bogus);
         }
 
         if self.at_name_segment() {
@@ -728,7 +534,7 @@ impl Parser<'_> {
             return self.complete(name, JavaSyntaxKind::NameExpression);
         }
 
-        let consume = !Self::is_expression_recovery_boundary(self.current_kind());
+        let consume = !Self::is_expression_recovery_boundary(self.current());
         self.expected_bogus_expression("expected expression", consume)
     }
 
@@ -742,7 +548,7 @@ impl Parser<'_> {
         loop {
             lookahead.skip_annotations();
             if lookahead.at(JavaSyntaxKind::LBracket)
-                && lookahead.nth_kind(1) == JavaSyntaxKind::RBracket
+                && lookahead.nth(1) == JavaSyntaxKind::RBracket
             {
                 saw_array_dimensions = true;
                 lookahead.bump();
@@ -765,8 +571,8 @@ impl Parser<'_> {
         }
 
         let bogus = self.precede(target);
-        let diagnostic = self.pending_expected_at(1, "expected type name before class literal");
-        self.complete_bogus_recovery(bogus, diagnostic, JavaSyntaxKind::BogusClassLiteralTarget)
+        self.error_expected_at(1, "expected type name before class literal");
+        self.complete(bogus, JavaSyntaxKind::Bogus)
     }
 
     fn method_reference_receiver(
@@ -775,33 +581,27 @@ impl Parser<'_> {
     ) -> jolt_syntax::CompletedMarker {
         if matches!(
             JavaSyntaxKind::from_raw(receiver.kind()),
-            Some(
-                JavaSyntaxKind::LiteralExpression
-                    | JavaSyntaxKind::NameExpression
-                    | JavaSyntaxKind::ThisExpression
-                    | JavaSyntaxKind::SuperExpression
-                    | JavaSyntaxKind::ParenthesizedExpression
-                    | JavaSyntaxKind::ClassLiteralExpression
-                    | JavaSyntaxKind::FieldAccessExpression
-                    | JavaSyntaxKind::ArrayAccessExpression
-                    | JavaSyntaxKind::MethodInvocationExpression
-                    | JavaSyntaxKind::ObjectCreationExpression
-                    | JavaSyntaxKind::ArrayCreationExpression
-                    | JavaSyntaxKind::SwitchExpression
-                    | JavaSyntaxKind::ClassType
-                    | JavaSyntaxKind::ArrayType
-            )
+            JavaSyntaxKind::LiteralExpression
+                | JavaSyntaxKind::NameExpression
+                | JavaSyntaxKind::ThisExpression
+                | JavaSyntaxKind::SuperExpression
+                | JavaSyntaxKind::ParenthesizedExpression
+                | JavaSyntaxKind::ClassLiteralExpression
+                | JavaSyntaxKind::FieldAccessExpression
+                | JavaSyntaxKind::ArrayAccessExpression
+                | JavaSyntaxKind::MethodInvocationExpression
+                | JavaSyntaxKind::ObjectCreationExpression
+                | JavaSyntaxKind::ArrayCreationExpression
+                | JavaSyntaxKind::SwitchExpression
+                | JavaSyntaxKind::ClassType
+                | JavaSyntaxKind::ArrayType
         ) {
             return receiver;
         }
 
         let bogus = self.precede(receiver);
-        let diagnostic = self.pending_expected("expected valid method reference receiver");
-        self.complete_bogus_recovery(
-            bogus,
-            diagnostic,
-            JavaSyntaxKind::BogusMethodReferenceReceiver,
-        )
+        self.error_expected("expected valid method reference receiver");
+        self.complete(bogus, JavaSyntaxKind::Bogus)
     }
 
     pub(super) fn parse_array_method_reference_type(&mut self) -> jolt_syntax::CompletedMarker {
@@ -823,11 +623,9 @@ impl Parser<'_> {
         let parameters = self.start();
         self.parse_lambda_parameter(None);
         self.complete(parameters, JavaSyntaxKind::LambdaParameterList);
-        self.expect_required(
+        self.expect(
             JavaSyntaxKind::Arrow,
             "expected `->` after lambda parameter",
-            lambda.anchor(),
-            crate::shape::lambda_expression::Slot::arrow as u16,
         );
         self.parse_lambda_body();
         self.complete(lambda, JavaSyntaxKind::LambdaExpression)
@@ -837,19 +635,13 @@ impl Parser<'_> {
         &mut self,
     ) -> jolt_syntax::CompletedMarker {
         let lambda = self.start();
-        self.expect_required(
-            JavaSyntaxKind::LParen,
-            "expected lambda parameter list",
-            lambda.anchor(),
-            crate::shape::lambda_expression::Slot::open_paren as u16,
-        );
+        self.expect(JavaSyntaxKind::LParen, "expected lambda parameter list");
         let list = self.start();
         let mut style = None;
         self.parse_comma_separated(
-            list.anchor(),
             "expected lambda parameter name",
             |parser| parser.at(JavaSyntaxKind::RParen),
-            |parser, _| {
+            |parser| {
                 let parameter = parser.parse_lambda_parameter(style);
                 if style.is_none() {
                     style = Some(parameter.style);
@@ -869,17 +661,13 @@ impl Parser<'_> {
             },
         );
         self.complete(list, JavaSyntaxKind::LambdaParameterList);
-        self.expect_required(
+        self.expect(
             JavaSyntaxKind::RParen,
             "expected `)` after lambda parameters",
-            lambda.anchor(),
-            crate::shape::lambda_expression::Slot::close_paren as u16,
         );
-        self.expect_required(
+        self.expect(
             JavaSyntaxKind::Arrow,
             "expected `->` after lambda parameters",
-            lambda.anchor(),
-            crate::shape::lambda_expression::Slot::arrow as u16,
         );
         self.parse_lambda_body();
         self.complete(lambda, JavaSyntaxKind::LambdaExpression)
@@ -899,15 +687,14 @@ impl Parser<'_> {
     ) -> ParsedLambdaParameter {
         let parameter = self.start();
         if self.at(JavaSyntaxKind::Comma) {
-            let diagnostic = self.pending_expected("expected lambda parameter name");
+            self.error_expected("expected lambda parameter name");
             self.bump();
-            self.complete_recovery(parameter, JavaSyntaxKind::LambdaParameter, [diagnostic]);
+            self.complete(parameter, JavaSyntaxKind::LambdaParameter);
             return ParsedLambdaParameter {
                 style: expected_style.unwrap_or(LambdaParameterStyle::Implicit),
                 varargs: false,
             };
         }
-        let owner = parameter.anchor();
         let (has_modifiers, has_var_modifier) = self.parse_lambda_modifiers();
         let starts_typed_parameter = self.starts_typed_lambda_parameter();
         let style = if has_var_modifier {
@@ -918,61 +705,31 @@ impl Parser<'_> {
             LambdaParameterStyle::Implicit
         };
         let mut varargs = false;
-        let mut missing_type = None;
         if has_var_modifier {
             self.parse_annotations();
-            self.expect_variable_identifier_required(
-                "expected lambda parameter name",
-                owner,
-                crate::shape::lambda_parameter::Slot::name as u16,
-                true,
-            );
+            self.expect_variable_identifier("expected lambda parameter name", true);
             self.parse_array_dimensions();
         } else if starts_typed_parameter {
             self.parse_local_variable_type();
             self.parse_annotations();
             varargs = self.eat(JavaSyntaxKind::Ellipsis);
-            self.expect_variable_identifier_required(
-                "expected lambda parameter name",
-                owner,
-                crate::shape::lambda_parameter::Slot::name as u16,
-                true,
-            );
+            self.expect_variable_identifier("expected lambda parameter name", true);
             self.parse_array_dimensions();
         } else if has_modifiers {
             self.parse_annotations();
-            missing_type =
-                Some(self.pending_expected("expected lambda parameter type after modifiers"));
-            self.expect_variable_identifier_required(
-                "expected lambda parameter name",
-                owner,
-                crate::shape::lambda_parameter::Slot::name as u16,
-                true,
-            );
+            self.error_expected("expected lambda parameter type after modifiers");
+            self.expect_variable_identifier("expected lambda parameter name", true);
         } else {
             self.parse_annotations();
-            self.expect_variable_identifier_required(
-                "expected lambda parameter name",
-                owner,
-                crate::shape::lambda_parameter::Slot::name as u16,
-                true,
-            );
+            self.expect_variable_identifier("expected lambda parameter name", true);
         }
-        let style_mismatch = expected_style
-            .is_some_and(|expected| style != expected)
-            .then(|| self.pending_expected("lambda parameters must use the same form"));
-        let misplaced_varargs = (varargs && !self.at(JavaSyntaxKind::RParen) && !self.at_eof())
-            .then(|| self.pending_expected("varargs lambda parameter must be last"));
-        let diagnostics = [missing_type, style_mismatch, misplaced_varargs];
-        if diagnostics.iter().any(Option::is_some) {
-            self.complete_recovery(
-                parameter,
-                JavaSyntaxKind::LambdaParameter,
-                diagnostics.into_iter().flatten(),
-            );
-        } else {
-            self.complete(parameter, JavaSyntaxKind::LambdaParameter);
+        if expected_style.is_some_and(|expected| style != expected) {
+            self.error_expected("lambda parameters must use the same form");
         }
+        if varargs && !self.at(JavaSyntaxKind::RParen) && !self.at_eof() {
+            self.error_expected("varargs lambda parameter must be last");
+        }
+        self.complete(parameter, JavaSyntaxKind::LambdaParameter);
         ParsedLambdaParameter { style, varargs }
     }
 
@@ -980,18 +737,16 @@ impl Parser<'_> {
         let modifiers = self.start();
         let mut saw_modifier = false;
         let mut saw_var = false;
-        loop {
-            if self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
+        let mut guard = self.loop_guard();
+        while self.check(&mut guard) {
+            if self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw {
                 saw_modifier = true;
                 self.parse_annotation();
             } else if self.at(JavaSyntaxKind::FinalKw) {
                 saw_modifier = true;
                 self.bump();
             } else if self.at_contextual("var")
-                && !matches!(
-                    self.nth_kind(1),
-                    JavaSyntaxKind::Dot | JavaSyntaxKind::Arrow
-                )
+                && !matches!(self.nth(1), JavaSyntaxKind::Dot | JavaSyntaxKind::Arrow)
             {
                 saw_modifier = true;
                 saw_var = true;
@@ -1017,23 +772,18 @@ impl Parser<'_> {
         &mut self,
     ) -> jolt_syntax::CompletedMarker {
         let creation = self.start();
-        self.parse_object_creation_after_new(creation.anchor());
+        self.parse_object_creation_after_new();
         self.complete(creation, JavaSyntaxKind::ObjectCreationExpression)
     }
 
-    pub(super) fn parse_object_creation_after_new(&mut self, owner: NodeAnchor) {
+    pub(super) fn parse_object_creation_after_new(&mut self) {
         self.bump();
         self.parse_optional_type_argument_list();
         self.parse_object_creation_type();
         if self.at(JavaSyntaxKind::LParen) {
             self.parse_argument_list();
         } else {
-            let diagnostic = self.pending_expected("expected constructor arguments");
-            self.missing_required_slot(
-                owner,
-                crate::shape::object_creation_expression::Slot::arguments as u16,
-                [diagnostic],
-            );
+            self.error_expected("expected constructor arguments");
         }
         if self.at(JavaSyntaxKind::LBrace) {
             self.parse_type_body(JavaSyntaxKind::ClassBody, None);
@@ -1056,19 +806,16 @@ impl Parser<'_> {
         }
 
         self.parse_annotations();
-        let diagnostic = if self.at_primitive_type() {
-            let diagnostic = self.pending_expected("expected class type in object creation");
+        self.error_expected("expected class type in object creation");
+        if self.at_primitive_type() {
             self.bump();
-            diagnostic
-        } else {
-            self.pending_expected("expected class type in object creation")
-        };
+        }
 
-        self.complete_recovery(ty, JavaSyntaxKind::BogusObjectCreationType, [diagnostic])
+        self.complete(ty, JavaSyntaxKind::Bogus)
     }
 
     pub(super) fn parse_class_type_to_instantiate_tail(&mut self) {
-        if self.nth_kind(1) != JavaSyntaxKind::Dot {
+        if self.nth(1) != JavaSyntaxKind::Dot {
             let name = self.start();
             self.bump();
             self.complete(name, JavaSyntaxKind::Name);
@@ -1084,36 +831,18 @@ impl Parser<'_> {
         self.bump();
 
         let remaining_segments = self.start();
+        // Unguarded: every further iteration first bumps a `.`.
         loop {
             let segment = self.start();
             self.parse_annotations();
-            let restricted_identifier = self.expect_type_identifier(
-                "expected class type segment",
-                segment.anchor(),
-                crate::shape::qualified_name_segment_node::Slot::identifier as u16,
-            );
-
-            let misplaced_type_arguments = if self.at(JavaSyntaxKind::Lt)
-                && self.type_arguments_are_followed_by_dot()
-            {
-                let diagnostic = self.pending_unexpected(
+            self.expect_type_identifier("expected class type segment");
+            if self.at(JavaSyntaxKind::Lt) && self.type_arguments_are_followed_by_dot() {
+                self.error_unexpected(
                     "type arguments in class instance creation must appear on the final type segment",
                 );
                 self.parse_optional_type_argument_list();
-                Some(diagnostic)
-            } else {
-                None
-            };
-            let diagnostics = [restricted_identifier, misplaced_type_arguments];
-            if diagnostics.iter().any(Option::is_some) {
-                self.complete_recovery(
-                    segment,
-                    JavaSyntaxKind::QualifiedNameSegmentNode,
-                    diagnostics.into_iter().flatten(),
-                );
-            } else {
-                self.complete(segment, JavaSyntaxKind::QualifiedNameSegmentNode);
             }
+            self.complete(segment, JavaSyntaxKind::QualifiedNameSegmentNode);
 
             if !self.at(JavaSyntaxKind::Dot) {
                 break;
@@ -1139,31 +868,25 @@ impl Parser<'_> {
         let ty = self.parse_type();
         let ty = if matches!(
             JavaSyntaxKind::from_raw(ty.kind()),
-            Some(
-                JavaSyntaxKind::PrimitiveType
-                    | JavaSyntaxKind::ClassType
-                    | JavaSyntaxKind::ArrayType
-            )
+            JavaSyntaxKind::PrimitiveType | JavaSyntaxKind::ClassType | JavaSyntaxKind::ArrayType
         ) {
             ty
         } else {
             let bogus = self.precede(ty);
-            let diagnostic = self.pending_expected("expected array element type");
-            self.complete_recovery(bogus, JavaSyntaxKind::BogusArrayCreationType, [diagnostic])
+            self.error_expected("expected array element type");
+            self.complete(bogus, JavaSyntaxKind::Bogus)
         };
         let base_has_unsized_dimensions =
-            JavaSyntaxKind::from_raw(ty.kind()) == Some(JavaSyntaxKind::ArrayType);
+            JavaSyntaxKind::from_raw(ty.kind()) == JavaSyntaxKind::ArrayType;
 
         let dimensions = self.start();
         let mut saw_dim_expression = false;
-        while self.starts_dim_expression() {
+        let mut guard = self.loop_guard();
+        while self.starts_dim_expression() && self.check(&mut guard) {
             if base_has_unsized_dimensions {
-                let diagnostic = self
-                    .pending_unexpected("sized array dimension cannot follow unsized dimensions");
-                self.parse_dim_expression(Some(diagnostic));
-            } else {
-                self.parse_dim_expression(None);
+                self.error_unexpected("sized array dimension cannot follow unsized dimensions");
             }
+            self.parse_dim_expression();
             saw_dim_expression = true;
         }
         self.complete(dimensions, JavaSyntaxKind::DimExpressionList);
@@ -1172,68 +895,37 @@ impl Parser<'_> {
 
         if self.at(JavaSyntaxKind::LBrace) {
             if saw_dim_expression {
-                let diagnostic = self
-                    .pending_unexpected("array initializer cannot follow dimension expressions");
-                self.parse_array_initializer_fragment(Some(diagnostic));
-            } else {
-                self.parse_array_initializer_fragment(None);
+                self.error_unexpected("array initializer cannot follow dimension expressions");
             }
+            self.parse_array_initializer_fragment();
         } else if base_has_unsized_dimensions && !saw_dim_expression {
-            let diagnostic =
-                self.pending_expected("expected array initializer or dimension expression");
-            self.missing_required_slot(
-                creation.anchor(),
-                crate::shape::array_creation_expression::Slot::initializer as u16,
-                [diagnostic],
-            );
+            self.error_expected("expected array initializer or dimension expression");
         }
 
         self.complete(creation, JavaSyntaxKind::ArrayCreationExpression)
     }
 
-    pub(super) fn parse_dim_expression(&mut self, recovery: Option<PendingDiagnostic>) {
+    pub(super) fn parse_dim_expression(&mut self) {
         let dim = self.start();
-        let owner = dim.anchor();
         self.parse_annotations();
-        self.expect_required(
-            JavaSyntaxKind::LBracket,
-            "expected `[`",
-            owner,
-            crate::shape::dim_expression::Slot::open_bracket as u16,
-        );
+        self.expect(JavaSyntaxKind::LBracket, "expected `[`");
         self.parse_expression_until(&[JavaSyntaxKind::RBracket]);
-        self.expect_required(
-            JavaSyntaxKind::RBracket,
-            "expected `]`",
-            owner,
-            crate::shape::dim_expression::Slot::close_bracket as u16,
-        );
-        if let Some(diagnostic) = recovery {
-            self.complete_recovery(dim, JavaSyntaxKind::DimExpression, [diagnostic]);
-        } else {
-            self.complete(dim, JavaSyntaxKind::DimExpression);
-        }
+        self.expect(JavaSyntaxKind::RBracket, "expected `]`");
+        self.complete(dim, JavaSyntaxKind::DimExpression);
     }
 
-    pub(super) fn parse_array_initializer_fragment(&mut self, recovery: Option<PendingDiagnostic>) {
+    pub(super) fn parse_array_initializer_fragment(&mut self) {
         let initializer = self.start();
-        let owner = initializer.anchor();
-        self.expect_required(
-            JavaSyntaxKind::LBrace,
-            "expected array initializer",
-            owner,
-            crate::shape::array_initializer::Slot::open_brace as u16,
-        );
+        self.expect(JavaSyntaxKind::LBrace, "expected array initializer");
         let values = self.start();
-        while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
+        let mut guard = self.loop_guard();
+        while !self.at(JavaSyntaxKind::RBrace) && self.check(&mut guard) {
             if self.at(JavaSyntaxKind::LBrace) {
                 if self
-                    .with_syntax_nesting(|parser| {
-                        parser.parse_array_initializer_fragment(None);
-                    })
+                    .nested(Self::parse_array_initializer_fragment)
                     .is_none()
                 {
-                    self.parse_excessive_array_initializer();
+                    self.recover_too_deep(EXPRESSION_STOPS);
                 }
             } else {
                 self.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RBrace]);
@@ -1242,92 +934,36 @@ impl Parser<'_> {
             self.eat(JavaSyntaxKind::Comma);
         }
         self.complete(values, JavaSyntaxKind::VariableInitializerList);
-        self.expect_required(
+        self.expect(
             JavaSyntaxKind::RBrace,
             "expected `}` after array initializer",
-            owner,
-            crate::shape::array_initializer::Slot::close_brace as u16,
-        );
-        if let Some(diagnostic) = recovery {
-            self.complete_recovery(initializer, JavaSyntaxKind::ArrayInitializer, [diagnostic]);
-        } else {
-            self.complete(initializer, JavaSyntaxKind::ArrayInitializer);
-        }
-    }
-
-    fn parse_excessive_array_initializer(&mut self) {
-        let initializer = self.start();
-        let owner = initializer.anchor();
-        self.expect_required(
-            JavaSyntaxKind::LBrace,
-            "expected array initializer",
-            owner,
-            crate::shape::array_initializer::Slot::open_brace as u16,
-        );
-
-        let values = self.start();
-        let bogus = self.start();
-        let diagnostic = self.pending_excessive_syntax_nesting();
-        self.consume_until_enclosing_brace();
-        self.complete_recovery(
-            bogus,
-            JavaSyntaxKind::BogusVariableInitializer,
-            [diagnostic],
-        );
-        self.complete(values, JavaSyntaxKind::VariableInitializerList);
-        self.expect_required(
-            JavaSyntaxKind::RBrace,
-            "expected `}` after array initializer",
-            owner,
-            crate::shape::array_initializer::Slot::close_brace as u16,
         );
         self.complete(initializer, JavaSyntaxKind::ArrayInitializer);
     }
 
     pub(super) fn parse_argument_list(&mut self) {
         let arguments = self.start();
-        self.expect_required(
-            JavaSyntaxKind::LParen,
-            "expected argument list",
-            arguments.anchor(),
-            crate::shape::argument_list::Slot::open_paren as u16,
-        );
+        self.expect(JavaSyntaxKind::LParen, "expected argument list");
         let expressions = self.start();
         self.parse_comma_separated(
-            expressions.anchor(),
             "expected argument",
             |parser| parser.at(JavaSyntaxKind::RParen),
-            |parser, _| {
+            |parser| {
                 parser.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RParen]);
             },
         );
         self.complete(expressions, JavaSyntaxKind::ExpressionList);
-        self.expect_required(
-            JavaSyntaxKind::RParen,
-            "expected `)` after arguments",
-            arguments.anchor(),
-            crate::shape::argument_list::Slot::close_paren as u16,
-        );
+        self.expect(JavaSyntaxKind::RParen, "expected `)` after arguments");
         self.complete(arguments, JavaSyntaxKind::ArgumentList);
     }
 
-    pub(super) fn parse_method_reference_suffix(&mut self, owner: NodeAnchor) {
-        self.expect_required(
-            JavaSyntaxKind::DoubleColon,
-            "expected `::`",
-            owner,
-            crate::shape::method_reference_expression::Slot::double_colon as u16,
-        );
+    pub(super) fn parse_method_reference_suffix(&mut self) {
+        self.expect(JavaSyntaxKind::DoubleColon, "expected `::`");
         self.parse_optional_type_argument_list();
         if self.at(JavaSyntaxKind::NewKw) || self.at_name_segment() {
             self.bump();
         } else {
-            let diagnostic = self.pending_expected("expected method reference target");
-            self.missing_required_slot(
-                owner,
-                crate::shape::method_reference_expression::Slot::target as u16,
-                [diagnostic],
-            );
+            self.error_expected("expected method reference target");
         }
     }
 
@@ -1337,7 +973,8 @@ impl Parser<'_> {
     ) -> jolt_syntax::CompletedMarker {
         let literal = self.start();
         if !allow_decimal_boundary_literal && self.at_decimal_integer_boundary_literal() {
-            self.decimal_integer_boundary_literal_here(
+            self.error(
+                codes::DECIMAL_INTEGER_BOUNDARY_LITERAL,
                 "decimal integer boundary literal may appear only as the operand of unary minus",
             );
         }
@@ -1346,14 +983,11 @@ impl Parser<'_> {
     }
 
     pub(super) fn at_decimal_integer_boundary_literal(&mut self) -> bool {
-        if self.current_kind() != JavaSyntaxKind::IntegerLiteral {
+        if self.current() != JavaSyntaxKind::IntegerLiteral {
             return false;
         }
 
-        let Some(text) = self.current_text() else {
-            return false;
-        };
-        let normalized = text.replace('_', "");
+        let normalized = self.current_text().replace('_', "");
 
         normalized == "2147483648"
             || matches!(

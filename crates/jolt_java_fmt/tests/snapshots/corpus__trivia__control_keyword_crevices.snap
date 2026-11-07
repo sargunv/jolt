@@ -5,7 +5,7 @@ expression: snapshot
 formatted:
 class ControlKeywordCrevices {
   void run(boolean flag) {
-    outer /* JOLT-TRIVIA:label-before-colon */: /* JOLT-TRIVIA:label-after-colon */
+    outer /* JOLT-TRIVIA:label-before-colon */ : /* JOLT-TRIVIA:label-after-colon */
     while /* JOLT-TRIVIA:while-before-paren */ (
       flag /* JOLT-TRIVIA:while-before-close */
     ) {
@@ -16,7 +16,8 @@ class ControlKeywordCrevices {
       flag = false;
     } while /* JOLT-TRIVIA:do-while-before-paren */ (
       flag /* JOLT-TRIVIA:do-while-before-close */
-    ) /* JOLT-TRIVIA:do-while-before-semi */;
+    )
+    /* JOLT-TRIVIA:do-while-before-semi */;
 
     synchronized /* JOLT-TRIVIA:synchronized-before-paren */ (
       this /* JOLT-TRIVIA:synchronized-before-close */

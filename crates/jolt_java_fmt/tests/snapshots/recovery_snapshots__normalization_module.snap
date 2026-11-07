@@ -19,4 +19,4 @@ module recovered.normalization {
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(77), end: TextSize(78) }) message=expected identifier
+code=java.parse.expected_syntax range=77..78 message=expected identifier

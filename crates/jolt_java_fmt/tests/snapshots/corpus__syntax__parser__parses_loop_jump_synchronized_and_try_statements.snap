@@ -11,14 +11,10 @@ class Flow {
     do {
       break;
     } while (false);
-    for (int i = 0; i < 10; i++) {
-    }
-    for (String value : values) {
-    }
-    for (SomeClass<?> value : values) {
-    }
-    synchronized (this) {
-    }
+    for (int i = 0; i < 10; i++) {}
+    for (String value : values) {}
+    for (SomeClass<?> value : values) {}
+    synchronized (this) {}
     try {
       throw new Exception();
     } catch (java.io.IOException | RuntimeException ex) {
@@ -29,8 +25,7 @@ class Flow {
     try (
       var ignored = open();
       existing
-    ) {
-    }
+    ) {}
     return 0;
   }
 

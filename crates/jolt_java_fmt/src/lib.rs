@@ -1,47 +1,27 @@
-//! Java formatter implementation for Jolt.
+//! The Java formatter: the Java `FormatLanguage`, node dispatch, shared
+//! helpers, and the layout rules. See `docs/internals/formatter.md` and
+//! `docs/internals/java-style.md`.
 
-macro_rules! doc_concat {
-    ($doc:expr, $docs:expr $(,)?) => {{
-        let docs = $docs;
-        $doc.concat(docs)
-    }};
-}
-
-macro_rules! doc_group {
-    ($doc:expr, $contents:expr $(,)?) => {{
-        let contents = $contents;
-        $doc.group(contents)
-    }};
-}
-
-macro_rules! doc_force_group {
-    ($doc:expr, $contents:expr $(,)?) => {{
-        let contents = $contents;
-        $doc.force_group(contents)
-    }};
-}
-
-macro_rules! doc_indent {
-    ($doc:expr, $contents:expr $(,)?) => {{
-        let contents = $contents;
-        $doc.indent(contents)
-    }};
-}
-
-macro_rules! doc_join {
-    ($doc:expr, $separator:expr, $docs:expr $(,)?) => {{
-        let separator = $separator;
-        let docs = $docs;
-        $doc.join(separator, docs)
-    }};
-}
-
-mod format;
+mod dispatch;
 mod helpers;
+mod language;
 mod rules;
 
-#[cfg(feature = "bench")]
-pub use format::benchmark_format_syntax_to_sink;
-#[doc(hidden)]
-pub use format::format_parse_to_sink;
-pub use format::format_source_to_sink;
+use std::ops::ControlFlow;
+
+use jolt_fmt::{FormatOptions, Sink};
+use jolt_java_syntax::JavaParse;
+
+pub use language::JavaFormat;
+
+/// The formatter context every Java rule receives.
+pub type JavaFormatter<'a> = jolt_fmt::Formatter<'a, JavaFormat>;
+
+/// Formats a parsed compilation unit into `sink`.
+pub fn format<S: Sink + ?Sized>(
+    parse: &JavaParse<'_>,
+    options: &FormatOptions,
+    sink: &mut S,
+) -> ControlFlow<()> {
+    jolt_fmt::format::<JavaFormat, S>(parse.syntax(), options, sink)
+}

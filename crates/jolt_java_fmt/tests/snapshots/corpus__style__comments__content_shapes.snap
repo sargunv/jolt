@@ -26,12 +26,29 @@ class CommentContentShapes {
 
   /*
   plain first line
-  unevenly indented second line
-  line beginning with a tab
+    unevenly indented second line
+  	line beginning with a tab
 
   last line after a blank
   */
-  void plainMultiline() {
+  void plainMultiline() {}
+
+  /**
+   * Code in a doc comment keeps its indentation:
+   * <pre>
+   *   if (ready) {
+   *       run();
+   *   }
+   * </pre>
+   */
+  void preformatted() {}
+
+  void art() {
+    /*
+       +---+
+       | a |
+       +---+
+    */
   }
 
   String markers = "/* not a comment */ // /**/";

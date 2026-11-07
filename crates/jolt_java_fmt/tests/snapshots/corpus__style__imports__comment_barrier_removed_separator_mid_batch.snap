@@ -11,8 +11,7 @@ import abc.def;
 import abc.def.Another;
 import one.last;
 
-class C {
-}
+class C {}
 
 diagnostics:
 (none)

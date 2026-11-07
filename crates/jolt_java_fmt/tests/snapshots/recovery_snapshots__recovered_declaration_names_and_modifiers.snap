@@ -13,10 +13,9 @@ formatted:
 record sealed(int value) {}
 
 class RecoveredModifiers {
-  transient void method() {
-  }
+  transient void method() {}
 }
 
 diagnostics:
-code=java.parse.restricted_type_identifier severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(13) }) message=expected type name
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(60), end: TextSize(69) }) message=invalid method modifier
+code=java.parse.restricted_type_identifier range=7..13 message=expected type name
+code=java.parse.unexpected_syntax range=60..69 message=invalid method modifier

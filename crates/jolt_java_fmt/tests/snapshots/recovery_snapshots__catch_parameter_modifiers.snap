@@ -8,9 +8,7 @@ class C { void m() { try {} catch (final /* mod */ E e) {} } }
 formatted:
 class C {
   void m() {
-    try {
-    } catch (final /* mod */ E e) {
-    }
+    try {} catch (final /* mod */ E e) {}
   }
 }
 

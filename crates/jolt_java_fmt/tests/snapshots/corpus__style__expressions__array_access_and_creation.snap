@@ -9,7 +9,7 @@ class Example {
   }
 
   Object pickCommented(Object[] values, int index) {
-    return values[ /* index */ index] /* after */;
+    return values[/* index */ index] /* after */;
   }
 
   Object create(Object first, Object second) {
@@ -17,7 +17,7 @@ class Example {
   }
 
   int[] sized(int count) {
-    return new /* array */ int[ /* size */ count] /* sized */;
+    return new /* array */ int[/* size */ count] /* sized */;
   }
 
   int[] numbers() {
@@ -35,10 +35,9 @@ class Example {
 
   int[] commentedNumbers() {
     return new int[] {
-      /* start */
-      1, // one
-      2, /* two */
-      3 /* three */, // trailing
+      /* start */ 1, // one
+      2,
+      /* two */ 3 /* three */, // trailing
     };
   }
 

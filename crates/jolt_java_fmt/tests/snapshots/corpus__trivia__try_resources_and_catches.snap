@@ -5,13 +5,13 @@ expression: snapshot
 formatted:
 class TryTrivia {
   void run() throws Exception {
-    try ( /* JOLT-TRIVIA:try-open */
-      Resource first = open() /* JOLT-TRIVIA:resource-first */;
+    try (
+      /* JOLT-TRIVIA:try-open */ Resource first = open() /* JOLT-TRIVIA:resource-first */;
       Resource second = open() /* JOLT-TRIVIA:resource-second */
     ) {
       first.close();
-    } catch ( /* JOLT-TRIVIA:catch-open */
-      java.io.IOException
+    } catch (
+      /* JOLT-TRIVIA:catch-open */ java.io.IOException
       | /* JOLT-TRIVIA:catch-union */ IllegalStateException ex /* JOLT-TRIVIA:catch-param */
     ) {
       throw ex;
@@ -24,12 +24,10 @@ class TryTrivia {
     return null;
   }
 
-  void cleanup() {
-  }
+  void cleanup() {}
 }
 
-interface Resource extends AutoCloseable {
-}
+interface Resource extends AutoCloseable {}
 
 diagnostics:
 (none)

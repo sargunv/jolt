@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"abc" "hello world"
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StringLiteral "\"abc\"" @ 0..5 trailing=[Whitespace " "]
+      StringLiteral "\"hello world\"" @ 6..19
+  Eof "" @ 19..19
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..5 message=unexpected token at top level

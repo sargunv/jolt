@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"™"
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StringLiteral "\"™\"" @ 0..5
+  Eof "" @ 5..5
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..5 message=unexpected token at top level

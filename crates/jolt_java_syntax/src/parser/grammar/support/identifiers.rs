@@ -1,47 +1,31 @@
 // Handles Java identifier roles that depend on parser context.
-use super::{JavaParserExt, JavaSyntaxKind, Parser};
-use jolt_syntax::{CompletedMarker, NodeAnchor, PendingDiagnostic};
+use super::{JavaSyntaxKind, Parser};
+use crate::parser::codes;
+use jolt_syntax::CompletedMarker;
 
 impl Parser<'_> {
-    pub(in crate::parser::grammar) fn expect_type_identifier(
-        &mut self,
-        message: &str,
-        owner: NodeAnchor,
-        slot: u16,
-    ) -> Option<PendingDiagnostic> {
+    pub(in crate::parser::grammar) fn expect_type_identifier(&mut self, message: &str) {
         if self.at_type_identifier() {
             self.bump();
-            None
         } else if self.at_name_segment() {
-            let diagnostic = self.restricted_type_identifier_here(message);
+            self.error(codes::RESTRICTED_TYPE_IDENTIFIER, message);
             self.bump();
-            Some(diagnostic)
         } else {
-            let diagnostic = self.pending_expected(message);
-            self.missing_required_slot(owner, slot, [diagnostic]);
-            None
+            self.error_expected(message);
         }
     }
 
-    pub(in crate::parser::grammar) fn expect_named_identifier_required(
-        &mut self,
-        message: &str,
-        owner: NodeAnchor,
-        slot: u16,
-    ) {
+    pub(in crate::parser::grammar) fn expect_named_identifier(&mut self, message: &str) {
         if self.at_name_segment() {
             self.bump();
         } else {
-            let diagnostic = self.pending_expected(message);
-            self.missing_required_slot(owner, slot, [diagnostic]);
+            self.error_expected(message);
         }
     }
 
-    pub(in crate::parser::grammar) fn expect_variable_identifier_required(
+    pub(in crate::parser::grammar) fn expect_variable_identifier(
         &mut self,
         message: &str,
-        owner: NodeAnchor,
-        slot: u16,
         allow_unnamed: bool,
     ) {
         let accepted = if allow_unnamed {
@@ -52,29 +36,21 @@ impl Parser<'_> {
         if accepted {
             self.bump();
         } else {
-            let diagnostic = self.pending_expected(message);
-            self.missing_required_slot(owner, slot, [diagnostic]);
+            self.error_expected(message);
         }
     }
 
-    pub(in crate::parser::grammar) fn consume_qualified_name_required(
-        &mut self,
-        owner: NodeAnchor,
-        slot: u16,
-    ) -> bool {
+    pub(in crate::parser::grammar) fn consume_qualified_name_required(&mut self) -> bool {
         if self.consume_qualified_name_contents(|_, _| false).is_some() {
             true
         } else {
-            let diagnostic = self.pending_expected("expected identifier");
-            self.missing_required_slot(owner, slot, [diagnostic]);
+            self.error_expected("expected identifier");
             false
         }
     }
 
     pub(in crate::parser::grammar) fn consume_qualified_name_required_until<F>(
         &mut self,
-        owner: NodeAnchor,
-        slot: u16,
         stops: &[JavaSyntaxKind],
         contextual_boundary: F,
         stop_at_name_segment: bool,
@@ -89,8 +65,7 @@ impl Parser<'_> {
             return;
         }
         if parsed_name.is_none() && at_boundary {
-            let diagnostic = self.pending_expected("expected identifier");
-            self.missing_required_slot(owner, slot, [diagnostic]);
+            self.error_expected("expected identifier");
             return;
         }
 
@@ -98,11 +73,11 @@ impl Parser<'_> {
             Some(name) => self.precede(name),
             None => self.start(),
         };
-        let diagnostic = self.pending_expected("expected identifier");
+        self.error_expected("expected identifier");
         while !self.at_qualified_name_boundary(stops, contextual_boundary, stop_at_name_segment) {
             self.bump();
         }
-        self.complete_recovery(name, JavaSyntaxKind::BogusName, [diagnostic]);
+        self.complete(name, JavaSyntaxKind::Bogus);
     }
 
     fn at_qualified_name_boundary<F>(
@@ -115,17 +90,18 @@ impl Parser<'_> {
         F: Fn(&mut Self, usize) -> bool,
     {
         self.at_eof()
-            || stops.contains(&self.current_kind())
+            || stops.contains(&self.current())
             || stop_at_name_segment && self.at_name_segment()
             || contextual_boundary(self, 0)
     }
 
-    pub(in crate::parser::grammar) fn consume_qualified_name_cause(
-        &mut self,
-    ) -> Option<PendingDiagnostic> {
-        self.consume_qualified_name_contents(|_, _| false)
-            .is_none()
-            .then(|| self.pending_expected("expected identifier"))
+    /// Returns whether a name was consumed; reports a diagnostic otherwise.
+    pub(in crate::parser::grammar) fn consume_qualified_name_or_report(&mut self) -> bool {
+        let consumed = self.consume_qualified_name_contents(|_, _| false).is_some();
+        if !consumed {
+            self.error_expected("expected identifier");
+        }
+        consumed
     }
 
     fn consume_qualified_name_contents<F>(
@@ -140,7 +116,7 @@ impl Parser<'_> {
         }
 
         let name = self.start();
-        if self.nth_kind(1) != JavaSyntaxKind::Dot
+        if self.nth(1) != JavaSyntaxKind::Dot
             || !self.nth_is_name_segment(2)
             || contextual_boundary(self, 2)
         {
@@ -187,10 +163,10 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn at_type_identifier(&mut self) -> bool {
-        self.current_kind() == JavaSyntaxKind::Identifier
+        self.current() == JavaSyntaxKind::Identifier
             && !matches!(
                 self.current_text(),
-                Some("permits" | "record" | "sealed" | "var" | "yield")
+                "permits" | "record" | "sealed" | "var" | "yield"
             )
     }
 }

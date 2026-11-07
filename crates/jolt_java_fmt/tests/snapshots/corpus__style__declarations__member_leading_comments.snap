@@ -11,8 +11,7 @@ class MemberComments {
   }
 
   // method lead
-  void work() {
-  }
+  void work() {}
 }
 
 diagnostics:

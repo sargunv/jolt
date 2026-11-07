@@ -32,14 +32,13 @@ import z.Zeta;
 // prove it is sortable, so the comments stay a barrier ahead of it rather than
 // travelling with it -- but they still lead it directly, so no blank line is
 // invented between them, matching the sortable path.
-import a.;
+import a .;
 
 // Same, with the separator's comments and the import already adjacent.
-import b.;
+import b .;
 
-class ImportAfterRemovedSeparatorComments {
-}
+class ImportAfterRemovedSeparatorComments {}
 
 diagnostics:
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(407), end: TextSize(408) }) message=unexpected token in import declaration
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(493), end: TextSize(494) }) message=unexpected token in import declaration
+code=java.parse.unexpected_syntax range=407..408 message=unexpected token in import declaration
+code=java.parse.unexpected_syntax range=493..494 message=unexpected token in import declaration

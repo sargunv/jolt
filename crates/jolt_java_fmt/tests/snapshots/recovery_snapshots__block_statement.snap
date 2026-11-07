@@ -8,9 +8,9 @@ class C { void m() { int value = /* keep */ ; } }
 formatted:
 class C {
   void m() {
-    int value = /* keep */ ;
+    int value = /* keep */;
   }
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(45) }) message=expected expression
+code=java.parse.expected_syntax range=44..45 message=expected expression

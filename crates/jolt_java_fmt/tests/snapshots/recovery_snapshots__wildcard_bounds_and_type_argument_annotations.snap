@@ -7,10 +7,10 @@ class C { List<? extends /* bound */> a; List<@A /* arg */> b; }
 
 formatted:
 class C {
-  List<? extends /* bound */ > a;
-  List<@A /* arg */ > b;
+  List<? extends /* bound */> a;
+  List<@A /* arg */> b;
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(36), end: TextSize(37) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(58), end: TextSize(59) }) message=expected type
+code=java.parse.expected_syntax range=36..37 message=expected type
+code=java.parse.expected_syntax range=58..59 message=expected type

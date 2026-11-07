@@ -62,7 +62,7 @@ export default defineConfig({
   base: process.env.VITEPRESS_BASE ?? "/",
   title: "Jolt",
   description:
-    "Jolt is a fast, opinionated formatter for Java and Kotlin. One static binary, no JVM required.",
+    "Jolt is a fast, opinionated formatter for Java. One static binary, no JVM required.",
   vite: {
     optimizeDeps: {
       include: [
@@ -101,7 +101,10 @@ export default defineConfig({
       },
       {
         text: "Internals",
-        items: [{ text: "Formatter", link: "/internals/formatter" }],
+        items: [
+          { text: "Java style", link: "/internals/java-style" },
+          { text: "Formatter", link: "/internals/formatter" },
+        ],
       },
     ],
     outline: {

@@ -10,8 +10,7 @@ import z.Z;
 
 import static z.Z.tools.*;
 
-class Names {
-}
+class Names {}
 
 diagnostics:
 (none)

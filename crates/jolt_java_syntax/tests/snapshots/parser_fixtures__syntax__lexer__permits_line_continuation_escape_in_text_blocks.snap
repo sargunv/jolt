@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"""
+a\
+b\c\
+d
+"""
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      TextBlockLiteral "\"\"\"\na\\\nb\\\rc\\\r\nd\n\"\"\"" @ 0..19
+  Eof "" @ 19..19
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..19 message=unexpected token at top level

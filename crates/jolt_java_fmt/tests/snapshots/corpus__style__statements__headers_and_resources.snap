@@ -1,0 +1,84 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class HeadersAndResources {
+  void loops(java.util.List<String> values) {
+    for (int i = 0; i < 10; ) {
+      run(i);
+    }
+    for (; ready(); ) {
+      next();
+    }
+    for (
+      int i = 0;
+      i < 10;
+      i++
+      // before close
+    ) {
+      run(i);
+    }
+    for (
+      var veryLongVariableNameForTheElement : someVeryLongMethodReturningAnIterable(
+        values
+      )
+    ) {
+      run();
+    }
+    while (
+      ready()
+      // before close
+    ) {
+      next();
+    }
+  }
+
+  void resources() throws Exception {
+    try (
+      existing
+    ) {
+      run();
+    }
+    try (
+      this.existing;
+      var other = open()
+    ) {
+      run();
+    }
+    try (
+      var first = open(); // first
+      var second = open()
+      // before close
+    ) {
+      run();
+    }
+    try (
+      // leading
+      var only = open()
+    ) {
+      run();
+    }
+  }
+
+  void catches() {
+    try {
+      run();
+    } catch (
+      final IllegalStateException
+      | IllegalArgumentException veryLongExceptionVariableName
+    ) {
+      handle();
+    } catch (
+      Exception e
+      // before close
+    ) {
+      handle();
+    } finally {
+      cleanup();
+    }
+  }
+}
+
+diagnostics:
+(none)

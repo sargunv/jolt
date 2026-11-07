@@ -4,8 +4,7 @@ expression: snapshot
 ---
 formatted:
 class Example {
-  void run() {
-  }
+  void run() {}
 }
 
 diagnostics:

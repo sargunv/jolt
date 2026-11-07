@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+\x \U0061
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      Unknown "\\" @ 0..1
+      Identifier "x" @ 1..2 trailing=[Whitespace " "]
+      Unknown "\\" @ 3..4
+      Identifier "U0061" @ 4..9
+  Eof "" @ 9..9
+
+diagnostics:
+code=java.lex.unknown_character range=0..1 message=unknown character
+code=java.lex.unknown_character range=3..4 message=unknown character
+code=java.parse.unexpected_syntax range=0..1 message=unexpected token at top level

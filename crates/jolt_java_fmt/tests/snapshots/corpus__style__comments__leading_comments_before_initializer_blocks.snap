@@ -4,8 +4,7 @@ expression: snapshot
 ---
 formatted:
 class LeadingCommentsBeforeInitializerBlocks {
-  /* instance lead */
-  {
+  /* instance lead */ {
     instance();
   }
 
@@ -14,30 +13,26 @@ class LeadingCommentsBeforeInitializerBlocks {
     lineLead();
   }
 
-  /* static lead */
-  static {
+  /* static lead */ static {
     staticInit();
   }
 
   void nested() {
-    /* block lead */
-    {
+    /* block lead */ {
       nested();
     }
   }
 }
 
 class SameLineInstanceInitializerComment {
-  /* dangling */
-  {
+  /* dangling */ {
     body();
   }
 }
 
 class SameLineNestedBlockComment {
   void m() {
-    /* dangling */
-    {
+    /* dangling */ {
       body();
     }
   }

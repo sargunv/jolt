@@ -10,8 +10,7 @@ class LongArrayDimensions {
 
   void consume(
     int[][][][][][][][][][][][][][][][][][][][][][][][] values[][][][][][][][][][][][]
-  ) {
-  }
+  ) {}
 }
 
 diagnostics:

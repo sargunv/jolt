@@ -29,26 +29,19 @@ class TryResourceSeparator {
 }
 
 formatted:
-class ExtendsNoTypes
-  extends //x
-{
-}
+class ExtendsNoTypes extends //x
+{}
 
-class ImplementsNoTypes
-  implements //x
-{
-}
+class ImplementsNoTypes implements //x
+{}
 
-sealed class PermitsNoNames
-  permits //x
-{
-}
+sealed class PermitsNoNames permits //x
+{}
 
 class SwitchDefaultLabel {
   int m(String s) {
     return switch (s) {
-      case null,
-        default //x
+      case null, default //x
       -> 1;
     };
   }
@@ -57,15 +50,15 @@ class SwitchDefaultLabel {
 class TryResourceSeparator {
   void m() throws Exception {
     try (
-      ; //x
-    {
-    }
+      ;
+    //x
+    {}
   }
 }
 
 diagnostics:
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(33), end: TextSize(34) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(76), end: TextSize(77) }) message=expected type
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(120), end: TextSize(121) }) message=expected name
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(318), end: TextSize(319) }) message=expected resource
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(328), end: TextSize(329) }) message=expected `)` after resources
+code=java.parse.expected_syntax range=33..34 message=expected type
+code=java.parse.expected_syntax range=76..77 message=expected type
+code=java.parse.expected_syntax range=120..121 message=expected name
+code=java.parse.expected_syntax range=318..319 message=expected resource
+code=java.parse.expected_syntax range=328..329 message=expected `)` after resources

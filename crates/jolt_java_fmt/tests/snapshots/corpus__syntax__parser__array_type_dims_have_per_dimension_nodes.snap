@@ -7,11 +7,9 @@ class ArrayTypePerDimensionDims {
   String @A [] @B [] names;
 }
 
-@interface A {
-}
+@interface A {}
 
-@interface B {
-}
+@interface B {}
 
 diagnostics:
 (none)

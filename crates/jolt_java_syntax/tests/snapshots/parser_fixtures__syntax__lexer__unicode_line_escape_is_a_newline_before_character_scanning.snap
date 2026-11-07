@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+'\u000a' '\u000d'
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      CharacterLiteral "'" @ 0..1
+      CharacterLiteral "' '" @ 7..10 leading=[Newline "\\u000a"]
+      CharacterLiteral "'" @ 16..17 leading=[Newline "\\u000d"]
+  Eof "" @ 17..17
+
+diagnostics:
+code=java.lex.unterminated_character_literal range=0..1 message=unterminated character literal
+code=java.lex.unterminated_character_literal range=16..17 message=unterminated character literal
+code=java.parse.unexpected_syntax range=0..1 message=unexpected token at top level

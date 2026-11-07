@@ -7,12 +7,10 @@ input:
 // JOLT-TRIVIA:file-tail
 
 formatted:
-/* top */
-+ ;
+/* top */ + ;
 
-class C {
-}
+class C {}
 // JOLT-TRIVIA:file-tail
 
 diagnostics:
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(10), end: TextSize(11) }) message=unexpected token at top level
+code=java.parse.unexpected_syntax range=10..11 message=unexpected token at top level

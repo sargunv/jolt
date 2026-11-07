@@ -4,8 +4,7 @@ expression: snapshot
 ---
 formatted:
 class Base {
-  Base(int value) {
-  }
+  Base(int value) {}
 }
 
 class FlexibleConstructor extends Base {

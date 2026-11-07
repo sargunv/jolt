@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"\378"
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StringLiteral "\"\\378\"" @ 0..6
+  Eof "" @ 6..6
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..6 message=unexpected token at top level

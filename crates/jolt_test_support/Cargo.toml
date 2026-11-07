@@ -7,10 +7,8 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-jolt_diagnostics = { path = "../jolt_diagnostics" }
-jolt_fmt_ir = { path = "../jolt_fmt_ir" }
+jolt_fmt = { path = "../jolt_fmt" }
 jolt_syntax = { path = "../jolt_syntax" }
-unicode-width = "0.2.2"
 
 [lints]
 workspace = true

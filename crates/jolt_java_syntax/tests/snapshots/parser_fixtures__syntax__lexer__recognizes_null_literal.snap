@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+null
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      NullLiteral "null" @ 0..4
+  Eof "" @ 4..4
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..4 message=unexpected token at top level

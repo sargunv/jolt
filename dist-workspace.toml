@@ -44,6 +44,10 @@ musl-tools = { targets = ["aarch64-unknown-linux-musl", "x86_64-unknown-linux-mu
 [dist.github-custom-runners.aarch64-pc-windows-msvc]
 runner = "windows-2025"
 
+# cargo-dist 0.32 defaults this target to macos-14, which GitHub no longer runs.
+[dist.github-custom-runners.aarch64-apple-darwin]
+runner = "macos-15"
+
 [[dist.extra-artifacts]]
 artifacts = ["plugin.wasm", "dprint-schema.json", "jolt-schema.json"]
 build = [
@@ -51,7 +55,7 @@ build = [
   "-c",
   """\
 set -eu
-tools/wasm/build_optimized.sh plugin.wasm
+tools/wasm.sh plugin.wasm
 cargo run --release --package jolt_cli -- config schema --dprint > dprint-schema.json
 cargo run --release --package jolt_cli -- config schema > jolt-schema.json
 """,

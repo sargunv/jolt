@@ -13,11 +13,9 @@ import java.util.List;
 import static java.util.Collections.*;
 import static java.util.Collections.emptyList;
 
-class A {
-}
+class A {}
 
-interface B {
-}
+interface B {}
 
 diagnostics:
 (none)

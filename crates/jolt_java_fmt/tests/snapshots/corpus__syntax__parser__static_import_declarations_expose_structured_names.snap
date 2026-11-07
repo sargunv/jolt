@@ -6,8 +6,7 @@ formatted:
 import static java.util.Collections.*;
 import static java.util.Collections.emptyList;
 
-class StaticImports {
-}
+class StaticImports {}
 
 diagnostics:
 (none)

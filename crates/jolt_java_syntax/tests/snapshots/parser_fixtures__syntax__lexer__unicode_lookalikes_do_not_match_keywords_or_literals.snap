@@ -1,0 +1,35 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+ｉｆ ｔｒｕｅ ｎｕｌｌ
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "ｉｆ" @ 0..6 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "ｔｒｕｅ" @ 7..19 trailing=[Whitespace " "]
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "ｎｕｌｌ" @ 20..32
+      VariableDeclaratorList
+        VariableDeclarator
+  Eof "" @ 32..32
+
+diagnostics:
+code=java.parse.expected_syntax range=20..32 message=expected `;` after field declaration
+code=java.parse.expected_syntax range=32..32 message=expected variable name
+code=java.parse.expected_syntax range=32..32 message=expected `;` after field declaration

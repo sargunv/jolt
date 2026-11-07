@@ -4,13 +4,11 @@ expression: snapshot
 ---
 formatted:
 class Runner {
-  public Runner() throws IOException, TimeoutException {
-  }
+  public Runner() throws IOException, TimeoutException {}
 
   public Runner(Request request, ExecutionContext executionContext)
     throws /* ctor */ IOException, // io
-      TimeoutException {
-  }
+      TimeoutException {}
 
   public Result compute(
     Request request,
@@ -18,8 +16,7 @@ class Runner {
     RetryPolicy retryPolicy
   )
     throws /* checked */ IOException, // io
-      TimeoutException {
-  }
+      TimeoutException {}
 }
 
 diagnostics:

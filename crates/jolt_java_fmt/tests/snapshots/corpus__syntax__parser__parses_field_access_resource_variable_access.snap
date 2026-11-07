@@ -9,8 +9,7 @@ class FieldAccessResource {
   void method() throws Exception {
     try (
       this.existing
-    ) {
-    }
+    ) {}
   }
 }
 

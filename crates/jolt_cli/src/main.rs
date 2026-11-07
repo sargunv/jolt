@@ -3,21 +3,22 @@ use std::process::ExitCode;
 use clap::Parser as _;
 
 mod cli;
-mod config_schema;
-#[cfg(feature = "docs-generation")]
-mod docs_generation;
-mod error;
-mod fmt;
+mod config;
+mod format;
+mod schema;
+
+/// Errors are messages for the user.
+type Result<T> = std::result::Result<T, String>;
 
 fn main() -> ExitCode {
-    #[cfg(feature = "docs-generation")]
-    if let Some(exit_code) = docs_generation::run_from_env_args() {
-        return exit_code;
+    #[cfg(feature = "docs")]
+    if std::env::args().nth(1).as_deref() == Some("__cli-reference") {
+        let command = <cli::Cli as clap::CommandFactory>::command();
+        print!("{}", clap_markdown::help_markdown_command(&command));
+        return ExitCode::SUCCESS;
     }
 
-    let cli = cli::Cli::parse();
-
-    match cli::run(cli) {
+    match cli::run(cli::Cli::parse()) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("{error}");

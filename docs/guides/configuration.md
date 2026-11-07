@@ -1,32 +1,19 @@
 # Configuration
 
-Jolt's configuration surface is intentionally small. Use `jolt.toml` for the
-native CLI and `dprint.jsonc` when running Jolt as a dprint plugin.
+Jolt has three formatting options: line width, indent width, and tabs or spaces.
+Set them in `jolt.toml` for the CLI, or in `dprint.json` when running Jolt as a
+dprint plugin.
 
 ## Create a Config
 
-Create `jolt.toml` at the project root:
+Create `jolt.toml` in the project root:
 
 ```sh
 jolt config init
 ```
 
-This writes a root config with a `#:schema` directive for TOML language servers
-that support JSON Schema association, such as Taplo and Tombi.
-
-## Discovery
-
-Jolt discovers config by walking from the effective project root down to each
-file's directory, layering any config files found at these locations:
-
-- `jolt.toml`
-- `.config/jolt.toml`
-- `.config/jolt/config.toml`
-
-The effective project root for each file is the nearest ancestor with a VCS
-marker (`.git`, `.hg`, `.jj`, `.svn`) or a config file containing `root = true`.
-That means a nested `root = true` config stops inheritance from parent
-directories.
+It writes every option at its default, with a `#:schema` directive for TOML
+language servers that support JSON Schema, such as Taplo and Tombi.
 
 ## Example
 
@@ -43,68 +30,87 @@ indent-width = 2
 use-tabs = false
 
 [files]
-include = ["**/*.java", "**/*.kt", "**/*.kts"]
+include = ["**/*.java"]
 exclude = ["generated/**"]
 ```
 
 :::
 
-For dprint, put formatter options under the `jolt` key in `dprint.jsonc`. dprint
-uses camelCase names such as `lineWidth`, `indentWidth`, and `useTabs`.
-
 ## Fields
 
-- `root`: marks this config as the project root when set to `true`.
-- `format.line-width`: preferred maximum rendered line width.
-- `format.indent-width`: number of spaces per indentation level when using
-  spaces.
-- `format.use-tabs`: use tabs for indentation when set to `true`.
-- `files.include`: source file globs to include.
-- `files.exclude`: source file globs to exclude. `.gitignore` and `.ignore`
-  files are always respected as well.
+- `root`: marks this directory as the project root when `true`.
+- `format.line-width`: preferred maximum line width. Default `80`.
+- `format.indent-width`: spaces per indentation level when not using tabs.
+  Default `2`.
+- `format.use-tabs`: indent with tabs instead of spaces. Default `false`.
+- `files.include`: globs of source files to format, relative to the config's
+  directory. Default `["**/*.java"]`. A nearer config's list replaces a farther
+  one's.
+- `files.exclude`: globs of source files to skip, relative to the config's
+  directory. Every config's list applies. `.gitignore` and `.ignore` files are
+  always respected too.
 
-## CLI overrides
+The globs select files found in directories given to `jolt format`; files named
+on the command line are always formatted.
 
-The `jolt fmt` command can override formatting settings for one run:
+## Discovery
+
+A config file is any of these, in increasing precedence within one directory:
+
+- `.config/jolt/config.toml`
+- `.config/jolt.toml`
+- `jolt.toml`
+
+A file's settings come from every config between the project root and the file's
+directory, nearer ones taking precedence. The project root is the nearest
+ancestor with a VCS marker (`.git`, `.hg`, `.jj`, `.svn`) or a config with
+`root = true`, so a nested `root = true` stops inheritance from the directories
+above it. Without one, the project root is the directory `jolt` runs in when the
+file is under it (so `jolt format .`, `jolt format src/A.java` and
+`jolt format --stdin-filename src/A.java -` agree), and otherwise the file's own
+directory.
+
+## Command-line Overrides
+
+Options given to `jolt format` override every config:
 
 ```sh
-jolt fmt --line-width 100 --indent-width 4 --use-tabs false .
+jolt format --line-width 100 --indent-width 4 --use-tabs false .
 ```
 
-Use `--config <path>` to load only an explicit config file. Use `--no-config` to
-disable discovered project configs and rely on defaults plus CLI options.
+`--include` replaces the include globs and `--exclude` adds exclude globs, both
+relative to the working directory. `--config <path>` loads only that file, and
+`--no-config` loads none.
 
 ## Inspect Configs
 
-List the config files that apply to the current directory or a path:
+List the config files that apply to a directory or file, lowest precedence
+first:
 
 ```sh
 jolt config list [path]
 ```
 
-Print the effective config for the current directory or a path:
+Print the effective config, and for a file path (existing or not) whether the
+include and exclude globs select it:
 
 ```sh
 jolt config resolve [path]
 ```
 
-`resolve` prints TOML with comments showing which config supplied each value.
-When the path is a file or a future `.java`, `.kt`, or `.kts` file, it also
-reports whether that file is selected by the resolved include/exclude patterns.
+## dprint
+
+Put options under the `jolt` key of `dprint.json`, in camelCase. dprint's own
+`lineWidth`, `indentWidth`, and `useTabs` apply when the `jolt` key leaves them
+unset.
+
+```json
+{ "lineWidth": 100, "jolt": { "indentWidth": 4 } }
+```
 
 ## Schemas
 
-The docs build publishes the raw [Jolt config schema](/schemas/jolt-schema.json)
-and [dprint config schema](/schemas/dprint-schema.json).
-
-Print the JSON schema for `jolt.toml` locally:
-
-```sh
-jolt config schema
-```
-
-Print the dprint plugin schema:
-
-```sh
-jolt config schema --dprint
-```
+The docs publish the [Jolt config schema](/schemas/jolt-schema.json) and the
+[dprint config schema](/schemas/dprint-schema.json), and each release attaches
+both. `jolt config schema` prints the first, and `jolt config schema --dprint`
+the second.

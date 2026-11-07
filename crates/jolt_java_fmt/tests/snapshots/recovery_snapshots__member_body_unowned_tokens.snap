@@ -7,12 +7,12 @@ class C { int a; /* member */ + ; void m() {} }
 
 formatted:
 class C {
-  int a; /* member */
+  int a;
 
-  + ;
-  void m() {
-  }
+  /* member */ + ;
+
+  void m() {}
 }
 
 diagnostics:
-code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=unexpected token in type body
+code=java.parse.unexpected_syntax range=30..31 message=unexpected token in type body

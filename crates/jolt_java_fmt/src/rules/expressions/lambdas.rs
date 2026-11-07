@@ -1,261 +1,130 @@
-use super::{
-    Doc, LambdaExpression, LambdaParameter, LeadingTrivia, TrailingTrivia, comment_forces_line,
-    format_annotation, format_block, format_expression, format_separator_with_comments,
-    format_token, format_token_with_comments, format_type,
-};
-use crate::helpers::comments::token_has_comments;
-use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
-use crate::helpers::recovery::{
-    JavaFormatField, JavaFormatListPart, format_malformed, format_optional_field,
-    format_required_field, resolve_list_part, resolve_required_field,
-};
-use jolt_fmt_ir::DocBuilder;
+//! Lambda expressions and their parameters.
+
+use jolt_fmt::{Doc, cat, group, indent};
 use jolt_java_syntax::{
-    JavaSyntaxField, JavaSyntaxListPart, LambdaBodySyntax, LambdaBodyValue, LambdaModifier,
-    LambdaModifierSyntax,
+    LambdaExpression, LambdaModifier, LambdaModifierList, LambdaParameter, LambdaParameterList,
 };
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxToken};
 
-pub(super) fn format_lambda_expression<'source>(
-    expression: &LambdaExpression<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let parameters = format_lambda_parameters(expression, doc);
-    let arrow = format_lambda_arrow(expression, doc);
-    let body = format_required_field(expression.body(), doc, format_lambda_body);
+use crate::JavaFormatter;
+use crate::helpers::lists::{ListLayout, TrailingComma, delimited, joined};
 
-    doc_concat!(doc, [parameters, arrow, body])
-}
-
-fn format_lambda_body<'source>(
-    body: LambdaBodySyntax<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    match body.classify() {
-        Ok(LambdaBodyValue::Expression(expression)) => format_expression(&expression, doc),
-        Ok(LambdaBodyValue::Block(block)) => format_block(&block, doc),
-        Ok(LambdaBodyValue::Bogus(bogus)) => format_malformed(&bogus, doc),
-        Err(error) => {
-            doc.block_on_invariant(error.to_string());
-            Doc::nil()
+/// `parameters -> body`. Parameters that do not fit break as a list.
+pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpression<'a>) -> Doc {
+    let parameters = match single_untyped_parameter(f, node) {
+        Some(parameter) => {
+            // N6: `(x) ->` prints `x ->`.
+            let open = removed(f, node.open_paren());
+            let parameter = f.fmt(parameter);
+            let close = removed(f, node.close_paren());
+            cat![f; open, parameter, close]
         }
-    }
-}
-
-fn format_lambda_arrow<'source>(
-    expression: &LambdaExpression<'source>,
-    doc: &mut jolt_fmt_ir::DocBuilder<'source>,
-) -> Doc<'source> {
-    format_required_field(expression.arrow(), doc, |arrow, doc| {
-        if arrow.leading_comments().is_empty() && arrow.trailing_comments().is_empty() {
-            let space = doc.space();
-            let arrow = format_separator_with_comments(doc, &arrow, space);
-            return doc_concat!(doc, [doc.space(), arrow]);
+        None if node.open_paren().is_none() && node.close_paren().is_none() => {
+            let parameters = node
+                .parameters()
+                .into_iter()
+                .flat_map(LambdaParameterList::elements);
+            joined(f, parameters, |_| Doc::NIL)
         }
-
-        let forced_line = arrow
-            .trailing_comments()
-            .any(|comment| comment_forces_line(&comment));
-
-        doc_concat!(
-            doc,
-            [
-                doc.space(),
-                format_token(
-                    doc,
-                    &arrow,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::BeforeLineBreak,
-                ),
-                if forced_line {
-                    doc.hard_line()
-                } else {
-                    doc.space()
-                },
-            ]
-        )
-    })
-}
-
-fn format_lambda_parameters<'source>(
-    expression: &LambdaExpression<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let has_parentheses = matches!(expression.open_paren(), JavaSyntaxField::Present(_))
-        && matches!(expression.close_paren(), JavaSyntaxField::Present(_));
-    let parameters = resolve_required_field(expression.parameters(), doc);
-    if let Some(removal) = expression.simple_parameter_parenthesis_removal()
-        && optional_delimiter_is_comment_free(expression.open_paren())
-        && optional_delimiter_is_comment_free(expression.close_paren())
-    {
-        let parameter = removal.parameter;
-        let parameter = if parameter
-            .token_iter()
-            .any(|token| token_has_comments(&token))
-        {
-            format_lambda_parameter(&parameter, doc)
-        } else {
-            format_required_field(parameter.name(), doc, |name, doc| {
-                format_token_with_comments(doc, &name)
-            })
-        };
-        let open = doc.removed_source(removal.open);
-        let close = doc.removed_source(removal.close);
-        return doc_concat!(doc, [open, parameter, close]);
-    }
-    let open = format_optional_field(expression.open_paren(), doc, |token, doc| {
-        format_token_with_comments(doc, &token)
-    });
-    let parameters = match parameters {
-        JavaFormatField::Present(parameters) => format_lambda_parameter_entries(&parameters, doc),
-        JavaFormatField::Malformed(recovery) => recovery,
-    };
-    let close = format_optional_field(expression.close_paren(), doc, |token, doc| {
-        format_token_with_comments(doc, &token)
-    });
-
-    if has_parentheses {
-        let parameters = doc_indent!(doc, doc_concat!(doc, [doc.soft_line(), parameters]));
-        doc_group!(
-            doc,
-            doc_concat!(doc, [open, parameters, doc.soft_line_boundary(), close]),
-        )
-    } else {
-        doc_group!(doc, doc_concat!(doc, [open, parameters, close]),)
-    }
-}
-
-fn optional_delimiter_is_comment_free(
-    field: JavaSyntaxField<'_, jolt_java_syntax::JavaSyntaxToken<'_>>,
-) -> bool {
-    match field {
-        JavaSyntaxField::Missing(_) => true,
-        JavaSyntaxField::Present(token) => !token_has_comments(&token),
-        JavaSyntaxField::Malformed(_) => false,
-    }
-}
-
-fn format_lambda_parameter_entries<'source>(
-    parameters: &jolt_java_syntax::LambdaParameterList<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let items = lambda_parameter_items(parameters, doc);
-    comma_list(doc, items)
-}
-
-fn lambda_parameter_items<'source, 'fmt>(
-    parameters: &'fmt jolt_java_syntax::LambdaParameterList<'source>,
-    doc: &'fmt mut DocBuilder<'source>,
-) -> Vec<CommaListItem<'source>> {
-    syntax_comma_list_items(doc, parameters.parts(), |parameter, doc| {
-        format_lambda_parameter(&parameter, doc)
-    })
-}
-
-#[allow(clippy::needless_pass_by_value)]
-fn optional_is_absent<T>(field: JavaSyntaxField<'_, T>) -> bool {
-    matches!(field, JavaSyntaxField::Missing(_))
-}
-
-fn format_lambda_parameter<'source>(
-    parameter: &LambdaParameter<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let modifiers = format_required_field(parameter.modifiers(), doc, |modifiers, doc| {
-        format_lambda_modifiers(modifiers.parts(), doc)
-    });
-    let ty = format_optional_field(parameter.r#type(), doc, |ty, doc| format_type(&ty, doc));
-    let varargs_annotations =
-        format_required_field(parameter.varargs_annotations(), doc, |annotations, doc| {
-            format_annotation_parts(annotations.parts(), doc)
-        });
-    let ellipsis = format_optional_field(parameter.ellipsis(), doc, |ellipsis, doc| {
-        format_token_with_comments(doc, &ellipsis)
-    });
-    let name = format_required_field(parameter.name(), doc, |name, doc| {
-        format_token_with_comments(doc, &name)
-    });
-    doc_concat!(
-        doc,
-        [
-            modifiers,
-            ty,
-            varargs_annotations,
-            ellipsis,
-            if optional_is_absent(parameter.r#type()) && optional_is_absent(parameter.ellipsis()) {
-                Doc::nil()
-            } else {
-                doc.space()
+        None if is_empty(f, node) => {
+            // The reference breaks even an empty `()` when the line does not
+            // fit: `(` / `) -> body`.
+            let open = f.token_opt(node.open_paren());
+            let inner = indent![f; f.soft_line()];
+            let close = f.token_opt(node.close_paren());
+            group![f; open, inner, f.soft_line(), close]
+        }
+        None => delimited(
+            f,
+            node.syntax(),
+            node.open_paren(),
+            node.parameters()
+                .into_iter()
+                .flat_map(LambdaParameterList::elements),
+            node.close_paren(),
+            ListLayout {
+                padded: false,
+                trailing_comma: TrailingComma::Never,
             },
-            name
-        ]
-    )
+        ),
+    };
+    let arrow = f.token_opt(node.arrow());
+    let body = f.fmt_opt(node.body());
+    cat![f; parameters, f.space(), arrow, f.space(), body]
 }
 
-fn format_lambda_modifiers<'source>(
-    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, LambdaModifier<'source>>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let mut has_parts = false;
-    let docs = doc.concat_list(|docs| {
-        for part in parts {
-            if has_parts {
-                let space = docs.space();
-                docs.push(space);
-            }
-            has_parts = true;
-            let part = match resolve_list_part(part, docs) {
-                JavaFormatListPart::Item(modifier) => match modifier.classify() {
-                    Ok(LambdaModifierSyntax::Annotation(annotation)) => {
-                        format_annotation(&annotation, docs)
-                    }
-                    Ok(LambdaModifierSyntax::Final(token) | LambdaModifierSyntax::Var(token)) => {
-                        format_token_with_comments(docs, &token)
-                    }
-                    Err(error) => {
-                        docs.block_on_invariant(error.to_string());
-                        Doc::nil()
-                    }
-                },
-                JavaFormatListPart::Separator(separator) => {
-                    format_token_with_comments(docs, &separator)
-                }
-                JavaFormatListPart::Recovery(recovery) => recovery.doc(),
-            };
-            docs.push(part);
-        }
-    });
-    if has_parts {
-        doc_concat!(doc, [docs, doc.space()])
-    } else {
-        Doc::nil()
-    }
+/// `()` with nothing inside, not even comments.
+fn is_empty<'a>(f: &JavaFormatter<'a>, node: LambdaExpression<'a>) -> bool {
+    !f.has_dangling_comments(node.syntax())
+        && node
+            .parameters()
+            .into_iter()
+            .flat_map(LambdaParameterList::elements)
+            .all(|element| matches!(element, ListElement::Missing))
 }
 
-fn format_annotation_parts<'source>(
-    parts: impl IntoIterator<Item = JavaSyntaxListPart<'source, jolt_java_syntax::Annotation<'source>>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let mut has_parts = false;
-    let annotations = doc.concat_list(|docs| {
-        for part in parts {
-            if has_parts {
-                let space = docs.space();
-                docs.push(space);
-            }
-            has_parts = true;
-            let part = match resolve_list_part(part, docs) {
-                JavaFormatListPart::Item(annotation) => format_annotation(&annotation, docs),
-                JavaFormatListPart::Separator(separator) => {
-                    format_token_with_comments(docs, &separator)
-                }
-                JavaFormatListPart::Recovery(recovery) => recovery.doc(),
-            };
-            docs.push(part);
-        }
-    });
-    if has_parts {
-        doc_concat!(doc, [doc.space(), annotations, doc.space()])
-    } else {
-        Doc::nil()
+fn removed<'a>(f: &mut JavaFormatter<'a>, token: Option<SyntaxToken<'a>>) -> Doc {
+    token.map_or(Doc::NIL, |token| f.removed(SyntaxElement::Token(token)))
+}
+
+/// The parameter of `(x) ->` when N6 removes its parentheses: one parameter
+/// without modifiers, type or dimensions, and no comments on or inside the
+/// parentheses.
+fn single_untyped_parameter<'a>(
+    f: &JavaFormatter<'a>,
+    node: LambdaExpression<'a>,
+) -> Option<LambdaParameter<'a>> {
+    let (open, close) = (node.open_paren()?, node.close_paren()?);
+    if !node.syntax().is_recovery_free() || f.has_dangling_comments(node.syntax()) {
+        return None;
     }
+    let mut elements = node.parameters()?.elements();
+    let (Some(ListElement::Item(parameter)), None) = (elements.next(), elements.next()) else {
+        return None;
+    };
+    let untyped = parameter
+        .modifiers()
+        .is_none_or(|modifiers| modifiers.syntax().children().next().is_none())
+        && parameter.r#type().is_none()
+        && parameter.ellipsis().is_none()
+        && parameter.dimensions().is_none();
+    let quiet = !f.has_comments_within(parameter.syntax())
+        && [open, close].into_iter().all(|token| {
+            let token = SyntaxElement::Token(token);
+            !f.has_leading_comments(token) && !f.has_trailing_comments(token)
+        });
+    (untyped && quiet).then_some(parameter)
+}
+
+/// `final @A Type... name[]`; modifiers and annotations stay inline.
+pub(crate) fn lambda_parameter<'a>(f: &mut JavaFormatter<'a>, node: LambdaParameter<'a>) -> Doc {
+    let mut docs = Vec::new();
+    for modifier in node
+        .modifiers()
+        .into_iter()
+        .flat_map(LambdaModifierList::items)
+    {
+        docs.push(match modifier {
+            LambdaModifier::Annotation(annotation) => f.fmt(annotation),
+            LambdaModifier::Bogus(bogus) => f.fmt(bogus),
+            LambdaModifier::Token(token) => f.token(token),
+        });
+        docs.push(f.space());
+    }
+    let ty = node.r#type();
+    docs.push(f.fmt_opt(ty));
+    if let Some(annotations) = node.varargs_annotations()
+        && annotations.elements().next().is_some()
+    {
+        docs.push(f.space());
+        docs.push(f.fmt(annotations));
+    }
+    let ellipsis = node.ellipsis();
+    docs.push(f.token_opt(ellipsis));
+    if ty.is_some() || ellipsis.is_some() {
+        docs.push(f.space());
+    }
+    docs.push(f.token_opt(node.name()));
+    docs.push(f.fmt_opt(node.dimensions()));
+    f.concat(docs)
 }

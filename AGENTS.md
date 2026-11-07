@@ -1,11 +1,21 @@
 # Jolt
 
-Fast, opinionated JVM and Kotlin Multiplatform project tooling.
+Fast, opinionated Java formatter.
 
 ## Project Map
 
-- `.agents/docs/VISION.md`: product vision.
 - `crates/`: Rust workspace crates for the formatter engine and wrappers.
+  `jolt_cli` (the `jolt` binary) and `jolt_fmt_dprint` (the dprint plugin) use
+  only the `jolt_formatter` facade and `jolt_config`, the one definition of the
+  user-facing format options.
+- `tools/`: corpus import (`import/import.py`), the regression reference
+  (`jolt-ref.sh`), the profile-guided release build (`pgo.py`), the optimized
+  plugin build (`wasm.sh`), and the benchmark (`bench.py`).
+- `docs/internals/formatter.md`: the formatter design contract (crates, APIs,
+  comment model, verification). Amend it in the same change when an
+  implementation has to deviate.
+- `docs/internals/java-style.md`: the normative Java output and its deliberate
+  changes from the reference.
 
 ## Useful Commands
 
@@ -13,25 +23,43 @@ Fast, opinionated JVM and Kotlin Multiplatform project tooling.
 - `mise run test`: run all tests.
 - `mise run test --update`: run tests with `INSTA_UPDATE=always`.
 - `mise run jolt ...`: run the Jolt CLI from local source.
-- `mise run hunt`: sweep the imported corpora (tools/import/.imports) for
-  formatter bugs. Formats every file at several line widths, and with a comment
-  injected at token boundaries in each shape of `PROBE_SHAPES` — on the
-  boundary's own line, so it lands in the previous token's trailing trivia, and
-  on a line of its own, so it lands in the next token's leading trivia — then
-  checks reparse validity, structure/comment conservation, and idempotence.
+- `mise run hunt`: sweep the repository fixtures and the imported corpora
+  (tools/import/.imports) for formatter bugs. Formats every file at several line
+  widths, and with a comment injected at token boundaries in each shape of
+  `PROBE_SHAPES` — on the boundary's own line, so it lands in the previous
+  token's trailing trivia, and on a line of its own, so it lands in the next
+  token's leading trivia — then checks reparse validity, structure, token and
+  comment conservation, and idempotence. The fixtures and the gjf, palantir and
+  prettier inputs up to 4 KiB get every boundary at every width; larger files
+  and Spring are sampled. `mise run hunt --mutate` also checks every one-token
+  deletion of those small files, a recovery stress test outside the gate.
   Positions inside a string literal are excluded, since text there is content
   rather than trivia. Runs in release mode; too slow in debug for the normal
   test suite. Reports land in `target/hunt/`, capped per failure category. Exits
-  non-zero when a failure category is not in that language's `KNOWN_OPEN` list,
-  and when a `KNOWN_OPEN` entry stops firing and should be deleted, so the sweep
-  is a signal while carrying the debt it already has. The `jcheck`/`kcheck`
-  examples re-run one file, or one probe position for a repro, e.g.
-  `.../File.java:ownline12`.
+  non-zero on any failure category not in `KNOWN_OPEN`, which must stay empty,
+  and on a `KNOWN_OPEN` entry that stops firing. The `jcheck` example re-runs
+  one file, or one variant for a repro, e.g. `.../File.java:ownline12`,
+  `.../File.java:comment3@40` or `.../File.java:delete7` (`--mutate` adds the
+  deletions to a whole-file check).
+- `mise run jref ...`: compare the formatter with the reference outputs
+  (`jref <dir>` checks `format(F) == F` for `.java` files and `.snap`
+  `formatted:` sections; `jref --input <in> --expected <out>` checks
+  `format(in) == out`). The reference outputs and the reference binary live in
+  `tools/import/.imports/.jolt-ref/`, which `tools/jolt-ref.sh build` recreates
+  and `tools/jolt-ref.sh compare <binary>` diffs against; differences from them
+  must be explained by "Deliberate changes" in `docs/internals/java-style.md`.
 - `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
   plugin.
-- `mise x google-java-format -- google-java-format ...`: run the
-  google-java-format formatter as a useful reference.
-- `mise x oxfmt -- oxfmt ...`: run the oxfmt formatter as a useful reference.
+- `mise run bench`: time formatting the Spring corpus with hyperfine and print
+  the medians; `mise run bench --compare` adds google-java-format and
+  prettier-java and writes `docs/bench.json`, which the docs show. Rerun it on a
+  quiet machine before committing the numbers.
+- `mise run build:jolt --mode release` and
+  `mise run build:dprint-plugin --mode release`: the PGO-built CLI in
+  `target/release/jolt` and the optimized, smoke-tested plugin in
+  `target/plugin.wasm`.
+- `mise x aqua:google/google-java-format -- google-java-format ...`: run the
+  pinned google-java-format as a useful reference.
 
 Run `mise tasks ls --all` for the full task list.
 
@@ -61,6 +89,17 @@ Run `mise tasks ls --all` for the full task list.
 - A formatter must not panic, refuse, or validate syntax for
   malformed-but-represented trees. Format the represented pieces consistently
   and preserve all existing tokens/trivia.
+- Formatter rules emit source tokens only through `Formatter::token`, nodes only
+  through `Formatter::node`/`fmt`, and comments only through the chokepoints
+  (`node`, `token`, `verbatim`, `removed`, `dangling`, and
+  `leading_comments`/`trailing_comments` for the rules that build a node's doc
+  themselves: spines, the `else if` chain, N7 parentheses and the declaration
+  header). Rules never choose how a comment prints; comment placement is decided
+  once, before layout, by `jolt_fmt`'s placement pass, and rules ask it
+  (`leading_comments_break` and the other queries) instead of reading trivia.
+  Debug builds assert every comment is emitted exactly once.
+- Normalizations are the closed list N1–N10 in `docs/internals/formatter.md`,
+  applied only to recovery-free nodes.
 - Formatter rules must not parse by inspecting token streams. Syntax crates own
   tree shape, recovery accessors, and token ownership; formatter crates consume
   those accessors for layout only.

@@ -4,8 +4,7 @@ expression: snapshot
 ---
 formatted:
 @Normal(name = "test", nested = @Marker, values = { 1, 2 })
-class Annotated {
-}
+class Annotated {}
 
 @interface Normal {
   String name();
@@ -15,8 +14,7 @@ class Annotated {
   int[] values();
 }
 
-@interface Marker {
-}
+@interface Marker {}
 
 diagnostics:
 (none)
