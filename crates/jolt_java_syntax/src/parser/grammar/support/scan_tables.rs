@@ -11,28 +11,12 @@ pub(in crate::parser) struct ScanTables {
     /// Per token: the first `;`, `}`, or EOF at bracket depth zero, with the
     /// high bit set when a `this(` or `super(` precedes it at depth zero.
     statement_end: Vec<u32>,
-    /// Per token: whether `this` appears before the next `,`, `)`, `;`, or EOF.
-    receiver: Vec<bool>,
 }
 
 const SAW_INVOCATION: u32 = 1 << 31;
 
-/// Tokens that may appear inside type arguments.
-const fn is_type_token(kind: JavaSyntaxKind) -> bool {
-    matches!(
-        kind,
-        JavaSyntaxKind::Identifier
-            | JavaSyntaxKind::Dot
-            | JavaSyntaxKind::Comma
-            | JavaSyntaxKind::Question
-            | JavaSyntaxKind::ExtendsKw
-            | JavaSyntaxKind::SuperKw
-            | JavaSyntaxKind::Amp
-            | JavaSyntaxKind::At
-            | JavaSyntaxKind::LBracket
-            | JavaSyntaxKind::RBracket
-    ) || super::is_primitive_type_start(kind)
-}
+/// The most tokens [`Parser::starts_receiver_parameter`] looks at.
+const RECEIVER_SCAN_LIMIT: usize = 512;
 
 impl ScanTables {
     fn build(&mut self, parser: &Parser<'_>, base: usize) {
@@ -66,36 +50,9 @@ impl ScanTables {
             }
         }
 
-        // The index after the `>` closing a type-argument `<`, for `<` runs
-        // made only of type tokens (a `>>` or `>>>` closes two or three).
-        let mut after_angle = vec![None; kinds.len()];
-        let mut angles: Vec<usize> = Vec::new();
-        for (index, &kind) in kinds.iter().enumerate() {
-            let closes = match kind {
-                JavaSyntaxKind::Lt => {
-                    angles.push(index);
-                    continue;
-                }
-                JavaSyntaxKind::Gt => 1,
-                JavaSyntaxKind::RShift => 2,
-                JavaSyntaxKind::UnsignedRShift => 3,
-                kind if is_type_token(kind) => continue,
-                _ => {
-                    angles.clear();
-                    continue;
-                }
-            };
-            for _ in 0..closes {
-                if let Some(open) = angles.pop() {
-                    after_angle[open] = Some(index + 1);
-                }
-            }
-        }
-
         let len = kinds.len();
         let mut header_end = vec![0u32; len];
         let mut statement_end = vec![0u32; len];
-        let mut receiver = vec![false; len];
         let at = |index: usize| u32::try_from(base + index).expect("token index fits in u32");
         for index in (0..len).rev() {
             let kind = kinds[index];
@@ -120,23 +77,10 @@ impl ScanTables {
                     statement_end[index + 1] | if invocation { SAW_INVOCATION } else { 0 }
                 }
             };
-            receiver[index] = match kind {
-                JavaSyntaxKind::Eof
-                | JavaSyntaxKind::Comma
-                | JavaSyntaxKind::RParen
-                | JavaSyntaxKind::Semicolon => false,
-                JavaSyntaxKind::ThisKw => true,
-                // Commas inside type arguments do not end the parameter.
-                JavaSyntaxKind::Lt => {
-                    after_angle[index].map_or(receiver[index + 1], |after| receiver[after])
-                }
-                _ => receiver[index + 1],
-            };
         }
         self.base = base;
         self.header_end = header_end;
         self.statement_end = statement_end;
-        self.receiver = receiver;
     }
 }
 
@@ -176,9 +120,39 @@ impl Parser<'_> {
             && self.kind_at((entry & !SAW_INVOCATION) as usize) == JavaSyntaxKind::Semicolon
     }
 
-    /// Whether `this` appears before the end of the current parameter.
+    /// Whether `this` appears before the end of the current parameter: a
+    /// `,` or `)` outside the brackets and type arguments the parameter
+    /// opens. The scan stops after `RECEIVER_SCAN_LIMIT` tokens (a receiver's
+    /// type is never that long), so a query is `O(1)` even when recovery asks
+    /// again at every token of a malformed list.
     pub(in crate::parser::grammar) fn starts_receiver_parameter(&mut self) -> bool {
-        let offset = self.scan_offset();
-        self.scan_tables.receiver[offset]
+        // Brackets, and type arguments outside them (inside, `<` is an
+        // annotation argument's comparison).
+        let (mut brackets, mut angles) = (0usize, 0usize);
+        let start = self.position();
+        for index in start..start + RECEIVER_SCAN_LIMIT {
+            let kind = self.kind_at(index);
+            match kind {
+                JavaSyntaxKind::ThisKw => return true,
+                JavaSyntaxKind::Eof
+                | JavaSyntaxKind::Semicolon
+                | JavaSyntaxKind::LBrace
+                | JavaSyntaxKind::RBrace => return false,
+                JavaSyntaxKind::Comma | JavaSyntaxKind::RParen if brackets == 0 && angles == 0 => {
+                    return false;
+                }
+                JavaSyntaxKind::LParen | JavaSyntaxKind::LBracket => brackets += 1,
+                JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket => {
+                    brackets = brackets.saturating_sub(1);
+                }
+                _ if brackets > 0 => {}
+                JavaSyntaxKind::Lt => angles += 1,
+                JavaSyntaxKind::Gt => angles = angles.saturating_sub(1),
+                JavaSyntaxKind::RShift => angles = angles.saturating_sub(2),
+                JavaSyntaxKind::UnsignedRShift => angles = angles.saturating_sub(3),
+                _ => {}
+            }
+        }
+        false
     }
 }

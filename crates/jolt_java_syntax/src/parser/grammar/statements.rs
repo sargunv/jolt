@@ -160,10 +160,17 @@ impl Parser<'_> {
     /// An `else if` chain is parsed in a loop and takes one nesting level,
     /// however long it is (the formatter walks it iteratively too).
     pub(super) fn parse_if_statement(&mut self) {
+        // The outermost `if`, then the chained ones (allocated only for a
+        // chain).
+        let mut outer = None;
         let mut chain = Vec::new();
         loop {
             let statement = self.start();
-            chain.push(statement);
+            if outer.is_none() {
+                outer = Some(statement);
+            } else {
+                chain.push(statement);
+            }
             self.expect(JavaSyntaxKind::IfKw, "expected `if`");
             self.parse_parenthesized_expression(
                 "expected `(` before if condition",
@@ -187,7 +194,7 @@ impl Parser<'_> {
             }
             break;
         }
-        for statement in chain.into_iter().rev() {
+        for statement in chain.into_iter().rev().chain(outer) {
             self.complete(statement, JavaSyntaxKind::IfStatement);
         }
     }

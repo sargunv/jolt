@@ -34,7 +34,7 @@ struct Command {
 }
 
 #[allow(clippy::struct_excessive_bools)]
-struct Printer<'p, 'a, S: Sink + ?Sized> {
+struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     docs: &'p DocBuilder<'a>,
     options: FormatOptions,
     sink: &'p mut S,
@@ -54,18 +54,18 @@ struct Printer<'p, 'a, S: Sink + ?Sized> {
     after_line_comment: bool,
     /// The last character written on the current line, if it is not a space.
     last: Option<char>,
-    joins: fn(char, char) -> bool,
+    joins: J,
     suffixes: Vec<Command>,
     /// The fit check's stack, kept to reuse its allocation.
     fit_stack: Vec<Fit>,
     stack: Vec<Command>,
 }
 
-pub(crate) fn print<S: Sink + ?Sized>(
+pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
     docs: &DocBuilder<'_>,
     root: Doc,
     options: FormatOptions,
-    joins: fn(char, char) -> bool,
+    joins: J,
     final_newline: bool,
     sink: &mut S,
 ) -> ControlFlow<()> {
@@ -100,7 +100,7 @@ pub(crate) fn print<S: Sink + ?Sized>(
     printer.sink.write(&printer.out)
 }
 
-impl<S: Sink + ?Sized> Printer<'_, '_, S> {
+impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
     fn run(&mut self) -> ControlFlow<()> {
         loop {
             let Some(command) = self.stack.pop() else {
@@ -199,13 +199,23 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
             self.pending_indent = command.indent;
         }
         self.flush_pending();
-        if let (Some(last), Some(first)) = (self.last, text.text.chars().next())
-            && (self.joins)(last, first)
-        {
-            self.out.push(' ');
-            self.column += 1;
+        let bytes = text.text.as_bytes();
+        if let Some(last) = self.last {
+            // Texts start with an ASCII byte in all but rare cases.
+            let first = match bytes.first() {
+                Some(&byte) if byte.is_ascii() => Some(char::from(byte)),
+                _ => text.text.chars().next(),
+            };
+            if first.is_some_and(|first| (self.joins)(last, first)) {
+                self.out.push(' ');
+                self.column += 1;
+            }
         }
-        self.last = text.text.chars().next_back().filter(|ch| *ch != ' ');
+        self.last = match bytes.last() {
+            Some(b' ') | None => None,
+            Some(&byte) if byte.is_ascii() => Some(char::from(byte)),
+            _ => text.text.chars().next_back(),
+        };
         if text.flags & VERBATIM_START != 0 {
             self.verbatim_base.clone_from(&self.line_ws);
         }

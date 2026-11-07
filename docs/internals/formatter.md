@@ -546,7 +546,8 @@ precedence by token kind, contextual keyword tests, modifier partitioning
   a `Bogus` node at a category or list position (unexpected tokens), and a
   `MALFORMED` node whose children did not fit its shape. There is no other.
 - The parenthesis/annotation lookahead table stays (linear build, indexed
-  queries).
+  queries). Whether a formal parameter is a receiver (`X<T, U> this`) is a
+  forward scan of that parameter, capped at 512 tokens.
 - Every other speculative lookahead (type arguments, casts, lambda heads,
   modifiers) scans at most one type, annotation or header whose nesting is
   capped at `MAX_DEPTH`, or answers balanced-bracket questions from the table,
