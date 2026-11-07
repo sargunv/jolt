@@ -1,0 +1,17 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--threads\", \"2\", \".\"], \"\")"
+---
+$ jolt fmt --threads 2 .
+status: 1
+--- stderr
+A.java:1:7: java.parse.expected_syntax: expected type name
+A.java:2:1: java.parse.expected_syntax: expected `}` after type body
+Formatted 2 files in $TIME
+1 file could not be formatted
+--- wrote B.java
+class A {
+  void f() {
+    if (ready) { go(); }
+  }
+}

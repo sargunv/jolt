@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/jolt_cli",
+  "crates/jolt_config",
   "crates/jolt_fmt",
   "crates/jolt_fmt_dprint",
   "crates/jolt_formatter",
@@ -8,8 +9,6 @@ members = [
   "crates/jolt_java_syntax",
   "crates/jolt_syntax",
   "crates/jolt_test_support",
-  # TEMPORARY: "tools/bench/driver" stays out until the periphery stage
-  # decides its future; it measured the deleted `bench` metrics features.
 ]
 resolver = "3"
 

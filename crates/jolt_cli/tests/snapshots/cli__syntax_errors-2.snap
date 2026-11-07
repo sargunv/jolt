@@ -1,0 +1,8 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--format-with-errors\", \"A.java\"], \"\")"
+---
+$ jolt fmt --format-with-errors A.java
+status: 0
+--- stderr
+Formatted 1 file in $TIME

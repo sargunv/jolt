@@ -1,0 +1,8 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"README.md\"], \"\")"
+---
+$ jolt fmt README.md
+status: 1
+--- stderr
+README.md: unsupported file extension

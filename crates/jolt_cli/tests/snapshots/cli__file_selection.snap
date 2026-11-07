@@ -1,0 +1,14 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--exclude\", \"src/Internal.java\"], \"\")"
+---
+$ jolt fmt --exclude src/Internal.java
+status: 0
+--- stderr
+Formatted 1 file in $TIME
+--- wrote src/A.java
+class A {
+  void f() {
+    if (ready) { go(); }
+  }
+}

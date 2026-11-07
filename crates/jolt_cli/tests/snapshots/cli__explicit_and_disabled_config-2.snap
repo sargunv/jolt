@@ -1,0 +1,14 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--config\", \"conf/explicit.toml\", \".\"], \"\")"
+---
+$ jolt fmt --config conf/explicit.toml .
+status: 0
+--- stderr
+Formatted 1 file in $TIME
+--- wrote A.java
+class A {
+   void f() {
+      if (ready) { go(); }
+   }
+}

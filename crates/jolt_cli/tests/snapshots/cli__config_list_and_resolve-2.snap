@@ -1,0 +1,17 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"config\", \"resolve\", \"src/nested/Internal.java\"], \"\")"
+---
+$ jolt config resolve src/nested/Internal.java
+status: 0
+--- stdout
+[format]
+line-width = 100
+indent-width = 2
+use-tabs = true
+
+[files]
+include = ["**/*.java"]
+exclude = ["generated/**", "**/Internal.java"]
+
+# target $TEMP/src/nested/Internal.java is not selected

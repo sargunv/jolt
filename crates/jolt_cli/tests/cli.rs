@@ -1,570 +1,304 @@
-use std::{fs, path::Path, process::Output};
+//! Runs the `jolt` binary in temporary projects. Each snapshot shows the exit
+//! status, the output, and every file the run created or changed.
 
-use assert_cmd::Command;
-use assert_cmd::cargo::cargo_bin;
+use std::{
+    collections::BTreeMap,
+    fmt::Write as _,
+    fs,
+    io::Write as _,
+    path::Path,
+    process::{Command, Stdio},
+};
+
 use tempfile::TempDir;
 
-const SIMPLE_INPUT: &str = "class A {}\n";
-const SIMPLE_FORMATTED: &str = "class A {\n}\n";
-const NESTED_INPUT: &str = "class A { void f(){ if (true) { System.out.println(1); } } }\n";
+/// Formats to different text with each indentation option.
+const NESTED: &str = "class A { void f() { if (ready) { go(); } } }\n";
+const FORMATTED: &str = "class A {\n  void f() {\n    go();\n  }\n}\n";
 
-#[test]
-fn init_creates_root_config_with_schema_directive() {
-    let temp = TempDir::new().expect("tempdir should be created");
+/// A temporary project: write files, run `jolt`, snapshot the result.
+struct Project {
+    dir: TempDir,
+}
 
-    let output = jolt(temp.path(), ["config", "init"], "");
+impl Project {
+    fn new(files: &[(&str, &str)]) -> Self {
+        let project = Self {
+            dir: TempDir::new().unwrap(),
+        };
+        for (path, contents) in files {
+            project.write(path, contents);
+        }
+        project
+    }
 
-    assert_success(&output);
-    assert!(stderr(&output).contains("Created"));
-    let contents = read(temp.path().join("jolt.toml"));
-    assert!(contents.starts_with("#:schema https://github.com/sargunv/jolt/releases/download/"));
-    assert!(contents.contains("/jolt-schema.json\n"));
-    assert!(contents.contains("root = true\n"));
-    assert!(contents.contains("[format]\n"));
-    assert!(contents.contains("use-tabs = false\n"));
-    assert!(contents.contains("[files]\n"));
-    assert!(contents.contains("\"**/*.java\""));
+    fn write(&self, path: &str, contents: &str) {
+        let path = self.dir.path().join(path);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, contents).unwrap();
+    }
+
+    fn files(&self) -> BTreeMap<String, String> {
+        let mut files = BTreeMap::new();
+        collect(self.dir.path(), self.dir.path(), &mut files);
+        files
+    }
+
+    /// Runs `jolt` in `cwd` (relative to the project) and renders the result.
+    fn run_in(&self, cwd: &str, args: &[&str], stdin: &str) -> String {
+        let before = self.files();
+        let mut child = Command::new(env!("CARGO_BIN_EXE_jolt"))
+            .args(args)
+            .current_dir(self.dir.path().join(cwd))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        // A run that fails before reading stdin closes the pipe early.
+        let _ = child.stdin.take().unwrap().write_all(stdin.as_bytes());
+        let output = child.wait_with_output().unwrap();
+
+        let mut rendered = format!(
+            "$ jolt {}\nstatus: {}\n",
+            args.join(" "),
+            output.status.code().unwrap_or(-1)
+        );
+        for (label, bytes) in [("stdout", &output.stdout), ("stderr", &output.stderr)] {
+            if !bytes.is_empty() {
+                let _ = write!(rendered, "--- {label}\n{}", String::from_utf8_lossy(bytes));
+            }
+        }
+        for (path, contents) in self.files() {
+            if before.get(&path) != Some(&contents) {
+                let _ = write!(rendered, "--- wrote {path}\n{contents}");
+            }
+        }
+        self.normalize(&rendered)
+    }
+
+    fn run(&self, args: &[&str], stdin: &str) -> String {
+        self.run_in(".", args, stdin)
+    }
+
+    fn normalize(&self, text: &str) -> String {
+        let mut text = text.to_owned();
+        for dir in [
+            fs::canonicalize(self.dir.path()).unwrap(),
+            self.dir.path().to_path_buf(),
+        ] {
+            text = text.replace(&dir.display().to_string(), "$TEMP");
+        }
+        text.lines()
+            .map(|line| match line.rsplit_once(" in ") {
+                Some((summary, _))
+                    if summary.starts_with("Formatted ") || summary.starts_with("Checked ") =>
+                {
+                    format!("{summary} in $TIME\n")
+                }
+                _ => format!("{line}\n"),
+            })
+            .collect()
+    }
+}
+
+fn collect(root: &Path, dir: &Path, files: &mut BTreeMap<String, String>) {
+    for entry in fs::read_dir(dir).unwrap() {
+        let path = entry.unwrap().path();
+        if path.is_dir() {
+            collect(root, &path, files);
+        } else {
+            let name = path.strip_prefix(root).unwrap().display().to_string();
+            files.insert(name, fs::read_to_string(&path).unwrap_or_default());
+        }
+    }
 }
 
 #[test]
-fn init_refuses_existing_config_locations() {
-    let root_config = TempDir::new().expect("tempdir should be created");
-    write(root_config.path().join("jolt.toml"), "root = true\n");
-    let output = jolt(root_config.path(), ["config", "init"], "");
-    assert_failure(&output);
-    assert!(stderr(&output).contains("jolt.toml: config already exists"));
-
-    let dot_config = TempDir::new().expect("tempdir should be created");
-    fs::create_dir_all(dot_config.path().join(".config/jolt"))
-        .expect("config dir should be created");
-    write(
-        dot_config.path().join(".config/jolt/config.toml"),
-        "root = true\n",
-    );
-    let output = jolt(dot_config.path(), ["config", "init"], "");
-    assert_failure(&output);
-    assert!(stderr(&output).contains("config already exists"));
-    assert!(!dot_config.path().join("jolt.toml").exists());
+fn write_mode() {
+    let project = Project::new(&[
+        ("A.java", NESTED),
+        ("src/B.java", FORMATTED),
+        ("README.md", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run(&["fmt"], ""));
 }
 
 #[cfg(unix)]
 #[test]
-fn write_mode_in_place_rewrite_preserves_unix_mode_bits() {
+fn write_mode_rewrites_files_in_place() {
     use std::os::unix::fs::{MetadataExt as _, PermissionsExt as _};
 
-    let temp = TempDir::new().expect("tempdir should be created");
-    let path = temp.path().join("A.java");
-    write(&path, SIMPLE_INPUT);
-    fs::set_permissions(&path, fs::Permissions::from_mode(0o754)).expect("mode should be set");
-    let before = fs::metadata(&path).expect("metadata should be readable");
-
-    let output = jolt(temp.path(), ["fmt", "A.java"], "");
-
-    assert_success(&output);
-    assert_eq!(read(&path), SIMPLE_FORMATTED);
-    let after = fs::metadata(&path).expect("metadata should be readable");
+    let project = Project::new(&[("A.java", NESTED)]);
+    let path = project.dir.path().join("A.java");
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o754)).unwrap();
+    let before = fs::metadata(&path).unwrap();
+    assert!(project.run(&["fmt", "A.java"], "").contains("status: 0"));
+    let after = fs::metadata(&path).unwrap();
     assert_eq!(after.mode() & 0o777, 0o754);
     assert_eq!(after.ino(), before.ino());
 }
 
 #[test]
-fn write_mode_formats_multiple_files_with_threads() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("A.java"), SIMPLE_INPUT);
-    write(temp.path().join("B.java"), NESTED_INPUT);
-
-    let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
-
-    assert_success(&output);
-    assert_eq!(read(temp.path().join("A.java")), SIMPLE_FORMATTED);
-    assert_nested_uses_two_spaces(&read(temp.path().join("B.java")));
+fn check_mode() {
+    let project = Project::new(&[
+        ("src/B.java", NESTED),
+        ("src/A.java", NESTED),
+        ("src/C.java", FORMATTED),
+        ("Bad.java", "class {\n"),
+    ]);
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "--threads", "2", "."], ""));
 }
 
 #[test]
-fn write_mode_leaves_unchanged_java_files_untouched() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    let path = temp.path().join("A.java");
-    write(&path, SIMPLE_FORMATTED);
-    let mut permissions = fs::metadata(&path)
-        .expect("metadata should be readable")
-        .permissions();
-    permissions.set_readonly(true);
-    fs::set_permissions(&path, permissions).expect("file should be made readonly");
-
-    let output = jolt(temp.path(), ["fmt", "A.java"], "");
-
-    assert_success(&output);
-    assert_eq!(read(path), SIMPLE_FORMATTED);
+fn syntax_errors() {
+    let project = Project::new(&[("A.java", "class {\n"), ("B.java", NESTED)]);
+    insta::assert_snapshot!(project.run(&["fmt", "--threads", "2", "."], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "--format-with-errors", "A.java"], ""));
 }
 
 #[test]
-fn check_mode_with_threads_prints_changed_paths_in_order_without_writing() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    fs::create_dir_all(temp.path().join("src")).expect("src dir should be created");
-    write(temp.path().join("src/B.java"), SIMPLE_INPUT);
-    write(temp.path().join("src/A.java"), SIMPLE_INPUT);
-
-    let output = jolt(temp.path(), ["fmt", "--check", "--threads", "2", "."], "");
-
-    assert_failure(&output);
-    assert_eq!(stdout(&output), "src/A.java\nsrc/B.java\n");
-    assert_eq!(read(temp.path().join("src/A.java")), SIMPLE_INPUT);
-    assert_eq!(read(temp.path().join("src/B.java")), SIMPLE_INPUT);
+fn stdin() {
+    let project = Project::new(&[]);
+    insta::assert_snapshot!(project.run(&["format", "-"], NESTED));
+    insta::assert_snapshot!(project.run(
+        &["fmt", "--check", "--stdin-filename", "src/Main.java", "-"],
+        NESTED
+    ));
+    insta::assert_snapshot!(project.run(
+        &["fmt", "--stdin-filename", "src/Main.java", "-"],
+        "class {\n"
+    ));
 }
 
 #[test]
-fn syntax_error_with_threads_fails_without_blocking_other_files() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("Bad.java"), "class {\n");
-    write(temp.path().join("Good.java"), SIMPLE_INPUT);
-
-    let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
-
-    assert_failure(&output);
-    assert!(stderr(&output).contains("java.parse.expected_syntax"));
-    assert_eq!(read(temp.path().join("Bad.java")), "class {\n");
-    assert_simple_formatted(&read(temp.path().join("Good.java")));
+fn path_errors() {
+    let project = Project::new(&[("README.md", NESTED)]);
+    insta::assert_snapshot!(project.run(&["fmt", "README.md"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "Missing.java"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "-", "README.md"], ""));
 }
 
 #[test]
-fn cli_format_options_reach_core() {
-    let temp = TempDir::new().expect("tempdir should be created");
-
-    let line_width = jolt(
-        temp.path(),
-        ["fmt", "--line-width", "30", "-"],
-        "class A { String s = first.second.third.fourth.fifth.sixth; }\n",
-    );
-    assert_success(&line_width);
-    assert!(stdout(&line_width).contains("String s =\n    first.second"));
-
-    let indent_width = jolt(
-        temp.path(),
-        ["fmt", "--indent-width", "4", "-"],
-        NESTED_INPUT,
-    );
-    assert_success(&indent_width);
-    assert_nested_uses_four_spaces(&stdout(&indent_width));
-
-    let tabs = jolt(
-        temp.path(),
-        ["fmt", "--use-tabs", "true", "-"],
-        NESTED_INPUT,
-    );
-    assert_success(&tabs);
-    assert_nested_uses_tabs(&stdout(&tabs));
-
-    write(temp.path().join("jolt.toml"), "[format]\nuse-tabs = true\n");
-    let spaces = jolt(
-        temp.path(),
-        ["fmt", "--use-tabs", "false", "-"],
-        NESTED_INPUT,
-    );
-    assert_success(&spaces);
-    assert_nested_uses_two_spaces(&stdout(&spaces));
+fn format_flags_override_config() {
+    let project = Project::new(&[("jolt.toml", "[format]\nindent-width = 4\nuse-tabs = true\n")]);
+    insta::assert_snapshot!(project.run(&["fmt", "-"], NESTED));
+    insta::assert_snapshot!(project.run(&["fmt", "--use-tabs", "false", "-"], NESTED));
+    insta::assert_snapshot!(project.run(
+        &[
+            "fmt",
+            "--line-width",
+            "20",
+            "--indent-width",
+            "3",
+            "--use-tabs",
+            "false",
+            "-"
+        ],
+        NESTED
+    ));
 }
 
 #[test]
-fn config_options_apply_and_cli_options_override_them() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(
-        temp.path().join("jolt.toml"),
-        "[format]\nindent-width = 4\n",
-    );
-
-    let configured = jolt(temp.path(), ["fmt", "-"], NESTED_INPUT);
-    assert_success(&configured);
-    assert_nested_uses_four_spaces(&stdout(&configured));
-
-    let overridden = jolt(
-        temp.path(),
-        ["fmt", "--indent-width", "2", "-"],
-        NESTED_INPUT,
-    );
-    assert_success(&overridden);
-    assert_nested_uses_two_spaces(&stdout(&overridden));
+fn nested_configs_layer_up_to_the_project_root() {
+    let project = Project::new(&[
+        ("jolt.toml", "[format]\nuse-tabs = true\n"),
+        ("project/.git/HEAD", ""),
+        ("project/jolt.toml", "[format]\nindent-width = 4\n"),
+        ("project/Root.java", NESTED),
+        (
+            "project/module/.config/jolt.toml",
+            "[format]\nindent-width = 3\n",
+        ),
+        ("project/module/Module.java", NESTED),
+        ("project/module/lib/jolt.toml", "root = true\n"),
+        ("project/module/lib/Lib.java", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run_in("project/module", &["fmt", "--threads", "2", ".."], ""));
 }
 
 #[test]
-fn nested_configs_override_parent_configs() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(
-        temp.path().join("jolt.toml"),
-        "[format]\nindent-width = 4\n",
-    );
-    fs::create_dir_all(temp.path().join("module")).expect("module dir should be created");
-    write(
-        temp.path().join("module/jolt.toml"),
-        "[format]\nindent-width = 2\n",
-    );
-    write(temp.path().join("Root.java"), NESTED_INPUT);
-    write(temp.path().join("module/Module.java"), NESTED_INPUT);
-
-    let output = jolt(temp.path(), ["fmt", "."], "");
-
-    assert_success(&output);
-    assert_nested_uses_four_spaces(&read(temp.path().join("Root.java")));
-    assert_nested_uses_two_spaces(&read(temp.path().join("module/Module.java")));
+fn config_locations_in_one_directory() {
+    let project = Project::new(&[
+        (
+            ".config/jolt/config.toml",
+            "[format]\nindent-width = 4\nline-width = 20\n",
+        ),
+        (".config/jolt.toml", "[format]\nindent-width = 3\n"),
+    ]);
+    insta::assert_snapshot!(project.run(&["fmt", "-"], NESTED));
+    project.write("jolt.toml", "[format]\nindent-width = 2\n");
+    insta::assert_snapshot!(project.run(&["fmt", "-"], NESTED));
 }
 
 #[test]
-fn nested_configs_apply_with_threads() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(
-        temp.path().join("jolt.toml"),
-        "[format]\nindent-width = 4\n",
-    );
-    fs::create_dir_all(temp.path().join("module")).expect("module dir should be created");
-    write(
-        temp.path().join("module/jolt.toml"),
-        "[format]\nindent-width = 2\n",
-    );
-    write(temp.path().join("Root.java"), NESTED_INPUT);
-    write(temp.path().join("module/Module.java"), NESTED_INPUT);
-
-    let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
-
-    assert_success(&output);
-    assert_nested_uses_four_spaces(&read(temp.path().join("Root.java")));
-    assert_nested_uses_two_spaces(&read(temp.path().join("module/Module.java")));
+fn explicit_and_disabled_config() {
+    let project = Project::new(&[
+        ("jolt.toml", "[format]\nindent-width = 4\n"),
+        (
+            "conf/explicit.toml",
+            "[format]\nindent-width = 3\n[files]\nexclude = [\"B.java\"]\n",
+        ),
+        ("conf/B.java", NESTED),
+        ("A.java", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run(&["fmt", "--no-config", "-"], NESTED));
+    insta::assert_snapshot!(project.run(&["fmt", "--config", "conf/explicit.toml", "."], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "--config", "missing.toml", "-"], NESTED));
 }
 
 #[test]
-fn child_invocations_discover_configs_up_to_vcs_root() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("jolt.toml"), "[format]\nuse-tabs = true\n");
-    fs::create_dir_all(temp.path().join("project/.git")).expect("git dir should be created");
-    fs::create_dir_all(temp.path().join("project/module")).expect("module dir should be created");
-    write(
-        temp.path().join("project/jolt.toml"),
-        "[format]\nindent-width = 4\n",
-    );
-
-    let output = jolt(
-        &temp.path().join("project/module"),
-        ["fmt", "-"],
-        NESTED_INPUT,
-    );
-
-    assert_success(&output);
-    assert_nested_uses_four_spaces(&stdout(&output));
-}
-
-#[test]
-fn root_true_config_defines_project_boundary_without_vcs_marker() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("jolt.toml"), "[format]\nuse-tabs = true\n");
-    fs::create_dir_all(temp.path().join("project/module")).expect("module dir should be created");
-    write(
-        temp.path().join("project/jolt.toml"),
-        "root = true\n[format]\nindent-width = 4\n",
-    );
-
-    let output = jolt(
-        &temp.path().join("project/module"),
-        ["fmt", "-"],
-        NESTED_INPUT,
-    );
-
-    assert_success(&output);
-    assert_nested_uses_four_spaces(&stdout(&output));
-
-    let dot_config = TempDir::new().expect("tempdir should be created");
-    write(
-        dot_config.path().join("jolt.toml"),
-        "[format]\nuse-tabs = true\n",
-    );
-    fs::create_dir_all(dot_config.path().join("project/.config/jolt"))
-        .expect("config dir should be created");
-    fs::create_dir_all(dot_config.path().join("project/module"))
-        .expect("module dir should be created");
-    write(
-        dot_config.path().join("project/.config/jolt/config.toml"),
-        "root = true\n[format]\nindent-width = 4\n",
-    );
-
-    let output = jolt(
-        &dot_config.path().join("project/module"),
-        ["fmt", "-"],
-        NESTED_INPUT,
-    );
-
-    assert_success(&output);
-    assert_nested_uses_four_spaces(&stdout(&output));
-}
-
-#[test]
-fn root_true_config_stops_parent_config_inheritance() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("jolt.toml"), "[format]\nuse-tabs = true\n");
-    fs::create_dir_all(temp.path().join("project/module")).expect("module dir should be created");
-    write(
-        temp.path().join("project/jolt.toml"),
-        "root = true\n[format]\nindent-width = 4\n",
-    );
-    write(temp.path().join("Root.java"), NESTED_INPUT);
-    write(temp.path().join("project/module/Module.java"), NESTED_INPUT);
-
-    let output = jolt(temp.path(), ["fmt", "."], "");
-
-    assert_success(&output);
-    assert_nested_uses_tabs(&read(temp.path().join("Root.java")));
-    assert_nested_uses_four_spaces(&read(temp.path().join("project/module/Module.java")));
-}
-
-#[test]
-fn root_and_dot_config_locations_are_discovered() {
-    let root_config = TempDir::new().expect("tempdir should be created");
-    write(
-        root_config.path().join("jolt.toml"),
-        "[format]\nindent-width = 4\n",
-    );
-    let output = jolt(root_config.path(), ["fmt", "-"], NESTED_INPUT);
-    assert_success(&output);
-    assert_nested_uses_four_spaces(&stdout(&output));
-
-    let dot_config = TempDir::new().expect("tempdir should be created");
-    fs::create_dir_all(dot_config.path().join(".config")).expect("config dir should be created");
-    write(
-        dot_config.path().join(".config/jolt.toml"),
-        "[format]\nindent-width = 4\n",
-    );
-    let output = jolt(dot_config.path(), ["fmt", "-"], NESTED_INPUT);
-    assert_success(&output);
-    assert_nested_uses_four_spaces(&stdout(&output));
-
-    let xdg_config = TempDir::new().expect("tempdir should be created");
-    fs::create_dir_all(xdg_config.path().join(".config/jolt"))
-        .expect("config dir should be created");
-    write(
-        xdg_config.path().join(".config/jolt/config.toml"),
-        "[format]\nindent-width = 4\n",
-    );
-    let output = jolt(xdg_config.path(), ["fmt", "-"], NESTED_INPUT);
-    assert_success(&output);
-    assert_nested_uses_four_spaces(&stdout(&output));
-
-    write(
-        xdg_config.path().join("jolt.toml"),
-        "[format]\nindent-width = 2\n",
-    );
-    let output = jolt(xdg_config.path(), ["fmt", "-"], NESTED_INPUT);
-    assert_success(&output);
-    assert_nested_uses_two_spaces(&stdout(&output));
-}
-
-#[test]
-fn config_file_errors_and_no_config_behavior() {
-    let temp = TempDir::new().expect("tempdir should be created");
-
-    let missing = jolt(
-        temp.path(),
-        ["fmt", "--config", "missing.toml", "-"],
-        SIMPLE_INPUT,
-    );
-    assert_failure(&missing);
-    assert!(stderr(&missing).contains("missing.toml"));
-
-    write(
-        temp.path().join("jolt.toml"),
-        "[format]\nindent-width = 4\n",
-    );
-    let no_config = jolt(temp.path(), ["fmt", "--no-config", "-"], NESTED_INPUT);
-    assert_success(&no_config);
-    assert_nested_uses_two_spaces(&stdout(&no_config));
-
-    write(
-        temp.path().join("explicit.toml"),
-        "[format]\nindent-width = 4\n",
-    );
-    write(temp.path().join("jolt.toml"), "[format]\nline-wdith = 80\n");
-    let explicit_config = jolt(
-        temp.path(),
-        ["fmt", "--config", "explicit.toml", "-"],
-        NESTED_INPUT,
-    );
-    assert_success(&explicit_config);
-    assert_nested_uses_four_spaces(&stdout(&explicit_config));
-
-    write(temp.path().join("jolt.toml"), "[format]\nline-wdith = 80\n");
-    let unknown_key = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
-    assert_failure(&unknown_key);
-    assert!(stderr(&unknown_key).contains("unknown field"));
-
-    write(
-        temp.path().join("jolt.toml"),
+fn config_errors() {
+    let project = Project::new(&[]);
+    for config in [
+        "[format]\nline-wdith = 80\n",
         "[format]\nindent-width = 0\n",
-    );
-    let invalid_range = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
-    assert_failure(&invalid_range);
-    assert!(stderr(&invalid_range).contains("indent-width must be greater than zero"));
-
-    write(
-        temp.path().join("jolt.toml"),
         "[files]\ninclude = [\"[\"]\n",
-    );
-    let invalid_glob = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
-    assert_failure(&invalid_glob);
-    assert!(stderr(&invalid_glob).contains("jolt.toml: invalid glob pattern"));
-}
-
-#[test]
-fn stdin_formatting_accepts_threads_but_stays_serial() {
-    let temp = TempDir::new().expect("tempdir should be created");
-
-    let output = jolt(temp.path(), ["fmt", "--threads", "2", "-"], SIMPLE_INPUT);
-
-    assert_success(&output);
-    assert_simple_formatted(&stdout(&output));
-}
-
-#[test]
-fn include_replacement_selects_candidates() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    fs::create_dir_all(temp.path().join("selected")).expect("selected dir should be created");
-    fs::create_dir_all(temp.path().join("other")).expect("other dir should be created");
-    write(
-        temp.path().join("jolt.toml"),
-        "[files]\ninclude = [\"selected/**/*.java\"]\n",
-    );
-    write(temp.path().join("selected/A.java"), SIMPLE_INPUT);
-    write(temp.path().join("other/B.java"), SIMPLE_INPUT);
-
-    let configured = jolt(temp.path(), ["fmt", "."], "");
-    assert_success(&configured);
-    assert_simple_formatted(&read(temp.path().join("selected/A.java")));
-    assert_eq!(read(temp.path().join("other/B.java")), SIMPLE_INPUT);
-
-    let cli_replacement = jolt(
-        temp.path(),
-        ["fmt", "--include", "other/**/*.java", "."],
-        "",
-    );
-    assert_success(&cli_replacement);
-    assert_simple_formatted(&read(temp.path().join("other/B.java")));
-}
-
-#[test]
-fn exclude_patterns_stack_across_config_and_cli() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    fs::create_dir_all(temp.path().join("src")).expect("src dir should be created");
-    fs::create_dir_all(temp.path().join("generated")).expect("generated dir should be created");
-    write(
-        temp.path().join("jolt.toml"),
-        "[files]\nexclude = [\"generated/**\"]\n",
-    );
-    write(temp.path().join("src/A.java"), SIMPLE_INPUT);
-    write(temp.path().join("src/Internal.java"), SIMPLE_INPUT);
-    write(temp.path().join("generated/B.java"), SIMPLE_INPUT);
-
-    let output = jolt(
-        temp.path(),
-        ["fmt", "--exclude", "src/Internal.java", "."],
-        "",
-    );
-
-    assert_success(&output);
-    assert_simple_formatted(&read(temp.path().join("src/A.java")));
-    assert_eq!(read(temp.path().join("src/Internal.java")), SIMPLE_INPUT);
-    assert_eq!(read(temp.path().join("generated/B.java")), SIMPLE_INPUT);
-}
-
-#[test]
-fn gitignore_and_ignore_files_are_respected() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    fs::create_dir_all(temp.path().join("gitignored")).expect("ignored dir should be created");
-    fs::create_dir_all(temp.path().join("ignored")).expect("ignored dir should be created");
-    write(temp.path().join(".gitignore"), "gitignored/\n");
-    write(temp.path().join(".ignore"), "ignored/\n");
-    write(temp.path().join("A.java"), SIMPLE_INPUT);
-    write(temp.path().join("gitignored/B.java"), SIMPLE_INPUT);
-    write(temp.path().join("ignored/C.java"), SIMPLE_INPUT);
-
-    let output = jolt(temp.path(), ["fmt", "."], "");
-
-    assert_success(&output);
-    assert_simple_formatted(&read(temp.path().join("A.java")));
-    assert_eq!(read(temp.path().join("gitignored/B.java")), SIMPLE_INPUT);
-    assert_eq!(read(temp.path().join("ignored/C.java")), SIMPLE_INPUT);
-}
-
-#[test]
-fn unknown_extensions_are_rejected_when_explicit_and_ignored_when_recursive() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("README.md"), SIMPLE_INPUT);
-    write(temp.path().join("A.java"), SIMPLE_INPUT);
-
-    let explicit = jolt(temp.path(), ["fmt", "README.md"], "");
-    assert_failure(&explicit);
-    assert!(stderr(&explicit).contains("README.md: unsupported file extension"));
-    assert_eq!(read(temp.path().join("README.md")), SIMPLE_INPUT);
-
-    let recursive = jolt(temp.path(), ["fmt", "."], "");
-    assert_success(&recursive);
-    assert_eq!(read(temp.path().join("README.md")), SIMPLE_INPUT);
-    assert_simple_formatted(&read(temp.path().join("A.java")));
-}
-
-fn jolt<const N: usize>(dir: &Path, args: [&str; N], stdin: &str) -> Output {
-    let mut command = Command::new(cargo_bin("jolt"));
-    command.current_dir(dir).args(args);
-    if !stdin.is_empty() {
-        command.write_stdin(stdin);
+    ] {
+        project.write("jolt.toml", config);
+        insta::assert_snapshot!(project.run(&["fmt", "-"], NESTED));
     }
-    command.output().expect("jolt command should run")
 }
 
-fn write(path: impl AsRef<Path>, contents: &str) {
-    fs::write(path, contents).expect("file should be written");
+#[test]
+fn file_selection() {
+    let project = Project::new(&[
+        (
+            "jolt.toml",
+            "[files]\ninclude = [\"src/**/*.java\"]\nexclude = [\"src/gen/**\"]\n",
+        ),
+        ("src/A.java", NESTED),
+        ("src/Internal.java", NESTED),
+        ("src/gen/G.java", NESTED),
+        ("src/ignored/I.java", NESTED),
+        ("src/.ignore", "ignored/\n"),
+        ("other/O.java", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run(&["fmt", "--exclude", "src/Internal.java"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "--include", "other/*.java", "--check"], ""));
 }
 
-fn read(path: impl AsRef<Path>) -> String {
-    fs::read_to_string(path).expect("file should be read")
+#[test]
+fn config_init() {
+    let project = Project::new(&[]);
+    insta::assert_snapshot!(project.run(&["config", "init"], ""));
+    insta::assert_snapshot!(project.run(&["config", "init"], ""));
 }
 
-fn assert_simple_formatted(contents: &str) {
-    assert_ne!(contents, SIMPLE_INPUT);
-    assert!(contents.contains("class A"));
-    assert!(contents.ends_with('\n'));
-}
-
-fn assert_nested_uses_two_spaces(contents: &str) {
-    assert!(contents.contains("\n  void f()"));
-    assert!(contents.contains("\n    if (true)"));
-}
-
-fn assert_nested_uses_four_spaces(contents: &str) {
-    assert!(contents.contains("\n    void f()"));
-    assert!(contents.contains("\n        if (true)"));
-}
-
-fn assert_nested_uses_tabs(contents: &str) {
-    assert!(contents.contains("\n\tvoid f()"));
-    assert!(contents.contains("\n\t\tif (true)"));
-}
-
-fn stdout(output: &Output) -> String {
-    String::from_utf8(output.stdout.clone()).expect("stdout should be UTF-8")
-}
-
-fn stderr(output: &Output) -> String {
-    String::from_utf8(output.stderr.clone()).expect("stderr should be UTF-8")
-}
-
-fn assert_success(output: &Output) {
-    assert!(
-        output.status.success(),
-        "expected success\nstdout:\n{}\nstderr:\n{}",
-        stdout(output),
-        stderr(output)
-    );
-}
-
-fn assert_failure(output: &Output) {
-    assert!(
-        !output.status.success(),
-        "expected failure\nstdout:\n{}\nstderr:\n{}",
-        stdout(output),
-        stderr(output)
-    );
+#[test]
+fn config_list_and_resolve() {
+    let project = Project::new(&[
+        (
+            "jolt.toml",
+            "root = true\n[format]\nline-width = 100\n[files]\nexclude = [\"generated/**\"]\n",
+        ),
+        ("src/.config/jolt.toml", "[format]\nuse-tabs = true\n"),
+        (
+            "src/jolt.toml",
+            "[files]\nexclude = [\"**/Internal.java\"]\n",
+        ),
+    ]);
+    insta::assert_snapshot!(project.run(&["config", "list", "src/nested/A.java"], ""));
+    insta::assert_snapshot!(project.run(&["config", "resolve", "src/nested/Internal.java"], ""));
+    insta::assert_snapshot!(project.run_in("src", &["config", "resolve"], ""));
 }

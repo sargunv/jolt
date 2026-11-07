@@ -1,0 +1,12 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"-\"], NESTED)"
+---
+$ jolt fmt -
+status: 1
+--- stderr
+$TEMP/jolt.toml: TOML parse error at line 2, column 16
+  |
+2 | indent-width = 0
+  |                ^
+invalid value: integer `0`, expected a nonzero u8

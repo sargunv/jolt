@@ -33,7 +33,7 @@ const inputLintDiagnostics = computed<LintDiagnostic[]>(() => {
     return [];
   }
 
-  return toLintDiagnostics(parseFormatError(formatError.value));
+  return toLintDiagnostics(parseFormatError(formatError.value), input.value);
 });
 
 const formatStatus = computed(() => {
