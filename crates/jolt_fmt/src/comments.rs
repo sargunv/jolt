@@ -392,19 +392,34 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
     }
 }
 
-/// Decides each comment's layout from the line breaks around it.
+/// Decides each comment's layout from the line breaks around it. A comment
+/// with code before it on its line that is followed only by other comments
+/// up to the line's end ends its line too: `/* a */` in `x; /* a */ // b`
+/// trails `x;` like `// b`.
 fn classify_layouts<L: Language>(
     list: &mut [Comment<'_>],
     prev: &[Option<SyntaxToken<'_>>],
     next: &[SyntaxToken<'_>],
 ) {
     let eof = L::to_raw(L::EOF);
+    // Whether the line ends after the comment, past any comments after it.
+    let mut line_ends = vec![false; list.len()];
+    for index in (0..list.len()).rev() {
+        let last_before_next = next.get(index + 1) != Some(&next[index]);
+        line_ends[index] = list[index].lines_after > 0
+            || if last_before_next {
+                next[index].kind() == eof
+            } else {
+                line_ends[index + 1]
+            };
+    }
     for index in 0..list.len() {
         let comment = &mut list[index];
         let last_before_next = next.get(index + 1) != Some(&next[index]);
         let newline_before = prev[index].is_none() || comment.lines_before > 0;
-        let newline_after =
-            comment.lines_after > 0 || (last_before_next && next[index].kind() == eof);
+        let newline_after = comment.lines_after > 0
+            || (last_before_next && next[index].kind() == eof)
+            || (!newline_before && line_ends[index]);
         comment.layout = match (newline_before, newline_after) {
             (true, true) => CommentLayout::OwnLine,
             (true, false) => CommentLayout::StartOfLine,

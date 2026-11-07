@@ -556,41 +556,23 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 let text = self.comment_doc(index, true);
                 cat![self; self.builder.hard_line(), text, after]
             }
+            // Spaced from what follows like an inline comment, which is what
+            // the comment is when the line does not break before it.
             (Side::Leading, CommentLayout::StartOfLine) => {
-                // Spaced from what follows like an inline comment, which is
-                // what the comment is when the line does not break before it.
-                let next = self.comments.next[index];
-                let after = if L::is_closer(next) || L::is_separator(next) {
-                    Doc::NIL
-                } else {
-                    Doc::SPACE
-                };
+                let after = self.space_after(index);
                 let text = self.comment_doc(index, false);
                 cat![self; Doc::HARD_LINE, text, after]
             }
             (Side::Leading, CommentLayout::EndOfLine) => {
-                let hug = self.comments.prev[index].is_some_and(L::hugs_next);
-                let before = if hug { Doc::NIL } else { Doc::SPACE };
+                let before = self.space_before(index);
                 let after = self.line_or_blank(comment.lines_after >= 2);
-                let text = self.comment_doc(index, false);
-                cat![self; before, text, after]
-            }
-            (Side::Leading, _) => {
-                let hug = self.comments.prev[index].is_some_and(L::hugs_next);
-                let before = if hug { Doc::NIL } else { Doc::SPACE };
-                let next = self.comments.next[index];
-                let after = if L::is_closer(next) || L::is_separator(next) {
-                    Doc::NIL
-                } else {
-                    Doc::SPACE
-                };
                 let text = self.comment_doc(index, false);
                 cat![self; before, text, after]
             }
             // A block comment at the end of a line trails its code like an
             // inline one: it does not force the line to break.
-            (_, CommentLayout::EndOfLine)
-                if self.comments.list[index].kind == CommentKind::Line =>
+            (Side::Trailing | Side::Dangling, CommentLayout::EndOfLine)
+                if comment.kind == CommentKind::Line =>
             {
                 let (space, break_parent) = (Doc::SPACE, Doc::BREAK_PARENT);
                 let text = self.comment_doc(index, false);
@@ -598,26 +580,41 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 let suffix = self.builder.line_suffix(suffix);
                 cat![self; suffix, break_parent]
             }
-            (_, CommentLayout::Inline | CommentLayout::StartOfLine | CommentLayout::EndOfLine) => {
-                let hug = self.comments.prev[index].is_some_and(L::hugs_next);
-                let before = if hug { Doc::NIL } else { Doc::SPACE };
-                // Code may follow on the line (after a block comment that
-                // ended its line in the source), spaced as it would be after
-                // a leading inline comment.
-                let next = self.comments.next[index];
-                let after = if L::is_closer(next) || L::is_separator(next) {
-                    Doc::NIL
-                } else {
-                    Doc::SPACE
-                };
-                let text = self.comment_doc(index, false);
-                cat![self; before, text, after]
-            }
             (_, CommentLayout::OwnLine) => {
                 let (hard_line, after) = (Doc::HARD_LINE, Doc::HARD_LINE);
                 let text = self.comment_doc(index, true);
                 cat![self; hard_line, text, after]
             }
+            // Code may follow on the line (after a block comment that ended
+            // its line in the source), spaced as after a leading inline one.
+            (_, CommentLayout::Inline | CommentLayout::StartOfLine | CommentLayout::EndOfLine) => {
+                let before = self.space_before(index);
+                let after = self.space_after(index);
+                let text = self.comment_doc(index, false);
+                cat![self; before, text, after]
+            }
+        }
+    }
+
+    /// No space after a token that hugs what follows, unless another comment
+    /// of the same gap precedes this one.
+    fn space_before(&self, index: usize) -> Doc {
+        let after_comment = index > 0 && self.comments.next[index - 1] == self.comments.next[index];
+        if !after_comment && self.comments.prev[index].is_some_and(L::hugs_next) {
+            Doc::NIL
+        } else {
+            Doc::SPACE
+        }
+    }
+
+    /// No space before a closer or separator. (A comment after this one
+    /// brings its own space.)
+    fn space_after(&self, index: usize) -> Doc {
+        let next = self.comments.next[index];
+        if L::is_closer(next) || L::is_separator(next) {
+            Doc::NIL
+        } else {
+            Doc::SPACE
         }
     }
 

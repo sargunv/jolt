@@ -166,8 +166,13 @@ fn control_body_comment<'a>(
         SyntaxElement::Token(_) => parent,
     };
     let body = next_sibling(container, header_end)?.as_node()?;
-    // A missing body leaves the next clause (a list) after the header.
-    if body.is_malformed() || body.first_token() != Some(context.next) || node_kind(body).is_list()
+    // `try` and `finally` own a block; after `try` a resource specification
+    // or (when the block is missing) the catch clauses come next instead.
+    let block_only = matches!(kind(prev), K::TryKw | K::FinallyKw);
+    if body.is_malformed()
+        || body.first_token() != Some(context.next)
+        || node_kind(body).is_list()
+        || (block_only && node_kind(body) != K::Block)
     {
         return None;
     }
