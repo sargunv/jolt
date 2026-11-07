@@ -488,9 +488,15 @@ pub enum ModifierElement<'a> {
     Token(SyntaxToken<'a>),
 }
 
-/// Plain lists iterate present items; separated lists also expose elements.
+/// Separated lists expose items and elements. A plain list whose item type
+/// holds `Bogus` (a category or choice) exposes items; one whose item type
+/// cannot (a single node kind or tokens) exposes only elements, so no rule can
+/// skip a bogus item by accident.
+impl<'a> ClassBodyMemberList<'a> {
+    pub fn items(self) -> impl Iterator<Item = ClassBodyMember<'a>> + 'a;
+}
 impl<'a> BlockStatementList<'a> {
-    pub fn items(self) -> impl Iterator<Item = BlockStatement<'a>> + 'a;
+    pub fn elements(self) -> impl Iterator<Item = ListElement<'a, BlockStatement<'a>>> + 'a;
 }
 impl<'a> ExpressionList<'a> {
     pub fn items(self) -> impl Iterator<Item = Expression<'a>> + 'a;
@@ -501,6 +507,8 @@ pub enum ListElement<'a, T> {
     Item(T),
     Separator(SyntaxToken<'a>),
     Missing,
+    /// A `Bogus` node at an item position whose type cannot hold it.
+    Bogus(SyntaxNode<'a>),
 }
 
 pub(crate) struct JavaSyntaxFactory; // impl SyntaxFactory, one match arm per kind
@@ -692,13 +700,15 @@ chunks for the sink. State that replaces the old line modes:
 - **Line suffixes.** A broken newline request with pending suffixes first prints
   the suffixes (Prettier semantics: the request is pushed back and the suffix
   contents are printed first, so a suffix may itself contain line breaks).
-  Additionally, any text that is not `sticky` with pending suffixes first prints
-  the suffixes and then a newline at that text's indent. This is what keeps an
-  end-of-line comment from being carried past a token: `} // c` followed by
-  `else` prints `} // c` / `else`. Only synthesized separators are `sticky`
-  (`b // c` followed by a synthesized trailing `,` prints `b, // c`); a
-  represented `,` or `;` never follows a pending suffix, because placement rule
-  S1 already attached the comment after it.
+  Output reaches the sink in chunks of about 1 KiB, so a comparing sink (check
+  mode) stops the printer soon after the first difference. Additionally, any
+  text that is not `sticky` with pending suffixes first prints the suffixes and
+  then a newline at that text's indent. This is what keeps an end-of-line
+  comment from being carried past a token: `} // c` followed by `else` prints
+  `} // c` / `else`. Only synthesized separators are `sticky` (`b // c` followed
+  by a synthesized trailing `,` prints `b, // c`); a represented `,` or `;`
+  never follows a pending suffix, because placement rule S1 already attached the
+  comment after it.
 - **Line comments end their line.** After a text flagged `line_comment`, the
   next text on the same output line (including the next flushed suffix) is
   preceded by a newline at the current indent. Two trailing line comments can
@@ -707,15 +717,20 @@ chunks for the sink. State that replaces the old line modes:
   file).
 
 Spaces collapse in the fit check as they do when printing (a run of `space` and
-flat `line` counts one column before the next text).
+flat `line` counts one column before the next text, and none at the start of a
+line).
 
 Fit check for a group not already forced to break: Prettier's `fits` over the
 group's contents in flat mode followed by the rest of the stack in its recorded
-modes, with remaining width `line_width - column`. It returns `false` on width
-overflow, on a forced newline inside the group, and when, inside the group's
-contents, a non-`sticky` text is reached while a line suffix is pending (from
-before the group or from inside it): that text will be preceded by a forced
-newline, so the group cannot be flat. It returns `true` at the first newline of
+modes, with remaining width `line_width - column`. The contents of a line suffix
+(an end-of-line comment) count toward the width, as in the reference. It returns
+`false` on width overflow and on a forced newline inside the group. When, inside
+the group's contents, a non-`sticky` text is reached while a line suffix is
+pending (from before the group or from inside it), that text will be preceded by
+a forced newline: if a flat `line` or `soft_line` was measured in the group
+before it, the group returns `false` (breaking it moves that text); otherwise
+breaking cannot change where the text starts, so the check continues from a
+fresh line at the text's indentation. It returns `true` at the first newline of
 the rest, at a non-`sticky` text of the rest while a suffix is pending, or at
 the end. It visits at most `FIT_BUDGET = 4096` commands; exhausting the budget
 returns `false` (break). Cost: `O(doc nodes × FIT_BUDGET)` worst case, in
@@ -725,7 +740,9 @@ The pending-suffix rule is what makes `x = // c` / `value` and `return // c` /
 `value` lay out like the reference: the value's group sees the pending comment,
 breaks, and the value continues on the next line at its own indent, where it may
 break further by its own rule. If `fits` treated that text as fitting, the group
-would print flat and a long value could never break.
+would print flat and a long value could never break. The fresh-line rule is what
+keeps `a ||  // c` / `(b && c)` from breaking the parenthesized operand: its
+group starts with text, so it is measured on the line the comment pushes it to.
 
 An `if_break` whose group id has not been printed yet chooses the flat branch.
 
@@ -814,9 +831,9 @@ Rules, first match wins:
    `Leading(leading_target(next), OwnLine)`.
 4. **G3, own-line before a closer.** `next` is a closer (`is_closer`) and the
    layout is `OwnLine` or `StartOfLine`: `Dangling(next.parent())`.
-5. **S1, end-of-line before a separator.** The layout is `EndOfLine`, `next` is
-   a separator (`is_separator`), `prev` is not one, and no other comment lies
-   between this comment and `next`:
+5. **S1, end-of-line before a separator.** The comment is a line comment, the
+   layout is `EndOfLine`, `next` is a separator (`is_separator`), `prev` is not
+   one, and no other comment lies between this comment and `next`:
    `Trailing(trailing_target(next),
    EndOfLine)`. This is the one placement
    that moves a comment across a token (`a // c` `,` prints `a, // c`); doing it
@@ -829,8 +846,10 @@ Rules, first match wins:
 6. Defaults: `OwnLine`/`StartOfLine` → `Leading(leading_target(next), layout)`;
    `EndOfLine` → `Trailing(trailing_target(prev), EndOfLine)`; `Inline` →
    `Trailing(trailing_target(prev), Inline)` if `next` is a closer or a
-   separator, else `Leading(leading_target(next), Inline)`. (`EndOfLine` and
-   `Inline` imply a `prev`.)
+   separator and `prev` is not an opener, else
+   `Leading(leading_target(next), Inline)`. (`EndOfLine` and `Inline` imply a
+   `prev`.) The opener exception keeps `{/* c */;}` stable: the `;` may be
+   removed, and a comment trailing the `{` would then be alone in the region.
 
 Two rules then keep the comments of one gap in order, whatever the rules above
 chose:
@@ -875,19 +894,20 @@ depth and is large only at the head of a deep left-nested spine.
 The formatter, not the rules, prints leading and trailing comments, from the
 effective layout only:
 
-| Attachment | Layout        | Printed as                                                      |
-| ---------- | ------------- | --------------------------------------------------------------- |
-| Leading    | `OwnLine`     | `hard_line, C, (empty_line if lines_after ≥ 2 else hard_line)`  |
-| Leading    | `StartOfLine` | `hard_line, C, space`                                           |
-| Leading    | `Inline`      | `space` unless `L::hugs_next(prev)`, then `C, space`            |
-| Leading    | `EndOfLine`   | `space` unless `L::hugs_next(prev)`, then `C, hard_line` (Runs) |
-| Trailing   | `EndOfLine`   | `line_suffix(space, C), break_parent`                           |
-| Trailing   | `Inline`      | `space, C`                                                      |
-| Dangling   | any           | by the owning rule via `Formatter::dangling`: one per line      |
+| Attachment | Layout                              | Printed as                                                                                                          |
+| ---------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Leading    | `OwnLine`                           | `hard_line, C, (empty_line if lines_after ≥ 2 else hard_line)`                                                      |
+| Leading    | `StartOfLine`                       | `hard_line, C, space`                                                                                               |
+| Leading    | `Inline`                            | `space` unless `L::hugs_next(prev)`, then `C`, then `space` unless `next` is a closer or separator                  |
+| Leading    | `EndOfLine`                         | `space` unless `L::hugs_next(prev)`, then `C, hard_line` (Runs)                                                     |
+| Trailing   | `EndOfLine`, line comment           | `line_suffix(space, C), break_parent`                                                                               |
+| Trailing   | `EndOfLine` block comment, `Inline` | `space` unless `L::hugs_next(prev)`, then `C`, then `space` unless `next` is a closer or separator                  |
+| Dangling   | any                                 | by the owning rule via `Formatter::dangling`: one per line, except that comments that shared a source line share it |
 
-An inline trailing block comment is flagged in the text table: for fitting, its
-width counts only when more text follows it on the line, exactly like the
-end-of-line comment it becomes on the next pass when a line break follows it.
+A block comment that ends its line trails its code like an inline comment: it
+does not force the line to break, so `foo(a, /* c */` / `b)` prints
+`foo(a, /* c */ b)` when it fits, as in the reference. On the next pass the
+comment is `Inline` and leads `b`, which prints the same text.
 
 Because spaces collapse and are dropped at line start, these are correct
 whatever separator the rule itself put at that position: `a /* c */ + b`,
@@ -912,7 +932,10 @@ the source) is expanded to `/**`, `* text`, `*/`. See
 Why this is idempotent: printing preserves each comment's neighbours (no comment
 crosses a token, except across separators by S1, which is decided the same way
 on every pass) and its newline-before/newline-after facts, except where the
-layout itself put a newline next to an `Inline` or `EndOfLine` comment. In that
+layout itself put a newline next to an `Inline` or `EndOfLine` comment, or
+removed one after an end-of-line block comment (which prints the same as the
+`Inline` comment it becomes, and a rule that chooses a layout from leading
+comments asks whether they start a line, not whether there are any). In that
 case every enclosing group was already broken (by `break_parent`, a multi-line
 text, or the pending-suffix fit rule), so on the next pass the comment (now
 `StartOfLine` or `EndOfLine`) forces exactly the breaks that already happened
@@ -965,14 +988,17 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// the node starts mid-line inside an `indent`.
     pub fn verbatim(&mut self, node: SyntaxNode<'a>) -> Doc;
     /// The node's dangling comments, each on its own line (`empty_line`
-    /// between two when the source had a blank line), with no line before the
-    /// first or after the last. NIL when none.
+    /// between two when the source had a blank line, `space` when they shared
+    /// a source line), with no line before the first or after the last. NIL
+    /// when none.
     pub fn dangling(&mut self, node: SyntaxNode<'a>) -> Doc;
 
     // ── Queries; they emit nothing. ──
     pub fn has_leading_comments(&self, element: SyntaxElement<'a>) -> bool;
     pub fn has_trailing_comments(&self, element: SyntaxElement<'a>) -> bool;
     pub fn has_dangling_comments(&self, node: SyntaxNode<'a>) -> bool;
+    /// A trailing line comment (no trailing comma is synthesized after it).
+    pub fn has_trailing_line_comment(&self, element: SyntaxElement<'a>) -> bool;
     /// Any comment attached to the node or located inside its range.
     pub fn has_comments_within(&self, node: SyntaxNode<'a>) -> bool; // O(log comments)
     /// The node is an item inside a formatter-ignore region, so a
@@ -1059,16 +1085,15 @@ per item, and finding a marker's list walks its ancestors once. Nested lists
 inside a verbatim item are never visited; nested lists inside a formatted item
 apply the same test to their own items.
 
-Two refinements make verbatim robust while placeholders (and lists formatted as
-units) are printed verbatim. First, `verbatim` also prints the comments attached
-to the descendants that begin or end at the node's first or last token (a list's
-first item's leading comments lie before the list), so a verbatim list never
-loses them. Second, a comment inside the slice can be attached outside the node
-by S1 (`return x // c` `;` with a verbatim `return`): verbatim marks the
-comments it prints, and attachment printing skips a comment verbatim already
-printed. Every verbatim piece of one node re-indents against the indentation of
-the output line the node starts on (recorded at its first text), also after a
-text block.
+Two refinements make verbatim robust for formatter-ignore items and malformed
+nodes. First, `verbatim` also prints the comments attached to the descendants
+that begin or end at the node's first or last token (a list's first item's
+leading comments lie before the list), so a verbatim list never loses them.
+Second, a comment inside the slice can be attached outside the node by S1
+(`return x // c` `;` with a verbatim `return`): verbatim marks the comments it
+prints, and attachment printing skips a comment verbatim already printed. Every
+verbatim piece of one node re-indents against the indentation of the output line
+the node starts on (recorded at its first text), also after a text block.
 
 Malformed nodes use the same `verbatim`: `node()` on a malformed node is
 `node_with(node, verbatim(node))`. Verbatim output covers exactly the comments
@@ -1098,14 +1123,13 @@ comment multiset catches that.
 ```text
 crates/jolt_java_fmt/
   src/lib.rs                    shared   pub fn format, JavaFormat, type JavaFormatter
-  src/language.rs               shared   impl FormatLanguage: separator/delimiter tables, hooks H1–H3
+  src/language.rs               shared   impl FormatLanguage: separator/delimiter tables, hooks H1–H5
   src/dispatch.rs               shared   total match: node kind → rule function
   src/helpers/mod.rs            shared
-  src/helpers/lists.rs          shared   delimited comma lists
+  src/helpers/lists.rs          shared   delimited comma lists, one-element delimited nodes, list items
   src/helpers/bodies.rs         shared   braced bodies, member/statement item lists, blank-line policy
   src/helpers/assignment.rs     shared   `left = right` layout
-  src/helpers/tokens.rs         shared   join spacing between adjacent tokens, keyword helpers
-  src/helpers/placeholder.rs    shared   TEMPORARY: deleted at integration
+  src/helpers/tokens.rs         shared   join spacing between adjacent tokens
   src/rules/mod.rs              shared   declares the four area modules
   src/rules/declarations/**     Area A
   src/rules/statements/**       Area B
@@ -1193,6 +1217,19 @@ rules. "Header end" below means the `)` closing the header of `if`, `while`,
   nested block, `case 1: {`) has no header before it in the same parent, so H3
   does not apply and the comment leads the statement on its own line.
 
+- **H4, end-of-line comment after a promoted body.** The comment is `EndOfLine`
+  and `prev` is the last token of the final non-block body of an `if`, `else`,
+  `while`, `for` or enhanced `for` (not an `else if` chain):
+  `Trailing(body, EndOfLine)`. The generic rules would make the comment trail
+  the whole statement and print after the synthesized `}` of brace promotion; H4
+  keeps `if (a) return; // c` inside the block, as in the reference (fixture
+  `brace-promotion-comments`).
+- **H5, block comment at the end of a line after `(`, `[` or `<`.** A block
+  comment with layout `EndOfLine` right after one of these openers (not before
+  its closer, where G1 applies) is `Leading(leading_target(next), Inline)`: it
+  stays inline before the next token, as in the reference (`run( /* d */` / `a)`
+  prints `run(/* d */ a)`). G2 still moves it to its own line after `{`.
+
 Anything else that looks like it needs a hook should first be checked against
 the generic rules; a new hook requires a fixture and an entry here.
 
@@ -1203,9 +1240,10 @@ the generic rules; a new hook requires a fixture and an entry here.
 pub(crate) enum TrailingComma {
     /// Argument, parameter and type-argument lists (Java forbids one there).
     Never,
-    /// Array and annotation-array initializers: a synthesized `,` when broken;
-    /// a trailing `,` in the source forces the broken layout and is printed
-    /// with `token`.
+    /// Array and annotation-array initializers: a synthesized `,` when broken,
+    /// except after a last element with a trailing line comment (`last // c`
+    /// / `}`, as in the reference); a trailing `,` in the source forces the
+    /// broken layout and is printed with `token`.
     IfBroken,
 }
 pub(crate) struct ListLayout {
@@ -1229,12 +1267,26 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     close: Option<SyntaxToken<'a>>,
     layout: ListLayout,
 ) -> Doc;
+/// `open inner close` for a node with one inner element (array access,
+/// dimension expressions, casts): no breaks of its own; `inner` is indented
+/// when asked, and the owner's dangling comments print on their own lines
+/// before `close`.
+pub(crate) fn enclosed<'a>(
+    f: &mut JavaFormatter<'a>,
+    owner: SyntaxNode<'a>,
+    delimiters: (Option<SyntaxToken<'a>>, Option<SyntaxToken<'a>>),
+    inner: Doc,
+    indent_inner: bool,
+) -> Doc;
+/// One list element: the item with `fmt`, a bogus node with `node`.
+pub(crate) fn list_item<'a, T: AstNode<'a>>(
+    f: &mut JavaFormatter<'a>,
+    element: ListElement<'a, T>,
+) -> Doc;
 
 // helpers/bodies.rs
 /// `{`, the items at one more indent joined by `item_list` with `separator`,
-/// the owner's dangling comments (as in `delimited`), `}`. `owner` is
-/// `open.parent()`. An empty body (no items, no dangling comments) prints
-/// `{`, newline, `}` until D1 is applied at integration, then `{}`.
+/// the owner's dangling comments, `}` (via `braced`).
 pub(crate) fn braced_body<'a>(
     f: &mut JavaFormatter<'a>,
     owner: SyntaxNode<'a>,
@@ -1242,6 +1294,17 @@ pub(crate) fn braced_body<'a>(
     items: impl IntoIterator<Item = ListItem<'a>>,
     close: Option<SyntaxToken<'a>>,
     separator: impl FnMut(&mut JavaFormatter<'a>, Separator<'a>) -> Doc,
+) -> Doc;
+/// `open`, already formatted `content` and the owner's dangling comments one
+/// indent deeper on their own lines, `close`; `{}` when both are empty (D1).
+/// Used by `braced_body`, enum bodies (constants then members) and brace
+/// promotion (synthesized braces, no owner).
+pub(crate) fn braced<'a>(
+    f: &mut JavaFormatter<'a>,
+    owner: Option<SyntaxNode<'a>>,
+    open: Doc,
+    content: Doc,
+    close: Doc,
 ) -> Doc;
 pub(crate) fn member_separator<'a>(f: &mut JavaFormatter<'a>, sep: Separator<'a>) -> Doc; // blank unless field–field
 pub(crate) fn statement_separator<'a>(f: &mut JavaFormatter<'a>, sep: Separator<'a>) -> Doc; // blank iff source had one
@@ -1262,13 +1325,6 @@ pub(crate) fn assignment_like<'a>(
 /// different tokens (`- -x`, `+ +x`, `a instanceof`…). Rules that join
 /// elements with nothing between them consult it.
 pub(crate) fn needs_space(left: SyntaxToken<'_>, right: SyntaxToken<'_>) -> bool;
-
-// helpers/placeholder.rs  (TEMPORARY)
-/// `f.verbatim(node)` as a stand-in for an unported rule (`node()` already
-/// prints the node's leading and trailing comments around it). Records the
-/// kind in a thread-local set that `jref` reads through a `#[doc(hidden)]`
-/// `jolt_java_fmt::take_placeholder_kinds()`.
-pub(crate) fn placeholder<'a>(f: &mut JavaFormatter<'a>, node: SyntaxNode<'a>) -> Doc;
 ```
 
 ### Cross-area layout contracts
@@ -1280,7 +1336,7 @@ doc excludes surrounding spaces unless stated.
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ModifierList`, `ParameterModifierList` (D)             | Annotations and keywords **including** the trailing separator: `hard_line` after declaration annotations (those before the first keyword), `space` after the last keyword/type-use annotation. NIL when empty. Via `f.fmt` this is the declaration layout, used for fields, methods, types, local variables, enhanced-for variables and resources.                                 |
 | `types::inline_modifiers(f, ParameterModifierList)` (D) | The inline layout: every annotation and keyword on one line, separated by spaces, followed by `space`; NIL when empty. A plain `pub(crate)` function (lists carry no comments, so no `f.fmt` is needed), used for `FormalParameter` (D), `RecordComponent` (A) and `CatchParameter` (B), as in the reference (`void m(@Nonnull String p)`, `catch (@Nonnull final Exception ex)`). |
-| `AnnotationList` (D)                                    | Type-use annotations inline: separated by spaces, followed by `space`; NIL when empty. Package, module and enum-constant annotations (one per line) are laid out by A itself from the list's items.                                                                                                                                                                                |
+| `AnnotationList` (D)                                    | Type-use annotations inline: separated by spaces, followed by `space`; NIL when empty. `types::annotation_lines(f, Option<AnnotationList>)` lays out package, module and enum-constant annotations one per line.                                                                                                                                                                   |
 | `ArrayDimensions` (D)                                   | `[]` per dimension, an annotated one preceded by its annotations and a space (`@A []`); no space before an unannotated `[`.                                                                                                                                                                                                                                                        |
 | `Name`, `QualifiedName` (D)                             | The dotted name on one line; never breaks.                                                                                                                                                                                                                                                                                                                                         |
 | `Block` (B)                                             | `{ … }` from `braced_body` with `statement_separator`; caller adds the space before.                                                                                                                                                                                                                                                                                               |
@@ -1316,18 +1372,18 @@ Normalizations apply only when the owning node `is_recovery_free()`. Removed
 tokens print their comments through `removed`. The structure fingerprint
 (`jolt_java_fmt/tests/common`) ignores exactly these changes.
 
-| #   | Normalization                                  | Where                                                                                                                                                                                       | Extra condition                                                                                                                                                                            |
-| --- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| N1  | Import grouping and sorting                    | Imports of a compilation unit                                                                                                                                                               | Per import: recovery-free, name without interior comments. An elided item whose comments survive (a stray `;` carrying a comment) is a barrier like a non-sortable import. See Java style. |
-| N2  | Modifier ordering                              | Declaration `ModifierList`                                                                                                                                                                  | Keyword runs between comment-carrying or bogus modifiers sort independently.                                                                                                               |
-| N3  | Module directive and `requires` modifier order | `ModuleDeclaration`                                                                                                                                                                         | Directive recovery-free; comment-carrying directives anchor like imports.                                                                                                                  |
-| N4  | Brace promotion                                | Non-block bodies of `if`, `else`, `while`, `do`, `for`, enhanced `for`                                                                                                                      | Body is not malformed.                                                                                                                                                                     |
-| N5  | Redundant `;` removal                          | `EmptyStatement` in blocks and switch groups and as a promoted body, `EmptyDeclaration` in compilation units and type bodies, trailing `;` of try resources, redundant enum body separators | A removed separator's comments print after the token that follows it when that token is a separator (`B, // c` `;` → `B; // c`), so S1 sees the same thing on the next pass.               |
-| N6  | Redundant parenthesis removal                  | Parenthesized left operand of a same-precedence binary chain; switch guard `when (x)`; single untyped lambda parameter `(x) ->`                                                             | `has_comments_within` is false for the parenthesized node (or, for the lambda, the parameter list's parentheses carry no comments).                                                        |
-| N7  | Readability parentheses                        | Binary operands of `&`, `\|`, `^`, `<<`, `>>`, `>>>` that are themselves binary expressions                                                                                                 | —                                                                                                                                                                                          |
-| N8  | Trailing commas                                | Array and annotation array initializers (iff broken); enum constants (per Java style)                                                                                                       | —                                                                                                                                                                                          |
-| N9  | Comment text                                   | Trailing whitespace, re-indentation, star alignment, doc comment expansion                                                                                                                  | Comment content otherwise unchanged.                                                                                                                                                       |
-| N10 | Whitespace                                     | Line endings become `\n`; one final newline; BOM and trailing SUB preserved                                                                                                                 | —                                                                                                                                                                                          |
+| #   | Normalization                                  | Where                                                                                                                                                                                       | Extra condition                                                                                                                                                                                                     |
+| --- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| N1  | Import grouping and sorting                    | Imports of a compilation unit                                                                                                                                                               | Per import: recovery-free, name without interior comments. An elided item whose comments survive (a stray `;` carrying a comment) is a barrier like a non-sortable import. See Java style.                          |
+| N2  | Modifier ordering                              | Declaration `ModifierList`                                                                                                                                                                  | Keyword runs between comment-carrying or bogus modifiers sort independently.                                                                                                                                        |
+| N3  | Module directive and `requires` modifier order | `ModuleDeclaration`                                                                                                                                                                         | Directive recovery-free; comment-carrying directives anchor like imports.                                                                                                                                           |
+| N4  | Brace promotion                                | Non-block bodies of `if`, `else`, `while`, `do`, `for`, enhanced `for`                                                                                                                      | Body is not malformed.                                                                                                                                                                                              |
+| N5  | Redundant `;` removal                          | `EmptyStatement` in blocks and switch groups and as a promoted body, `EmptyDeclaration` in compilation units and type bodies, trailing `;` of try resources, redundant enum body separators | When an enum's constants end with `;`, a removed trailing comma's comments, and the `;`'s own leading comments, print after a blank line following `B;` (`B, // c` `;` → `B;`, blank, `// c`), as in the reference. |
+| N6  | Redundant parenthesis removal                  | Parenthesized left operand of a same-precedence binary chain; switch guard `when (x)`; single untyped lambda parameter `(x) ->`                                                             | `has_comments_within` is false for the parenthesized node (or, for the lambda, the parameter list's parentheses carry no comments).                                                                                 |
+| N7  | Readability parentheses                        | Binary operands of `&`, `\|`, `^`, `<<`, `>>`, `>>>` that are themselves binary expressions                                                                                                 | —                                                                                                                                                                                                                   |
+| N8  | Trailing commas                                | Array and annotation array initializers (iff broken); enum constants (per Java style)                                                                                                       | —                                                                                                                                                                                                                   |
+| N9  | Comment text                                   | Trailing whitespace, re-indentation, star alignment, doc comment expansion                                                                                                                  | Comment content otherwise unchanged.                                                                                                                                                                                |
+| N10 | Whitespace                                     | Line endings become `\n`; one final newline; BOM and trailing SUB preserved                                                                                                                 | —                                                                                                                                                                                                                   |
 
 There is no import deduplication; the reference does not deduplicate.
 
@@ -1395,8 +1451,9 @@ Feature `serde` forwards to `jolt_fmt/serde`. `RenderSink`, `RenderControl`,
 `FormatSinkResult`, `ParsedSource`, `parse_source`,
 `format_parsed_source_to_sink`, and `format_source_to_sink` are deleted. `check`
 mode is a sink that compares chunks against the source and breaks at the first
-difference; after `Formatted { halted: false }` the CLI must also check that the
-whole source was consumed (the output may be a strict prefix of the source).
+difference (`jolt_cli::format::Compare`); after `Formatted { halted: false }`
+the CLI also checks that the whole source was consumed (the output may be a
+strict prefix of the source).
 
 ## Verification
 
@@ -1462,8 +1519,7 @@ For an input `S` and output `F = format(S)`:
   `.java` file (or the `formatted:` section of every `.snap`) under `<dir>`;
   `jref --input <in> --expected <out> [--line-width N]` checks
   `format(in) == out` file by file. It prints totals, writes diffs to
-  `target/jref/`, and for every mismatching file lists the placeholder kinds the
-  run hit, so a mismatch with no placeholders is a real bug. Input files with
+  `target/jref/` with each mismatch's first differing line. Input files with
   syntax errors are skipped and counted separately (the reference CLI left them
   untouched, and the new CLI refuses them too). The reference set is
   `tools/import/.imports/.jolt-ref/` (`input/`, `old-output/`,
@@ -1490,7 +1546,16 @@ Design levers already in this contract: no per-token comment work without a
 bitset hit; borrowed text only; 16-byte doc nodes with precomputed widths and
 break bits; early sink halt in check mode; no debug-only work in release. If the
 budget is missed, the next levers are reusing the token, node, and doc vectors
-across files on a thread, and profile-guided builds (`tools/pgo`).
+across files on a thread, and profile-guided builds (`tools/pgo.py`).
+
+Measured at integration (same session, back to back, machine shared with other
+agents): PERF_NUMBERS. Two fixes got there: syntax cursors compare and hash by
+tree and id (the derived impls compared the whole source string, which made
+comment placement scan the file per comparison), and check mode halts at the
+first difference again (the printer hands the sink 1 KiB chunks). In a
+single-threaded run over Spring, parsing is about 0.47 s, comment placement 0.04
+s, document construction 0.48 s and printing 0.20 s; document construction (many
+small allocations in the rules) is the next target.
 
 ## Deleted
 
@@ -1672,6 +1737,22 @@ against the reference and accept only differences listed in Java style's
 snapshot updates; run every gate including the performance budget; update
 `AGENTS.md` and this page to what was built.
 
+As built: the areas merged without conflicts. The shared requests became
+`helpers::bodies::braced`, `helpers::lists::{enclosed, list_item}`, the
+trailing-comma policy in `delimited`,
+`types::{inline_modifiers,
+annotation_lines}`,
+`Formatter::has_trailing_line_comment` and hooks H4 and H5.
+`AnnotationElementList` was removed from the schema (annotation argument lists
+hold their element list, annotation interface bodies their member list), which
+made formatter-ignore and comments between `@interface` members work like other
+bodies. The reference diff found and fixed: line-suffix width not counted, the
+fit check counting a space at line start, a parenthesized operand after
+`|| // c` breaking, end-of-line block comments forcing breaks, the declaration
+header group leaving out the return type, the multi-declarator indent, and the
+enum separator comment layout. Every remaining difference from the reference is
+classified under Java style's "Deliberate changes".
+
 ## Changes to project invariants
 
 This design keeps every invariant in `AGENTS.md` and makes these precise:
@@ -1686,9 +1767,8 @@ This design keeps every invariant in `AGENTS.md` and makes these precise:
   verifies every comment is emitted once.
 - Normalizations are the closed list N1–N10, gated on `is_recovery_free()`.
 
-It temporarily supersedes "Valid syntax must always use structured formatting"
-for `helpers::placeholder` only, from the formatter foundation until integration
-deletes it.
+The temporary exception for `helpers::placeholder` ended at integration, which
+deleted it.
 
 ## Decisions
 
@@ -1706,10 +1786,11 @@ them unless this page is amended; report any deviation in the stage result.
    `Eof`, and prints at the outer indentation. This fixes #222 (the first pass
    is the fixpoint) without letting a comment attach inside a node that may be
    printed verbatim. Java style's C2 shows the output.
-4. **Separators and comments.** Only `,` and `;` pull an end-of-line comment
-   past themselves (S1), and only synthesized ones are `sticky` in the printer.
-   Closers do not: every layout that may break before a closer already puts a
-   line there, and the reference keeps `a[i // c` / `]`.
+4. **Separators and comments.** Only `,` and `;` pull an end-of-line line
+   comment past themselves (S1; a block comment stays, `1 /* c */;`, as in the
+   reference), and only synthesized ones are `sticky` in the printer. Closers do
+   not: every layout that may break before a closer already puts a line there,
+   and the reference keeps `a[i // c` / `]`.
 5. **Inline comment spacing.** One space on each side, none after `L::hugs_next`
    tokens, none before a closer or separator. `this /* c */.x` becomes
    `this /* c */ .x` (listed under C4).

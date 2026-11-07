@@ -38,7 +38,10 @@ Fast, opinionated Java formatter.
 - `mise run jref ...`: compare the formatter with the reference outputs
   (`jref <dir>` checks `format(F) == F` for `.java` files and `.snap`
   `formatted:` sections; `jref --input <in> --expected <out>` checks
-  `format(in) == out`). Mismatches list the placeholder kinds they hit.
+  `format(in) == out`). The reference outputs and the reference binary live in
+  `tools/import/.imports/.jolt-ref/` (see its `README.md`); differences from
+  them must be explained by "Deliberate changes" in
+  `docs/internals/java-style.md`.
 - `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
   plugin.
 - `mise run bench`: time formatting the Spring corpus with hyperfine
@@ -105,9 +108,7 @@ Run `mise tasks ls --all` for the full task list.
   valid node must never select verbatim output. The parser/syntax layer owns
   malformed classification, and verbatim formatting must track every contained
   token and comment so the surrounding structured formatter cannot lose or
-  duplicate them. TEMPORARY exception until the rule areas are integrated:
-  `jolt_java_fmt::helpers::placeholder` prints unported valid kinds verbatim
-  (grep `placeholder(`); integration deletes it.
+  duplicate them.
 - Prefer integration tests with `insta` snapshots over inline tests and
   assertions where practical. Inline focused tests should be reserved only for
   important regressions and edge cases that are not possible to test with the

@@ -52,8 +52,7 @@ package com.example.demo;
 import a.Alpha;
 import z.Zed;
 
-class A {
-}
+class A {}
 ```
 
 - Order is as written: header comments, package, imports, then types (or
@@ -117,8 +116,11 @@ module demo {
 
 Directives are grouped by kind in the order `requires`, `exports`, `opens`,
 `uses`, `provides`, groups separated by a blank line, sorted by name within a
-group. `requires` modifiers are ordered `static transitive`. Comment-carrying
-directives anchor like imports. `to`/`with` name lists break all-or-nothing.
+group. `requires` modifiers are ordered `static transitive` unless one carries a
+comment. A directive with leading comments, a recovered directive, and a
+formatter-ignored one are barriers: each stays in place on its own, and the
+directives on each side sort separately. `to`/`with` name lists break
+all-or-nothing.
 
 ## Declarations
 
@@ -166,11 +168,9 @@ class Derived<T>
     pkg.Second
   permits
     Child, // child
-    other.Child {
-}
+    other.Child {}
 
-interface Shape extends Drawable, Scalable permits Circle, Square {
-}
+interface Shape extends Drawable, Scalable permits Circle, Square {}
 ```
 
 - The header (`modifiers kind Name<T>` plus `extends`, `implements`, `permits`)
@@ -191,15 +191,13 @@ class Groups {
   int second;
   int third;
 
-  Groups() {
-  }
+  Groups() {}
 
   static {
     initialize();
   }
 
-  void a() {
-  }
+  void a() {}
 }
 ```
 
@@ -209,8 +207,8 @@ class Groups {
   annotation-interface members.
 - Redundant `;` members are removed; their comments stay in place.
 - Empty bodies (methods, constructors, initializers, types, blocks, anonymous
-  classes, lambda blocks, switch blocks, module bodies) currently print as `{`,
-  newline, `}` (see D1).
+  classes, lambda blocks, switch blocks, module bodies) print `{}` (D1); a body
+  holding only comments breaks.
 
 ### Enums
 
@@ -219,8 +217,7 @@ enum Mode {
   BASIC,
   @Marker
   SPECIAL(helper(1), new Box()) {
-    void run() {
-    }
+    void run() {}
   },
 }
 
@@ -236,7 +233,23 @@ enum Color {
 - Constants are always one per line. Without members, every constant is followed
   by a comma, including the last. With members, the last constant is followed by
   `;`, then a blank line and the members. A source `;` with no members is kept
-  after the last constant (`B;`).
+  after the last constant (`B;`). The constants' own comments stay with them,
+  and no comma is added after a last constant with a trailing line comment
+  (`B // c`).
+- When the constants end with `;`, the comments of a removed trailing comma and
+  the comments before the `;` move after `B;` and a blank line, where they lead
+  the members (or end the body). The `;`'s comments are followed by another
+  blank line; a comma's comments lead the first member directly:
+
+```java
+enum Mode {
+  B;
+
+  // was after the comma: `B, // c`
+  int code;
+}
+```
+
 - Constant annotations go on their own lines; arguments and bodies format like
   calls and class bodies.
 
@@ -247,8 +260,7 @@ record CustomerProfile(
   String displayName,
   CustomerIdentifier primaryIdentifier,
   CommunicationPreferences communicationPreferences
-) {
-}
+) {}
 ```
 
 Components are a list (flat if they fit, else one per line with `)` on its own
@@ -264,8 +276,7 @@ public Result compute(
   RetryPolicy retryPolicy
 )
   throws /* checked */ IOException, // io
-    TimeoutException {
-}
+    TimeoutException {}
 ```
 
 - `modifiers <T> ReturnType name(params) throws X {` on one line if it fits.
@@ -549,10 +560,14 @@ visible rules are:
   stays attached to it.
 - **Start of line.** A block comment that starts its line with code after it on
   the same line keeps that code on its line (`/* lead */ static {`, C5).
-- **End of line.** A comment that ends its line stays at the end of the line,
-  after any `,` or `;` that follows its code (`user, // selected`,
-  `return x; // done`, C8). The line always breaks after it. A closing delimiter
-  is not pulled up: `foo(a // c` / `)` keeps `)` on the next line.
+- **End of line.** A line comment that ends its line stays at the end of the
+  line, after any `,` or `;` that follows its code (`user, // selected`,
+  `return x; // done`, C8). The line always breaks after it, and its width
+  counts toward the line. A closing delimiter is not pulled up: `foo(a // c` /
+  `)` keeps `)` on the next line. A block comment that ends its line stays after
+  its code but does not force a break: `foo(a, /* c */` / `b)` prints
+  `foo(a, /* c */ b)` when it fits, and `x = 1 /* c */` / `;` prints
+  `x = 1 /* c */;`.
 - **After a keyword or operator.** An end-of-line comment after `=`, `return`,
   `throw`, `yield`, `break`, `continue` or `assert` keeps its place, and the
   value continues on the next line one indent deeper:
@@ -570,7 +585,9 @@ return // a comment ends the line after the keyword
   and none before a closing delimiter, `,` or `;` (C4).
 - **Opening braces and parentheses.** An end-of-line comment after an opening
   `{`, `(`, `[` or `<` moves to its own line as the first line inside:
-  `class X { // c` prints `class X {`, then `// c` one indent deeper (C6).
+  `class X { // c` prints `class X {`, then `// c` one indent deeper (C6). An
+  end-of-line block comment after `(`, `[` or `<` instead stays inline before
+  what follows (`run( /* d */` / `a)` prints `run(/* d */ a)`).
 - **Before a body's brace.** A block comment on its own line between a header
   and its `{` moves onto the header line (`class X /* c */ {`,
   `if (ready) /* c */ {`); a line comment there ends the header line and the
@@ -583,7 +600,8 @@ return // a comment ends the line after the keyword
 - **Dangling.** Comments in an otherwise empty body, argument list or other
   delimited list, and comments on their own lines before a closing delimiter,
   print one per line inside the delimiters at the inner indentation, after any
-  items, keeping one blank line before the first when the source had one:
+  items, keeping one blank line before the first when the source had one.
+  Comments that shared a source line keep sharing it (`/* a */ /* b */`):
 
 ```java
 log(
@@ -664,6 +682,15 @@ only comments still breaks. Array initializers already printed `{}`. D1 is
 applied at integration as its own commit, after the rest of the output matches
 the reference.
 
+### D2. Type-use annotations among a method's modifiers stay in place
+
+The reference moved a type-use annotation written among a generic method's
+modifiers after the type parameters (`public @A <T> T m()` printed
+`public static <T> @A T m()`). That moves the annotation from the modifier list
+to the return type in the tree, a normalization outside N1–N10, so the
+annotation now stays where it was written: `public static @A <T> T m()`. No
+corpus file has this shape.
+
 ### C1. Own-line comments stay on their own line (#223)
 
 The reference printed a comment that started its line as `comment` + newline
@@ -707,6 +734,10 @@ The reference could drop an own-line comment after an annotation that had its
 own trailing comment, and could print a comment twice at a formatter-ignore
 boundary. Both are fixed; there is no visible style rule.
 
+Comments also keep their place among the tokens that remain when a `;` is
+removed: `if (test); /*test*/ else` prints `if (test) {} /*test*/ else`, where
+the reference moved the comment into the promoted block.
+
 ### C4. Inline comments get one space on each side, except next to delimiters
 
 The reference inserted a space between `(`, `[`, `<`, `.` or `::` and a
@@ -727,6 +758,10 @@ except none after `(`, `[`, `<`, `.`, `::` or `@` and none before `)`, `]`, `}`,
     builder./* call */ add(first);
     this /**/ .field = 1;
 ```
+
+The same holds before a `:` (`retry /* label */ :`, `default /* d */ :`), where
+the reference had no space, and after an opener when a separator follows
+(`for (/* c */;;)`, where the reference printed `for ( /* c */;;)`).
 
 ### C5. A block comment keeps the code after it on its line
 
@@ -754,8 +789,10 @@ separate lines):
 ### C6. End-of-line comments after an opening `(` or `<` move inside
 
 Bodies already moved an end-of-line comment after `{` to the first line inside
-the body. Parentheses and angle brackets now do the same (the reference left the
-comment on the opening line, sometimes producing `for ( // c` then `;;)`):
+the body; switch blocks now do too (`switch (v) { // c` puts `// c` on the first
+line inside, where the reference left it on the brace line). Parentheses and
+angle brackets now do the same (the reference left the comment on the opening
+line, sometimes producing `for ( // c` then `;;)`):
 
 ```java
 // reference
@@ -793,8 +830,9 @@ The exception is `else` followed by `if`, which keeps the reference output
 
 ### C8. End-of-line comments before `;` move after it
 
-`,` already pulled an end-of-line comment past itself (`user, // selected`); `;`
-now does too, so a statement never ends with its `;` alone on a line:
+`,` already pulled an end-of-line line comment past itself
+(`user, // selected`); `;` now does too, so a statement never ends with its `;`
+alone on a line (a comment on its own line before `;` keeps its line, C1):
 
 ```java
 // reference
@@ -803,27 +841,76 @@ now does too, so a statement never ends with its `;` alone on a line:
     return // a comment ends the line after the keyword
       y // a comment before the terminator keeps it in the continuation
       ;
+    break // no label follows the keyword
+    ;
 // new
     return; // no value follows the keyword, so the terminator stays put
     return // a comment ends the line after the keyword
       y; // a comment before the terminator keeps it in the continuation
+    break; // no label follows the keyword
 ```
 
-### C9. No blank lines inside operator chains after trailing comments
+### C9. No blank line is inserted after an end-of-line comment
 
-The reference inserted a blank line after an operand that carried an end-of-line
-comment in a broken binary chain (corpus file `B20844369.java`). Blank lines are
-now kept only between list items, never inside an expression:
+The reference inserted a blank line after a line that ended with a line comment
+in many places: after an annotation (`@Test // gh-123`), a `case` label, a
+broken operand or chain segment, a `}` before `else`, a `for` header part and an
+annotation's closing `)`. Blank lines now come only from the source, between
+list items, never inside an expression or a declaration (corpus files
+`B20844369.java`, `SwitchComment.java`, and 610 Spring files):
 
 ```java
 // reference
     "(?:(?<androidId>\\d+)\\+)?" // optional Android ID
 
       + "(?<type>\\d+)" // type
+  @Test // gh-32365
+
+  void mostSpecific() {
 // new
     "(?:(?<androidId>\\d+)\\+)?" // optional Android ID
       + "(?<type>\\d+)" // type
+  @Test // gh-32365
+  void mostSpecific() {
 ```
+
+### C10. Comment text is kept outside star blocks
+
+The reference turned some single-line block comments into star blocks and
+mangled their text (`/* **/` printed `/*`, `* *`, `*/`). A single-line block
+comment now prints as written; only an own-line single-line doc comment is
+expanded into a star block, and only multi-line comments are re-aligned.
+
+### C11. Comments do not block normalizations of what they precede
+
+The reference owned a member's Javadoc by the member's first token, so a
+modifier with a Javadoc before it was a sorting barrier and
+`abstract public int size();` stayed unsorted. A comment before a declaration
+now leads the declaration, so its modifiers sort as usual
+(`public abstract int size();`). Only a comment between two modifiers is a
+barrier (N2).
+
+### C12. Dangling comments keep a shared line, and brackets are no exception
+
+Comments in an empty region or on their own lines before a closer print one per
+line inside the delimiters, except that comments that shared a source line keep
+sharing it (the reference split `{/* a */ /* b */}` into two lines, and
+re-joined comments it had printed from a removed `;`). The reference kept
+comments in empty brackets on the bracket line (`int[ /* c */] x`); they now
+print like every other dangling comment:
+
+```java
+// new
+  int[
+    /* c */
+  ] x;
+```
+
+### L1. No stray blank lines in `for` headers and empty switch groups
+
+A broken `for` header with an empty update part (`for (init; cond;)`), and a
+switch whose last group has no statements (`default:` before `}`), printed a
+blank line in the reference. Neither does now.
 
 ### F1. Formatter-ignore works item by item
 
