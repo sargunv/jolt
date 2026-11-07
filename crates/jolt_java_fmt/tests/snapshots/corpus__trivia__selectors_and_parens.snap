@@ -17,7 +17,7 @@ class SelectorsAndParens {
           /* JOLT-TRIVIA:after-cast-paren */ (/* JOLT-TRIVIA:inner-paren-open */ Object /* JOLT-TRIVIA:inner-type-name */)
             "x"
       )
-    /* JOLT-TRIVIA:cast-expression-before-semi */ ;
+    /* JOLT-TRIVIA:cast-expression-before-semi */;
     Object[] values =
       new Object /* JOLT-TRIVIA:array-type-before-empty-dims */ [] /* JOLT-TRIVIA:array-empty-dims-before-init */ {
         value /* JOLT-TRIVIA:array-init-element */,

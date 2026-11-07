@@ -526,9 +526,16 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 cat![self; self.builder.hard_line(), text, after]
             }
             (Side::Leading, CommentLayout::StartOfLine) => {
-                let (hard_line, space) = (Doc::HARD_LINE, Doc::SPACE);
+                // Spaced from what follows like an inline comment, which is
+                // what the comment is when the line does not break before it.
+                let next = self.comments.next[index];
+                let after = if L::is_closer(next) || L::is_separator(next) {
+                    Doc::NIL
+                } else {
+                    Doc::SPACE
+                };
                 let text = self.comment_doc(index, false);
-                cat![self; hard_line, text, space]
+                cat![self; Doc::HARD_LINE, text, after]
             }
             (Side::Leading, CommentLayout::EndOfLine) => {
                 let hug = self.comments.prev[index].is_some_and(L::hugs_next);

@@ -125,12 +125,21 @@ pub(crate) fn switch_block_statement_group<'a>(
         let block = f.node(statement);
         return cat![f; labels, f.space(), block];
     }
+    // The comments of removed `;` after the last statement print at the
+    // labels' indent, where the next pass reads them (leading the next group
+    // or dangling in the switch block).
+    let kept = statements
+        .iter()
+        .rposition(|item| matches!(item, ListItem::Format(_)))
+        .map_or(0, |last| last + 1);
+    let removed = statements.split_off(kept);
     let statements = f.item_list(statements, statement_separator);
+    let removed = f.item_list(removed, |f, _| f.hard_line());
     if statements.is_nil() {
-        return labels;
+        return cat![f; labels, removed];
     }
     let statements = indent![f; f.hard_line(), statements];
-    cat![f; labels, statements]
+    cat![f; labels, statements, removed]
 }
 
 /// A block statement that may share the label line: a plain block outside
@@ -159,8 +168,13 @@ pub(crate) fn switch_rule<'a>(f: &mut JavaFormatter<'a>, node: SwitchRule<'a>) -
             f.group(body)
         }
         // A comment on its own line before a `throw` keeps the statement
-        // one indent deeper, like an expression body.
-        Some(body) if comments_break_before(f, SyntaxElement::Node(body.syntax())) => {
+        // one indent deeper, like an expression body. A block stays at the
+        // label's indent: H3 moves a comment on its own line before `{` to
+        // the arrow's line, so only comments that already share a line with
+        // the arrow lead it.
+        Some(body @ SwitchRuleBody::ThrowStatement(_))
+            if comments_break_before(f, SyntaxElement::Node(body.syntax())) =>
+        {
             let body = f.fmt(body);
             let semicolon = f.token_opt(node.semicolon());
             let body = indent![f; body, semicolon];

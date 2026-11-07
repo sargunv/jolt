@@ -17,7 +17,7 @@ class ControlKeywordCrevices {
     } while /* JOLT-TRIVIA:do-while-before-paren */ (
       flag /* JOLT-TRIVIA:do-while-before-close */
     )
-    /* JOLT-TRIVIA:do-while-before-semi */ ;
+    /* JOLT-TRIVIA:do-while-before-semi */;
 
     synchronized /* JOLT-TRIVIA:synchronized-before-paren */ (
       this /* JOLT-TRIVIA:synchronized-before-close */
