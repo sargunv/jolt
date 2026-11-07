@@ -1,0 +1,19 @@
+class BracePromotionComments {
+  void nested(boolean a, boolean b) {
+    if (a) if (b) run(); else stop();
+    if (a) while (b) next();
+    if (a) run(); // only when a
+    else stop(); // otherwise
+    if (a) return; // done early
+    while (b) next(); // keep going
+    for (;;) break; // leave
+    if (a) /* inline */ run();
+    else /* inline else */ stop();
+    if (a)
+      /* own line block */
+      run();
+    while (b) /* empty */ ;
+    if (a) ; // empty then
+    do /* once */ run(); while (b);
+  }
+}

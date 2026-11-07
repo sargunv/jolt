@@ -1,29 +1,19 @@
-//! Blocks, block statements, local variables, expression and return
-//! statements.
+//! Blocks, block statements, local declarations, and the simple statements.
 
-use jolt_fmt::{Doc, ListItem, cat, indent};
+use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
-    Block, BlockItem, BlockStatement, ExpressionStatement, LocalVariableDeclaration,
-    LocalVariableType, ReturnStatement,
+    Block, BlockStatement, EmptyStatement, ExpressionStatement, LabeledStatement,
+    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, LocalVariableType, Statement,
 };
 use jolt_syntax::{AstNode, SyntaxElement};
 
+use super::{statement_items, statement_separator};
 use crate::JavaFormatter;
-use crate::helpers::bodies::{braced_body, statement_separator};
+use crate::helpers::bodies::braced_body;
 
+/// `{`, the statements one per line (blank lines kept, at most one), `}`.
 pub(crate) fn block<'a>(f: &mut JavaFormatter<'a>, node: Block<'a>) -> Doc {
-    let statements: Vec<_> = node
-        .statements()
-        .into_iter()
-        .flat_map(jolt_java_syntax::BlockStatementList::items)
-        .map(|statement| {
-            if let Some(BlockItem::EmptyStatement(_)) = statement.item() {
-                ListItem::Elide(statement.syntax())
-            } else {
-                ListItem::Format(statement.syntax())
-            }
-        })
-        .collect();
+    let statements = statement_items(node.statements());
     braced_body(
         f,
         node.syntax(),
@@ -40,6 +30,8 @@ pub(crate) fn block_statement<'a>(f: &mut JavaFormatter<'a>, node: BlockStatemen
     cat![f; item, semicolon]
 }
 
+/// `modifiers Type declarators`, without the `;` (the enclosing block
+/// statement or `for` header owns it).
 pub(crate) fn local_variable_declaration<'a>(
     f: &mut JavaFormatter<'a>,
     node: LocalVariableDeclaration<'a>,
@@ -54,6 +46,38 @@ pub(crate) fn local_variable_declaration<'a>(
     cat![f; modifiers, ty, f.space(), declarators]
 }
 
+pub(crate) fn local_class_or_interface_declaration<'a>(
+    f: &mut JavaFormatter<'a>,
+    node: LocalClassOrInterfaceDeclaration<'a>,
+) -> Doc {
+    f.fmt_opt(node.declaration())
+}
+
+/// A `;` statement that no normalization removes (a labeled empty
+/// statement).
+pub(crate) fn empty_statement<'a>(f: &mut JavaFormatter<'a>, node: EmptyStatement<'a>) -> Doc {
+    f.token_opt(node.semicolon())
+}
+
+/// `label:` on its own line, then the statement. An empty statement after
+/// a colon that carries an inline comment stays on the colon's line: a
+/// line break would turn the comment into an end-of-line comment, which the
+/// next pass moves past the `;`.
+pub(crate) fn labeled_statement<'a>(f: &mut JavaFormatter<'a>, node: LabeledStatement<'a>) -> Doc {
+    let label = f.token_opt(node.label());
+    let separator = match (node.colon(), node.body()) {
+        (Some(colon), Some(Statement::EmptyStatement(_)))
+            if f.has_trailing_comments(SyntaxElement::Token(colon)) =>
+        {
+            f.space()
+        }
+        _ => f.hard_line(),
+    };
+    let colon = f.token_opt(node.colon());
+    let body = f.fmt_opt(node.body());
+    cat![f; label, colon, separator, body]
+}
+
 pub(crate) fn expression_statement<'a>(
     f: &mut JavaFormatter<'a>,
     node: ExpressionStatement<'a>,
@@ -61,27 +85,4 @@ pub(crate) fn expression_statement<'a>(
     let expression = f.fmt_opt(node.expression());
     let semicolon = f.token_opt(node.semicolon());
     cat![f; expression, semicolon]
-}
-
-/// `return value;`. When the keyword carries a trailing comment, the value
-/// continues on the next line one indent deeper.
-pub(crate) fn return_statement<'a>(f: &mut JavaFormatter<'a>, node: ReturnStatement<'a>) -> Doc {
-    let keyword_comments = node
-        .return_keyword()
-        .is_some_and(|keyword| f.has_trailing_comments(SyntaxElement::Token(keyword)));
-    let keyword = f.token_opt(node.return_keyword());
-    let value = match node.expression() {
-        Some(value) if keyword_comments => {
-            let value = f.fmt(value);
-            let value = indent![f; f.line(), value];
-            f.group(value)
-        }
-        Some(value) => {
-            let value = f.fmt(value);
-            cat![f; f.space(), value]
-        }
-        None => Doc::NIL,
-    };
-    let semicolon = f.token_opt(node.semicolon());
-    cat![f; keyword, value, semicolon]
 }

@@ -1,0 +1,39 @@
+class KeywordValuesAndLabels {
+  int values(int y) {
+    assert y > 0 : "positive";
+    assert // why
+    y > 0 : "positive";
+    if (y == 0) throw // because
+    new IllegalStateException();
+    return
+    // own line before the value
+    y + 1;
+  }
+
+  int beforeTerminator(int y) {
+    return y
+    // own line before the terminator
+    ;
+  }
+
+  void labels(boolean ready) {
+    outer:
+    while (ready) {
+      inner: for (;;) { if (ready) continue outer; break inner; }
+    }
+    empty: ;
+    commented: /* nothing */ ;
+  }
+
+  int yields(int value) {
+    return switch (value) {
+      case 1 -> {
+        yield // one
+        1;
+      }
+      default -> {
+        yield value;
+      }
+    };
+  }
+}
