@@ -84,7 +84,10 @@ const sample = computed(() => SAMPLES[activeSample.value]);
 const lintDiagnostics = computed(() => {
   if (!formatError.value) return [];
 
-  const diagnostics = toLintDiagnostics(parseFormatError(formatError.value));
+  const diagnostics = toLintDiagnostics(
+    parseFormatError(formatError.value),
+    sample.value.source,
+  );
   if (diagnostics.length > 0) return diagnostics;
 
   return [

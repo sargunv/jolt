@@ -1,0 +1,10 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--stdin-filename\", \"src/Main.java\", \"-\"], \"class {\\n\")"
+---
+$ jolt fmt --stdin-filename src/Main.java -
+status: 1
+--- stderr
+src/Main.java:1:7: java.parse.expected_syntax: expected type name
+src/Main.java:2:1: java.parse.expected_syntax: expected `}` after type body
+1 file could not be formatted

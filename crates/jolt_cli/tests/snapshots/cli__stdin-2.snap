@@ -1,0 +1,10 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--check\", \"--stdin-filename\", \"src/Main.java\", \"-\"],\nNESTED)"
+---
+$ jolt fmt --check --stdin-filename src/Main.java -
+status: 1
+--- stdout
+src/Main.java
+--- stderr
+1 file needs formatting

@@ -1,0 +1,15 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run_in(\"src\", &[\"config\", \"resolve\"], \"\")"
+---
+$ jolt config resolve
+status: 0
+--- stdout
+[format]
+line-width = 100
+indent-width = 2
+use-tabs = true
+
+[files]
+include = ["**/*.java"]
+exclude = ["generated/**", "**/Internal.java"]

@@ -51,7 +51,7 @@ build = [
   "-c",
   """\
 set -eu
-tools/wasm/build_optimized.sh plugin.wasm
+tools/wasm.sh plugin.wasm
 cargo run --release --package jolt_cli -- config schema --dprint > dprint-schema.json
 cargo run --release --package jolt_cli -- config schema > jolt-schema.json
 """,

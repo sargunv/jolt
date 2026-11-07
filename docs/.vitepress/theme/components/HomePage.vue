@@ -12,7 +12,7 @@ const JoltPlayground = defineAsyncComponent(
 const MANUAL = [
   {
     name: "What is Jolt?",
-    desc: "Approach, performance, and where the speed comes from.",
+    desc: "Approach and performance.",
     href: "/guides/what-is-jolt",
   },
   {
@@ -36,8 +36,13 @@ const MANUAL = [
     href: "/reference/cli",
   },
   {
+    name: "Java style",
+    desc: "The output Jolt produces, rule by rule.",
+    href: "/internals/java-style",
+  },
+  {
     name: "How the formatter works",
-    desc: "CST, trivia, and the document IR.",
+    desc: "Syntax tree, comment placement, and the document IR.",
     href: "/internals/formatter",
   },
 ];

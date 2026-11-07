@@ -1,0 +1,10 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"config\", \"list\", \"src/nested/A.java\"], \"\")"
+---
+$ jolt config list src/nested/A.java
+status: 0
+--- stdout
+$TEMP/jolt.toml
+$TEMP/src/.config/jolt.toml
+$TEMP/src/jolt.toml

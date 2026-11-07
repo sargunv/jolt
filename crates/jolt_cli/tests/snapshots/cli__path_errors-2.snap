@@ -1,0 +1,8 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"Missing.java\"], \"\")"
+---
+$ jolt fmt Missing.java
+status: 1
+--- stderr
+Missing.java: path does not exist

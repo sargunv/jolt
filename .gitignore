@@ -1,7 +1,7 @@
 /target/
 __pycache__/
 node_modules/
-.imports/
+.imports
 .ruff_cache/
 /plugin.wasm
 /schema.json
@@ -12,6 +12,5 @@ node_modules/
 /docs/.vitepress/dist/
 /docs/.vitepress/.temp/
 /docs/.vitepress/theme/assets/jolt-plugin.wasm
-/docs/public/man/
 /docs/public/schemas/
 /docs/reference/

@@ -6,4 +6,4 @@ repository = "https://github.com/sargunv/jolt"
 license = "Apache-2.0"
 binaries = ["jolt"]
 out-dir = "out"
-build-command = ["python", "build.py"]
+build-command = ["python", "../../tools/pgo.py"]

@@ -1,0 +1,11 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--include\", \"other/*.java\", \"--check\"], \"\")"
+---
+$ jolt fmt --include other/*.java --check
+status: 1
+--- stdout
+other/O.java
+--- stderr
+Checked 1 file in $TIME
+1 file needs formatting

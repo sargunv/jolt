@@ -4,8 +4,13 @@ Fast, opinionated Java formatter.
 
 ## Project Map
 
-- `.agents/docs/VISION.md`: product vision.
 - `crates/`: Rust workspace crates for the formatter engine and wrappers.
+  `jolt_cli` (the `jolt` binary) and `jolt_fmt_dprint` (the dprint plugin) use
+  only the `jolt_formatter` facade and `jolt_config`, the one definition of the
+  user-facing format options.
+- `tools/`: corpus import (`import/import.py`), the profile-guided release build
+  (`pgo.py`), the optimized plugin build (`wasm.sh`), and the benchmark
+  (`bench.py`).
 - `docs/internals/formatter.md`: the formatter design contract (crates, APIs,
   comment model, verification, build plan). Amend it in the same change when an
   implementation has to deviate.
@@ -36,6 +41,14 @@ Fast, opinionated Java formatter.
   `format(in) == out`). Mismatches list the placeholder kinds they hit.
 - `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
   plugin.
+- `mise run bench`: time formatting the Spring corpus with hyperfine
+  (`--compare` adds google-java-format and prettier-java) and write
+  `docs/bench.json`, which the docs show. Rerun it on a quiet machine before
+  committing the numbers.
+- `mise run build:jolt --mode release` and
+  `mise run build:dprint-plugin --mode release`: the PGO-built CLI in
+  `target/release/jolt` and the optimized, smoke-tested plugin in
+  `target/plugin.wasm`.
 - `mise x google-java-format -- google-java-format ...`: run the
   google-java-format formatter as a useful reference.
 - `mise x oxfmt -- oxfmt ...`: run the oxfmt formatter as a useful reference.

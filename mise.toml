@@ -13,6 +13,7 @@ lockfile = true
 "core:rust" = { version = "1.96.0", profile = "minimal", components = "rustfmt,clippy,llvm-tools", targets = "wasm32-unknown-unknown" }
 "aqua:google/google-java-format" = "1.35.0"
 "aqua:pnpm/pnpm" = "11.9.0"
+"aqua:sharkdp/hyperfine" = "2.0.0"
 "core:node" = "24.18.0"
 "cargo:cargo-machete" = "0.9.2"
 "cargo:cargo-nextest" = "0.9.138"
@@ -33,24 +34,20 @@ outputs = ["tools/import/.imports/manifest.json"]
 run = "python tools/import/import.py"
 
 [tasks.check]
+description = "Run every check through hk"
 run = "hk check --all"
 
+[tasks.fix]
+description = "Run every check and fixer through hk"
+run = "hk fix --all"
+
 [tasks.test]
+description = "Run all tests"
 usage = 'flag "--update" help="Update insta snapshots"'
 run = 'INSTA_UPDATE="$([ "${usage_update:-false}" = "true" ] && printf always || printf no)" cargo nextest run --workspace'
 
-[tasks.nextest]
-run = "cargo nextest run --workspace"
-
-[tasks.machete]
-run = "cargo machete"
-
 [tasks.hunt]
-description = "Sweep the imported corpora for formatter bugs (idempotence, conservation, reparse validity)"
-depends = ["hunt:java"]
-
-[tasks."hunt:java"]
-description = "Sweep the imported Java corpora for formatter bugs"
+description = "Sweep the imported Java corpora for formatter bugs (idempotence, conservation, reparse validity)"
 run = "cargo run --release -p jolt_java_fmt --example jhunt"
 
 [tasks.jref]
@@ -58,9 +55,45 @@ description = "Compare formatter output with the reference outputs"
 raw_args = true
 run = "cargo run --release -p jolt_java_fmt --example jref --"
 
+[tasks.jolt]
+description = "Run the jolt CLI from local source"
+raw_args = true
+run = "cargo run -p jolt_cli --"
+
+[tasks."dprint-with-jolt"]
+description = "Run dprint with the local debug plugin"
+depends = ["build:dprint-plugin"]
+raw_args = true
+run = "dprint --plugins=\"$PWD/target/wasm32-unknown-unknown/debug/jolt_fmt_dprint.wasm\""
 
 [tasks.build]
 depends = ["build:jolt", "build:dprint-plugin"]
+
+[tasks."build:jolt"]
+description = "Build the CLI; release mode is profile-guided (tools/pgo.py)"
+usage = 'flag "--mode <mode>" default="debug" { choices "debug" "release" }'
+run = '''
+case "${usage_mode?}" in
+  debug) cargo build --package jolt_cli ;;
+  release) python tools/pgo.py ;;
+esac
+'''
+
+[tasks."build:dprint-plugin"]
+description = "Build the dprint plugin; release mode is optimized and smoke-tested (tools/wasm.sh)"
+usage = 'flag "--mode <mode>" default="debug" { choices "debug" "release" }'
+run = '''
+case "${usage_mode?}" in
+  debug) cargo build --target wasm32-unknown-unknown --package jolt_fmt_dprint ;;
+  release) tools/wasm.sh ;;
+esac
+'''
+
+[tasks.bench]
+description = "Time format checks on the Spring corpus and write docs/bench.json"
+usage = 'flag "--compare" help="Also time google-java-format and prettier-java"'
+depends = ["build:jolt --mode release", "build:dprint-plugin --mode release"]
+run = 'python tools/bench.py $([ "${usage_compare:-false}" = "true" ] && printf %s --compare)'
 
 [tasks."docs:dev"]
 depends = ["build:dprint-plugin --mode debug"]
@@ -74,50 +107,8 @@ run = "pnpm docs:build"
 depends = ["build:dprint-plugin --mode release"]
 run = "pnpm docs:preview"
 
-[tasks."build:jolt"]
-usage = '''
-flag "--mode <mode>" help="Cargo build mode" {
-  choices "debug" "release"
-  default "debug"
-}
-'''
-
-run = '''
-case "${usage_mode?}" in
-  debug) cargo build --package jolt_cli ;;
-  release) python -m tools.pgo.build ;;
-esac
-'''
-
-[tasks."jolt"]
-raw_args = true
-run = "cargo run -p jolt_cli --"
-
-[tasks."build:dprint-plugin"]
-usage = '''
-flag "--mode <mode>" help="Cargo build mode" {
-  choices "debug" "release"
-  default "debug"
-}
-'''
-run = '''
-case "${usage_mode?}" in
-  debug) cargo build --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm ;;
-  release) tools/wasm/build_optimized.sh ;;
-esac
-'''
-
-[tasks."dprint-with-jolt"]
-depends = ["build:dprint-plugin"]
-raw_args = true
-run = "dprint --plugins=\"$PWD/target/wasm32-unknown-unknown/debug/jolt_fmt_dprint.wasm\""
-
-[tasks.benchmark]
-description = "Run formatter benchmarks"
-usage = 'flag "--comparison-tools" help="Also benchmark google-java-format and prettier-java"'
-run = 'python -m tools.bench.architecture $([ "${usage_comparison_tools:-false}" = "true" ] && printf %s --comparison-tools)'
-
 [tasks."release:build"]
+description = "Build the release archives for this host with cargo-dist"
 run = '''
 host=$(rustc -vV | sed -n 's/^host: //p')
 case "$host" in
@@ -130,6 +121,7 @@ dist build --target "$target"
 '''
 
 [tasks."release:cut"]
+description = "Bump versions, commit, tag, and push a release"
 run = '''
 set -eu
 today=$(date -u +%Y%m%d)
@@ -167,9 +159,6 @@ git push --atomic origin HEAD "$tag"
 
 echo "Released $tag"
 '''
-
-[tasks.fix]
-run = "hk fix --all"
 
 [hooks]
 postinstall = ["hk install --mise"]

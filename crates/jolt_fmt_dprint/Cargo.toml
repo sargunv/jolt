@@ -9,24 +9,13 @@ rust-version.workspace = true
 [lib]
 crate-type = ["cdylib"]
 
-[features]
-default = ["wasm"]
-wasm = [
-  "dep:dprint-core",
-  "dep:jolt_formatter",
-  "dep:serde_json",
-  "dprint-core/wasm",
-  "jolt_formatter/serde",
-]
-
-[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
-dprint-core = { version = "0.68.2", default-features = false, optional = true }
-jolt_formatter = { path = "../jolt_formatter", optional = true }
-serde_json = { version = "1.0", optional = true }
+[dependencies]
+dprint-core = { version = "0.68.2", default-features = false, features = ["wasm"] }
+jolt_config = { path = "../jolt_config" }
+jolt_formatter = { path = "../jolt_formatter", features = ["serde"] }
+serde_json = "1.0"
 
 [dev-dependencies]
-dprint-core = { version = "0.68.2", default-features = false, features = ["wasm"] }
-jolt_formatter = { path = "../jolt_formatter", features = ["serde"] }
 tempfile = "3.23"
 
 [lints]
