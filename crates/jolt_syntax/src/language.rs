@@ -52,8 +52,8 @@ pub trait Language: 'static {
     fn unexpected_diagnostic_code() -> DiagnosticCodeId;
 
     /// If the given lexed token should be split into multiple syntax tokens
-    /// (e.g. Java's `>>` into two `>` tokens for type-argument recovery, or
-    /// Kotlin's `?.` into `?` and `.`), returns the split kinds.
+    /// (e.g. Java's `>>` into two `>` tokens for type-argument recovery),
+    /// returns the split kinds.
     fn split_token(token: &LexedToken<Self>) -> Option<&'static [Self::Kind]>
     where
         Self: Sized;

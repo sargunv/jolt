@@ -384,8 +384,6 @@ dependencies = [
  "jolt_fmt_ir",
  "jolt_java_fmt",
  "jolt_java_syntax",
- "jolt_kotlin_fmt",
- "jolt_kotlin_syntax",
  "jolt_syntax",
  "serde",
  "serde_json",
@@ -455,8 +453,6 @@ dependencies = [
  "jolt_fmt_ir",
  "jolt_java_fmt",
  "jolt_java_syntax",
- "jolt_kotlin_fmt",
- "jolt_kotlin_syntax",
 ]
 
 [[package]]
@@ -473,31 +469,6 @@ dependencies = [
 
 [[package]]
 name = "jolt_java_syntax"
-version = "0.0.0"
-dependencies = [
- "insta",
- "jolt_diagnostics",
- "jolt_syntax",
- "jolt_test_support",
- "jolt_text",
- "num_enum",
- "unicode-general-category",
-]
-
-[[package]]
-name = "jolt_kotlin_fmt"
-version = "0.0.0"
-dependencies = [
- "insta",
- "jolt_diagnostics",
- "jolt_fmt_ir",
- "jolt_kotlin_syntax",
- "jolt_syntax",
- "jolt_test_support",
-]
-
-[[package]]
-name = "jolt_kotlin_syntax"
 version = "0.0.0"
 dependencies = [
  "insta",

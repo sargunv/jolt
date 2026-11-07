@@ -198,11 +198,11 @@ Files or directories to format. Use \*(Aq\-\*(Aq to read stdin
 .el .ds Aq '
 .TH jolt 1  "jolt 0.20260721.0 ($COMMIT)" "Jolt Manual"
 .SH NAME
-jolt \- Fast, opinionated JVM and Kotlin Multiplatform project tooling.
+jolt \- Fast, opinionated Java formatter.
 .SH SYNOPSIS
 \fBjolt\fR [\fB\-h\fR|\fB\-\-help\fR] [\fB\-V\fR|\fB\-\-version\fR] <\fIsubcommands\fR>
 .SH DESCRIPTION
-Fast, opinionated JVM and Kotlin Multiplatform project tooling.
+Fast, opinionated Java formatter.
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR

@@ -2,12 +2,11 @@
 //!
 //! [`Comment`], [`CommentKind`], and [`SyntaxToken`] are shared syntax types, so
 //! comment text rendering, ordering, separator spacing, and forced-line
-//! decisions are all language-neutral. [`CommentKind::Doc`] already covers both
-//! Javadoc and `KDoc`.
+//! decisions are all language-neutral. [`CommentKind::Doc`] covers Javadoc-style
+//! `/** */` blocks.
 //!
 //! Language crates still own comment placement that is specific to their
-//! grammar, such as Java's modifier relocation or Kotlin's semicolon
-//! terminators.
+//! grammar, such as Java's modifier relocation.
 
 use jolt_syntax::{Comment, CommentKind, Language, SyntaxToken, TriviaKind};
 
@@ -106,7 +105,7 @@ pub fn format_trailing_comment<'source>(
     }
 }
 
-/// Reports whether a comment uses Javadoc/KDoc star-block layout.
+/// Reports whether a comment uses Javadoc-style star-block layout.
 #[must_use]
 pub fn comment_is_star_block(comment: &Comment<'_>) -> bool {
     comment.kind() == CommentKind::Doc || is_star_block_comment(comment.text())

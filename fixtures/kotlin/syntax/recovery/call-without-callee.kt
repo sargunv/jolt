@@ -1,1 +1,0 @@
-fun demo() { <String>(value) }

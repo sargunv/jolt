@@ -17,7 +17,6 @@
     "**/*.snap",
     "crates/**/*.java",
     "fixtures/java/**",
-    "fixtures/kotlin/**",
     ".github/workflows/release.yml"
   ],
   "plugins": [

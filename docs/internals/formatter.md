@@ -1,14 +1,14 @@
 # Formatter
 
 Jolt formats a lossless concrete syntax tree into a document, then renders that
-document directly to a sink. Java and Kotlin share the document machinery, not
-their syntax or layout rules.
+document directly to a sink. The document machinery is language-neutral; syntax
+and layout rules live in the language crates (currently only Java).
 
 ## Run ownership
 
 The public `jolt_formatter` facade only detects or accepts a language and
-dispatches to `jolt_java_fmt` or `jolt_kotlin_fmt`. Each language formatter then
-owns:
+dispatches to a language formatter (`jolt_java_fmt`). Each language formatter
+then owns:
 
 - parsing source and extracting its typed root;
 - the root layout entry point and all syntax-shaped layout rules; and
@@ -34,15 +34,15 @@ and malformed fields and list parts, exact token ownership, recovery status,
 malformed verbatim cores, and normalization claims. Formatter rules consume
 those accessors; they do not parse token streams or reconstruct syntax.
 
-`jolt_java_fmt::rules` and `jolt_kotlin_fmt::rules` mirror their respective
-language constructs: programs, declarations, expressions, statements, types, and
-language-specific forms. These modules decide grouping, indentation, separators,
-comment placement, and other layout policy. Their `helpers` modules own
-language-specific token/comment formatting, typed field and list recovery, and
-lexical classification. Shared recovery types carry only resolved physical
-shape: item, separator, or a malformed/missing document whose layout
-contribution is visible or claim-only. Each language still owns separator,
-joining, normalization, and comment policy for those parts.
+`jolt_java_fmt::rules` mirrors the language's constructs: programs,
+declarations, expressions, statements, types, and language-specific forms. These
+modules decide grouping, indentation, separators, comment placement, and other
+layout policy. Their `helpers` modules own language-specific token/comment
+formatting, typed field and list recovery, and lexical classification. Shared
+recovery types carry only resolved physical shape: item, separator, or a
+malformed/missing document whose layout contribution is visible or claim-only.
+Each language still owns separator, joining, normalization, and comment policy
+for those parts.
 
 `jolt_fmt_ir` shares mechanics with identical semantics: document construction,
 token/trivia assembly, malformed-fragment assembly, formatter-ignore planning,
@@ -58,25 +58,25 @@ fall back to source replay.
 
 Formatting starts by parsing the source, so its finite-cost contract has parser
 and CST-layout parts. Parser recursion is charged only at grammar owners that
-can re-enter a recursive cycle. Java and Kotlin allow 128 active recursive
-owners. Java generic lookahead and consuming grammar retain a counter separate
-from other Java syntax owners because speculative and consuming decisions must
-agree, but both counters use that one policy value. Parser loops that build
-binary, member, call, and type-suffix spines do not spend these budgets because
-they do not grow the native or WASM call stack.
+can re-enter a recursive cycle. Java allows 128 active recursive owners. Java
+generic lookahead and consuming grammar retain a counter separate from other
+Java syntax owners because speculative and consuming decisions must agree, but
+both counters use that one policy value. Parser loops that build binary, member,
+call, and type-suffix spines do not spend these budgets because they do not grow
+the native or WASM call stack.
 
 When an owner budget is exhausted, the syntax crate uses a borrowed,
 allocation-free token scan to a documented enclosing recovery boundary. Recovery
 is syntax-shape specific: ordinary expressions and most types become one
-diagnostic-owned bogus subtree; an excessive Java generic argument and a Kotlin
-required function-type slot retain their required outer shape around malformed
-content. Array initializers, type bodies, blocks, and class bodies retain their
-real delimiters and required list shape around one bogus child. Java statement
-overflow deliberately coarsens unsupported siblings and control tails through
-the enclosing body boundary, but leaves that body's closing brace and following
-syntax to their real owners. Every shape preserves all consumed tokens and
-trivia. The formatter receives that ordinary represented recovery structure; it
-does not impose another depth limit or synthesize a repair.
+diagnostic-owned bogus subtree; an excessive Java generic argument retains its
+required outer shape around malformed content. Array initializers, type bodies,
+blocks, and class bodies retain their real delimiters and required list shape
+around one bogus child. Java statement overflow deliberately coarsens
+unsupported siblings and control tails through the enclosing body boundary, but
+leaves that body's closing brace and following syntax to their real owners.
+Every shape preserves all consumed tokens and trivia. The formatter receives
+that ordinary represented recovery structure; it does not impose another depth
+limit or synthesize a repair.
 
 Java's repeated parenthesis and annotation lookahead has a separate work bound.
 The first relevant query builds one exact table for the remaining token suffix.
@@ -90,10 +90,7 @@ Iterative parser loops can still produce valid CST spines much deeper than the
 parser call-stack limits. The language formatters therefore use borrowed,
 parent-aware descent/ascent walks for the repeatable families:
 
-- Java postfix expressions and alternating binary/`instanceof` expressions;
-- Kotlin call/navigation/index/postfix/callable-reference expressions;
-- Kotlin ordinary/type binary expressions and nullable, receiver, and
-  definitely-non-null type suffixes.
+- Java postfix expressions and alternating binary/`instanceof` expressions.
 
 Each walk follows exact typed child fields to one base, formats that base once,
 and replays the existing suffix layout while ascending only to the captured
@@ -137,11 +134,11 @@ debug assertions are disabled, including the release and distribution profiles.
 
 A malformed typed field supplies a `SyntaxVerbatimCore`: the exact syntax-owned
 source interval eligible for verbatim output, together with the tokens, source
-claim, and neighboring-token facts needed at its boundaries. The Java and Kotlin
-recovery helpers resolve their typed field and list enums and format comments
-outside that core structurally. Shared recovery code assembles those pieces,
-resolves exceptional joins, and carries the syntax-derived visible-versus-
-claim-only fact to the list owner. It does not choose separators or spacing.
+claim, and neighboring-token facts needed at its boundaries. The Java recovery
+helpers resolve their typed field and list enums and format comments outside
+that core structurally. Shared recovery code assembles those pieces, resolves
+exceptional joins, and carries the syntax-derived visible-versus- claim-only
+fact to the list owner. It does not choose separators or spacing.
 
 A required missing role emits no text after the language helper confirms that
 syntax owns an empty verbatim core. A malformed role emits its borrowed core and
@@ -189,7 +186,7 @@ output: malformed verbatim cores and formatter-ignore runs.
 
 The shared IR identifies at most the adjacent atom pair on each side and asks
 the language's `LexicalSafety` implementation for `None`, `Space`, or
-`HardLine`. Java and Kotlin own token classification and their finite
+`HardLine`. The language crate owns token classification and their finite
 punctuation/keyword join tables. The shared code calls that policy at most once
 per present boundary pair; it does not inspect source gaps or retokenize
 fragment text. A trailing line comment bypasses the policy and forces a hard

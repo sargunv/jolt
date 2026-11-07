@@ -51,7 +51,7 @@ const MANUAL = [
       </p>
       <h1 class="home-title">Jolt<span class="jz-caret" /></h1>
       <p class="home-lede">
-        Jolt is a formatter for Java and Kotlin, shipped as a static native CLI
+        Jolt is a formatter for Java, shipped as a static native CLI
         and a dprint plugin. This page runs the same engine as WebAssembly in
         your browser.
       </p>

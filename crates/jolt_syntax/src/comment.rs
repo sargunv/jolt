@@ -1,7 +1,7 @@
 //! Shared comment infrastructure for language syntax trees.
 //!
-//! Comments are derived from [`SyntaxTrivia`] attached to tokens. Both the Java
-//! and Kotlin syntax crates consume these types via type aliases (e.g.
+//! Comments are derived from [`SyntaxTrivia`] attached to tokens. Language syntax
+//! crates consume these types via type aliases (e.g.
 //! `JavaComment<'source> = jolt_syntax::Comment<'source>`), keeping the parse
 //! and iteration logic in one place.
 
@@ -15,16 +15,14 @@ use crate::{SourceTriviaPiece, SyntaxTrivia, TriviaKind};
 
 /// A comment kind exposed from syntax trivia.
 ///
-/// Both Java and Kotlin share the same three comment kinds; the only naming
-/// difference is documentation conventions (`Javadoc` vs `KDoc`), which does
-/// not affect the layout-level distinction.
+/// The three comment kinds common to C-family languages.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CommentKind {
     /// A `//` line comment (also covers shebang comments).
     Line,
     /// A non-documentation block comment.
     Block,
-    /// A documentation block comment (`/** */` Javadoc or `/** */` `KDoc`).
+    /// A documentation block comment (`/** */`, e.g. Javadoc).
     Doc,
 }
 

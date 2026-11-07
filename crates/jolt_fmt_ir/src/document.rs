@@ -193,7 +193,7 @@ impl<'source> DocBuilder<'source> {
     /// Creates one document arena with a linear reservation derived from the
     /// source it will format.
     ///
-    /// Realistic Java and Kotlin both produce about two document nodes per
+    /// Realistic Java produces about two document nodes per
     /// five source bytes. Child ranges are less dense; one slot per eight
     /// bytes is a conservative estimate. These fixed ratios avoid geometric
     /// arena growth without inspecting syntax twice or introducing per-rule

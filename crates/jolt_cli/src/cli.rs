@@ -26,7 +26,7 @@ pub(crate) const VERSION: &str = concat!(
 
 #[derive(Debug, Parser)]
 #[command(name = "jolt", version = VERSION)]
-#[command(about = "Fast, opinionated JVM and Kotlin Multiplatform project tooling.")]
+#[command(about = "Fast, opinionated Java formatter.")]
 pub(crate) struct Cli {
     #[command(subcommand)]
     command: Command,

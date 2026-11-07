@@ -44,11 +44,6 @@ CORPORA = {
         extensions=(".java",),
         source=IMPORTS / "spring-framework",
     ),
-    "kotlin-realistic": Corpus(
-        language="kotlin",
-        extensions=(".kt", ".kts"),
-        source=IMPORTS / "maplibre-compose/source",
-    ),
 }
 
-REALISTIC_CORPUS_KEYS = ("realistic", "kotlin-realistic")
+REALISTIC_CORPUS_KEYS = ("realistic",)

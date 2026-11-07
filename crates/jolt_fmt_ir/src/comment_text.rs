@@ -1,4 +1,4 @@
-//! Language-agnostic comment text helpers shared by Java and Kotlin formatters.
+//! Language-agnostic comment text helpers shared by language formatters.
 //!
 //! Comment *policy* (which kinds get star-block treatment, trailing flatten,
 //! token trivia placement) stays in each language crate. These helpers only

@@ -1,6 +1,6 @@
 # Jolt
 
-Fast, opinionated JVM and Kotlin Multiplatform project tooling.
+Fast, opinionated Java formatter.
 
 ## Project Map
 
@@ -22,11 +22,10 @@ Fast, opinionated JVM and Kotlin Multiplatform project tooling.
   Positions inside a string literal are excluded, since text there is content
   rather than trivia. Runs in release mode; too slow in debug for the normal
   test suite. Reports land in `target/hunt/`, capped per failure category. Exits
-  non-zero when a failure category is not in that language's `KNOWN_OPEN` list,
-  and when a `KNOWN_OPEN` entry stops firing and should be deleted, so the sweep
-  is a signal while carrying the debt it already has. The `jcheck`/`kcheck`
-  examples re-run one file, or one probe position for a repro, e.g.
-  `.../File.java:ownline12`.
+  non-zero when a failure category is not in the `KNOWN_OPEN` list, and when a
+  `KNOWN_OPEN` entry stops firing and should be deleted, so the sweep is a
+  signal while carrying the debt it already has. The `jcheck` example re-runs
+  one file, or one probe position for a repro, e.g. `.../File.java:ownline12`.
 - `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
   plugin.
 - `mise x google-java-format -- google-java-format ...`: run the

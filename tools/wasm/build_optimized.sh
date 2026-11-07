@@ -70,11 +70,9 @@ esac
 plugin=$(cd "$(dirname "$optimized")" && pwd)/$(basename "$optimized")
 smoke=$(mktemp -d)
 printf 'class Smoke{}\n' > "$smoke/Smoke.java"
-printf 'class Smoke{val answer=42}\n' > "$smoke/Smoke.kt"
 (
   cd "$smoke"
-  "$dprint" --plugins="$plugin" fmt Smoke.java Smoke.kt >/dev/null
+  "$dprint" --plugins="$plugin" fmt Smoke.java >/dev/null
 )
 grep -q 'class Smoke {' "$smoke/Smoke.java"
-grep -q 'val answer = 42' "$smoke/Smoke.kt"
 mv -f "$optimized" "$output"

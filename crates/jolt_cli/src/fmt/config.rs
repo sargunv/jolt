@@ -13,7 +13,7 @@ use toml_edit::DocumentMut;
 
 use crate::error::CliError;
 
-const DEFAULT_INCLUDE: &[&str] = &["**/*.java", "**/*.kt", "**/*.kts"];
+const DEFAULT_INCLUDE: &[&str] = &["**/*.java"];
 const VCS_MARKERS: &[&str] = &[".git", ".hg", ".jj", ".svn"];
 
 #[derive(Clone, Debug, Eq, PartialEq)]

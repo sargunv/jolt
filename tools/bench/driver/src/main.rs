@@ -165,12 +165,6 @@ fn make_operation(
             }
             Ok(0)
         })),
-        (Language::Kotlin, Mode::Parse) => Ok(Box::new(|| {
-            for item in &sources.items {
-                black_box(jolt_kotlin_syntax::parse_kotlin_file(&item.text));
-            }
-            Ok(0)
-        })),
         (Language::Java, Mode::Format) => {
             let parses = sources
                 .items
@@ -194,44 +188,10 @@ fn make_operation(
                 Ok(sink.bytes)
             }))
         }
-        (Language::Kotlin, Mode::Format) => {
-            let parses = sources
-                .items
-                .iter()
-                .map(|item| jolt_kotlin_syntax::parse_kotlin_file(&item.text))
-                .collect::<Vec<_>>();
-            ensure_kotlin_parses(&parses)?;
-            Ok(Box::new(move || {
-                let mut sink = CountingSink::default();
-                for parse in &parses {
-                    let syntax = parse
-                        .syntax()
-                        .expect("parses were checked before measurement");
-                    let (result, _) = jolt_kotlin_fmt::benchmark_format_syntax_to_sink(
-                        &syntax,
-                        &FormatOptions::default(),
-                        &mut sink,
-                    );
-                    ensure_complete(result)?;
-                }
-                Ok(sink.bytes)
-            }))
-        }
         (Language::Java, Mode::EndToEnd) => Ok(Box::new(|| {
             let mut sink = CountingSink::default();
             for item in &sources.items {
                 ensure_complete(jolt_java_fmt::format_source_to_sink(
-                    &item.text,
-                    &FormatOptions::default(),
-                    &mut sink,
-                ))?;
-            }
-            Ok(sink.bytes)
-        })),
-        (Language::Kotlin, Mode::EndToEnd) => Ok(Box::new(|| {
-            let mut sink = CountingSink::default();
-            for item in &sources.items {
-                ensure_complete(jolt_kotlin_fmt::format_source_to_sink(
                     &item.text,
                     &FormatOptions::default(),
                     &mut sink,
@@ -290,27 +250,6 @@ fn collect_structural_metrics(
             }
             Ok(metrics)
         }
-        Language::Kotlin => {
-            let mut metrics = StructuralMetrics::default();
-            for item in &sources.items {
-                let parse = jolt_kotlin_syntax::parse_kotlin_file(&item.text);
-                metrics.syntax += parse
-                    .benchmark_metrics()
-                    .ok_or("Kotlin parser did not produce a file")?;
-                let syntax = parse
-                    .syntax()
-                    .ok_or("Kotlin parser did not produce a file")?;
-                let mut sink = CountingSink::default();
-                let (result, document) = jolt_kotlin_fmt::benchmark_format_syntax_to_sink(
-                    &syntax,
-                    &FormatOptions::default(),
-                    &mut sink,
-                );
-                ensure_complete(result)?;
-                metrics.document += document;
-            }
-            Ok(metrics)
-        }
     }
 }
 
@@ -319,14 +258,6 @@ fn ensure_java_parses(parses: &[jolt_java_syntax::JavaParse<'_>]) -> Result<(), 
         Ok(())
     } else {
         Err("Java parser did not produce a compilation unit for every source".into())
-    }
-}
-
-fn ensure_kotlin_parses(parses: &[jolt_kotlin_syntax::KotlinParse<'_>]) -> Result<(), String> {
-    if parses.iter().all(|parse| parse.syntax().is_some()) {
-        Ok(())
-    } else {
-        Err("Kotlin parser did not produce a file for every source".into())
     }
 }
 
@@ -383,7 +314,6 @@ impl Sources {
     fn read(root: &Path, language: Language) -> Result<Self, String> {
         let extensions: &[&str] = match language {
             Language::Java => &["java"],
-            Language::Kotlin => &["kt", "kts"],
         };
         let mut paths = Vec::new();
         collect_paths(root, extensions, &mut paths)?;
@@ -451,7 +381,6 @@ fn collect_paths(root: &Path, extensions: &[&str], paths: &mut Vec<PathBuf>) -> 
 #[serde(rename_all = "kebab-case")]
 enum Language {
     Java,
-    Kotlin,
 }
 
 #[derive(Clone, Copy, Serialize)]
@@ -497,7 +426,6 @@ impl Args {
                 "--language" => {
                     language = Some(match value.as_str() {
                         "java" => Language::Java,
-                        "kotlin" => Language::Kotlin,
                         _ => return Err(format!("unsupported language: {value}")),
                     });
                 }

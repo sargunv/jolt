@@ -1,6 +1,6 @@
 //! Shared `@formatter:off` / `@formatter:on` range handling.
 //!
-//! Both the Java and Kotlin formatters consume this module to discover
+//! Language formatters consume this module to discover
 //! formatter-ignore ranges from token trivia and to splice the raw source
 //! spanned by those ranges back into the rendered document.
 

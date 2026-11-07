@@ -204,18 +204,8 @@ pub fn java_fixture_root(manifest_dir: &str) -> PathBuf {
 }
 
 #[must_use]
-pub fn kotlin_fixture_root(manifest_dir: &str) -> PathBuf {
-    workspace_root(manifest_dir).join("fixtures/kotlin")
-}
-
-#[must_use]
 pub fn collect_java_files(root: &Path) -> Vec<PathBuf> {
     collect_fixture_files(root, &["java"], "Java")
-}
-
-#[must_use]
-pub fn collect_kotlin_files(root: &Path) -> Vec<PathBuf> {
-    collect_fixture_files(root, &["kt", "kts"], "Kotlin")
 }
 
 #[must_use]
@@ -568,7 +558,7 @@ pub struct StructurePolicy<K: 'static> {
     /// comes from the enclosing nodes, so eliding these tokens costs no coverage.
     pub normalizable_punctuation: &'static [K],
     /// Nodes whose child sequence is order-insensitive, covering
-    /// `ReorderReason::ModuleDirectives` and Kotlin's sorted import list. Only
+    /// `ReorderReason::ModuleDirectives`. Only
     /// recovery-free children are canonicalized, mirroring the authorization
     /// `NormalizationOwner` grants; a child carrying recovery keeps its position, so
     /// moving it past a sortable neighbour still fails.
@@ -1815,8 +1805,8 @@ pub fn assert_no_line_exceeds_width(formatted: &str, label: &str, line_width: u1
 /// Formats `sources` with a block comment inserted after every token boundary,
 /// asserting the formatter never blocks and stays idempotent.
 ///
-/// Line comments are a known gap: sweeping them finds further Kotlin failures
-/// that are not yet fixed, so this stays on block comments until they are.
+/// Line comments are a known gap: sweeping them found further failures
+/// that were not yet fixed, so this stays on block comments until they are.
 ///
 /// A trailing comment is only emitted if some rule takes responsibility for it.
 /// `TrailingTrivia::RelocatedToEnclosingContext` moves that responsibility to

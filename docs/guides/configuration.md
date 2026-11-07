@@ -43,7 +43,7 @@ indent-width = 2
 use-tabs = false
 
 [files]
-include = ["**/*.java", "**/*.kt", "**/*.kts"]
+include = ["**/*.java"]
 exclude = ["generated/**"]
 ```
 
@@ -89,8 +89,8 @@ jolt config resolve [path]
 ```
 
 `resolve` prints TOML with comments showing which config supplied each value.
-When the path is a file or a future `.java`, `.kt`, or `.kts` file, it also
-reports whether that file is selected by the resolved include/exclude patterns.
+When the path is a file or a future `.java` file, it also reports whether that
+file is selected by the resolved include/exclude patterns.
 
 ## Schemas
 

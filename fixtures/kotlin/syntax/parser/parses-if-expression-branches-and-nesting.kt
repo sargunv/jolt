@@ -1,7 +1,0 @@
-fun choose(a: Int, b: Int, c: Int): Int {
-    val logged = trace(if (a > b) a else b, c)
-    return if (a > b)
-        if (a > c) a else c
-    else
-        if (b > c) b else c
-}
