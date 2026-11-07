@@ -1599,9 +1599,9 @@ For an input `S` and output `F = format(S)`:
   and `tools/import/.imports` with the oracle at three widths and the four
   comment probe shapes: every boundary at every width for the fixtures and the
   gjf, palantir and prettier inputs up to 4 KiB, sampled boundaries at width 80
-  for larger files and Spring. `KNOWN_OPEN` must be empty. `--mutate` also
-  deletes each token of those small files in turn (the oracle's token check
-  catches code loss); that recovery stress test is outside the gate.
+  for larger files and Spring. It also deletes each token of those small files
+  in turn (the oracle's token check catches code loss), which stresses parser
+  recovery and the formatting of recovered trees. `KNOWN_OPEN` must be empty.
 - `examples/jcheck.rs`: replays one file or one variant (`File.java:ownline12`,
   `File.java:comment3@40`, `File.java:delete7`).
 - `examples/jref.rs` (new): `jref <dir>` checks `format(F) == F` for every

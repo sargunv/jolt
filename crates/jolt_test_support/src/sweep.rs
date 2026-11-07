@@ -66,8 +66,7 @@ pub const SWEEP_SAMPLED_PROBES: usize = 8;
 pub const SWEEP_WIDTHS: &[u16] = &[40, 80, 120];
 pub const SWEEP_PROBE_WIDTH: u16 = 80;
 /// Files up to this size in an exhaustive suite get every probe at every
-/// width (and, with `--mutate`, every one-token deletion); larger ones are
-/// sampled.
+/// width and every one-token deletion; larger ones are sampled.
 pub const SWEEP_EXHAUSTIVE_MAX_BYTES: usize = 4096;
 /// Samples kept per summary key.
 pub const MAX_SAMPLES_PER_KEY: usize = 20;
@@ -261,16 +260,14 @@ pub fn sweep_variant<C: CorpusLanguage>(
         .collect()
 }
 
-/// Every sweep check for one file: each width, then each probe shape (and,
-/// when `mutate` and the suite is exhaustive, each one-token deletion). A
-/// probe that makes clean source dirty is skipped (it landed in something
-/// other than trivia).
+/// Every sweep check for one file: each width, then each probe shape, then
+/// (in an exhaustive suite) each one-token deletion. A probe that makes clean
+/// source dirty is skipped (it landed in something other than trivia).
 #[must_use]
 pub fn sweep_source<C: CorpusLanguage>(
     language: &C,
     source: &str,
     depth: Depth,
-    mutate: bool,
 ) -> Vec<SweepFailure> {
     let depth = depth.for_source(source);
     let mut failures = Vec::new();
@@ -310,7 +307,7 @@ pub fn sweep_source<C: CorpusLanguage>(
             }
         }
     }
-    if mutate && depth == Depth::Exhaustive {
+    if depth == Depth::Exhaustive {
         for (index, &(start, end)) in language.token_ranges(source).iter().enumerate() {
             let deleted = format!("{}{}", &source[..start], &source[end..]);
             failures.extend(sweep_variant(
@@ -354,9 +351,6 @@ pub struct CorpusSweep<'a> {
     pub out_dir: &'a str,
     /// Failure categories already known to fire.
     pub known_open: &'a [&'a str],
-    /// Also check every one-token deletion of the small files of exhaustive
-    /// suites (`--mutate`): recovery stress, outside the gate.
-    pub mutate: bool,
 }
 
 #[derive(Default)]
@@ -441,7 +435,7 @@ pub fn run_corpus_sweep<C: CorpusLanguage>(
     let _ = fs::remove_dir_all(&out_dir);
     fs::create_dir_all(&out_dir).expect("create hunt output directory");
 
-    let (mut findings, mut slow) = sweep_files(language, &files, sweep.mutate);
+    let (mut findings, mut slow) = sweep_files(language, &files);
 
     let mut report = write_report(&mut findings, &mut slow, &out_dir);
 
@@ -547,7 +541,6 @@ fn write_report(findings: &mut Findings, slow: &mut [(PathBuf, u128)], out_dir: 
 fn sweep_files<C: CorpusLanguage>(
     language: &C,
     files: &[(PathBuf, Depth)],
-    mutate: bool,
 ) -> (Findings, Vec<(PathBuf, u128)>) {
     let threads = std::thread::available_parallelism().map_or(4, usize::from);
     let next = std::sync::atomic::AtomicUsize::new(0);
@@ -565,7 +558,7 @@ fn sweep_files<C: CorpusLanguage>(
                         let started = std::time::Instant::now();
                         let failures = match fs::read_to_string(path) {
                             Ok(source) => {
-                                catching(path, || sweep_source(language, &source, *depth, mutate))
+                                catching(path, || sweep_source(language, &source, *depth))
                             }
                             Err(error) => vec![SweepFailure {
                                 category: "read-error".to_owned(),

@@ -2,8 +2,7 @@
 //! `tools/import/.imports` (`common::SWEEP_SUITES`): every file at several
 //! widths, with every `PROBE_SHAPES` comment shape injected at token
 //! boundaries, and (for small files of the exhaustive suites) with each token
-//! deleted (with `--mutate`, which is outside the gate), checked with the
-//! oracle. Run with `mise run hunt` (release mode).
+//! deleted, checked with the oracle. Run with `mise run hunt` (release mode).
 //! `jcheck` replays one file or variant.
 
 use std::path::Path;
@@ -30,7 +29,6 @@ fn main() {
             extensions: &["java"],
             out_dir: "java",
             known_open: KNOWN_OPEN,
-            mutate: std::env::args().any(|arg| arg == "--mutate"),
         },
     );
     std::process::exit(code);
