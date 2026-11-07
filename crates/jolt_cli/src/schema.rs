@@ -29,6 +29,24 @@ fn dprint_schema() -> Value {
             .into_iter()
             .map(|(name, schema)| (camel_case(&name), schema))
             .collect();
+        // Keys dprint itself reads from every plugin's object.
+        properties.insert(
+            "associations".to_owned(),
+            json!({
+                "description": "Glob patterns of the files this plugin formats (read by dprint).",
+                "anyOf": [
+                    { "type": "string" },
+                    { "type": "array", "items": { "type": "string" } },
+                ],
+            }),
+        );
+        properties.insert(
+            "locked".to_owned(),
+            json!({
+                "description": "Read by dprint itself; see its configuration documentation.",
+                "type": "boolean",
+            }),
+        );
     }
     json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
