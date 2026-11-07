@@ -62,28 +62,17 @@ CompilationUnit
                           RParen ")" @ 151..152 leading=[Newline "\n", Whitespace "    "]
                     Semicolon ";" @ 152..153
               RBrace "}" @ 156..157 leading=[Newline "\n", Whitespace "  "]
-          FieldDeclaration
-            ModifierList
-              StaticKw "static" @ 161..167 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-            ClassType
-              ClassTypeSegmentList
-                ClassTypeSegmentNode
-                  AnnotationList
-                  Name
-                    Identifier "Thrown" @ 168..174 trailing=[Whitespace " "]
-            VariableDeclaratorList
-              VariableDeclarator
-                ExtendsKw "extends" @ 175..182 trailing=[Whitespace " "]
-                Identifier "RuntimeException" @ 183..199 trailing=[Whitespace " "]
-                LBrace "{" @ 200..201 trailing=[Whitespace "  ", BlockComment "/* nothing */", Whitespace " "]
-        RBrace "}" @ 217..218
-    Bogus
-      RBrace "}" @ 219..220 leading=[Newline "\n"]
+          Bogus
+            StaticKw "static" @ 161..167 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "Thrown" @ 168..174 trailing=[Whitespace " "]
+            ExtendsKw "extends" @ 175..182 trailing=[Whitespace " "]
+            Identifier "RuntimeException" @ 183..199 trailing=[Whitespace " "]
+            LBrace "{" @ 200..201 trailing=[Whitespace "  ", BlockComment "/* nothing */", Whitespace " "]
+            RBrace "}" @ 217..218
+        RBrace "}" @ 219..220 leading=[Newline "\n"]
   Eof "" @ 221..221 leading=[Newline "\n"]
 
 diagnostics:
 code=java.parse.unexpected_syntax range=54..55 message=unexpected token in expression
 code=java.parse.unexpected_syntax range=105..106 message=unexpected token in expression
-code=java.parse.expected_syntax range=175..182 message=expected variable name
-code=java.parse.expected_syntax range=217..218 message=expected `;` after field declaration
-code=java.parse.unexpected_syntax range=219..220 message=unexpected token at top level
+code=java.parse.unexpected_syntax range=161..167 message=unexpected token in type body

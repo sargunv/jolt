@@ -36,7 +36,8 @@ class KeywordValuesAndLabels {
     }
     empty:
     ;
-    commented: /* nothing */ ;
+    commented: /* nothing */
+    ;
   }
 
   int yields(int value) {

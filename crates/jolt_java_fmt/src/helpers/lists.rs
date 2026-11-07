@@ -10,9 +10,9 @@ pub(crate) enum TrailingComma {
     /// Argument, parameter and type-argument lists (Java forbids one there).
     Never,
     /// Array and annotation-array initializers: a synthesized `,` when
-    /// broken, except after a last element that carries a trailing line
-    /// comment (`last // c` / `}`, as in the reference); a trailing `,` in the
-    /// source forces the broken layout and is printed with `token`.
+    /// broken (before a trailing line comment of the last element: `last, //
+    /// c`); a trailing `,` in the source forces the broken layout and is
+    /// printed with `token`.
     IfBroken,
 }
 
@@ -42,7 +42,6 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     let mut docs = Vec::with_capacity(elements.len() * 2 + 2);
     let mut after_item = false;
     let mut has_items = false;
-    let mut last_commented = false;
     for (index, element) in elements.iter().enumerate() {
         let last = index + 1 == elements.len();
         match *element {
@@ -50,7 +49,6 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
                 if after_item {
                     docs.push(f.line());
                 }
-                last_commented = f.has_trailing_line_comment(SyntaxElement::Node(item.syntax()));
                 docs.push(f.fmt(item));
                 after_item = true;
                 has_items = true;
@@ -59,7 +57,6 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
                 if after_item {
                     docs.push(f.line());
                 }
-                last_commented = f.has_trailing_line_comment(SyntaxElement::Node(node));
                 docs.push(f.node(node));
                 after_item = true;
                 has_items = true;
@@ -78,7 +75,7 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     if has_items && layout.trailing_comma == TrailingComma::IfBroken {
         if trailing_separator {
             docs.push(f.break_parent());
-        } else if !last_commented && owner.is_recovery_free() {
+        } else if owner.is_recovery_free() {
             // N8 normalizes only recovery-free lists.
             let comma = f.sticky(",");
             docs.push(f.if_break(comma, Doc::NIL));

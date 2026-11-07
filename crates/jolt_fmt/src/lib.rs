@@ -14,7 +14,6 @@ use jolt_syntax::{Language, RawSyntaxKind, SyntaxNode, SyntaxToken, TriviaKind};
 
 pub use comments::{
     Comment, CommentContext, CommentKind, CommentLayout, Placement, is_unclosed, leading_target,
-    trailing_target,
 };
 pub use doc::{Doc, DocBuilder, Reindent};
 pub use formatter::{Formatter, ListItem, Separator};
@@ -80,8 +79,6 @@ pub trait FormatLanguage: Sized + 'static {
     /// marker sits between, before or after the items of the owner's list,
     /// `None` when it is inside an item.
     fn ignore_scope(enclosing: SyntaxNode<'_>) -> Option<SyntaxNode<'_>>;
-    /// Expand an own-line `/** text */` into a multi-line star block.
-    const EXPAND_DOC_COMMENTS: bool;
 }
 
 /// Formats a tree: placement, ignore regions, doc construction, the debug

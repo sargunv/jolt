@@ -139,9 +139,10 @@ public final class User {
 - Declaration annotations (those before the first modifier keyword) go one per
   line before the declaration. Annotations after a modifier keyword are type-use
   annotations and stay inline. This applies to every declaration kind, including
-  local variables and try resources (`@Nonnull` / `final String s = "x";`);
-  formal and lambda parameters keep their annotations inline
-  (`void m(@Nonnull String p)`).
+  local variables (`@Nonnull` / `final String s = "x";`). Variables declared
+  inside a header or pattern keep their annotations inline: formal, lambda and
+  catch parameters, try resources, enhanced-for variables and type patterns
+  (`void m(@Nonnull String p)`, `for (@A String s : values)`, R10).
 - Modifier keywords are reordered to this order:
 
   ```java
@@ -234,18 +235,20 @@ enum Color {
   by a comma, including the last. With members, the last constant is followed by
   `;`, then a blank line and the members. A source `;` with no members is kept
   after the last constant (`B;`). The constants' own comments stay with them,
-  and no comma is added after a last constant with a trailing line comment
-  (`B // c`).
-- When the constants end with `;`, the comments of a removed trailing comma and
-  the comments before the `;` move after `B;` and a blank line, where they lead
-  the members (or end the body). The `;`'s comments are followed by another
-  blank line; a comma's comments lead the first member directly:
+  and the comma added after the last constant goes before its trailing line
+  comment (`B, // c`, R7).
+- When the constants end with `;`, the `;` moves up to the last constant past a
+  removed trailing comma, whose comments stay on that line (`B, // c` / `;`
+  prints `B; // c`, R4). Comments on their own line before the `;` (or before
+  the comma) move after `B;` and a blank line, followed by another blank line
+  before the members:
 
 ```java
 enum Mode {
   B;
 
-  // was after the comma: `B, // c`
+  // was on its own line before the `;`
+
   int code;
 }
 ```
@@ -502,7 +505,8 @@ return () -> {
 
 - A single untyped, unmodified parameter drops its parentheses: `(x) -> x`
   prints `x -> x`. Typed, annotated, `final` or `var` parameters keep them.
-- Parameters that do not fit break as a list: `(`, one per line, `) -> body`.
+- Parameters that do not fit break as a list: `(`, one per line, `) -> body`. An
+  empty `()` never breaks (R5).
 - Expression bodies stay on the arrow line when they fit; block bodies open on
   the arrow line.
 - Method references print without spaces: `String::length`, `int[]::new`,
@@ -520,10 +524,10 @@ return new String[] {
 ```
 
 - Initializers are padded when flat (`{ 1, 2 }`), `{}` when empty, and when
-  broken put each element on its own line with a trailing comma, closing brace
-  on its own line. A trailing comma in the source forces the broken layout
-  (`int[] b = {1, 2,};` prints broken, after `=`); the same holds for annotation
-  element arrays.
+  broken put each element on its own line with a trailing comma (before a
+  trailing line comment of the last element, R7), closing brace on its own line.
+  A trailing comma in the source forces the broken layout (`int[] b = {1, 2,};`
+  prints broken, after `=`); the same holds for annotation element arrays.
 - Dimensions: `new int[size][count]`, `String[][].class`, `int[] a`.
 
 ### Other expressions
@@ -550,7 +554,7 @@ return new String[] {
 ## Comments
 
 Comments are never dropped, duplicated, or merged, and never move across a token
-except past a `,` or `;` (below) and into a control statement's body (C7).
+except past a `,` or `;` (below) and into a body after its header (C7, R2).
 Placement follows [the formatter's comment model](./formatter.md#comments); the
 visible rules are:
 
@@ -588,14 +592,11 @@ return // a comment ends the line after the keyword
   `class X { // c` prints `class X {`, then `// c` one indent deeper (C6). An
   end-of-line block comment after `(`, `[` or `<` instead stays inline before
   what follows (`run( /* d */` / `a)` prints `run(/* d */ a)`).
-- **Before a body's brace.** A block comment on its own line between a header
-  and its `{` moves onto the header line (`class X /* c */ {`,
-  `if (ready) /* c */ {`); a line comment there ends the header line and the
-  brace takes the next line (`class X // c` / `{`), except in control statements
-  (next rule).
-- **Control headers.** A comment that ends the header's line, and a line comment
-  on its own line, between a control statement's header and its body move to the
-  first line of the body (C7). After `else` followed by `if`, the comment stays:
+- **Between a header and its body.** A comment between a header and its body's
+  `{` moves to the first line of the body, unless it is inline
+  (`class X /* c */ {` stays). Before a control statement's non-block body, a
+  comment that ends the header's line, and a line comment on its own line, move
+  there too (C7, R2). After `else` followed by `if`, the comment stays:
   `} else // c` / `if (…) {`.
 - **Dangling.** Comments in an otherwise empty body, argument list or other
   delimited list, and comments on their own lines before a closing delimiter,
@@ -668,7 +669,10 @@ formatter-ignore item). No token is added to repair the code and none is lost.
 ## Deliberate changes
 
 These are the only intended differences from the reference. Each is visible in
-the snapshot diff at integration and must be explainable by one entry here.
+the snapshot diff at integration and must be explainable by one entry here. The
+R entries came later, from deleting special cases that only reproduced the
+reference or the first rewrite; each is numbered after the change that removed
+its special case.
 
 ### D1. Empty bodies print `{}`
 
@@ -979,3 +983,170 @@ own-line comment, items that shared a source line each start their own line, and
 the source's blank lines between items are kept (one at most). A region whose
 items are one per line with ordinary indentation, as in every reference fixture,
 prints exactly as before.
+
+### R2. A comment between any header and its body's brace moves into the body
+
+The reference, and the first rewrite, treated comments before a body's `{`
+differently by header kind: after a control header an end-of-line comment moved
+into the body (C7), but after a declaration header it stayed and pushed the
+brace onto its own line, and an own-line comment there was pulled up onto the
+header line. Now every comment between a header and its body's `{`, except an
+inline one, moves to the first line of the body, so own-line comments stay on
+their own line (C1) and the brace stays on the header line:
+
+```java
+// input
+class Example extends Base // trailing
+{
+  void run()
+  /* before the body */
+  {}
+}
+// reference
+class Example extends Base // trailing
+{
+  void run() /* before the body */ {}
+}
+// new
+class Example extends Base {
+  // trailing
+  void run() {
+    /* before the body */
+  }
+}
+```
+
+### R3. An inline comment before a promoted body goes inside its braces
+
+An inline comment between a control header and a body that brace promotion wraps
+used to stay before the synthesized `{`, which took a second statement layout of
+its own. It now leads the statement inside the braces, which is where an
+end-of-line comment there goes too (C7):
+
+```java
+// input
+if (a) /* inline */ run();
+// before
+if (a) /* inline */ {
+  run();
+}
+// new
+if (a) {
+  /* inline */ run();
+}
+```
+
+### R4. A removed enum comma's comments stay on the constant's line
+
+When the constants end with `;`, the reference moved the comments of a removed
+trailing comma after `B;` and a blank line, where they led the members. They now
+stay on the line of the last constant, after the `;` that moves up to it.
+Comments on their own line before the `;` still move after a blank line:
+
+```java
+// input
+enum E {
+  B, // c
+  ;
+  int code;
+}
+// reference
+enum E {
+  B;
+
+  // c
+  int code;
+}
+// new
+enum E {
+  B; // c
+
+  int code;
+}
+```
+
+### R5. An empty lambda parameter list never breaks
+
+The reference broke an empty `()` when the line did not fit, printing `(` and
+`) -> body` on two lines. An empty list now stays `()`, and the body breaks
+instead (Spring `ReactiveRetryInterceptorTests`):
+
+```java
+// reference
+Assert.notNull(
+  method,
+  (
+  ) -> "Method '%s' could not be found.".formatted(name)
+);
+// new
+Assert.notNull(
+  method,
+  () -> "Method '%s' could not be found.".formatted(name)
+);
+```
+
+### R7. The synthesized trailing comma goes before a last line comment
+
+The reference added no trailing comma to a broken array initializer, annotation
+array or enum constant list when the last element ended its line with a line
+comment. The synthesized comma is now always added; like every synthesized
+separator it goes before the comment:
+
+```java
+// reference
+String[] values = {
+  "first",
+  "last" // c
+};
+// new
+String[] values = {
+  "first",
+  "last", // c
+};
+```
+
+### R8. A labeled empty statement starts its own line too
+
+A label whose body was an empty statement kept the `;` on the label's line when
+the colon carried an inline comment (`commented: /* nothing */ ;`). The `;` now
+starts its own line like any labeled statement; an inline block comment does not
+move past it, so this is stable:
+
+```java
+commented: /* nothing */
+;
+```
+
+### R9. Out-of-range decimal literals format
+
+`2147483648` and `9223372036854775808L` are valid tokens that Java accepts only
+as the operand of unary minus. The parser enforced that value rule and the CLI
+refused such files as having syntax errors; that is a compiler's check, not a
+formatter's, so they now format like any literal (`int x = 2147483648;`).
+
+### R10. Annotations stay inline on resources, for-each variables and patterns
+
+The reference put a declaration annotation of a try resource, an enhanced-for
+variable or a type pattern on its own line, which broke the enclosing header.
+These variables now keep their annotations inline, as parameters and catch
+parameters already did:
+
+```java
+// reference
+try (
+  @Nonnull
+  AutoCloseable resource = open()
+) {}
+if (
+  o
+    instanceof Foo(
+      @Bar
+      String s
+    )
+) {}
+// new
+try (
+  @Nonnull AutoCloseable resource = open()
+) {}
+if (o instanceof Foo(@Bar String s)) {}
+```

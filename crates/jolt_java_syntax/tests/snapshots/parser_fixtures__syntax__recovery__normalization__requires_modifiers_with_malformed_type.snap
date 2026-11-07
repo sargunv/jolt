@@ -22,12 +22,15 @@ CompilationUnit
             StaticKw "static" @ 31..37 trailing=[Whitespace " "]
           Bogus
             Plus "+" @ 38..39 trailing=[Whitespace " "]
-            Identifier "a" @ 40..41
-            Dot "." @ 41..42
-            Identifier "b" @ 42..43
+        Bogus
+          Identifier "a" @ 40..41
+          Dot "." @ 41..42
+          Identifier "b" @ 42..43
           Semicolon ";" @ 43..44 trailing=[Whitespace " "]
       RBrace "}" @ 45..46
   Eof "" @ 47..47 leading=[Newline "\n"]
 
 diagnostics:
 code=java.parse.expected_syntax range=38..39 message=expected identifier
+code=java.parse.expected_syntax range=40..41 message=expected `;` after requires directive
+code=java.parse.unexpected_syntax range=40..41 message=unexpected token in module declaration

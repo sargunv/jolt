@@ -22,8 +22,6 @@ pub(crate) mod codes {
     pub(crate) const INVALID_SWITCH_GUARD: &str = "java.parse.invalid_switch_guard";
     pub(crate) const UNQUALIFIED_YIELD_METHOD_INVOCATION: &str =
         "java.parse.unqualified_yield_method_invocation";
-    pub(crate) const DECIMAL_INTEGER_BOUNDARY_LITERAL: &str =
-        "java.parse.decimal_integer_boundary_literal";
     pub(crate) const MISPLACED_RECEIVER_PARAMETER: &str = "java.parse.misplaced_receiver_parameter";
     pub(crate) const MISPLACED_CONSTRUCTOR_INVOCATION: &str =
         "java.parse.misplaced_constructor_invocation";

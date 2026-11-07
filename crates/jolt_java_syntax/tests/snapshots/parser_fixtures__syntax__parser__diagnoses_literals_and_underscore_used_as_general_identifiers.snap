@@ -27,13 +27,9 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 40..41
         ClassBodyMemberList
-          FieldDeclaration
-            PrimitiveType
-              AnnotationList
-              IntKw "int" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-            VariableDeclaratorList
-              VariableDeclarator
-                BooleanLiteral "false" @ 50..55
+          Bogus
+            IntKw "int" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            BooleanLiteral "false" @ 50..55
             Semicolon ";" @ 55..56
           FieldDeclaration
             PrimitiveType
@@ -61,7 +57,7 @@ diagnostics:
 code=java.parse.expected_syntax range=8..12 message=expected identifier
 code=java.parse.expected_syntax range=8..12 message=expected `;` after package declaration
 code=java.parse.unexpected_syntax range=8..12 message=unexpected token at top level
-code=java.parse.expected_syntax range=50..55 message=expected variable name
+code=java.parse.unexpected_syntax range=46..49 message=unexpected token in type body
 code=java.parse.expected_syntax range=65..66 message=expected variable name
 code=java.parse.unexpected_syntax range=72..76 message=unexpected token in type body
 code=java.parse.unexpected_syntax range=88..92 message=unexpected token in type body

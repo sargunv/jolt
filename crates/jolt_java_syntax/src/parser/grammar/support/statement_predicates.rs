@@ -53,18 +53,8 @@ impl Parser<'_> {
                 self.nth(1),
                 JavaSyntaxKind::LBracket
                     | JavaSyntaxKind::Dot
-                    | JavaSyntaxKind::Assign
                     | JavaSyntaxKind::PlusPlus
                     | JavaSyntaxKind::MinusMinus
-                    | JavaSyntaxKind::PlusEq
-                    | JavaSyntaxKind::MinusEq
-                    | JavaSyntaxKind::StarEq
-                    | JavaSyntaxKind::SlashEq
-                    | JavaSyntaxKind::AmpEq
-                    | JavaSyntaxKind::BarEq
-                    | JavaSyntaxKind::CaretEq
-                    | JavaSyntaxKind::PercentEq
-                    | JavaSyntaxKind::LShiftEq
                     | JavaSyntaxKind::Semicolon
             )
             && (self.nth(1) != JavaSyntaxKind::LParen || !self.tokens_touch(position))

@@ -21,7 +21,8 @@ int block=4;
 formatted:
 class MixedCommentLineEndings {
   // crlf line comment
-  crlf = 1;
+  crlf=1;
+
   // cr line comment
   int cr = 2;
   // lf line comment
@@ -35,4 +36,4 @@ class MixedCommentLineEndings {
 }
 
 diagnostics:
-code=java.parse.expected_syntax range=60..61 message=expected variable name
+code=java.parse.unexpected_syntax range=56..60 message=unexpected token in type body

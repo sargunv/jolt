@@ -50,34 +50,33 @@ CompilationUnit
       InterfaceKw "interface" @ 173..182 trailing=[Whitespace " "]
       InterfaceBody
         InterfaceBodyMemberList
-    FieldDeclaration
-      PrimitiveType
-        AnnotationList
-        LongKw "long" @ 183..187 trailing=[Whitespace " "]
-      VariableDeclaratorList
-        VariableDeclarator
-          NativeKw "native" @ 188..194 trailing=[Whitespace " "]
-          NewKw "new" @ 195..198 trailing=[Whitespace " "]
-          PackageKw "package" @ 199..206 trailing=[Whitespace " "]
-          PrivateKw "private" @ 207..214 trailing=[Whitespace " "]
-          ProtectedKw "protected" @ 215..224 trailing=[Whitespace " "]
-          PublicKw "public" @ 225..231 trailing=[Whitespace " "]
-          ReturnKw "return" @ 232..238 trailing=[Whitespace " "]
-          ShortKw "short" @ 239..244 trailing=[Whitespace " "]
-          StaticKw "static" @ 245..251 trailing=[Whitespace " "]
-          StrictfpKw "strictfp" @ 252..260 trailing=[Whitespace " "]
-          SuperKw "super" @ 261..266 trailing=[Whitespace " "]
-          SwitchKw "switch" @ 267..273 trailing=[Whitespace " "]
-          SynchronizedKw "synchronized" @ 274..286 trailing=[Whitespace " "]
-          ThisKw "this" @ 287..291 trailing=[Whitespace " "]
-          ThrowKw "throw" @ 292..297 trailing=[Whitespace " "]
-          ThrowsKw "throws" @ 298..304 trailing=[Whitespace " "]
-          TransientKw "transient" @ 305..314 trailing=[Whitespace " "]
-          TryKw "try" @ 315..318 trailing=[Whitespace " "]
-          VoidKw "void" @ 319..323 trailing=[Whitespace " "]
-          VolatileKw "volatile" @ 324..332 trailing=[Whitespace " "]
-          WhileKw "while" @ 333..338 trailing=[Whitespace " "]
-          UnderscoreKw "_" @ 339..340
+    Bogus
+      LongKw "long" @ 183..187 trailing=[Whitespace " "]
+      NativeKw "native" @ 188..194 trailing=[Whitespace " "]
+      NewKw "new" @ 195..198 trailing=[Whitespace " "]
+    PackageDeclaration
+      AnnotationList
+      PackageKw "package" @ 199..206 trailing=[Whitespace " "]
+    Bogus
+      PrivateKw "private" @ 207..214 trailing=[Whitespace " "]
+      ProtectedKw "protected" @ 215..224 trailing=[Whitespace " "]
+      PublicKw "public" @ 225..231 trailing=[Whitespace " "]
+      ReturnKw "return" @ 232..238 trailing=[Whitespace " "]
+      ShortKw "short" @ 239..244 trailing=[Whitespace " "]
+      StaticKw "static" @ 245..251 trailing=[Whitespace " "]
+      StrictfpKw "strictfp" @ 252..260 trailing=[Whitespace " "]
+      SuperKw "super" @ 261..266 trailing=[Whitespace " "]
+      SwitchKw "switch" @ 267..273 trailing=[Whitespace " "]
+      SynchronizedKw "synchronized" @ 274..286 trailing=[Whitespace " "]
+      ThisKw "this" @ 287..291 trailing=[Whitespace " "]
+      ThrowKw "throw" @ 292..297 trailing=[Whitespace " "]
+      ThrowsKw "throws" @ 298..304 trailing=[Whitespace " "]
+      TransientKw "transient" @ 305..314 trailing=[Whitespace " "]
+      TryKw "try" @ 315..318 trailing=[Whitespace " "]
+      VoidKw "void" @ 319..323 trailing=[Whitespace " "]
+      VolatileKw "volatile" @ 324..332 trailing=[Whitespace " "]
+      WhileKw "while" @ 333..338 trailing=[Whitespace " "]
+      UnderscoreKw "_" @ 339..340
   Eof "" @ 340..340
 
 diagnostics:
@@ -93,5 +92,7 @@ code=java.parse.unexpected_syntax range=158..168 message=unexpected token in imp
 code=java.parse.expected_syntax range=173..182 message=expected `;` after import declaration
 code=java.parse.expected_syntax range=183..187 message=expected type name
 code=java.parse.expected_syntax range=183..187 message=expected type body
-code=java.parse.expected_syntax range=188..194 message=expected variable name
-code=java.parse.expected_syntax range=340..340 message=expected `;` after field declaration
+code=java.parse.unexpected_syntax range=183..187 message=unexpected token at top level
+code=java.parse.expected_syntax range=207..214 message=expected identifier
+code=java.parse.expected_syntax range=207..214 message=expected `;` after package declaration
+code=java.parse.unexpected_syntax range=207..214 message=unexpected token at top level

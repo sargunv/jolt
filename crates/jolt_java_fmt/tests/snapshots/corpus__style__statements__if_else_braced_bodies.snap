@@ -9,8 +9,8 @@ class Example {
       run();
     } else if (waiting) {
       pause();
-    } else /* fallback */ {
-      stop();
+    } else {
+      /* fallback */ stop();
     }
   }
 

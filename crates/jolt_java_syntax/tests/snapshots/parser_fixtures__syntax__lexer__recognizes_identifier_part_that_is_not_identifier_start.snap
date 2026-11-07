@@ -8,17 +8,9 @@ á
 syntax:
 CompilationUnit
   CompilationUnitItemList
-    FieldDeclaration
-      ClassType
-        ClassTypeSegmentList
-          ClassTypeSegmentNode
-            AnnotationList
-            Name
-              Identifier "a\u{301}" @ 0..3
-      VariableDeclaratorList
-        VariableDeclarator
+    Bogus
+      Identifier "a\u{301}" @ 0..3
   Eof "" @ 3..3
 
 diagnostics:
-code=java.parse.expected_syntax range=3..3 message=expected variable name
-code=java.parse.expected_syntax range=3..3 message=expected `;` after field declaration
+code=java.parse.unexpected_syntax range=0..3 message=unexpected token at top level

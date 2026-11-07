@@ -18,9 +18,7 @@ impl Parser<'_> {
                 self.parse_module_declaration();
             } else if self.starts_type_declaration() {
                 self.parse_type_declaration();
-            } else if self.starts_misspelled_non_sealed_type_declaration() {
-                self.error_unexpected_top_level_token();
-            } else if self.starts_compact_member_declaration() {
+            } else if self.starts_method_declaration() || self.starts_field_declaration() {
                 self.parse_compact_member_declaration();
             } else {
                 self.error_unexpected_top_level_token();
@@ -91,11 +89,10 @@ impl Parser<'_> {
         self.parse_annotations();
         self.eat_contextual("open");
         self.expect_contextual("module", "expected `module`");
-        self.consume_qualified_name_required_until(
-            &[JavaSyntaxKind::LBrace, JavaSyntaxKind::RBrace],
-            Self::module_directive_boundary_at,
-            false,
-        );
+        self.consume_qualified_name_required_until(&[
+            JavaSyntaxKind::LBrace,
+            JavaSyntaxKind::RBrace,
+        ]);
 
         let has_open_brace = self.eat(JavaSyntaxKind::LBrace);
         if !has_open_brace {
@@ -134,14 +131,11 @@ impl Parser<'_> {
             }
             "exports" => {
                 self.bump();
-                self.consume_qualified_name_required_until(
-                    &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-                    Self::module_target_boundary_at,
-                    true,
-                );
-                if !Self::module_directive_boundary_at(self, 0) {
-                    self.parse_optional_module_target_clause();
-                }
+                self.consume_qualified_name_required_until(&[
+                    JavaSyntaxKind::Semicolon,
+                    JavaSyntaxKind::RBrace,
+                ]);
+                self.parse_optional_module_target_clause();
                 self.expect(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after exports directive",
@@ -150,14 +144,11 @@ impl Parser<'_> {
             }
             "opens" => {
                 self.bump();
-                self.consume_qualified_name_required_until(
-                    &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-                    Self::module_target_boundary_at,
-                    true,
-                );
-                if !Self::module_directive_boundary_at(self, 0) {
-                    self.parse_optional_module_target_clause();
-                }
+                self.consume_qualified_name_required_until(&[
+                    JavaSyntaxKind::Semicolon,
+                    JavaSyntaxKind::RBrace,
+                ]);
+                self.parse_optional_module_target_clause();
                 self.expect(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after opens directive",
@@ -166,11 +157,10 @@ impl Parser<'_> {
             }
             "uses" => {
                 self.bump();
-                self.consume_qualified_name_required_until(
-                    &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-                    Self::module_directive_boundary_at,
-                    false,
-                );
+                self.consume_qualified_name_required_until(&[
+                    JavaSyntaxKind::Semicolon,
+                    JavaSyntaxKind::RBrace,
+                ]);
                 self.expect(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after uses directive",
@@ -200,11 +190,10 @@ impl Parser<'_> {
             self.bump();
         }
         self.complete(modifiers, JavaSyntaxKind::RequiresModifierList);
-        self.consume_qualified_name_required_until(
-            &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-            Self::module_directive_boundary_at,
-            false,
-        );
+        self.consume_qualified_name_required_until(&[
+            JavaSyntaxKind::Semicolon,
+            JavaSyntaxKind::RBrace,
+        ]);
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after requires directive",
@@ -213,16 +202,11 @@ impl Parser<'_> {
 
     fn parse_provides_directive_rest(&mut self) {
         self.bump();
-        self.consume_qualified_name_required_until(
-            &[JavaSyntaxKind::Semicolon, JavaSyntaxKind::RBrace],
-            Self::module_implementation_boundary_at,
-            true,
-        );
-        if Self::module_directive_boundary_at(self, 0) {
-            self.error_expected("expected `with` in provides directive");
-        } else {
-            self.parse_module_implementation_clause();
-        }
+        self.consume_qualified_name_required_until(&[
+            JavaSyntaxKind::Semicolon,
+            JavaSyntaxKind::RBrace,
+        ]);
+        self.parse_module_implementation_clause();
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after provides directive",
@@ -242,50 +226,11 @@ impl Parser<'_> {
     }
 
     fn parse_module_name_list_item(&mut self) {
-        if Self::module_directive_boundary_at(self, 0) {
-            self.error_expected("expected identifier");
-            return;
-        }
-        self.consume_qualified_name_required_until(
-            &[
-                JavaSyntaxKind::Comma,
-                JavaSyntaxKind::Semicolon,
-                JavaSyntaxKind::RBrace,
-            ],
-            Self::module_directive_boundary_at,
-            false,
-        );
-    }
-
-    fn module_directive_boundary_at(&mut self, offset: usize) -> bool {
-        let index = self.position() + offset;
-        if !matches!(
-            self.text_at(index),
-            "requires" | "exports" | "opens" | "uses" | "provides"
-        ) {
-            return false;
-        }
-        self.is_name_segment_at(index + 1) || self.kind_at(index + 1) == JavaSyntaxKind::StaticKw
-    }
-
-    fn module_target_boundary_at(&mut self, offset: usize) -> bool {
-        if Self::module_directive_boundary_at(self, offset) {
-            return true;
-        }
-        let index = self.position() + offset;
-        self.kind_at(index) == JavaSyntaxKind::Identifier
-            && self.text_at(index) == "to"
-            && self.kind_at(index + 1) == JavaSyntaxKind::Identifier
-    }
-
-    fn module_implementation_boundary_at(&mut self, offset: usize) -> bool {
-        if Self::module_directive_boundary_at(self, offset) {
-            return true;
-        }
-        let index = self.position() + offset;
-        self.kind_at(index) == JavaSyntaxKind::Identifier
-            && self.text_at(index) == "with"
-            && self.kind_at(index + 1) == JavaSyntaxKind::Identifier
+        self.consume_qualified_name_required_until(&[
+            JavaSyntaxKind::Comma,
+            JavaSyntaxKind::Semicolon,
+            JavaSyntaxKind::RBrace,
+        ]);
     }
 
     fn parse_optional_module_target_clause(&mut self) {

@@ -30,44 +30,9 @@ impl Parser<'_> {
         }
 
         let has_constructor_name = type_name.is_some_and(|name| lookahead.text() == name);
-        if lookahead.nth(1) == JavaSyntaxKind::LParen
+        lookahead.nth(1) == JavaSyntaxKind::LParen
             && (has_constructor_name
                 || (lookahead.at_name_segment() && member_header_ends_with_block))
-        {
-            return true;
-        }
-
-        has_constructor_name && Self::missing_constructor_open_paren_reaches_body(&mut lookahead)
-    }
-
-    fn missing_constructor_open_paren_reaches_body(lookahead: &mut JavaLookahead<'_, '_>) -> bool {
-        lookahead.bump();
-        if !lookahead.skip_missing_constructor_parameter_header() {
-            return false;
-        }
-        if lookahead.eat(JavaSyntaxKind::ThrowsKw) {
-            return lookahead.skip_missing_constructor_throws_clause();
-        }
-
-        lookahead.at(JavaSyntaxKind::LBrace)
-    }
-
-    pub(in crate::parser::grammar) fn has_rejected_missing_constructor_header(
-        &mut self,
-        type_name: Option<usize>,
-    ) -> bool {
-        let type_name = type_name.map(|index| self.text_at(index));
-        let mut lookahead = self.lookahead();
-        lookahead.skip_type_modifiers();
-        if lookahead.at(JavaSyntaxKind::Lt) {
-            lookahead.skip_type_parameters();
-        }
-        if type_name.is_none_or(|name| lookahead.text() != name) {
-            return false;
-        }
-
-        lookahead.bump();
-        lookahead.skip_missing_constructor_parameter_header()
     }
 
     pub(in crate::parser::grammar) fn starts_compact_constructor(
@@ -175,16 +140,6 @@ impl Parser<'_> {
         lookahead.at_contextual("module")
     }
 
-    pub(in crate::parser::grammar) fn starts_misspelled_non_sealed_type_declaration(
-        &mut self,
-    ) -> bool {
-        if self.current_text() != "non" || self.nth(1) != JavaSyntaxKind::Minus {
-            return false;
-        }
-        let index = self.position() + 2;
-        self.text_at(index).starts_with("sealed") && self.nth_is_name_segment(3)
-    }
-
     pub(in crate::parser::grammar) fn starts_type_declaration(&mut self) -> bool {
         let mut lookahead = self.lookahead();
         lookahead.skip_type_modifiers();
@@ -193,15 +148,6 @@ impl Parser<'_> {
             JavaSyntaxKind::ClassKw | JavaSyntaxKind::InterfaceKw | JavaSyntaxKind::EnumKw
         ) || (lookahead.at_contextual("record") && lookahead.nth(1) == JavaSyntaxKind::Identifier)
             || (lookahead.at(JavaSyntaxKind::At) && lookahead.nth(1) == JavaSyntaxKind::InterfaceKw)
-    }
-
-    pub(in crate::parser::grammar) fn starts_compact_member_declaration(&mut self) -> bool {
-        let mut lookahead = self.lookahead();
-        lookahead.skip_type_modifiers();
-        lookahead.at_non_void_type_start()
-            || (lookahead.at(JavaSyntaxKind::VoidKw)
-                && lookahead.nth(1) == JavaSyntaxKind::Identifier
-                && lookahead.nth(2) == JavaSyntaxKind::LParen)
     }
 
     pub(in crate::parser::grammar) fn starts_field_declaration(&mut self) -> bool {

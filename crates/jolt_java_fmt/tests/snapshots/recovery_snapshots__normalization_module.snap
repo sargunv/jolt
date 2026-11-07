@@ -13,10 +13,14 @@ formatted:
 module recovered.normalization {
   uses z.Service;
 
-  requires transitive + static a.module;
+  requires transitive + static
+
+  a.module;
 
   uses a.Service;
 }
 
 diagnostics:
 code=java.parse.expected_syntax range=77..78 message=expected identifier
+code=java.parse.expected_syntax range=86..87 message=expected `;` after requires directive
+code=java.parse.unexpected_syntax range=86..87 message=unexpected token in module declaration

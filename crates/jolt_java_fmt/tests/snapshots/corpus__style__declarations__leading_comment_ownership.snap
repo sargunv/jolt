@@ -59,8 +59,7 @@ class LeadingCommentOwnership {
 
     for (
       // Enhanced-for variable documentation.
-      @A
-      String value : values
+      @A String value : values
     ) {}
 
     try (

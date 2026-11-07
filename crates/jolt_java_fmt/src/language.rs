@@ -3,7 +3,7 @@
 
 use jolt_fmt::{
     CommentContext, CommentKind, CommentLayout, Doc, FormatLanguage, Formatter, Placement,
-    leading_target, trailing_target,
+    leading_target,
 };
 use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind as K, is_assignment_operator};
 use jolt_syntax::{RawSyntaxKind, SyntaxElement, SyntaxNode, SyntaxToken};
@@ -29,7 +29,6 @@ fn is_angle_list(token: SyntaxToken<'_>) -> bool {
 
 impl FormatLanguage for JavaFormat {
     type Syntax = JavaLanguage;
-    const EXPAND_DOC_COMMENTS: bool = true;
 
     fn format_node<'a>(f: &mut Formatter<'a, Self>, node: SyntaxNode<'a>) -> Doc {
         crate::dispatch::format_node(f, node)
@@ -88,9 +87,8 @@ impl FormatLanguage for JavaFormat {
 
     fn place_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>> {
         let prev = context.prev?;
-        control_body_comment(context, prev)
+        body_comment(context, prev)
             .or_else(|| crate::rules::statements::promoted_body_comment(context))
-            .or_else(|| comment_before_body_brace(context, prev))
             .or_else(|| block_comment_after_opener(context, prev))
     }
 
@@ -129,21 +127,112 @@ fn next_sibling<'a>(
     children.next()
 }
 
-/// H1: a comment between a control header and its body moves to the first
-/// line of the body.
-fn control_body_comment<'a>(
+/// H1: a comment between a header and its body moves into the body. Before
+/// a body's `{` (of a declaration, control statement, lambda, switch rule or
+/// initializer) that is every comment but an inline one; before the
+/// non-block body of a control statement, an end-of-line comment or an
+/// own-line line comment.
+fn body_comment<'a>(
     context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let comment = context.comment;
-    let applies = match comment.layout {
-        CommentLayout::EndOfLine => true,
-        CommentLayout::OwnLine | CommentLayout::StartOfLine => comment.kind == CommentKind::Line,
-        CommentLayout::Inline => false,
+    let mut next = context.next;
+    // S1 would move an end-of-line line comment past a separator that the
+    // `{` follows (a trailing separator, recovery), so it goes in as well.
+    if comment.kind == CommentKind::Line
+        && comment.layout == CommentLayout::EndOfLine
+        && JavaFormat::is_separator(next)
+        && !JavaFormat::is_separator(prev)
+        && let Some(open) = next.next().filter(|&open| kind(open) == K::LBrace)
+    {
+        next = open;
+    }
+    let body = if kind(next) == K::LBrace {
+        if comment.layout == CommentLayout::Inline {
+            return None;
+        }
+        braced_body(context, prev, next)?
+    } else {
+        let applies = match comment.layout {
+            CommentLayout::EndOfLine => true,
+            CommentLayout::OwnLine | CommentLayout::StartOfLine => {
+                comment.kind == CommentKind::Line
+            }
+            CommentLayout::Inline => false,
+        };
+        if !applies {
+            return None;
+        }
+        let body = control_body(prev)?;
+        if body.first_token() != Some(next) || node_kind(body).is_list() {
+            return None;
+        }
+        return Some(Placement::Leading(
+            SyntaxElement::Node(body),
+            CommentLayout::OwnLine,
+        ));
     };
-    if !applies {
+    let inner = next
+        .next()
+        .filter(|&inner| !(inner.parent() == body && JavaFormat::is_closer(inner)));
+    Some(match inner {
+        Some(inner) => Placement::Leading(
+            leading_target::<JavaLanguage>(inner),
+            CommentLayout::OwnLine,
+        ),
+        None => Placement::Dangling(body),
+    })
+}
+
+/// The body that `open` begins, when it follows a header in the same parent.
+/// A labeled statement's body and a nested block start their own line, and a
+/// header with an unclosed opener before `prev` (recovery) does not end at
+/// the body.
+fn braced_body<'a>(
+    context: &CommentContext<'a, '_>,
+    prev: SyntaxToken<'a>,
+    open: SyntaxToken<'a>,
+) -> Option<SyntaxNode<'a>> {
+    let body = open.parent();
+    if body.is_malformed()
+        || !matches!(
+            node_kind(body),
+            K::ClassBody
+                | K::InterfaceBody
+                | K::EnumBody
+                | K::RecordBody
+                | K::AnnotationInterfaceBody
+                | K::Block
+                | K::ConstructorBody
+                | K::SwitchBlock
+        )
+    {
         return None;
     }
+    let header = body.parent()?;
+    if header.first_token() == Some(open)
+        || header.parent().is_none()
+        || node_kind(header) == K::LabeledStatement
+    {
+        return None;
+    }
+    let mut node = prev.parent();
+    loop {
+        if context.has_unclosed_child_until(node, prev) {
+            return None;
+        }
+        if node == header {
+            return Some(body);
+        }
+        node = node.parent()?;
+    }
+}
+
+/// The non-block body of the control statement whose header `prev` ends
+/// (the `)` of `if`, `while`, `for`, `switch`, `synchronized` or `catch`, a
+/// resource specification, or `else`, `do`), not an `else if`.
+fn control_body(prev: SyntaxToken<'_>) -> Option<SyntaxNode<'_>> {
     let parent = prev.parent();
     let header_end = match kind(prev) {
         K::RParen => match node_kind(parent) {
@@ -158,7 +247,7 @@ fn control_body_comment<'a>(
             K::ResourceSpecification => SyntaxElement::Node(parent),
             _ => return None,
         },
-        K::ElseKw | K::DoKw | K::TryKw | K::FinallyKw => SyntaxElement::Token(prev),
+        K::ElseKw | K::DoKw => SyntaxElement::Token(prev),
         _ => return None,
     };
     let container = match header_end {
@@ -166,87 +255,10 @@ fn control_body_comment<'a>(
         SyntaxElement::Token(_) => parent,
     };
     let body = next_sibling(container, header_end)?.as_node()?;
-    // `try` and `finally` own a block; after `try` a resource specification
-    // or (when the block is missing) the catch clauses come next instead.
-    let block_only = matches!(kind(prev), K::TryKw | K::FinallyKw);
-    if body.is_malformed()
-        || body.first_token() != Some(context.next)
-        || node_kind(body).is_list()
-        || (block_only && node_kind(body) != K::Block)
-    {
+    if body.is_malformed() || (kind(prev) == K::ElseKw && node_kind(body) == K::IfStatement) {
         return None;
     }
-    if kind(prev) == K::ElseKw && node_kind(body) == K::IfStatement {
-        return None;
-    }
-    if !matches!(node_kind(body), K::Block | K::SwitchBlock) {
-        return Some(Placement::Leading(
-            SyntaxElement::Node(body),
-            CommentLayout::OwnLine,
-        ));
-    }
-    let open = body.first_token()?;
-    let inner = open
-        .next()
-        .filter(|&inner| !(inner.parent() == body && JavaFormat::is_closer(inner)));
-    Some(match inner {
-        Some(inner) => Placement::Leading(
-            leading_target::<JavaLanguage>(inner),
-            CommentLayout::OwnLine,
-        ),
-        None => Placement::Dangling(body),
-    })
-}
-
-/// H3: a comment on its own line before a body's `{` that follows a header
-/// moves onto the header line.
-fn comment_before_body_brace<'a>(
-    context: &CommentContext<'a, '_>,
-    prev: SyntaxToken<'a>,
-) -> Option<Placement<'a>> {
-    let next = context.next;
-    if kind(next) != K::LBrace
-        || !matches!(
-            context.comment.layout,
-            CommentLayout::OwnLine | CommentLayout::StartOfLine
-        )
-    {
-        return None;
-    }
-    let body = next.parent();
-    if !matches!(
-        node_kind(body),
-        K::ClassBody
-            | K::InterfaceBody
-            | K::EnumBody
-            | K::RecordBody
-            | K::AnnotationInterfaceBody
-            | K::Block
-            | K::ConstructorBody
-            | K::SwitchBlock
-    ) {
-        return None;
-    }
-    let header = body.parent()?;
-    // A labeled statement's body starts its own line, so a comment before
-    // its `{` already prints where the next pass reads it. A header that
-    // ends in an opener is unclosed (recovery); the comment stays on its line.
-    if header.first_token() == Some(next)
-        || header.parent().is_none()
-        || node_kind(header) == K::LabeledStatement
-        || JavaFormat::closer_for(prev).is_some()
-    {
-        return None;
-    }
-    let layout = if context.comment.kind == CommentKind::Line {
-        CommentLayout::EndOfLine
-    } else {
-        CommentLayout::Inline
-    };
-    Some(Placement::Trailing(
-        trailing_target::<JavaLanguage>(prev),
-        layout,
-    ))
+    Some(body)
 }
 
 /// H5: a block comment that ends the line after `(`, `[` or a type-argument

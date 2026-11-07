@@ -47,13 +47,6 @@ impl<'source> Parser<'source> {
         self.at(JavaSyntaxKind::Eof)
     }
 
-    /// Consumes tokens up to (not including) index `end`, stopping at EOF.
-    pub(super) fn bump_to(&mut self, end: usize) {
-        while self.position() < end && !self.at_eof() {
-            self.bump();
-        }
-    }
-
     pub(super) fn current_text(&self) -> &'source str {
         self.nth_text(0)
     }

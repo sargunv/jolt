@@ -128,7 +128,6 @@ syntax/parser/array-type-dims-have-per-dimension-nodes.java
 syntax/parser/catch-clause-has-catch-parameter-boundary.java
 syntax/parser/catch-union-types-have-union-type-nodes.java
 syntax/parser/diagnoses-bare-try-statement.java
-syntax/parser/diagnoses-decimal-integer-boundary-literals-outside-unary-minus-operand.java
 syntax/parser/diagnoses-expression-try-with-resource.java
 syntax/parser/diagnoses-invalid-declaration-contexts.java
 syntax/parser/diagnoses-invalid-expression-forms.java
@@ -175,6 +174,7 @@ syntax/parser/parses-contextual-keyword-and-type-expression-ambiguities.java
 syntax/parser/parses-contextual-keywords-as-identifiers-outside-keyword-contexts.java
 syntax/parser/parses-contextual-yield-as-method-invocation.java
 syntax/parser/parses-dangling-else-with-nearest-if-binding.java
+syntax/parser/parses-decimal-integer-boundary-literals.java
 syntax/parser/parses-deeply-nested-generic-type-arguments-closed-by-shift-tokens.java
 syntax/parser/parses-diamond-class-instance-creation.java
 syntax/parser/parses-empty-declaration-alternatives.java

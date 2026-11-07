@@ -31,10 +31,10 @@ class BracePromotionComments {
     for (;;) {
       break; // leave
     }
-    if (a) /* inline */ {
-      run();
-    } else /* inline else */ {
-      stop();
+    if (a) {
+      /* inline */ run();
+    } else {
+      /* inline else */ stop();
     }
     if (a) {
       /* own line block */
@@ -44,8 +44,8 @@ class BracePromotionComments {
     if (a) {
       // empty then
     }
-    do /* once */ {
-      run();
+    do {
+      /* once */ run();
     } while (b);
   }
 }

@@ -10,10 +10,11 @@ use jolt_java_syntax::{
 };
 use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode};
 
-use super::{blocks, jumps, parenthesized, statement_separator, switches, tries};
+use super::{parenthesized, statement_separator};
 use crate::JavaFormatter;
 use crate::helpers::bodies::braced;
 use crate::helpers::lists::joined;
+use crate::rules::types::inline_modifiers;
 
 /// `if (condition) body`, then ` else body`. An `else if` chain stays flat;
 /// it is walked iteratively (its length is unbounded), each chained `if`'s
@@ -158,7 +159,9 @@ pub(crate) fn enhanced_for_variable<'a>(
     f: &mut JavaFormatter<'a>,
     node: EnhancedForVariable<'a>,
 ) -> Doc {
-    let modifiers = f.fmt_opt(node.modifiers());
+    let modifiers = node
+        .modifiers()
+        .map_or(Doc::NIL, |modifiers| inline_modifiers(f, modifiers));
     let ty = match node.r#type() {
         Some(EnhancedForVariableType::Type(ty)) => f.fmt(ty),
         Some(EnhancedForVariableType::Token(token)) => f.token(token),
@@ -220,16 +223,6 @@ fn body<'a>(f: &mut JavaFormatter<'a>, owner: SyntaxNode<'a>, body: Option<State
             let content = f.item_list(items, statement_separator);
             Some(promoted_block(f, content))
         }
-        // An inline comment before the statement stays before the
-        // synthesized `{` (`else /* c */ {`), as before a source `{`.
-        _ if inline_leading_comments(f, body.syntax()) => {
-            let leading = f.leading_comments(body.syntax());
-            let content = statement_content(f, body);
-            let trailing = f.trailing_comments(body.syntax());
-            let content = cat![f; content, trailing];
-            let block = promoted_block(f, content);
-            Some(cat![f; leading, block])
-        }
         _ => {
             let content = f.fmt(body);
             Some(promoted_block(f, content))
@@ -244,39 +237,6 @@ fn promoted_block(f: &mut JavaFormatter<'_>, content: Doc) -> Doc {
     let open = f.text("{");
     let close = f.text("}");
     braced(f, None, open, content, close)
-}
-
-/// The statement has leading comments, all on the line of the header before
-/// it (inline block comments).
-fn inline_leading_comments<'a>(f: &JavaFormatter<'a>, statement: SyntaxNode<'a>) -> bool {
-    let element = SyntaxElement::Node(statement);
-    f.has_leading_comments(element) && !f.leading_comments_break(element)
-}
-
-/// A statement's own layout, without its leading and trailing comments,
-/// for a caller that prints those itself. The statement is not malformed.
-fn statement_content<'a>(f: &mut JavaFormatter<'a>, statement: Statement<'a>) -> Doc {
-    match statement {
-        Statement::Block(node) => blocks::block(f, node),
-        Statement::EmptyStatement(node) => blocks::empty_statement(f, node),
-        Statement::LabeledStatement(node) => blocks::labeled_statement(f, node),
-        Statement::ExpressionStatement(node) => blocks::expression_statement(f, node),
-        Statement::IfStatement(node) => if_statement(f, node),
-        Statement::AssertStatement(node) => jumps::assert_statement(f, node),
-        Statement::SwitchStatement(node) => switches::switch_statement(f, node),
-        Statement::WhileStatement(node) => while_statement(f, node),
-        Statement::DoStatement(node) => do_statement(f, node),
-        Statement::ForStatement(node) => for_statement(f, node),
-        Statement::BreakStatement(node) => jumps::break_statement(f, node),
-        Statement::YieldStatement(node) => jumps::yield_statement(f, node),
-        Statement::ContinueStatement(node) => jumps::continue_statement(f, node),
-        Statement::ReturnStatement(node) => jumps::return_statement(f, node),
-        Statement::ThrowStatement(node) => jumps::throw_statement(f, node),
-        Statement::SynchronizedStatement(node) => synchronized_statement(f, node),
-        Statement::TryStatement(node) => tries::try_statement(f, node),
-        Statement::TryWithResourcesStatement(node) => tries::try_with_resources_statement(f, node),
-        Statement::Bogus(node) => f.verbatim(node.syntax()),
-    }
 }
 
 /// Comment hook H4, tried after H1. An end-of-line comment after the last
