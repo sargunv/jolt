@@ -1,10 +1,59 @@
-//! Binary operator chains.
+//! Binary operator and `instanceof` chains.
 
-use jolt_fmt::Doc;
-use jolt_java_syntax::{BinaryExpression, Expression, JavaSyntaxKind as K, binary_precedence};
-use jolt_syntax::{AstNode, SyntaxToken};
+use jolt_fmt::{Doc, cat, group, indent};
+use jolt_java_syntax::{
+    BinaryExpression, Expression, InstanceofExpression, JavaSyntaxKind as K,
+    ParenthesizedExpression, binary_precedence,
+};
+use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode};
 
 use crate::JavaFormatter;
+
+pub(crate) fn binary_expression<'a>(f: &mut JavaFormatter<'a>, node: BinaryExpression<'a>) -> Doc {
+    chain(f, Operation::Binary(node))
+}
+
+pub(crate) fn instanceof_expression<'a>(
+    f: &mut JavaFormatter<'a>,
+    node: InstanceofExpression<'a>,
+) -> Doc {
+    chain(f, Operation::Instanceof(node))
+}
+
+/// A node of the left operand spine.
+#[derive(Clone, Copy)]
+enum Operation<'a> {
+    Binary(BinaryExpression<'a>),
+    Instanceof(InstanceofExpression<'a>),
+}
+
+impl<'a> Operation<'a> {
+    fn syntax(self) -> SyntaxNode<'a> {
+        match self {
+            Self::Binary(node) => node.syntax(),
+            Self::Instanceof(node) => node.syntax(),
+        }
+    }
+
+    fn left(self) -> Option<Expression<'a>> {
+        match self {
+            Self::Binary(node) => node.left(),
+            Self::Instanceof(node) => node.expression(),
+        }
+    }
+}
+
+fn operation(expression: Expression<'_>) -> Option<Operation<'_>> {
+    match expression {
+        Expression::BinaryExpression(node) if !node.syntax().is_malformed() => {
+            Some(Operation::Binary(node))
+        }
+        Expression::InstanceofExpression(node) if !node.syntax().is_malformed() => {
+            Some(Operation::Instanceof(node))
+        }
+        _ => None,
+    }
+}
 
 fn operator_kind(node: BinaryExpression<'_>) -> Option<K> {
     node.operator().map(|token| K::from_raw(token.kind()))
@@ -29,66 +78,149 @@ fn flattens(parent: K, child: K) -> bool {
     true
 }
 
-/// A left-nested chain of one precedence level, walked iteratively: flat if
-/// it fits, else broken before every operator one indent deeper.
-pub(crate) fn binary_expression<'a>(f: &mut JavaFormatter<'a>, node: BinaryExpression<'a>) -> Doc {
-    // Spine from the outermost node inward.
-    let mut spine = vec![node];
-    let mut head = node.left();
-    while let (Some(Expression::BinaryExpression(left)), Some(parent)) = (
-        head,
-        operator_kind(*spine.last().expect("spine is not empty")),
-    ) {
-        if left.syntax().is_malformed()
-            || !operator_kind(left).is_some_and(|child| flattens(parent, child))
-        {
-            break;
-        }
-        spine.push(left);
-        head = left.left();
-    }
-    let mut leading = Vec::new();
-    for &interior in &spine[1..] {
-        leading.push(f.leading_comments(interior.syntax()));
-    }
-    let readability = operator_kind(node).is_some_and(|kind| {
-        matches!(
-            kind,
-            K::Amp | K::Bar | K::Caret | K::LShift | K::RShift | K::UnsignedRShift
-        )
-    });
-    let head = operand(f, head, readability);
-    let mut rest = Vec::with_capacity(spine.len() * 4);
-    for (depth, &binary) in spine.iter().enumerate().rev() {
-        let operator: Option<SyntaxToken<'a>> = binary.operator();
-        rest.push(f.line());
-        rest.push(f.token_opt(operator));
-        rest.push(f.space());
-        rest.push(operand(f, binary.right(), readability));
-        if depth > 0 {
-            rest.push(f.trailing_comments(binary.syntax()));
-        }
-    }
-    let rest = f.concat(rest);
-    let rest = f.indent(rest);
-    let leading = f.concat(leading);
-    let chain = jolt_fmt::cat![f; leading, head, rest];
-    f.group(chain)
+/// N7: operands of bitwise and shift operators that are themselves binary
+/// expressions get readability parentheses.
+fn needs_readability_parentheses(parent: BinaryExpression<'_>) -> bool {
+    parent.syntax().is_recovery_free()
+        && operator_kind(parent).is_some_and(|kind| {
+            matches!(
+                kind,
+                K::Amp | K::Bar | K::Caret | K::LShift | K::RShift | K::UnsignedRShift
+            )
+        })
 }
 
-/// An operand, wrapped in synthesized readability parentheses (N7) when it is
-/// itself a binary expression under a bitwise or shift operator.
-fn operand<'a>(
-    f: &mut JavaFormatter<'a>,
-    operand: Option<Expression<'a>>,
-    readability: bool,
-) -> Doc {
-    let wrap = readability && matches!(operand, Some(Expression::BinaryExpression(_)));
-    let doc = f.fmt_opt(operand);
-    if !wrap {
-        return doc;
+/// N6: a parenthesized left operand of a same-precedence chain whose
+/// parentheses carry no comments is transparent.
+fn transparent_left<'a>(
+    f: &JavaFormatter<'a>,
+    parent: Operation<'a>,
+    left: Expression<'a>,
+) -> Option<(BinaryExpression<'a>, ParenthesizedExpression<'a>)> {
+    let (Operation::Binary(parent), Expression::ParenthesizedExpression(parenthesized)) =
+        (parent, left)
+    else {
+        return None;
+    };
+    if !parent.syntax().is_recovery_free() || f.has_comments_within(parenthesized.syntax()) {
+        return None;
     }
-    let inner = jolt_fmt::indent![f; f.soft_line(), doc];
+    let Some(Expression::BinaryExpression(inner)) = parenthesized.expression() else {
+        return None;
+    };
+    flattens(operator_kind(parent)?, operator_kind(inner)?).then_some((inner, parenthesized))
+}
+
+/// A chain under construction: the first operand and `operator operand`
+/// pairs of one flattened precedence level.
+struct Run {
+    kind: K,
+    first: Doc,
+    rest: Vec<Doc>,
+}
+
+fn finish(f: &mut JavaFormatter<'_>, run: Run) -> Doc {
+    let rest = f.concat(run.rest);
+    let rest = f.indent(rest);
+    group![f; run.first, rest]
+}
+
+/// The left operand spine walked iteratively from the innermost operand
+/// outward. Each run of left-nested operators that flatten into one chain is
+/// flat if it fits, else broken before every operator one indent deeper; an
+/// `instanceof` breaks before its keyword. A run ends where the next operator
+/// does not flatten, and becomes the first operand of what follows.
+fn chain<'a>(f: &mut JavaFormatter<'a>, outer: Operation<'a>) -> Doc {
+    // The spine from the outermost node inward; `removed` holds the
+    // parentheses dropped by N6 above each node.
+    let mut spine = vec![(outer, None)];
+    let mut head = outer.left();
+    while let Some(left) = head {
+        let parent = spine.last().expect("spine is not empty").0;
+        let (next, parentheses) = match transparent_left(f, parent, left) {
+            Some((inner, parentheses)) => (Operation::Binary(inner), Some(parentheses)),
+            None => match operation(left) {
+                Some(next) => (next, None),
+                None => break,
+            },
+        };
+        spine.push((next, parentheses));
+        head = next.left();
+    }
+    let mut leading = Vec::with_capacity(spine.len() * 2);
+    for &(operation, parentheses) in &spine[1..] {
+        if let Some(parentheses) = parentheses {
+            leading.push(f.removed(SyntaxElement::Node(parentheses.syntax())));
+        }
+        leading.push(f.leading_comments(operation.syntax()));
+    }
+    let head_doc = f.fmt_opt(head);
+    let mut formatted = cat![f; f.concat(leading), head_doc];
+    // The expression `formatted` stands for, for N7.
+    let mut formatted_is_binary = matches!(head, Some(Expression::BinaryExpression(_)));
+    let mut run: Option<Run> = None;
+    for (depth, &(operation, _)) in spine.iter().enumerate().rev() {
+        let trailing = if depth > 0 {
+            f.trailing_comments(operation.syntax())
+        } else {
+            Doc::NIL
+        };
+        match operation {
+            Operation::Binary(node) => {
+                // A missing operator joins nothing.
+                let kind = operator_kind(node).unwrap_or(K::Eof);
+                let joins = run.as_ref().is_some_and(|run| flattens(kind, run.kind));
+                let readability = needs_readability_parentheses(node);
+                if !joins {
+                    if let Some(run) = run.take() {
+                        formatted = finish(f, run);
+                    }
+                    let first = if readability && formatted_is_binary {
+                        parenthesized(f, formatted)
+                    } else {
+                        formatted
+                    };
+                    run = Some(Run {
+                        kind,
+                        first,
+                        rest: Vec::new(),
+                    });
+                }
+                let operator = f.token_opt(node.operator());
+                let right = node.right();
+                let mut operand = f.fmt_opt(right);
+                if readability && matches!(right, Some(Expression::BinaryExpression(_))) {
+                    operand = parenthesized(f, operand);
+                }
+                let run = run.as_mut().expect("a run was started");
+                run.kind = kind;
+                run.rest
+                    .extend([f.line(), operator, f.space(), operand, trailing]);
+                formatted = Doc::NIL;
+                formatted_is_binary = true;
+            }
+            Operation::Instanceof(node) => {
+                if let Some(run) = run.take() {
+                    formatted = finish(f, run);
+                }
+                let keyword = f.token_opt(node.instanceof_keyword());
+                let target = f.fmt_opt(node.target());
+                let tail = indent![f; f.line(), keyword, f.space(), target];
+                formatted = group![f; formatted, tail, trailing];
+                formatted_is_binary = false;
+            }
+        }
+    }
+    match run {
+        Some(run) => finish(f, run),
+        None => formatted,
+    }
+}
+
+/// Synthesized readability parentheses (N7), which break like a
+/// parenthesized expression.
+fn parenthesized(f: &mut JavaFormatter<'_>, doc: Doc) -> Doc {
+    let inner = indent![f; f.soft_line(), doc];
     let (open, close) = (f.text("("), f.text(")"));
-    jolt_fmt::group![f; open, inner, f.soft_line(), close]
+    group![f; open, inner, f.soft_line(), close]
 }
