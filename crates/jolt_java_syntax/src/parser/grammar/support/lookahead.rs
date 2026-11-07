@@ -2,9 +2,8 @@
 use jolt_syntax::Lookahead;
 
 use super::{
-    JavaSyntaxKind, MissingConstructorHeaderAction, Parser, is_literal_expression_start,
-    is_primitive_type_start, is_type_argument_recovery_boundary, is_type_argument_value_start,
-    missing_constructor_header_action, type_modifier_len,
+    JavaSyntaxKind, Parser, is_literal_expression_start, is_primitive_type_start,
+    is_type_argument_recovery_boundary, is_type_argument_value_start, type_modifier_len,
 };
 use crate::JavaLanguage;
 use crate::parser::source::{LookaheadSummary, MAX_DEPTH};
@@ -193,103 +192,6 @@ impl<'source> JavaLookahead<'_, 'source> {
         self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw
     }
 
-    fn skip_bounded_annotation(&mut self) -> bool {
-        if !self.at(JavaSyntaxKind::At) || self.nth(1) == JavaSyntaxKind::InterfaceKw {
-            return false;
-        }
-
-        self.bump();
-        if self.at_name_segment() {
-            self.bump();
-            while self.at(JavaSyntaxKind::Dot) && self.nth(1) == JavaSyntaxKind::Identifier {
-                self.bump();
-                self.bump();
-            }
-        }
-
-        if !self.eat(JavaSyntaxKind::LParen) {
-            return true;
-        }
-
-        let mut paren_depth = 1usize;
-        let mut brace_depth = 0usize;
-        let mut bracket_depth = 0usize;
-        while !self.at_eof() {
-            match self.kind() {
-                JavaSyntaxKind::LParen => paren_depth += 1,
-                JavaSyntaxKind::RParen => {
-                    paren_depth -= 1;
-                    self.bump();
-                    if paren_depth == 0 {
-                        return true;
-                    }
-                    continue;
-                }
-                JavaSyntaxKind::LBrace => brace_depth += 1,
-                JavaSyntaxKind::RBrace if brace_depth > 0 => brace_depth -= 1,
-                JavaSyntaxKind::LBracket => bracket_depth += 1,
-                JavaSyntaxKind::RBracket if bracket_depth > 0 => bracket_depth -= 1,
-                JavaSyntaxKind::Semicolon | JavaSyntaxKind::RBrace
-                    if paren_depth == 1 && brace_depth == 0 && bracket_depth == 0 =>
-                {
-                    return false;
-                }
-                _ => {}
-            }
-            self.bump();
-        }
-        false
-    }
-
-    pub(in crate::parser::grammar) fn skip_missing_constructor_throws_clause(&mut self) -> bool {
-        loop {
-            if matches!(
-                self.kind(),
-                JavaSyntaxKind::LBrace
-                    | JavaSyntaxKind::Semicolon
-                    | JavaSyntaxKind::RBrace
-                    | JavaSyntaxKind::Eof
-            ) {
-                return self.at(JavaSyntaxKind::LBrace);
-            }
-            if self.eat(JavaSyntaxKind::Comma) {
-                continue;
-            }
-            if !self.skip_missing_constructor_throws_type() {
-                return false;
-            }
-            if !self.eat(JavaSyntaxKind::Comma) {
-                return self.at(JavaSyntaxKind::LBrace);
-            }
-        }
-    }
-
-    pub(in crate::parser::grammar) fn skip_missing_constructor_throws_type(&mut self) -> bool {
-        while self.at(JavaSyntaxKind::At) {
-            if !self.skip_bounded_annotation() {
-                return false;
-            }
-        }
-
-        if self.at(JavaSyntaxKind::VoidKw) {
-            self.bump();
-            loop {
-                let checkpoint = self.checkpoint();
-                self.skip_annotations();
-                if self.at(JavaSyntaxKind::LBracket) && self.nth(1) == JavaSyntaxKind::RBracket {
-                    self.bump();
-                    self.bump();
-                } else {
-                    self.rewind(checkpoint);
-                    break;
-                }
-            }
-            true
-        } else {
-            self.skip_type()
-        }
-    }
-
     /// Skips a run of annotations and modifiers. Every position the scan
     /// passes records the run's end, so rescans from inside the run (one per
     /// token in recovery) are O(1).
@@ -345,38 +247,6 @@ impl<'source> JavaLookahead<'_, 'source> {
 
             return;
         }
-    }
-
-    pub(in crate::parser::grammar) fn skip_missing_constructor_parameter_header(&mut self) -> bool {
-        let mut paren_depth = 0usize;
-        let mut brace_depth = 0usize;
-        while !self.at_eof() {
-            match missing_constructor_header_action(self.kind(), paren_depth, brace_depth) {
-                MissingConstructorHeaderAction::OpenNested => {
-                    paren_depth += 1;
-                    self.bump();
-                }
-                MissingConstructorHeaderAction::CloseNested => {
-                    paren_depth -= 1;
-                    self.bump();
-                }
-                MissingConstructorHeaderAction::OpenBrace => {
-                    brace_depth += 1;
-                    self.bump();
-                }
-                MissingConstructorHeaderAction::CloseBrace => {
-                    brace_depth -= 1;
-                    self.bump();
-                }
-                MissingConstructorHeaderAction::CloseHeader => {
-                    self.bump();
-                    return true;
-                }
-                MissingConstructorHeaderAction::Boundary => return false,
-                MissingConstructorHeaderAction::Bump => self.bump(),
-            }
-        }
-        false
     }
 
     pub(in crate::parser::grammar) fn skip_type(&mut self) -> bool {

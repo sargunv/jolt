@@ -22,14 +22,10 @@ class VerbatimEdgeComments {
     );
   }
 
-  static Thrown extends RuntimeException {/* nothing */
-}
-
+  static Thrown extends RuntimeException {  /* nothing */ }
 }
 
 diagnostics:
 code=java.parse.unexpected_syntax range=54..55 message=unexpected token in expression
 code=java.parse.unexpected_syntax range=105..106 message=unexpected token in expression
-code=java.parse.expected_syntax range=175..182 message=expected variable name
-code=java.parse.expected_syntax range=217..218 message=expected `;` after field declaration
-code=java.parse.unexpected_syntax range=219..220 message=unexpected token at top level
+code=java.parse.unexpected_syntax range=161..167 message=unexpected token in type body

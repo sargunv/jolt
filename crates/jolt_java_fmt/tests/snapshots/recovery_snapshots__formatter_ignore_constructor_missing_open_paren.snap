@@ -21,11 +21,11 @@ class Example {
     this( 1,2 );
     int raw=1+2;
     // @formatter:on
-    int after = 3;
+  int after=3;
   }
 
   Example(int a, int b) {}
 }
 
 diagnostics:
-code=java.parse.expected_syntax range=23..24 message=expected `(`
+code=java.parse.unexpected_syntax range=16..23 message=unexpected token in type body

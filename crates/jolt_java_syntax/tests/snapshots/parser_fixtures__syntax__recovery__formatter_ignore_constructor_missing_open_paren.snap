@@ -23,57 +23,30 @@ CompilationUnit
       ClassBody
         LBrace "{" @ 14..15
         ClassBodyMemberList
-          ConstructorDeclaration
+          Bogus
             Identifier "Example" @ 16..23 leading=[Newline "\n"]
             RParen ")" @ 23..24 trailing=[Whitespace " "]
-            ConstructorBody
-              LBrace "{" @ 25..26
-              ConstructorBodyEntryList
-                ConstructorInvocation
-                  ThisKw "this" @ 49..53 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
-                  ArgumentList
-                    LParen "(" @ 53..54 trailing=[Whitespace " "]
-                    ExpressionList
-                      LiteralExpression
-                        IntegerLiteral "1" @ 55..56
-                      Comma "," @ 56..57
-                      LiteralExpression
-                        IntegerLiteral "2" @ 57..58 trailing=[Whitespace " "]
-                    RParen ")" @ 59..60
-                  Semicolon ";" @ 60..61
-                BlockStatement
-                  LocalVariableDeclaration
-                    ParameterModifierList
-                    PrimitiveType
-                      AnnotationList
-                      IntKw "int" @ 64..67 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-                    VariableDeclaratorList
-                      VariableDeclarator
-                        Identifier "raw" @ 68..71
-                        Assign "=" @ 71..72
-                        VariableInitializer
-                          BinaryExpression
-                            LiteralExpression
-                              IntegerLiteral "1" @ 72..73
-                            Plus "+" @ 73..74
-                            LiteralExpression
-                              IntegerLiteral "2" @ 74..75
-                  Semicolon ";" @ 75..76
-                BlockStatement
-                  LocalVariableDeclaration
-                    ParameterModifierList
-                    PrimitiveType
-                      AnnotationList
-                      IntKw "int" @ 96..99 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
-                    VariableDeclaratorList
-                      VariableDeclarator
-                        Identifier "after" @ 100..105
-                        Assign "=" @ 105..106
-                        VariableInitializer
-                          LiteralExpression
-                            IntegerLiteral "3" @ 106..107
-                  Semicolon ";" @ 107..108
-              RBrace "}" @ 109..110 leading=[Newline "\n"]
+            LBrace "{" @ 25..26
+            ThisKw "this" @ 49..53 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
+            LParen "(" @ 53..54 trailing=[Whitespace " "]
+            IntegerLiteral "1" @ 55..56
+            Comma "," @ 56..57
+            IntegerLiteral "2" @ 57..58 trailing=[Whitespace " "]
+            RParen ")" @ 59..60
+            Semicolon ";" @ 60..61
+            IntKw "int" @ 64..67 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "raw" @ 68..71
+            Assign "=" @ 71..72
+            IntegerLiteral "1" @ 72..73
+            Plus "+" @ 73..74
+            IntegerLiteral "2" @ 74..75
+            Semicolon ";" @ 75..76
+            IntKw "int" @ 96..99 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+            Identifier "after" @ 100..105
+            Assign "=" @ 105..106
+            IntegerLiteral "3" @ 106..107
+            Semicolon ";" @ 107..108
+            RBrace "}" @ 109..110 leading=[Newline "\n"]
           ConstructorDeclaration
             Identifier "Example" @ 111..118 leading=[Newline "\n"]
             LParen "(" @ 118..119
@@ -102,4 +75,4 @@ CompilationUnit
   Eof "" @ 136..136 leading=[Newline "\n"]
 
 diagnostics:
-code=java.parse.expected_syntax range=23..24 message=expected `(`
+code=java.parse.unexpected_syntax range=16..23 message=unexpected token in type body

@@ -98,14 +98,10 @@ CompilationUnit
             IntKw "int" @ 249..252 trailing=[Whitespace " "]
             Identifier "value" @ 253..258
             RParen ")" @ 258..259 trailing=[Whitespace " "]
-            Annotation
-              At "@" @ 260..261
-              Name
-                Identifier "A" @ 261..262 trailing=[Whitespace " "]
-            Annotation
-              At "@" @ 263..264
-              Name
-                Identifier "A" @ 264..265 trailing=[Whitespace " "]
+            At "@" @ 260..261
+            Identifier "A" @ 261..262 trailing=[Whitespace " "]
+            At "@" @ 263..264
+            Identifier "A" @ 264..265 trailing=[Whitespace " "]
             IntegerLiteral "0" @ 266..267
             Semicolon ";" @ 267..268
           ClassDeclaration

@@ -1,9 +1,4 @@
-use super::{
-    BODY_STOPS, JavaSyntaxKind, Parser, StopSet,
-    support::{
-        MissingConstructorHeaderAction, SeparatedElement, missing_constructor_header_action,
-    },
-};
+use super::{BODY_STOPS, JavaSyntaxKind, Parser, StopSet, support::SeparatedElement};
 use crate::parser::codes;
 
 impl Parser<'_> {
@@ -429,17 +424,9 @@ impl Parser<'_> {
             return;
         }
 
-        if self.has_rejected_missing_constructor_header(type_name) {
-            let error = self.start();
-            self.error_unexpected("unexpected token in type body");
-            self.consume_rejected_missing_constructor_fragment(type_name);
-            self.complete(error, JavaSyntaxKind::Bogus);
-            return;
-        }
-
         if self.starts_method_declaration() {
             self.parse_method_declaration();
-        } else if self.starts_compact_member_declaration() {
+        } else if self.starts_field_declaration() {
             self.parse_field_declaration();
         } else {
             let error = self.start();
@@ -552,7 +539,7 @@ impl Parser<'_> {
         self.parse_optional_annotations();
         self.parse_result_type();
         self.expect_named_identifier("expected method name");
-        self.parse_formal_parameter_section(false);
+        self.parse_formal_parameter_section();
         self.parse_array_dimensions();
         self.parse_optional_throws_clause();
         self.parse_method_body();
@@ -589,7 +576,7 @@ impl Parser<'_> {
         self.parse_constructor_modifier_list();
         self.parse_optional_type_parameter_list();
         self.expect_type_identifier("expected constructor name");
-        self.parse_formal_parameter_section(true);
+        self.parse_formal_parameter_section();
         self.parse_optional_throws_clause();
         self.parse_constructor_block();
         self.complete(constructor, JavaSyntaxKind::ConstructorDeclaration);
@@ -611,8 +598,7 @@ impl Parser<'_> {
         self.parse_type();
     }
 
-    pub(super) fn parse_formal_parameter_section(&mut self, recover_missing_open_header: bool) {
-        let missing_open = !self.at(JavaSyntaxKind::LParen);
+    pub(super) fn parse_formal_parameter_section(&mut self) {
         self.expect(JavaSyntaxKind::LParen, "expected `(`");
         if !self.at(JavaSyntaxKind::RParen) {
             let list = self.start();
@@ -652,47 +638,6 @@ impl Parser<'_> {
                     element
                 },
             );
-            if recover_missing_open_header
-                && missing_open
-                && !self.at(JavaSyntaxKind::RParen)
-                && !matches!(
-                    self.current(),
-                    JavaSyntaxKind::LBrace | JavaSyntaxKind::Semicolon
-                )
-            {
-                let bogus = self.start();
-                self.error_expected("expected `,` between parameters");
-                let mut paren_depth = 0usize;
-                let mut brace_depth = 0usize;
-                while !self.at_eof() {
-                    match missing_constructor_header_action(
-                        self.current(),
-                        paren_depth,
-                        brace_depth,
-                    ) {
-                        MissingConstructorHeaderAction::OpenNested => {
-                            paren_depth += 1;
-                            self.bump();
-                        }
-                        MissingConstructorHeaderAction::CloseNested => {
-                            paren_depth -= 1;
-                            self.bump();
-                        }
-                        MissingConstructorHeaderAction::OpenBrace => {
-                            brace_depth += 1;
-                            self.bump();
-                        }
-                        MissingConstructorHeaderAction::CloseBrace => {
-                            brace_depth -= 1;
-                            self.bump();
-                        }
-                        MissingConstructorHeaderAction::CloseHeader
-                        | MissingConstructorHeaderAction::Boundary => break,
-                        MissingConstructorHeaderAction::Bump => self.bump(),
-                    }
-                }
-                self.complete(bogus, JavaSyntaxKind::Bogus);
-            }
             self.complete(list, JavaSyntaxKind::FormalParameterList);
         }
         self.expect(JavaSyntaxKind::RParen, "expected `)` after parameters");
@@ -1015,88 +960,6 @@ impl Parser<'_> {
                 break;
             }
             self.bump();
-        }
-    }
-
-    pub(super) fn consume_rejected_missing_constructor_fragment(
-        &mut self,
-        type_name: Option<usize>,
-    ) {
-        let mut saw_close_paren = false;
-        let mut paren_depth = 0usize;
-        let mut brace_depth = 0usize;
-        let mut in_throws_clause = false;
-        let mut expects_throws_type = false;
-        let mut guard = self.loop_guard();
-        while self.check(&mut guard) {
-            if !saw_close_paren {
-                match missing_constructor_header_action(self.current(), paren_depth, brace_depth) {
-                    MissingConstructorHeaderAction::OpenNested => paren_depth += 1,
-                    MissingConstructorHeaderAction::CloseNested => paren_depth -= 1,
-                    MissingConstructorHeaderAction::OpenBrace => brace_depth += 1,
-                    MissingConstructorHeaderAction::CloseBrace => brace_depth -= 1,
-                    MissingConstructorHeaderAction::CloseHeader => saw_close_paren = true,
-                    MissingConstructorHeaderAction::Boundary => {
-                        if self.at(JavaSyntaxKind::Semicolon) {
-                            self.bump();
-                        }
-                        break;
-                    }
-                    MissingConstructorHeaderAction::Bump => {}
-                }
-                self.bump();
-                continue;
-            }
-            if self.at(JavaSyntaxKind::ThrowsKw) {
-                self.bump();
-                in_throws_clause = true;
-                expects_throws_type = true;
-            } else if in_throws_clause && self.at(JavaSyntaxKind::Comma) {
-                self.bump();
-                expects_throws_type = true;
-            } else if expects_throws_type
-                && !matches!(
-                    self.current(),
-                    JavaSyntaxKind::LBrace | JavaSyntaxKind::Semicolon | JavaSyntaxKind::RBrace
-                )
-            {
-                let type_start = self.position();
-                let type_end = {
-                    let mut lookahead = self.lookahead();
-                    lookahead.skip_missing_constructor_throws_type();
-                    lookahead.position()
-                };
-                self.bump_to(type_end);
-                if type_end == type_start {
-                    self.bump();
-                }
-                expects_throws_type = false;
-            } else if self.starts_type_declaration()
-                || (!expects_throws_type
-                    && (self.starts_method_declaration()
-                        || self.starts_field_declaration()
-                        || self.starts_compact_constructor(type_name)))
-            {
-                break;
-            } else if self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw {
-                self.parse_annotation();
-            } else if self.at(JavaSyntaxKind::LBrace) {
-                self.consume_balanced_delimited(JavaSyntaxKind::LBrace, JavaSyntaxKind::RBrace);
-            } else if self.at(JavaSyntaxKind::Semicolon) {
-                self.bump();
-                break;
-            } else {
-                let type_end = {
-                    let mut lookahead = self.lookahead();
-                    lookahead.skip_type();
-                    lookahead.position()
-                };
-                if type_end > self.position() {
-                    self.bump_to(type_end);
-                } else {
-                    self.bump();
-                }
-            }
         }
     }
 }

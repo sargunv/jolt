@@ -549,8 +549,11 @@ precedence by token kind, contextual keyword tests, modifier partitioning
   array-initializer lists: an unclosed list ends where its statement, header or
   body does, with a missing closer, and the next statement parses normally
   (`f(;` / `g();` is two statements, not one `Bogus` argument that runs to the
-  block's `}`). A parameter list also ends at `{`. A type-body member that is
-  not one (`consume_body_member_fragment`) ends after a `;` or a braced body.
+  block's `}`). A parameter list also ends at `{`. A type-body member is a field
+  only when a type and a name start it; a member that is no declaration
+  (`consume_body_member_fragment`) is one `Bogus` that ends after a `;` or a
+  balanced braced body, so a malformed constructor (`Example) {…}`) is one bogus
+  member and the next member parses normally.
 - Recovery has exactly three representations: an empty required slot (missing),
   a `Bogus` node at a category or list position (unexpected tokens), and a
   `MALFORMED` node whose children did not fit its shape. There is no other.

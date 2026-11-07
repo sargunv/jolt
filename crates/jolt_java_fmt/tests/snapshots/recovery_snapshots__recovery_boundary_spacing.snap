@@ -20,6 +20,7 @@ class Registry<T
 
 class Fields {
   int .value;
+
   private final Map<K, ..Node<K,V>> nodes = new HashMap<>();
   private final Map<K, +Node<K,V>> alternateNodes = new HashMap<>();
 }
@@ -30,6 +31,6 @@ code=java.parse.expected_syntax range=28..33 message=expected type body
 code=java.parse.expected_syntax range=45..46 message=expected `>` after type parameters
 code=java.parse.expected_syntax range=45..46 message=expected type body
 code=java.parse.unexpected_syntax range=45..46 message=unexpected token at top level
-code=java.parse.expected_syntax range=73..74 message=expected variable name
+code=java.parse.unexpected_syntax range=69..72 message=unexpected token in type body
 code=java.parse.expected_syntax range=103..104 message=expected type
 code=java.parse.expected_syntax range=161..162 message=expected type

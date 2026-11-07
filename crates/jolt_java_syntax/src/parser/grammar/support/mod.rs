@@ -18,38 +18,6 @@ pub(in crate::parser::grammar) use lookahead::{JavaLookahead, gt_rest, is_gt_fam
 pub(in crate::parser) use scan_tables::ScanTables;
 pub(in crate::parser::grammar) use separated_lists::SeparatedElement;
 
-#[derive(Clone, Copy)]
-pub(super) enum MissingConstructorHeaderAction {
-    OpenNested,
-    CloseNested,
-    OpenBrace,
-    CloseBrace,
-    CloseHeader,
-    Boundary,
-    Bump,
-}
-
-pub(super) fn missing_constructor_header_action(
-    kind: JavaSyntaxKind,
-    paren_depth: usize,
-    brace_depth: usize,
-) -> MissingConstructorHeaderAction {
-    match kind {
-        JavaSyntaxKind::LParen => MissingConstructorHeaderAction::OpenNested,
-        JavaSyntaxKind::RParen if paren_depth == 0 => MissingConstructorHeaderAction::CloseHeader,
-        JavaSyntaxKind::RParen => MissingConstructorHeaderAction::CloseNested,
-        JavaSyntaxKind::LBrace if paren_depth > 0 || brace_depth > 0 => {
-            MissingConstructorHeaderAction::OpenBrace
-        }
-        JavaSyntaxKind::RBrace if brace_depth > 0 => MissingConstructorHeaderAction::CloseBrace,
-        JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace => MissingConstructorHeaderAction::Boundary,
-        JavaSyntaxKind::Semicolon if paren_depth == 0 && brace_depth == 0 => {
-            MissingConstructorHeaderAction::Boundary
-        }
-        _ => MissingConstructorHeaderAction::Bump,
-    }
-}
-
 pub(super) const fn is_type_argument_value_start(kind: JavaSyntaxKind) -> bool {
     matches!(kind, JavaSyntaxKind::Question | JavaSyntaxKind::Identifier)
         || is_primitive_type_start(kind)
