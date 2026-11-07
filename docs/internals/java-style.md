@@ -1011,3 +1011,23 @@ class Example extends Base {
   }
 }
 ```
+
+### R3. An inline comment before a promoted body goes inside its braces
+
+An inline comment between a control header and a body that brace promotion wraps
+used to stay before the synthesized `{`, which took a second statement layout of
+its own. It now leads the statement inside the braces, which is where an
+end-of-line comment there goes too (C7):
+
+```java
+// input
+if (a) /* inline */ run();
+// before
+if (a) /* inline */ {
+  run();
+}
+// new
+if (a) {
+  /* inline */ run();
+}
+```
