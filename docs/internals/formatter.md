@@ -975,14 +975,14 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// Leading comments, the token text, trailing comments. Never sticky.
     pub fn token(&mut self, token: SyntaxToken<'a>) -> Doc;
     pub fn token_opt(&mut self, token: Option<SyntaxToken<'a>>) -> Doc;
-    /// `node`'s leading/trailing comments around a doc the caller built from
-    /// the node's children: `cat(leading_comments(node), body,
-    /// trailing_comments(node))`. For normalization wrappers; `node` must not
-    /// be malformed.
-    pub fn node_with(&mut self, node: SyntaxNode<'a>, body: Doc) -> Doc;
-    /// The two halves of `node_with`, for iterative spine flattening, where an
-    /// interior spine node's leading comments go before the spine head and
-    /// its trailing comments after the segment that ends it (see Deep spines).
+    /// A node's leading and trailing comments, for a rule that builds the
+    /// node's doc from its children itself instead of through `node`: the
+    /// iterative spines and the `else if` chain, where an interior node's
+    /// leading comments go before the head and its trailing comments after
+    /// the segment that ends it (see Deep spines); the readability
+    /// parentheses of N7, which go between an operand and its comments; and
+    /// the declaration header, whose last clause's trailing comments print
+    /// outside the header group. The node must not be malformed.
     pub fn leading_comments(&mut self, node: SyntaxNode<'a>) -> Doc;
     pub fn trailing_comments(&mut self, node: SyntaxNode<'a>) -> Doc;
     /// Every comment attached to or inside `element`, in source order and in
@@ -1010,6 +1010,11 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     pub fn has_dangling_comments(&self, node: SyntaxNode<'a>) -> bool;
     /// A trailing line comment (no trailing comma is synthesized after it).
     pub fn has_trailing_line_comment(&self, element: SyntaxElement<'a>) -> bool;
+    /// Some leading comment prints a line break between the code before the
+    /// element and the element (its effective layout is not `Inline`).
+    pub fn leading_comments_break(&self, element: SyntaxElement<'a>) -> bool;
+    /// Some trailing comment ends its line.
+    pub fn trailing_comments_break(&self, element: SyntaxElement<'a>) -> bool;
     /// Any comment attached to the node or located inside its range.
     pub fn has_comments_within(&self, node: SyntaxNode<'a>) -> bool; // O(log comments)
     /// The node is an item inside a formatter-ignore region, so a
@@ -1774,8 +1779,9 @@ This design keeps every invariant in `AGENTS.md` and makes these precise:
 - "Formatter rules must preserve represented source tokens and their trivia":
   rules emit tokens only through `Formatter::token`, and comments only through
   the chokepoints (`node`, `token`, `verbatim`, `removed`, `dangling`, and
-  `node_with`/`leading_comments`/`trailing_comments` for spines and
-  normalization wrappers). Rules never choose how a comment prints.
+  `leading_comments`/`trailing_comments` for the rules that build a node's doc
+  themselves: spines, the `else if` chain, N7 parentheses and the declaration
+  header). Rules never choose how a comment prints.
 - "Verbatim formatting must track every contained token and comment": verbatim
   covers exactly the comments strictly inside the node, and the emission check
   verifies every comment is emitted once.

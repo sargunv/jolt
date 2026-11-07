@@ -25,7 +25,8 @@ pub(crate) fn class_declaration<'a>(f: &mut JavaFormatter<'a>, node: ClassDeclar
         node.permits().map(AstNode::syntax),
     ];
     let lead = node.class_keyword().map(SyntaxElement::Token);
-    let header = header(f, lead, head, None, clauses.into_iter().flatten());
+    let end = HeaderEnd::Clauses(clauses.into_iter().flatten().collect());
+    let header = header(f, lead, head, end);
     with_body(
         f,
         modifiers,
@@ -51,7 +52,8 @@ pub(crate) fn interface_declaration<'a>(
         node.permits().map(AstNode::syntax),
     ];
     let lead = node.interface_keyword().map(SyntaxElement::Token);
-    let header = header(f, lead, head, None, clauses.into_iter().flatten());
+    let end = HeaderEnd::Clauses(clauses.into_iter().flatten().collect());
+    let header = header(f, lead, head, end);
     with_body(
         f,
         modifiers,
@@ -93,7 +95,10 @@ pub(crate) fn record_declaration<'a>(
         },
     ));
     let lead = node.record_keyword().map(SyntaxElement::Token);
-    let header = header(f, lead, head, tail, implements);
+    let end = implements.map_or(HeaderEnd::Tail(tail), |clause| {
+        HeaderEnd::Clauses(vec![clause])
+    });
+    let header = header(f, lead, head, end);
     with_body(
         f,
         modifiers,
@@ -112,7 +117,8 @@ pub(crate) fn enum_declaration<'a>(f: &mut JavaFormatter<'a>, node: EnumDeclarat
     ];
     let implements = node.implements().map(AstNode::syntax);
     let lead = node.enum_keyword().map(SyntaxElement::Token);
-    let header = header(f, lead, head, None, implements);
+    let end = HeaderEnd::Clauses(implements.into_iter().collect());
+    let header = header(f, lead, head, end);
     with_body(
         f,
         modifiers,
@@ -135,7 +141,7 @@ pub(crate) fn annotation_interface_declaration<'a>(
         f.token_opt(node.name()),
     ];
     let lead = node.at().map(SyntaxElement::Token);
-    let header = header(f, lead, head, None, None);
+    let header = header(f, lead, head, HeaderEnd::Tail(None));
     with_body(
         f,
         modifiers,
@@ -164,9 +170,15 @@ fn with_body<'a>(
     cat![f; modifiers, header, body, semicolon]
 }
 
+/// What ends a declaration header: a closer that ends the head (the `)` of
+/// the parameters or components, when no clause follows), or the clauses.
+pub(super) enum HeaderEnd<'a> {
+    Tail(Option<SyntaxToken<'a>>),
+    Clauses(Vec<SyntaxNode<'a>>),
+}
+
 /// The header group of a declaration: `head`, then each clause, every
 /// clause on its own line one indent deeper when the header does not fit.
-/// `tail` is a closer that ends the head when there are no clauses.
 ///
 /// When `lead`, the element the header's first part (the first non-NIL doc
 /// of `head`) begins with, has a leading comment that breaks the line, such
@@ -180,8 +192,7 @@ pub(super) fn header<'a>(
     f: &mut JavaFormatter<'a>,
     lead: Option<SyntaxElement<'a>>,
     mut head: Vec<Doc>,
-    tail: Option<SyntaxToken<'a>>,
-    clauses: impl IntoIterator<Item = SyntaxNode<'a>>,
+    end: HeaderEnd<'a>,
 ) -> Doc {
     let apart = lead
         .is_some_and(|lead| f.leading_comments_break(lead) || f.has_trailing_line_comment(lead));
@@ -192,7 +203,10 @@ pub(super) fn header<'a>(
         .map_or(0, |i| i + 1);
     let mut rest = head.split_off(first);
     let first = f.concat(head);
-    let clauses: Vec<_> = clauses.into_iter().collect();
+    let (tail, clauses) = match end {
+        HeaderEnd::Tail(tail) => (tail, Vec::new()),
+        HeaderEnd::Clauses(clauses) => (None, clauses),
+    };
     let mut after = f.token_opt(tail);
     for (index, &clause) in clauses.iter().enumerate() {
         let clause = if index + 1 < clauses.len() || clause.is_malformed() {

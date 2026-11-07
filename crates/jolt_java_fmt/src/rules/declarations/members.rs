@@ -10,7 +10,7 @@ use jolt_java_syntax::{
 };
 use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode, SyntaxToken};
 
-use super::types::header;
+use super::types::{HeaderEnd, header};
 use crate::JavaFormatter;
 use crate::helpers::bodies::{braced_body, statement_separator};
 use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
@@ -69,7 +69,10 @@ pub(crate) fn method_declaration<'a>(
         close,
     ));
     head.push(f.fmt_opt(node.dimensions()));
-    let header = header(f, lead, head, tail, throws.map(AstNode::syntax));
+    let end = throws.map_or(HeaderEnd::Tail(tail), |throws| {
+        HeaderEnd::Clauses(vec![throws.syntax()])
+    });
+    let header = header(f, lead, head, end);
     let body = match node.body() {
         Some(MethodBody::Block(block)) => body_after_space(f, Some(block.syntax())),
         Some(MethodBody::Token(semicolon)) => f.token(semicolon),
@@ -102,7 +105,10 @@ pub(crate) fn constructor_declaration<'a>(
         node.parameters(),
         close,
     ));
-    let header = header(f, lead, head, tail, throws.map(AstNode::syntax));
+    let end = throws.map_or(HeaderEnd::Tail(tail), |throws| {
+        HeaderEnd::Clauses(vec![throws.syntax()])
+    });
+    let header = header(f, lead, head, end);
     let body = body_after_space(f, node.body().map(AstNode::syntax));
     cat![f; modifiers, header, body]
 }

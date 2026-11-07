@@ -218,11 +218,6 @@ impl<'s, L: Language> Parser<'s, L> {
         self.current() == kind
     }
 
-    #[must_use]
-    pub fn at_set(&self, set: TokenSet) -> bool {
-        set.contains(L::to_raw(self.current()))
-    }
-
     /// Consumes the current token. A no-op at the end of input.
     pub fn bump(&mut self) {
         let Some(token) = self.input.get(self.pos) else {

@@ -4,7 +4,7 @@
 use std::path::Path;
 
 pub use jolt_fmt::{FormatOptions, Sink};
-pub use jolt_syntax::{Diagnostic, LineCol, LineIndex, TextRange, TextSize};
+pub use jolt_syntax::{Diagnostic, LineIndex};
 
 /// A source language Jolt formats.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

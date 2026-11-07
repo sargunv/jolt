@@ -78,7 +78,7 @@ pub fn collect_java_files(root: &Path) -> Vec<PathBuf> {
 }
 
 #[must_use]
-pub fn collect_fixture_files(root: &Path, extensions: &[&str], language: &str) -> Vec<PathBuf> {
+fn collect_fixture_files(root: &Path, extensions: &[&str], language: &str) -> Vec<PathBuf> {
     assert!(
         root.is_dir(),
         "required {language} fixture directory is missing: {}",

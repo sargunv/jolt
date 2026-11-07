@@ -138,7 +138,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
 
     /// `node`'s leading and trailing comments around `body`, which the caller
     /// built from the node's children.
-    pub fn node_with(&mut self, node: SyntaxNode<'a>, body: Doc) -> Doc {
+    fn node_with(&mut self, node: SyntaxNode<'a>, body: Doc) -> Doc {
         let element = SyntaxElement::Node(node);
         if !self.comments.has(element) {
             return body;

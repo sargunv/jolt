@@ -87,9 +87,11 @@ Run `mise tasks ls --all` for the full task list.
 - Formatter rules emit source tokens only through `Formatter::token`, nodes only
   through `Formatter::node`/`fmt`, and comments only through the chokepoints
   (`node`, `token`, `verbatim`, `removed`, `dangling`, and
-  `node_with`/`leading_comments`/`trailing_comments` for spines and
-  normalization wrappers). Rules never choose how a comment prints; comment
-  placement is decided once, before layout, by `jolt_fmt`'s placement pass.
+  `leading_comments`/`trailing_comments` for the rules that build a node's doc
+  themselves: spines, the `else if` chain, N7 parentheses and the declaration
+  header). Rules never choose how a comment prints; comment placement is decided
+  once, before layout, by `jolt_fmt`'s placement pass, and rules ask it
+  (`leading_comments_break` and the other queries) instead of reading trivia.
   Debug builds assert every comment is emitted exactly once.
 - Normalizations are the closed list N1–N10 in `docs/internals/formatter.md`,
   applied only to recovery-free nodes.
