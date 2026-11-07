@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+enum E // c
+, }
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    EnumDeclaration
+      EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+      Identifier "E" @ 5..6 trailing=[Whitespace " ", LineComment "// c"]
+      EnumBody
+        ClassBodyMemberList
+    Bogus
+      Comma "," @ 12..13 leading=[Newline "\n"] trailing=[Whitespace " "]
+      RBrace "}" @ 14..15
+  Eof "" @ 16..16 leading=[Newline "\n"]
+
+diagnostics:
+code=java.parse.expected_syntax range=12..13 message=expected type body
+code=java.parse.unexpected_syntax range=12..13 message=unexpected token at top level

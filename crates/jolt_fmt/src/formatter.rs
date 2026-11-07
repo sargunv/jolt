@@ -223,15 +223,15 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
 
     /// The node's source from its first to its last token, interior comments
     /// included, re-indented relative to the output line it starts on. Text
-    /// blocks (multi-line tokens) are written raw. Then the trailing comments
-    /// of the elements inside the node that end at its last token, which the
-    /// node's own formatting would have printed there; placement attaches
-    /// every other comment outside the node's text outside the node.
+    /// blocks (multi-line tokens) are written raw. Comments attached to
+    /// elements inside the node but lying outside its text (trailing its last
+    /// token, or moved onto its first by S1) print around it, as the node's
+    /// own formatting would have printed them.
     pub fn verbatim(&mut self, node: SyntaxNode<'a>) -> Doc {
         let range = node.text_range();
-        let Some(last) = node.last_token().filter(|_| !range.is_empty()) else {
+        if node.last_token().is_none() || range.is_empty() {
             return Doc::NIL;
-        };
+        }
         for index in self.comments.within(range) {
             self.emitted[index] += 1;
             self.by_verbatim[index] = true;
@@ -256,21 +256,38 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
         let text = &source[cursor.get()..range.end().get()];
         docs.push(piece(self, text, Some(prefix)));
-        let mut trailing = Vec::new();
-        let mut element = SyntaxElement::Token(last);
-        while element != SyntaxElement::Node(node) {
-            trailing.extend(self.comments.attached(element, Side::Trailing));
-            element = SyntaxElement::Node(match element {
-                SyntaxElement::Token(token) => token.parent(),
-                SyntaxElement::Node(child) => child.parent().unwrap_or(node),
-            });
+        // Comments attached inside the node but lying outside its text: the
+        // node's own formatting would have printed them, before or after.
+        let (mut before, mut after) = (Vec::new(), Vec::new());
+        for element in node.descendants().skip(1) {
+            for side in [Side::Leading, Side::Dangling, Side::Trailing] {
+                for index in self.comments.attached(element, side) {
+                    if self.by_verbatim[index] {
+                        continue;
+                    }
+                    if self.comments.list[index].range.start() < range.start() {
+                        before.push(index);
+                    } else {
+                        after.push(index);
+                    }
+                }
+            }
         }
-        trailing.sort_unstable();
-        for index in trailing {
-            let (side, layout) = self.comments.attached[index];
-            docs.push(self.attached_comment(index, side, layout));
-        }
-        self.builder.concat(docs)
+        before.sort_unstable();
+        after.sort_unstable();
+        let edge = |f: &mut Self, indices: Vec<usize>| -> Vec<Doc> {
+            indices
+                .into_iter()
+                .map(|index| {
+                    let (side, layout) = f.comments.attached[index];
+                    f.attached_comment(index, side, layout)
+                })
+                .collect()
+        };
+        let mut all = edge(self, before);
+        all.append(&mut docs);
+        all.append(&mut edge(self, after));
+        self.builder.concat(all)
     }
 
     /// The node's dangling comments, each on its own line (comments that

@@ -284,7 +284,7 @@ fn statement_content<'a>(f: &mut JavaFormatter<'a>, statement: Statement<'a>) ->
 /// c`) would trail the whole statement by the generic rules, so it would
 /// print after the synthesized `}` of brace promotion. It trails the body
 /// instead and stays inside the block, as in the reference.
-pub(crate) fn promoted_body_comment<'a>(context: &CommentContext<'a>) -> Option<Placement<'a>> {
+pub(crate) fn promoted_body_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>> {
     if context.comment.layout != CommentLayout::EndOfLine {
         return None;
     }

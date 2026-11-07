@@ -74,7 +74,7 @@ pub trait FormatLanguage: Sized + 'static {
     fn hugs_next(token: SyntaxToken<'_>) -> bool;
     /// Language exceptions to comment placement, tried before the generic
     /// rules.
-    fn place_comment<'a>(context: &CommentContext<'a>) -> Option<Placement<'a>>;
+    fn place_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>>;
     /// The item-list owner a formatter-ignore marker belongs to, given the
     /// deepest node containing the tokens around it: the owner when the
     /// marker sits between, before or after the items of the owner's list,

@@ -53,14 +53,21 @@ pub enum Placement<'a> {
 }
 
 /// What a language hook sees about one comment.
-pub struct CommentContext<'a> {
+pub struct CommentContext<'a, 'p> {
     pub comment: Comment<'a>,
     pub prev: Option<SyntaxToken<'a>>,
     pub next: SyntaxToken<'a>,
     root: SyntaxNode<'a>,
+    unclosed: &'p BitSet,
 }
 
-impl<'a> CommentContext<'a> {
+impl<'a> CommentContext<'a, '_> {
+    /// [`is_unclosed`], answered from a set computed once per tree.
+    #[must_use]
+    pub fn is_unclosed(&self, open: SyntaxToken<'_>) -> bool {
+        self.unclosed.contains(open.id().index())
+    }
+
     /// The deepest node containing both `prev` and `next` (the root when
     /// there is no `prev`).
     #[must_use]
@@ -91,17 +98,51 @@ pub(crate) fn enclosing<'a>(
 }
 
 /// `open` opens a region of its parent whose closer is missing (recovery):
-/// no token of kind `L::closer_for(open)` follows it in its parent.
+/// no token of kind `L::closer_for(open)` follows it in its parent. Linear in
+/// the parent's children; comment placement uses the per-tree set instead.
 #[must_use]
 pub fn is_unclosed<L: FormatLanguage>(open: SyntaxToken<'_>) -> bool {
-    let parent = open.parent();
-    L::closer_for(open).is_some_and(|closer| {
-        !parent.is_recovery_free()
-            && !parent
-                .children()
-                .filter_map(SyntaxElement::as_token)
-                .any(|token| token.kind() == closer && token.id() > open.id())
-    })
+    let mut unclosed = false;
+    for_each_unclosed::<L>(open.parent(), |token| unclosed |= token == open);
+    unclosed
+}
+
+/// Every opener under `root` that [`is_unclosed`], in one linear pass.
+fn unclosed_openers<L: FormatLanguage>(root: SyntaxNode<'_>) -> BitSet {
+    let mut unclosed = BitSet::new(root.tree().token_count());
+    if !root.is_recovery_free() {
+        for element in root.descendants() {
+            if let SyntaxElement::Node(node) = element {
+                for_each_unclosed::<L>(node, |token| unclosed.insert(token.id().index()));
+            }
+        }
+    }
+    unclosed
+}
+
+/// Calls `f` with each opener among `node`'s child tokens that no token of
+/// its closer's kind follows. None in a recovery-free node.
+fn for_each_unclosed<'a, L: FormatLanguage>(
+    node: SyntaxNode<'a>,
+    mut f: impl FnMut(SyntaxToken<'a>),
+) {
+    if node.is_recovery_free() {
+        return;
+    }
+    let tokens: Vec<_> = node
+        .children()
+        .filter_map(SyntaxElement::as_token)
+        .collect();
+    // Kinds seen after the current token; at most one entry per kind.
+    let mut seen = Vec::new();
+    for token in tokens.into_iter().rev() {
+        if L::closer_for(token).is_some_and(|closer| !seen.contains(&closer)) {
+            f(token);
+        }
+        if !seen.contains(&token.kind()) {
+            seen.push(token.kind());
+        }
+    }
 }
 
 /// The outermost element other than the root that begins at `token`, never a
@@ -307,8 +348,8 @@ impl<'a> Collector<'a> {
     }
 }
 
-/// Classifies and places every comment under `root`.
-pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a> {
+/// Every comment under `root` with the tokens around it, in source order.
+fn collect(root: SyntaxNode<'_>) -> Collector<'_> {
     let mut collector = Collector {
         list: Vec::new(),
         prev: Vec::new(),
@@ -329,12 +370,17 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
         prev = Some(token);
     }
     collector.close();
+    collector
+}
+
+/// Classifies and places every comment under `root`.
+pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a> {
     let Collector {
         mut list,
         prev,
         next,
         ..
-    } = collector;
+    } = collect(root);
 
     classify_layouts::<L::Syntax>(&mut list, &prev, &next);
 
@@ -344,12 +390,14 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
     let mut previous: Option<(Placement<'a>, SyntaxToken<'a>)> = None;
     let mut nodes = BitSet::new(tree.node_count());
     let mut tokens = BitSet::new(tree.token_count());
+    let unclosed = unclosed_openers::<L>(root);
     for index in 0..list.len() {
         let context = CommentContext {
             comment: list[index],
             prev: prev[index],
             next: next[index],
             root,
+            unclosed: &unclosed,
         };
         let last_before_next = next.get(index + 1) != Some(&next[index]);
         let first_in_gap = index == 0 || next[index - 1] != next[index];
@@ -457,7 +505,7 @@ fn classify_layouts<L: Language>(
 }
 
 fn generic_placement<'a, L: FormatLanguage>(
-    context: &CommentContext<'a>,
+    context: &CommentContext<'a, '_>,
     first_in_gap: bool,
     last_before_next: bool,
 ) -> Placement<'a> {
@@ -481,7 +529,7 @@ fn generic_placement<'a, L: FormatLanguage>(
         if next.kind() == closer && next.parent() == prev.parent() {
             return Placement::Dangling(prev.parent());
         }
-        opens_region = !is_unclosed::<L>(prev);
+        opens_region = !context.is_unclosed(prev);
         // G2: an end-of-line comment right after an opener starts the inside
         // (also when only the end of the file follows an unclosed opener).
         let eof = next.kind() == <L::Syntax as Language>::to_raw(<L::Syntax as Language>::EOF);
@@ -522,7 +570,7 @@ fn generic_placement<'a, L: FormatLanguage>(
     }
 }
 
-fn debug_assert_hook_placement(context: &CommentContext<'_>, placement: Placement<'_>) {
+fn debug_assert_hook_placement(context: &CommentContext<'_, '_>, placement: Placement<'_>) {
     if !cfg!(debug_assertions) {
         return;
     }

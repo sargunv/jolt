@@ -3,7 +3,7 @@
 
 use jolt_fmt::{
     CommentContext, CommentKind, CommentLayout, Doc, FormatLanguage, Formatter, Placement,
-    is_unclosed, leading_target, trailing_target,
+    leading_target, trailing_target,
 };
 use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind as K, is_assignment_operator};
 use jolt_syntax::{RawSyntaxKind, SyntaxElement, SyntaxNode, SyntaxToken};
@@ -86,7 +86,7 @@ impl FormatLanguage for JavaFormat {
         Self::closer_for(token).is_some() || matches!(kind(token), K::Dot | K::DoubleColon | K::At)
     }
 
-    fn place_comment<'a>(context: &CommentContext<'a>) -> Option<Placement<'a>> {
+    fn place_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>> {
         let prev = context.prev?;
         control_body_comment(context, prev)
             .or_else(|| crate::rules::statements::promoted_body_comment(context))
@@ -132,7 +132,7 @@ fn next_sibling<'a>(
 /// H1: a comment between a control header and its body moves to the first
 /// line of the body.
 fn control_body_comment<'a>(
-    context: &CommentContext<'a>,
+    context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let comment = context.comment;
@@ -201,7 +201,7 @@ fn control_body_comment<'a>(
 /// H3: a comment on its own line before a body's `{` that follows a header
 /// moves onto the header line.
 fn comment_before_body_brace<'a>(
-    context: &CommentContext<'a>,
+    context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let next = context.next;
@@ -256,7 +256,7 @@ fn comment_before_body_brace<'a>(
 /// pass (reading it as inline) puts it, so a long declaration breaks the same
 /// way on both passes.
 fn block_comment_after_opener<'a>(
-    context: &CommentContext<'a>,
+    context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let comment = context.comment;
@@ -270,7 +270,7 @@ fn block_comment_after_opener<'a>(
     // Without the closer or the value (recovery), what follows belongs to an
     // enclosing node, and the comment stays where the generic rules put it.
     let inside = || match JavaFormat::closer_for(prev) {
-        Some(_) => !is_unclosed::<JavaFormat>(prev),
+        Some(_) => !context.is_unclosed(prev),
         None => prev
             .parent()
             .last_token()
