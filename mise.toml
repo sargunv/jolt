@@ -1,13 +1,13 @@
 [settings]
 experimental = true
 pin = true
-install_before = "3d"
+minimum_release_age = "3d"
 lockfile = true
 
 [tools]
 "aqua:dprint/dprint" = "0.54.0"
 "aqua:WebAssembly/binaryen" = "130"
-"aqua:jdx/hk" = "1.48.0"
+"aqua:jdx/hk" = "2.11.1"
 "core:java" = "zulu-25.34.17.0"
 "core:python" = "3.14.5"
 "core:rust" = { version = "1.96.0", profile = "minimal", components = "rustfmt,clippy,llvm-tools", targets = "wasm32-unknown-unknown" }

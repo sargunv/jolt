@@ -1,7 +1,7 @@
-amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Builtins.pkl"
+amends "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Builtins.pkl"
 
-local lintSteps = new Mapping<String, Step> {
+steps {
     ["cargo-check"] {
         glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
         check = "cargo check --workspace"
@@ -24,17 +24,3 @@ local lintSteps = new Mapping<String, Step> {
     }
 }
 
-hooks {
-    ["pre-commit"] {
-        fix = true
-        stash = "git"
-        steps = lintSteps
-    }
-    ["fix"] {
-        fix = true
-        steps = lintSteps
-    }
-    ["check"] {
-        steps = lintSteps
-    }
-}
