@@ -1,7 +1,6 @@
 //! Replays the sweep for the files on the command line, or one variant with
 //! `<path>:<variant>` (e.g. `Foo.java:ownline12`, `Foo.java:comment3@40`,
-//! `Foo.java:delete7`), printing the variant's source and every failure
-//! (`--mutate` adds the deletions to a whole-file check). Run
+//! `Foo.java:delete7`), printing the variant's source and every failure. Run
 //! with `cargo run --release -p jolt_java_fmt --example jcheck -- <args>`.
 
 use std::fs;
@@ -29,8 +28,7 @@ fn depth_of(path: &Path) -> Depth {
 fn main() {
     std::panic::set_hook(Box::new(|_| {}));
     let mut any = false;
-    let mutate = std::env::args().any(|arg| arg == "--mutate");
-    for arg in std::env::args().skip(1).filter(|arg| arg != "--mutate") {
+    for arg in std::env::args().skip(1) {
         let replay = arg
             .rsplit_once(':')
             .and_then(|(file, label)| Variant::parse(label).map(|variant| (file, variant)));
@@ -53,9 +51,7 @@ fn main() {
             let path = PathBuf::from(&arg);
             let source = fs::read_to_string(&path).expect("read input");
             let depth = depth_of(&path);
-            catching(&path, || {
-                sweep_source(&common::JavaCorpus, &source, depth, mutate)
-            })
+            catching(&path, || sweep_source(&common::JavaCorpus, &source, depth))
         };
         for failure in failures {
             any = true;

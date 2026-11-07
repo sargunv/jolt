@@ -82,7 +82,7 @@ class RecoveredStatements {
       call() /* resource-invalid-access */
     ) {}
     try (
-      var malformed = /* resource-trailing */;
+      var malformed = /* resource-trailing */ ;
     ) {}
     try {} catch (Exception exception /* catch-dimension */ []) {}
   }

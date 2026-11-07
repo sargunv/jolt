@@ -312,8 +312,9 @@ impl<'s, L: Language> Parser<'s, L> {
     /// method that forwards here).
     pub fn nested<P: AsMut<Self>, T>(parser: &mut P, parse: impl FnOnce(&mut P) -> T) -> Option<T>;
     /// Bumps tokens up to EOF or, outside the brackets the skipped tokens
-    /// open, a token `stop` accepts. Expression recovery stops at `}` this
-    /// way, so it never swallows the closer of an enclosing block.
+    /// open, a token `stop` accepts. Expression recovery stops at `;` and
+    /// `}` this way, so it never swallows the end of an enclosing statement
+    /// or block.
     pub fn skip_balanced(&mut self, stop: impl Fn(L::Kind) -> bool);
     /// The one deep-nesting recovery. Records a "too deeply nested"
     /// diagnostic and wraps tokens into a single `BOGUS` node until, at
@@ -542,6 +543,14 @@ precedence by token kind, contextual keyword tests, modifier partitioning
   type: `> , ) ] {` plus the `>` compounds; body member: `}`). This single
   function replaces all 13 `parse_excessive_*` functions and their bespoke
   shapes; the result is always one `Bogus` node at a category or list position.
+- No expression contains a `;` or `}` outside the brackets it opened, so
+  expression recovery (`parse_expression_until`) stops at either, and so do the
+  element loops of argument, parameter, annotation-argument and
+  array-initializer lists: an unclosed list ends where its statement, header or
+  body does, with a missing closer, and the next statement parses normally
+  (`f(;` / `g();` is two statements, not one `Bogus` argument that runs to the
+  block's `}`). A parameter list also ends at `{`. A type-body member that is
+  not one (`consume_body_member_fragment`) ends after a `;` or a braced body.
 - Recovery has exactly three representations: an empty required slot (missing),
   a `Bogus` node at a category or list position (unexpected tokens), and a
   `MALFORMED` node whose children did not fit its shape. There is no other.
@@ -828,9 +837,17 @@ node is a list, the target is instead its child on the path to `next` (repeated
 while that child is a list too). `trailing_target(prev)` is the same with last
 tokens. So a comment attaches to the outermost element that begins (or ends) at
 the adjacent token, never to a list (always to its item, so a member's Javadoc
-leads the member, not its `ModifierList`), and never past an adjacent token.
-Comments therefore never move across a token, except by S1 (past `,`/`;`) and
-hook H1 (into a control statement's body).
+leads the member, not its `ModifierList`), and never past an adjacent token. One
+exception keeps a comment next to its token in a recovered tree: the trailing
+walk does not enter a node that has recovery, is missing its last piece (an
+empty last slot, or a last child without tokens), and does not begin at the
+token. That node's layout may put a line for the missing piece (`x =` with no
+value prints `x =`, a line, nothing), and the comment, printed after the node,
+would land past it and read differently on the next pass. A node that begins at
+the token is entered anyway, so a comment before it (S1) never attaches inside
+it. Recovery-free trees are unaffected. Comments therefore never move across a
+token, except by S1 (past `,`/`;`) and hook H1 (into a control statement's
+body).
 
 Rules, first match wins:
 
@@ -838,14 +855,19 @@ Rules, first match wins:
 2. **G1, empty delimited region.** `prev` opens a region (`closer_for(prev)` is
    `Some`) and `next` is its matching closer (same parent, kind
    `closer_for(prev)`): `Dangling(prev.parent())`. An opener whose closer is
-   missing gets no special treatment: the comment falls through to the rules
-   below, and attaches to `next` (often `Eof`) outside the unclosed node, which
-   is stable and never hides a comment inside a node printed verbatim.
-3. **G2, end-of-line after an opener.** `prev` opens a region, the layout is
-   `EndOfLine`, and no other comment lies between `prev` and this comment:
+   missing (`is_unclosed::<L>(prev)`: no token of kind `closer_for(prev)` after
+   it in its parent, which layouts ask too) gets no special treatment here or in
+   G2 and the `Inline` default: the comment falls through to the rules below and
+   attaches by its neighbours, often `Eof`, outside the unclosed node, which is
+   stable and never hides a comment inside a node printed verbatim.
+3. **G2, end-of-line after an opener.** `prev` opens a region whose closer is
+   present, or only `Eof` follows, the layout is `EndOfLine`, and no other
+   comment lies between `prev` and this comment:
    `Leading(leading_target(next), OwnLine)`.
-4. **G3, own-line before a closer.** `next` is a closer (`is_closer`) and the
-   layout is `OwnLine` or `StartOfLine`: `Dangling(next.parent())`.
+4. **G3, own-line before a closer.** `next` is a closer (`is_closer`) that does
+   not begin its parent (a stray `}` is a `Bogus` of its own, and a comment
+   before it leads it), and the layout is `OwnLine` or `StartOfLine`:
+   `Dangling(next.parent())`. So a dangling comment always lies inside its node.
 5. **S1, end-of-line before a separator.** The comment is a line comment, the
    layout is `EndOfLine`, `next` is a separator (`is_separator`), `prev` is not
    one, and no other comment lies between this comment and `next`:
@@ -861,10 +883,13 @@ Rules, first match wins:
 6. Defaults: `OwnLine`/`StartOfLine` → `Leading(leading_target(next), layout)`;
    `EndOfLine` → `Trailing(trailing_target(prev), EndOfLine)`; `Inline` →
    `Trailing(trailing_target(prev), Inline)` if `next` is a closer or a
-   separator and `prev` is not an opener, else
+   separator and `prev` does not open a region whose closer is present, else
    `Leading(leading_target(next), Inline)`. (`EndOfLine` and `Inline` imply a
    `prev`.) The opener exception keeps `{/* c */;}` stable: the `;` may be
    removed, and a comment trailing the `{` would then be alone in the region.
+   After an unclosed opener the closer that follows belongs to an enclosing node
+   and starts its own line (`@A( /* c */ }`), so the comment trails the opener,
+   as it does on the next pass as an `EndOfLine` comment.
 
 Two rules then keep the comments of one gap in order, whatever the rules above
 chose:
@@ -994,6 +1019,12 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// their own layouts, without the element's text. For tokens or nodes a
     /// normalization removes. Returns NIL when there are none.
     pub fn removed(&mut self, element: SyntaxElement<'a>) -> Doc;
+    /// `removed`, printed like dangling comments (each on its own line, except
+    /// that comments that shared a source line share it), for the comments of
+    /// a removed element that a rule moves to lines of their own (an enum's
+    /// removed trailing comma, N5): the next pass reads them as own-line
+    /// comments, so they must print, and expand, as those do.
+    pub fn removed_on_own_lines(&mut self, element: SyntaxElement<'a>) -> Doc;
     /// The node's source from its first token's text to its last token's
     /// text, interior comments included and marked emitted, as
     /// `reindented(slice, Reindent::Strip(p))` where `p` is the indentation of
@@ -1001,7 +1032,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// emitted as raw `text` pieces between the reindented pieces, so their
     /// content never changes. Re-indenting relative to the output line (not
     /// the document indent) is what makes verbatim output a fixpoint even when
-    /// the node starts mid-line inside an `indent`.
+    /// the node starts mid-line inside an `indent`. After the slice come the
+    /// trailing comments of the elements inside the node that end at its last
+    /// token (see "Verbatim edges" below).
     pub fn verbatim(&mut self, node: SyntaxNode<'a>) -> Doc;
     /// The node's dangling comments, each on its own line (`empty_line`
     /// between two when the source had a blank line, `space` when they shared
@@ -1108,24 +1141,34 @@ per item, and finding a marker's list walks its ancestors once. Nested lists
 inside a verbatim item are never visited; nested lists inside a formatted item
 apply the same test to their own items.
 
-Two refinements make verbatim robust for formatter-ignore items and malformed
-nodes. First, `verbatim` also prints the comments attached to the descendants
-that begin or end at the node's first or last token (a list's first item's
-leading comments lie before the list), so a verbatim list never loses them.
-Second, a comment inside the slice can be attached outside the node by S1
-(`return x // c` `;` with a verbatim `return`): verbatim marks the comments it
-prints, and attachment printing skips a comment verbatim already printed. Every
-verbatim piece of one node re-indents against the indentation of the output line
-the node starts on (recorded at its first text), also after a text block.
-
 Malformed nodes use the same `verbatim`: `node()` on a malformed node is
-`node_with(node, verbatim(node))`. Verbatim output covers exactly the comments
-strictly between the node's first and last token; placement never attaches those
-to anything outside the node (every target rule picks a node that begins or ends
-at an adjacent token, and G1 needs the closer to be present), and attaches a
-comment outside that range to something inside it only through H1, which
-requires the body it targets not to be malformed. So nothing is lost or
-duplicated at the boundary (#224).
+`node_with(node, verbatim(node))`.
+
+**Verbatim edges.** A verbatim node prints the comments in its text, and
+placement attaches every comment outside its text to the node, an ancestor, or
+an element outside it, so the normal leading and trailing path prints it. Every
+target rule picks the outermost element that begins or ends at an adjacent
+token, which is the verbatim node or an ancestor when the token is the node's
+first or last; G1 needs the closer, so its region lies inside one node; G3 needs
+the closer not to begin its node, so a dangling comment lies inside its node;
+and H1 requires the body it targets not to be malformed. The exceptions are at
+the node's last token only: H4 attaches an end-of-line comment to an unbraced
+control body, which may end a formatter-ignore item, and the trailing walk's
+recovery exception can stop below a node that ends there. Those comments trail
+an element inside the node that ends at its last token, so `verbatim` prints
+them right after its slice, formatted as that element's trailing comments, which
+is what formatting the element would have printed at that point; it finds them
+by walking from the last token up to the node. Verbatim marks the comments of
+its slice, and attachment printing skips a comment verbatim already printed,
+which covers a comment inside the slice that S1 attached outside the node
+(`return x // c` `;` with a verbatim `return`). Every verbatim piece of one node
+re-indents against the indentation of the output line the node starts on
+(recorded at its first text), also after a text block. So nothing is lost or
+duplicated at the boundary (#224). (Before, verbatim walked every descendant and
+printed each comment attached to one outside the node's text around the slice,
+turning a dangling comment into a leading or trailing one, which the next pass
+placed differently. G3 no longer dangles a comment in a node it lies outside, so
+only the trailing edge remains.)
 
 ### Emission check
 
@@ -1251,7 +1294,12 @@ rules. "Header end" below means the `)` closing the header of `if`, `while`,
   token, as in the reference (`run( /* d */` / `a)` prints `run(/* d */ a)`),
   and is where the next pass, reading it as inline, puts it (after `=` it is
   part of the value, so a long declaration breaks the same way on both passes;
-  Java style C14). G2 still moves it to its own line after `{`.
+  Java style C14). G2 still moves it to its own line after `{`. H5 needs what
+  follows to be inside: the opener's closer is present, or the operator's node
+  extends past the comment. Otherwise (`x = /* c */` / `}` with the value
+  missing) `next` belongs to an enclosing node, and the comment trails the
+  operator by the generic rules, as it does when it is `Inline`
+  (`x = /* c */;`).
 
 Anything else that looks like it needs a hook should first be checked against
 the generic rules; a new hook requires a fixture and an entry here.
@@ -1281,7 +1329,10 @@ pub(crate) struct ListLayout {
 /// `blank_line_before_dangling(owner)`. Represented separators go through
 /// `token`, synthesized ones through `sticky`; `Missing` elements print
 /// nothing. Comma-separated lists only: a resource specification (`;`,
-/// always broken) is laid out by Area B itself.
+/// always broken) is laid out by Area B itself. When `open` has no closer
+/// (`jolt_fmt::is_unclosed`, recovery), no line is put where the closer would
+/// go, so what follows continues after the last element, where the source has
+/// it (`parenthesized` and the resource specification do the same).
 pub(crate) fn delimited<'a, T: AstNode<'a>>(
     f: &mut JavaFormatter<'a>,
     owner: SyntaxNode<'a>,
@@ -1300,6 +1351,13 @@ pub(crate) fn enclosed<'a>(
     delimiters: (Option<SyntaxToken<'a>>, Option<SyntaxToken<'a>>),
     inner: Doc,
     indent_inner: bool,
+) -> Doc;
+/// A list's elements, each separator followed by a line kind of the caller's
+/// choice, except a trailing separator (recovery), which separates nothing.
+pub(crate) fn joined<'a, T: AstNode<'a>>(
+    f: &mut JavaFormatter<'a>,
+    elements: impl IntoIterator<Item = ListElement<'a, T>>,
+    after: fn(&JavaFormatter<'a>) -> Doc,
 ) -> Doc;
 /// One list element: the item with `fmt`, a bogus node with `node`.
 pub(crate) fn list_item<'a, T: AstNode<'a>>(
@@ -1385,9 +1443,12 @@ Comment-driven layout rules that a single area owns:
 
 ### Normalizations
 
-Normalizations apply only when the owning node `is_recovery_free()`. Removed
-tokens print their comments through `removed`. The structure fingerprint
-(`jolt_java_fmt/tests/common`) ignores exactly these changes.
+Normalizations apply only when the owning node `is_recovery_free()`; for N5 in a
+body or switch group, that is the body or group, so a body with an error keeps
+its stray `;`s (an unclosed body that dropped one would move its comments out of
+the body on the next pass). Removed tokens print their comments through
+`removed`. The structure fingerprint (`jolt_java_fmt/tests/common`) ignores
+exactly these changes.
 
 | #   | Normalization                                  | Where                                                                                                                                                                                       | Extra condition                                                                                                                                                                                                     |
 | --- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1538,9 +1599,9 @@ For an input `S` and output `F = format(S)`:
   and `tools/import/.imports` with the oracle at three widths and the four
   comment probe shapes: every boundary at every width for the fixtures and the
   gjf, palantir and prettier inputs up to 4 KiB, sampled boundaries at width 80
-  for larger files and Spring. `KNOWN_OPEN` must be empty. `--mutate` also
-  deletes each token of those small files in turn (the oracle's token check
-  catches code loss); that recovery stress test is outside the gate.
+  for larger files and Spring. It also deletes each token of those small files
+  in turn (the oracle's token check catches code loss), which stresses parser
+  recovery and the formatting of recovered trees. `KNOWN_OPEN` must be empty.
 - `examples/jcheck.rs`: replays one file or one variant (`File.java:ownline12`,
   `File.java:comment3@40`, `File.java:delete7`).
 - `examples/jref.rs` (new): `jref <dir>` checks `format(F) == F` for every
@@ -1647,8 +1708,9 @@ This design keeps every invariant in `AGENTS.md` and makes these precise:
   themselves: spines, the `else if` chain, N7 parentheses and the declaration
   header). Rules never choose how a comment prints.
 - "Verbatim formatting must track every contained token and comment": verbatim
-  covers exactly the comments strictly inside the node, and the emission check
-  verifies every comment is emitted once.
+  covers exactly the comments strictly inside the node and the trailing comments
+  of its elements at its last token, and the emission check verifies every
+  comment is emitted once.
 - Normalizations are the closed list N1–N10, gated on `is_recovery_free()`.
 
 ## Decisions

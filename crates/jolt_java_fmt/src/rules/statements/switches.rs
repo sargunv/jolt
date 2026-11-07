@@ -102,7 +102,7 @@ pub(crate) fn switch_block_statement_group<'a>(
         label_count += 1;
     }
     let labels = f.concat(labels);
-    let mut statements = statement_items(node.statements());
+    let mut statements = statement_items(node.syntax(), node.statements());
     // N5 keeps one `;` of a group that has nothing else when another group
     // follows: removing it would merge the labels into that group.
     let last = node

@@ -7,8 +7,8 @@ class C { List<? extends /* bound */> a; List<@A /* arg */> b; }
 
 formatted:
 class C {
-  List<? extends /* bound */> a;
-  List<@A /* arg */> b;
+  List<? extends /* bound */ > a;
+  List<@A /* arg */ > b;
 }
 
 diagnostics:

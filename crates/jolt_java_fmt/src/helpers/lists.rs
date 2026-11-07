@@ -1,9 +1,9 @@
 //! Delimited comma lists.
 
-use jolt_fmt::{Doc, cat, group, indent};
+use jolt_fmt::{Doc, cat, group, indent, is_unclosed};
 use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
-use crate::JavaFormatter;
+use crate::{JavaFormat, JavaFormatter};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum TrailingComma {
@@ -86,6 +86,7 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     }
     let items = f.concat(docs);
     let inner = f.with_dangling(owner, items);
+    let before_close = before_closer(f, open, layout.padded);
     let open = f.token_opt(open);
     let close = f.token_opt(close);
     if inner.is_nil() {
@@ -98,8 +99,21 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     };
     let inner = cat![f; line, inner];
     let inner = f.indent(inner);
-    let list = cat![f; open, inner, line, close];
+    let list = cat![f; open, inner, before_close, close];
     f.group(list)
+}
+
+/// The line that puts the closer on its own line when the list breaks, or
+/// nothing when it is missing (recovery): what follows then continues after
+/// the last element, where the source has it.
+fn before_closer<'a>(f: &JavaFormatter<'a>, open: Option<SyntaxToken<'a>>, padded: bool) -> Doc {
+    if open.is_some_and(is_unclosed::<JavaFormat>) {
+        Doc::NIL
+    } else if padded {
+        f.line()
+    } else {
+        f.soft_line()
+    }
 }
 
 /// `open inner close` for a node with one inner element (brackets, casts):
@@ -136,11 +150,12 @@ pub(crate) fn parenthesized<'a>(
     inner: Doc,
     close: Option<SyntaxToken<'a>>,
 ) -> Doc {
+    let before_close = before_closer(f, open, false);
     let open = f.token_opt(open);
     let inner = f.with_dangling(owner, inner);
     let inner = indent![f; f.soft_line(), inner];
     let close = f.token_opt(close);
-    group![f; open, inner, f.soft_line(), close]
+    group![f; open, inner, before_close, close]
 }
 
 /// One item of a list: the item, or a bogus node in its place.
@@ -156,18 +171,23 @@ pub(crate) fn list_item<'a, T: AstNode<'a>>(
     }
 }
 
-/// A list's elements in order, each separator followed by `after` (`space`,
-/// `line`, `hard_line`, or NIL to join directly).
+/// A list's elements in order, each separator that an element follows
+/// followed by `after` (`space`, `line`, `hard_line`, or NIL to join
+/// directly). A trailing separator (recovery) has nothing to separate.
 pub(crate) fn joined<'a, T: AstNode<'a>>(
     f: &mut JavaFormatter<'a>,
     elements: impl IntoIterator<Item = ListElement<'a, T>>,
     after: fn(&JavaFormatter<'a>) -> Doc,
 ) -> Doc {
+    let mut elements = elements
+        .into_iter()
+        .filter(|element| !matches!(element, ListElement::Missing))
+        .peekable();
     let mut docs = Vec::new();
-    for element in elements {
+    while let Some(element) = elements.next() {
         let separator = matches!(element, ListElement::Separator(_));
         docs.push(list_item(f, element));
-        if separator {
+        if separator && elements.peek().is_some() {
             docs.push(after(f));
         }
     }

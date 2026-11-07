@@ -656,6 +656,15 @@ anyway. When formatting them, every represented piece is formatted structurally;
 each syntax-error node prints exactly as written (shifted like a
 formatter-ignore item). No token is added to repair the code and none is lost.
 
+- An unclosed list or header ends where its statement or body does: `f(;`
+  followed by `g();` keeps `g();` a statement of its own.
+- Nothing is printed where a missing closer would go, so what follows continues
+  on the line of the last element, as in the source; a trailing separator
+  (`throws E,`) gets no line after it either.
+- A comment after a token that ends a piece with something missing (`x =` with
+  no value) stays right after that token.
+- Stray `;`s are kept in a body or switch group with an error.
+
 ## Deliberate changes
 
 These are the only intended differences from the reference. Each is visible in

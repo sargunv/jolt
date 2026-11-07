@@ -304,7 +304,7 @@ impl Parser<'_> {
         let arguments = self.start();
         self.parse_comma_separated(
             "expected annotation argument",
-            move |parser| parser.at(stop),
+            move |parser| parser.at_expression_list_close(stop),
             move |parser| {
                 if parser.at(JavaSyntaxKind::Comma) {
                     let bogus = parser.start();
@@ -347,7 +347,7 @@ impl Parser<'_> {
             self.bump();
             let values = self.start();
             let mut guard = self.loop_guard();
-            while !self.at(JavaSyntaxKind::RBrace) && self.check(&mut guard) {
+            while !self.at_expression_list_close(JavaSyntaxKind::RBrace) && self.check(&mut guard) {
                 self.parse_annotation_element_value(JavaSyntaxKind::RBrace);
                 self.eat(JavaSyntaxKind::Comma);
             }

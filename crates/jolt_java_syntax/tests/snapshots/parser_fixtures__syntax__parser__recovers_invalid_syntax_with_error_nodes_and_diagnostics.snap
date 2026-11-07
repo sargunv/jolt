@@ -24,11 +24,6 @@ CompilationUnit
             Identifier "method" @ 24..30
             LParen "(" @ 30..31 trailing=[Whitespace " "]
             FormalParameterList
-              FormalParameter
-                ParameterModifierList
-                Bogus
-                  AnnotationList
-                AnnotationList
             Block
               LBrace "{" @ 32..33
               BlockStatementList
@@ -50,7 +45,5 @@ CompilationUnit
   Eof "" @ 64..64 leading=[Newline "\n"]
 
 diagnostics:
-code=java.parse.expected_syntax range=32..33 message=expected type
-code=java.parse.expected_syntax range=32..33 message=expected parameter name
 code=java.parse.expected_syntax range=32..33 message=expected `)` after parameters
 code=java.parse.expected_syntax range=54..55 message=expected expression

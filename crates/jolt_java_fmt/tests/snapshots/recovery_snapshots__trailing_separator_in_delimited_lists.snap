@@ -46,7 +46,7 @@ class TrailingSeparatorInDelimitedLists<T,> {
   void throwsClause() throws E, {}
 
   void forUpdate() {
-    for (int i = 0; ; i++, ) {}
+    for (int i = 0; ; i++,) {}
   }
 
   void recordPattern(Object o) {

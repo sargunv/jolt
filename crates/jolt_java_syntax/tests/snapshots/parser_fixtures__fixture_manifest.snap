@@ -312,6 +312,7 @@ syntax/recovery/recovered-declaration-names-and-modifiers.java
 syntax/recovery/recovery-boundary-program.java
 syntax/recovery/recovery-boundary-spacing.java
 syntax/recovery/resource-and-catch-lists.java
+syntax/recovery/separator-comment-before-bogus.java
 syntax/recovery/statements.java
 syntax/recovery/switch-and-module-lists.java
 syntax/recovery/switch-block-unowned-tokens.java
@@ -320,8 +321,10 @@ syntax/recovery/switch-statement-group.java
 syntax/recovery/top-level-empty-declaration-comments.java
 syntax/recovery/trailing-separator-in-delimited-lists.java
 syntax/recovery/type-annotation-and-parameter-lists.java
+syntax/recovery/unclosed-lists.java
 syntax/recovery/unterminated-comment.java
 syntax/recovery/unterminated-doc-comment.java
 syntax/recovery/unterminated-text-block-at-eof.java
 syntax/recovery/variable-declarators.java
+syntax/recovery/verbatim-edge-comments.java
 syntax/recovery/wildcard-bounds-and-type-argument-annotations.java

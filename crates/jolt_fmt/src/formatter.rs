@@ -163,12 +163,16 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         cat![self; before, after]
     }
 
-    /// `removed`, split into the trailing comments that sit before the
-    /// element in the source (moved onto it by S1, so they end the previous
-    /// line) and the rest, and whether the source has a blank line after the
-    /// last comment (which, with the element gone, separates the comments
-    /// from what follows).
-    fn removed_parts(&mut self, element: SyntaxElement<'a>) -> (Doc, Doc, bool) {
+    /// `removed`, for comments a normalization moves to lines of their own
+    /// (the comments of an enum's removed trailing comma): printed like
+    /// dangling comments, which is how the next pass reads them.
+    pub fn removed_on_own_lines(&mut self, element: SyntaxElement<'a>) -> Doc {
+        let indices = self.removed_indices(element);
+        self.own_lines(&indices)
+    }
+
+    /// The comments attached to or inside `element`, in source order.
+    fn removed_indices(&self, element: SyntaxElement<'a>) -> Vec<usize> {
         let mut indices: Vec<usize> = self
             .comments
             .attached(element, Side::Leading)
@@ -178,6 +182,16 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             indices.extend(self.comments.within(node.text_range()));
         }
         indices.sort_unstable();
+        indices
+    }
+
+    /// `removed`, split into the trailing comments that sit before the
+    /// element in the source (moved onto it by S1, so they end the previous
+    /// line) and the rest, and whether the source has a blank line after the
+    /// last comment (which, with the element gone, separates the comments
+    /// from what follows).
+    fn removed_parts(&mut self, element: SyntaxElement<'a>) -> (Doc, Doc, bool) {
+        let indices = self.removed_indices(element);
         let start = element.text_range().start();
         let mut before = Vec::new();
         let mut after = Vec::new();
@@ -209,29 +223,29 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
 
     /// The node's source from its first to its last token, interior comments
     /// included, re-indented relative to the output line it starts on. Text
-    /// blocks (multi-line tokens) are written raw. Comments attached inside
-    /// the node but outside its text (to an empty descendant, to an item that
-    /// begins or ends it, or dangling in it) print before or after it.
+    /// blocks (multi-line tokens) are written raw. Comments attached to
+    /// elements inside the node but lying outside its text (trailing its last
+    /// token, or moved onto its first by S1) print around it, as the node's
+    /// own formatting would have printed them.
     pub fn verbatim(&mut self, node: SyntaxNode<'a>) -> Doc {
         let range = node.text_range();
-        let inside = self.comments.within(range);
-        for index in inside.clone() {
+        if node.last_token().is_none() || range.is_empty() {
+            return Doc::NIL;
+        }
+        for index in self.comments.within(range) {
             self.emitted[index] += 1;
             self.by_verbatim[index] = true;
         }
-        let (leading, trailing) = self.outside_comments(node, range, inside);
-        if range.is_empty() {
-            return cat![self; leading, trailing];
-        }
         let source = node.source();
         let prefix = line_indentation(source, range.start());
-        let mut docs = vec![leading];
+        let mut docs = Vec::new();
         let mut cursor = range.start();
         let mut started = false;
         let mut piece = |f: &mut Self, text: &'a str, prefix: Option<&'a str>| {
-            let doc = f.verbatim_text(text, prefix, !started);
-            started |= !doc.is_nil();
-            doc
+            let flags = if started { 0 } else { VERBATIM_START };
+            started |= !text.is_empty();
+            f.builder
+                .text_with(text, prefix.map(Reindent::Strip), flags)
         };
         for token in node.tokens().filter(|token| has_line_break(token.text())) {
             let token_range = token.text_range();
@@ -242,65 +256,38 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
         let text = &source[cursor.get()..range.end().get()];
         docs.push(piece(self, text, Some(prefix)));
-        docs.push(trailing);
-        self.builder.concat(docs)
-    }
-
-    /// The comments attached to `node`'s descendants (and dangling in
-    /// `node`) that lie outside its text `range`, split into those before and
-    /// after it. `node`'s own leading and trailing comments are left to
-    /// `node_with`.
-    fn outside_comments(
-        &mut self,
-        node: SyntaxNode<'a>,
-        range: TextRange,
-        inside: std::ops::Range<usize>,
-    ) -> (Doc, Doc) {
-        let mut indices = Vec::new();
-        for element in node.descendants() {
-            if !self.comments.has(element) {
-                continue;
-            }
-            let own = element == SyntaxElement::Node(node);
-            for side in [Side::Leading, Side::Trailing, Side::Dangling] {
-                if own && side != Side::Dangling {
-                    continue;
+        // Comments attached inside the node but lying outside its text: the
+        // node's own formatting would have printed them, before or after.
+        let (mut before, mut after) = (Vec::new(), Vec::new());
+        for element in node.descendants().skip(1) {
+            for side in [Side::Leading, Side::Dangling, Side::Trailing] {
+                for index in self.comments.attached(element, side) {
+                    if self.by_verbatim[index] {
+                        continue;
+                    }
+                    if self.comments.list[index].range.start() < range.start() {
+                        before.push(index);
+                    } else {
+                        after.push(index);
+                    }
                 }
-                indices.extend(
-                    self.comments
-                        .attached(element, side)
-                        .filter(|index| !inside.contains(index)),
-                );
             }
         }
-        indices.sort_unstable();
-        let mut before = Vec::new();
-        let mut after = Vec::new();
-        for index in indices {
-            let (side, layout) = self.comments.attached[index];
-            let is_before = self.comments.list[index].range.end() <= range.start();
-            let side = match side {
-                Side::Dangling if is_before => Side::Leading,
-                Side::Dangling => Side::Trailing,
-                side => side,
-            };
-            let doc = self.attached_comment(index, side, layout);
-            if is_before {
-                before.push(doc);
-            } else {
-                after.push(doc);
-            }
-        }
-        (self.builder.concat(before), self.builder.concat(after))
-    }
-
-    /// A piece of verbatim output: source re-indented by `prefix`, or a raw
-    /// multi-line token. The first non-empty piece records the base
-    /// indentation every piece of the node re-indents against.
-    fn verbatim_text(&mut self, text: &'a str, prefix: Option<&'a str>, first: bool) -> Doc {
-        let flags = if first { VERBATIM_START } else { 0 };
-        let reindent = prefix.map(Reindent::Strip);
-        self.builder.text_with(text, reindent, flags)
+        before.sort_unstable();
+        after.sort_unstable();
+        let edge = |f: &mut Self, indices: Vec<usize>| -> Vec<Doc> {
+            indices
+                .into_iter()
+                .map(|index| {
+                    let (side, layout) = f.comments.attached[index];
+                    f.attached_comment(index, side, layout)
+                })
+                .collect()
+        };
+        let mut all = edge(self, before);
+        all.append(&mut docs);
+        all.append(&mut edge(self, after));
+        self.builder.concat(all)
     }
 
     /// The node's dangling comments, each on its own line (comments that
@@ -312,6 +299,12 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .attached(SyntaxElement::Node(node), Side::Dangling)
             .filter(|&index| !self.by_verbatim[index])
             .collect();
+        self.own_lines(&indices)
+    }
+
+    /// Comments each on its own line (comments that shared a source line
+    /// share it), with no line before the first or after the last.
+    fn own_lines(&mut self, indices: &[usize]) -> Doc {
         let mut docs = Vec::with_capacity(indices.len() * 2 + 1);
         for (position, &index) in indices.iter().enumerate() {
             if position == 0 {
@@ -562,7 +555,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
 
     /// One attached comment in its effective layout. A comment that verbatim
     /// output already printed is skipped (see the formatter design's
-    /// "Verbatim and S1").
+    /// "Verbatim edges").
     fn attached_comment(&mut self, index: usize, side: Side, layout: CommentLayout) -> Doc {
         if self.by_verbatim[index] {
             return Doc::NIL;

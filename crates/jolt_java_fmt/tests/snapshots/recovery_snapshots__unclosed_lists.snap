@@ -1,0 +1,65 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class UnclosedLists {
+  void parameters( {
+    arguments(;
+    trailing(x, ;
+    @A({1, 2; int annotated;
+    int[] values = {1, 2;
+    var item = queue.remove(;
+    var _ = queue.remove(); // after the unclosed call
+    var _ = queue.remove(); // last statement
+  }
+
+  void semicolon(; int field) {}
+
+  void brace(int parameter }
+
+  void next() {}
+}
+
+formatted:
+class UnclosedLists {
+  void parameters( {
+    arguments(;
+    trailing(x,;
+    @A({1, 2;
+    int annotated;
+    int[] values = { 1, 2;
+    var item = queue.remove(;
+    var _ = queue.remove(); // after the unclosed call
+    var _ = queue.remove(); // last statement
+  }
+
+  void semicolon(;
+
+  int field
+
+  ) {}
+
+  void brace(int parameter
+}
+
+void next() {}
+
+}
+
+diagnostics:
+code=java.parse.expected_syntax range=41..42 message=expected `)` after parameters
+code=java.parse.expected_syntax range=57..58 message=expected `)` after arguments
+code=java.parse.expected_syntax range=75..76 message=expected argument
+code=java.parse.expected_syntax range=75..76 message=expected `)` after arguments
+code=java.parse.expected_syntax range=89..90 message=expected `}` after annotation array initializer
+code=java.parse.expected_syntax range=89..90 message=expected `)` after annotation arguments
+code=java.parse.expected_syntax range=89..90 message=expected expression after annotation
+code=java.parse.expected_syntax range=130..131 message=expected `}` after array initializer
+code=java.parse.expected_syntax range=160..161 message=expected `)` after arguments
+code=java.parse.expected_syntax range=285..286 message=expected `)` after parameters
+code=java.parse.expected_syntax range=296..297 message=expected `;` after field declaration
+code=java.parse.unexpected_syntax range=296..297 message=unexpected token in type body
+code=java.parse.expected_syntax range=329..330 message=expected `)` after parameters
+code=java.parse.expected_syntax range=329..330 message=expected method body
+code=java.parse.unexpected_syntax range=349..350 message=unexpected token at top level

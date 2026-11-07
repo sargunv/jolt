@@ -86,7 +86,7 @@ impl FormatLanguage for JavaFormat {
         Self::closer_for(token).is_some() || matches!(kind(token), K::Dot | K::DoubleColon | K::At)
     }
 
-    fn place_comment<'a>(context: &CommentContext<'a>) -> Option<Placement<'a>> {
+    fn place_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>> {
         let prev = context.prev?;
         control_body_comment(context, prev)
             .or_else(|| crate::rules::statements::promoted_body_comment(context))
@@ -132,7 +132,7 @@ fn next_sibling<'a>(
 /// H1: a comment between a control header and its body moves to the first
 /// line of the body.
 fn control_body_comment<'a>(
-    context: &CommentContext<'a>,
+    context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let comment = context.comment;
@@ -201,7 +201,7 @@ fn control_body_comment<'a>(
 /// H3: a comment on its own line before a body's `{` that follows a header
 /// moves onto the header line.
 fn comment_before_body_brace<'a>(
-    context: &CommentContext<'a>,
+    context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let next = context.next;
@@ -256,7 +256,7 @@ fn comment_before_body_brace<'a>(
 /// pass (reading it as inline) puts it, so a long declaration breaks the same
 /// way on both passes.
 fn block_comment_after_opener<'a>(
-    context: &CommentContext<'a>,
+    context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let comment = context.comment;
@@ -267,10 +267,20 @@ fn block_comment_after_opener<'a>(
         kind => is_assignment_operator(kind),
     };
     let empty = JavaFormat::is_closer(next) && next.parent() == prev.parent();
+    // Without the closer or the value (recovery), what follows belongs to an
+    // enclosing node, and the comment stays where the generic rules put it.
+    let inside = || match JavaFormat::closer_for(prev) {
+        Some(_) => !context.is_unclosed(prev),
+        None => prev
+            .parent()
+            .last_token()
+            .is_some_and(|last| last.id() >= next.id()),
+    };
     if comment.kind == CommentKind::Line
         || comment.layout != CommentLayout::EndOfLine
         || !opener
         || empty
+        || !inside()
     {
         return None;
     }

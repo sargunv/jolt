@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class FormatterIgnorePromotedBodyComment {
+  void m(boolean a) {
+    // @formatter:off
+    if (a)  return; // trails the unbraced body, which stays unbraced
+    // @formatter:on
+    if (a) {
+      return; // trails the body inside its promoted braces
+    }
+  }
+}
+
+diagnostics:
+(none)

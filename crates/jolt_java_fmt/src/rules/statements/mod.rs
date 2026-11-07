@@ -9,7 +9,7 @@ mod tries;
 
 use jolt_fmt::ListItem;
 use jolt_java_syntax::{BlockItem, BlockStatementList};
-use jolt_syntax::{AstNode, ListElement};
+use jolt_syntax::{AstNode, ListElement, SyntaxNode};
 
 use crate::helpers::bodies;
 
@@ -41,15 +41,19 @@ pub(crate) use crate::helpers::lists::parenthesized;
 
 /// The statements of a block or switch group as item-list items: every
 /// child of the list, including bogus ones, with empty statements elided
-/// (N5).
-fn statement_items(list: Option<BlockStatementList<'_>>) -> Vec<ListItem<'_>> {
+/// (N5) when `owner` is recovery-free.
+fn statement_items<'a>(
+    owner: SyntaxNode<'a>,
+    list: Option<BlockStatementList<'a>>,
+) -> Vec<ListItem<'a>> {
     let Some(list) = list else {
         return Vec::new();
     };
+    let normalize = owner.is_recovery_free();
     list.elements()
         .filter_map(|element| match element {
             ListElement::Item(statement)
-                if matches!(statement.item(), Some(BlockItem::EmptyStatement(_))) =>
+                if normalize && matches!(statement.item(), Some(BlockItem::EmptyStatement(_))) =>
             {
                 Some(ListItem::Elide(statement.syntax()))
             }

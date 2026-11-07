@@ -88,15 +88,13 @@ impl Parser<'_> {
 
     pub(super) fn parse_expression_until<'a>(&mut self, stops: impl Into<StopSet<'a>>) {
         let stops = stops.into();
-        if self.at_eof() || stops.contains(self.current()) {
+        let stop = |kind| Self::ends_enclosing_statement(kind) || stops.contains(kind);
+        if self.at_eof() || stop(self.current()) {
             self.expected_bogus_expression("expected expression", false);
             return;
         }
 
         let expression = self.parse_expression();
-
-        // A `}` at this level closes an enclosing block or body.
-        let stop = |kind| kind == JavaSyntaxKind::RBrace || stops.contains(kind);
         if !self.at_eof() && !stop(self.current()) {
             let error = self.precede(expression);
             self.error_unexpected("unexpected token in expression");
@@ -110,21 +108,32 @@ impl Parser<'_> {
         stops: impl Into<StopSet<'a>>,
     ) {
         let stops = stops.into();
-        if self.at_eof() || stops.contains(self.current()) {
+        let stop = |kind| Self::ends_enclosing_statement(kind) || stops.contains(kind);
+        if self.at_eof() || stop(self.current()) {
             self.expected_bogus_expression("expected expression", false);
             return;
         }
 
         let expression = self.parse_assignment_expression_without_leading_lambda();
-
-        // A `}` at this level closes an enclosing block or body.
-        let stop = |kind| kind == JavaSyntaxKind::RBrace || stops.contains(kind);
         if !self.at_eof() && !stop(self.current()) {
             let error = self.precede(expression);
             self.error_unexpected("unexpected token in expression");
             self.skip_balanced(stop);
             self.complete(error, JavaSyntaxKind::Bogus);
         }
+    }
+
+    /// A `;` or `}` outside the brackets an expression opened ends the
+    /// enclosing statement, body or block: no expression contains one, so
+    /// recovery never skips past it into the next statement.
+    pub(super) const fn ends_enclosing_statement(kind: JavaSyntaxKind) -> bool {
+        matches!(kind, JavaSyntaxKind::Semicolon | JavaSyntaxKind::RBrace)
+    }
+
+    /// The end of a list of expressions closed by `close`: `close` itself, or
+    /// a token that ends the enclosing statement when `close` is missing.
+    pub(super) fn at_expression_list_close(&mut self, close: JavaSyntaxKind) -> bool {
+        self.at(close) || Self::ends_enclosing_statement(self.current())
     }
 
     pub(super) fn parse_expression(&mut self) -> jolt_syntax::CompletedMarker {
@@ -919,7 +928,7 @@ impl Parser<'_> {
         self.expect(JavaSyntaxKind::LBrace, "expected array initializer");
         let values = self.start();
         let mut guard = self.loop_guard();
-        while !self.at(JavaSyntaxKind::RBrace) && self.check(&mut guard) {
+        while !self.at_expression_list_close(JavaSyntaxKind::RBrace) && self.check(&mut guard) {
             if self.at(JavaSyntaxKind::LBrace) {
                 if self
                     .nested(Self::parse_array_initializer_fragment)
@@ -947,7 +956,7 @@ impl Parser<'_> {
         let expressions = self.start();
         self.parse_comma_separated(
             "expected argument",
-            |parser| parser.at(JavaSyntaxKind::RParen),
+            |parser| parser.at_expression_list_close(JavaSyntaxKind::RParen),
             |parser| {
                 parser.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RParen]);
             },

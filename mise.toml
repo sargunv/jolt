@@ -55,7 +55,7 @@ usage = 'flag "--update" help="Update insta snapshots"'
 run = 'INSTA_UPDATE="$([ "${usage_update:-false}" = "true" ] && printf always || printf no)" cargo nextest run --workspace'
 
 [tasks.hunt]
-description = "Sweep the fixtures and imported Java corpora for formatter bugs (idempotence, conservation, reparse validity); --mutate adds token deletions"
+description = "Sweep the fixtures and imported Java corpora for formatter bugs (idempotence, conservation, reparse validity), with comment probes and token deletions"
 raw_args = true
 run = "cargo run --release -p jolt_java_fmt --example jhunt --"
 
