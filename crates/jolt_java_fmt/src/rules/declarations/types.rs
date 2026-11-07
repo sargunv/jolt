@@ -6,7 +6,7 @@ use jolt_java_syntax::{
     ImplementsClause, InterfaceDeclaration, JavaSyntaxKind as K, PermitsClause, RecordDeclaration,
     ThrowsClause,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxNode, SyntaxToken};
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
 use crate::JavaFormatter;
 use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
@@ -24,7 +24,8 @@ pub(crate) fn class_declaration<'a>(f: &mut JavaFormatter<'a>, node: ClassDeclar
         node.implements().map(AstNode::syntax),
         node.permits().map(AstNode::syntax),
     ];
-    let header = header(f, head, None, clauses.into_iter().flatten());
+    let lead = node.class_keyword().map(SyntaxElement::Token);
+    let header = header(f, lead, head, None, clauses.into_iter().flatten());
     with_body(
         f,
         modifiers,
@@ -49,7 +50,8 @@ pub(crate) fn interface_declaration<'a>(
         node.extends().map(AstNode::syntax),
         node.permits().map(AstNode::syntax),
     ];
-    let header = header(f, head, None, clauses.into_iter().flatten());
+    let lead = node.interface_keyword().map(SyntaxElement::Token);
+    let header = header(f, lead, head, None, clauses.into_iter().flatten());
     with_body(
         f,
         modifiers,
@@ -90,7 +92,8 @@ pub(crate) fn record_declaration<'a>(
             trailing_comma: TrailingComma::Never,
         },
     ));
-    let header = header(f, head, tail, implements);
+    let lead = node.record_keyword().map(SyntaxElement::Token);
+    let header = header(f, lead, head, tail, implements);
     with_body(
         f,
         modifiers,
@@ -108,7 +111,8 @@ pub(crate) fn enum_declaration<'a>(f: &mut JavaFormatter<'a>, node: EnumDeclarat
         f.token_opt(node.name()),
     ];
     let implements = node.implements().map(AstNode::syntax);
-    let header = header(f, head, None, implements);
+    let lead = node.enum_keyword().map(SyntaxElement::Token);
+    let header = header(f, lead, head, None, implements);
     with_body(
         f,
         modifiers,
@@ -130,7 +134,8 @@ pub(crate) fn annotation_interface_declaration<'a>(
         f.space(),
         f.token_opt(node.name()),
     ];
-    let header = header(f, head, None, None);
+    let lead = node.at().map(SyntaxElement::Token);
+    let header = header(f, lead, head, None, None);
     with_body(
         f,
         modifiers,
@@ -163,21 +168,27 @@ fn with_body<'a>(
 /// clause on its own line one indent deeper when the header does not fit.
 /// `tail` is a closer that ends the head when there are no clauses.
 ///
-/// When the header's first part (the first non-NIL doc of `head`) contains a
-/// forced break, such as a comment on its own line before the header (after
-/// declaration annotations), it prints outside the group, and so do the
-/// trailing comments of the last part (`tail` or the last clause), so neither
-/// breaks the header, as in the reference.
+/// When `lead`, the element the header's first part (the first non-NIL doc
+/// of `head`) begins with, has a leading comment that breaks the line, such
+/// as a comment on its own line before the header (after declaration
+/// annotations), or a trailing line comment, that part prints outside the
+/// group, and so do the trailing comments of the last part (`tail` or the
+/// last clause), so neither breaks the header, as in the reference. (Breaks
+/// inside the first part, such as a broken return type, keep it in the
+/// group.)
 pub(super) fn header<'a>(
     f: &mut JavaFormatter<'a>,
+    lead: Option<SyntaxElement<'a>>,
     mut head: Vec<Doc>,
     tail: Option<SyntaxToken<'a>>,
     clauses: impl IntoIterator<Item = SyntaxNode<'a>>,
 ) -> Doc {
+    let apart = lead
+        .is_some_and(|lead| f.leading_comments_break(lead) || f.has_trailing_line_comment(lead));
     let first = head
         .iter()
         .position(|doc| !doc.is_nil())
-        .filter(|&i| f.will_break(head[i]))
+        .filter(|_| apart)
         .map_or(0, |i| i + 1);
     let mut rest = head.split_off(first);
     let first = f.concat(head);

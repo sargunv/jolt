@@ -8,7 +8,7 @@ use jolt_java_syntax::{
     EnhancedForVariableType, ForInitializer, ForInitializerValue, ForStatement, ForUpdate,
     IfStatement, Statement, StatementExpressionList, SynchronizedStatement, WhileStatement,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, TriviaKind};
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode};
 
 use super::{blocks, jumps, parenthesized, statement_separator, switches, tries};
 use crate::JavaFormatter;
@@ -247,12 +247,8 @@ fn promoted_block(f: &mut JavaFormatter<'_>, content: Doc) -> Doc {
 /// The statement has leading comments, all on the line of the header before
 /// it (inline block comments).
 fn inline_leading_comments<'a>(f: &JavaFormatter<'a>, statement: SyntaxNode<'a>) -> bool {
-    f.has_leading_comments(SyntaxElement::Node(statement))
-        && statement.first_token().is_some_and(|token| {
-            token
-                .leading()
-                .all(|piece| piece.kind != TriviaKind::Newline)
-        })
+    let element = SyntaxElement::Node(statement);
+    f.has_leading_comments(element) && !f.leading_comments_break(element)
 }
 
 /// A statement's own layout, without its leading and trailing comments,

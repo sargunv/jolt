@@ -349,6 +349,24 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .any(|index| self.comments.list[index].kind == CommentKind::Line)
     }
 
+    /// Some leading comment of the element prints a line break between the
+    /// code before it and the element: one on its own line, starting its
+    /// line, or ending its line.
+    #[must_use]
+    pub fn leading_comments_break(&self, element: SyntaxElement<'a>) -> bool {
+        self.comments
+            .attached(element, Side::Leading)
+            .any(|index| self.comments.attached[index].1 != CommentLayout::Inline)
+    }
+
+    /// Some trailing comment of the element ends its line.
+    #[must_use]
+    pub fn trailing_comments_break(&self, element: SyntaxElement<'a>) -> bool {
+        self.comments
+            .attached(element, Side::Trailing)
+            .any(|index| self.comments.attached[index].1 != CommentLayout::Inline)
+    }
+
     #[must_use]
     pub fn has_dangling_comments(&self, node: SyntaxNode<'a>) -> bool {
         self.comments

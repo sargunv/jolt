@@ -7,9 +7,9 @@ use jolt_java_syntax::{
     SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelColonList,
     SwitchLabelItem, SwitchLabelItemList, SwitchRule, SwitchRuleBody, SwitchStatement,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken, TriviaKind};
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
-use super::{comments_break_before, parenthesized, statement_items, statement_separator};
+use super::{parenthesized, statement_items, statement_separator};
 use crate::JavaFormatter;
 use crate::helpers::bodies::braced_body;
 
@@ -151,7 +151,7 @@ fn is_inline_block<'a>(f: &JavaFormatter<'a>, statement: SyntaxNode<'a>) -> bool
     BlockStatement::cast(statement)
         .and_then(BlockStatement::item)
         .is_some_and(|item| matches!(item, BlockItem::Block(_)))
-        && !comments_break_before(f, element)
+        && !f.leading_comments_break(element)
         && !f.in_ignore_region(statement)
 }
 
@@ -173,7 +173,7 @@ pub(crate) fn switch_rule<'a>(f: &mut JavaFormatter<'a>, node: SwitchRule<'a>) -
         // the arrow's line, so only comments that already share a line with
         // the arrow lead it.
         Some(body @ SwitchRuleBody::ThrowStatement(_))
-            if comments_break_before(f, SyntaxElement::Node(body.syntax())) =>
+            if f.leading_comments_break(SyntaxElement::Node(body.syntax())) =>
         {
             let body = f.fmt(body);
             let semicolon = f.token_opt(node.semicolon());
@@ -272,11 +272,7 @@ fn removable_parentheses<'a>(
     };
     let condition_comments = node.condition().is_some_and(|condition| {
         let condition = SyntaxElement::Node(condition.syntax());
-        f.has_leading_comments(condition)
-            || (f.has_trailing_comments(condition)
-                && close
-                    .leading()
-                    .any(|piece| piece.kind == TriviaKind::Newline))
+        f.has_leading_comments(condition) || f.trailing_comments_break(condition)
     });
     node.syntax().is_recovery_free()
         && !token_comments(open)

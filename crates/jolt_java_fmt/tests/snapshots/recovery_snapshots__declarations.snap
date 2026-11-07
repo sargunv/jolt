@@ -28,7 +28,7 @@ enum RecoveredEnum {
     /* JOLT-TRIVIA:enum-body */
     void recovered() {}
   },
-  /* JOLT-TRIVIA:enum-recovered */ ,;
+  /* JOLT-TRIVIA:enum-recovered */,;
 
   int member;
 }

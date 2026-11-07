@@ -8,7 +8,6 @@ use jolt_java_syntax::{
 };
 use jolt_syntax::{AstNode, SyntaxElement, SyntaxToken};
 
-use super::comments_break_before;
 use crate::JavaFormatter;
 
 /// `keyword value;`. When a comment ends the keyword's line, the value (and
@@ -32,7 +31,7 @@ fn keyword_value<'a>(
     let value = if keyword_comments {
         let value = indent![f; f.line(), value, semicolon];
         f.group(value)
-    } else if comments_break_before(f, element) {
+    } else if f.leading_comments_break(element) {
         let value = indent![f; value, semicolon];
         cat![f; f.space(), value]
     } else {

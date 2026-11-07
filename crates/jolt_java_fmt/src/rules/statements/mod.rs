@@ -9,7 +9,7 @@ mod tries;
 
 use jolt_fmt::{Doc, ListItem, cat, group, indent};
 use jolt_java_syntax::{BlockItem, BlockStatement, BlockStatementList};
-use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken, TriviaKind};
+use jolt_syntax::{AstNode, ListElement, SyntaxNode, SyntaxToken, TriviaKind};
 
 use crate::JavaFormatter;
 use crate::helpers::bodies;
@@ -72,17 +72,6 @@ fn with_dangling<'a>(f: &mut JavaFormatter<'a>, owner: SyntaxNode<'a>, inner: Do
         f.hard_line()
     };
     cat![f; inner, line, dangling]
-}
-
-/// The element has leading comments and the source breaks the line between
-/// them and the element.
-fn comments_break_before<'a>(f: &JavaFormatter<'a>, element: SyntaxElement<'a>) -> bool {
-    f.has_leading_comments(element)
-        && element.first_token().is_some_and(|token| {
-            token
-                .leading()
-                .any(|piece| piece.kind == TriviaKind::Newline)
-        })
 }
 
 /// The statements of a block or switch group as item-list items: every
