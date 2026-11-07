@@ -5,7 +5,7 @@ use jolt_java_syntax::{
     AnnotationInterfaceBody, ClassBody, EmptyDeclaration, EnumBody, EnumConstant, InterfaceBody,
     JavaSyntaxKind as K, RecordBody,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement};
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode};
 
 use crate::JavaFormatter;
 use crate::helpers::bodies::{braced, braced_body, member_separator};
@@ -13,6 +13,7 @@ use crate::rules::types::annotation_lines;
 
 pub(crate) fn class_body<'a>(f: &mut JavaFormatter<'a>, node: ClassBody<'a>) -> Doc {
     let members = member_items(
+        node.syntax(),
         node.members()
             .into_iter()
             .flat_map(jolt_java_syntax::ClassBodyMemberList::items),
@@ -29,6 +30,7 @@ pub(crate) fn class_body<'a>(f: &mut JavaFormatter<'a>, node: ClassBody<'a>) -> 
 
 pub(crate) fn interface_body<'a>(f: &mut JavaFormatter<'a>, node: InterfaceBody<'a>) -> Doc {
     let members = member_items(
+        node.syntax(),
         node.members()
             .into_iter()
             .flat_map(jolt_java_syntax::InterfaceBodyMemberList::items),
@@ -45,6 +47,7 @@ pub(crate) fn interface_body<'a>(f: &mut JavaFormatter<'a>, node: InterfaceBody<
 
 pub(crate) fn record_body<'a>(f: &mut JavaFormatter<'a>, node: RecordBody<'a>) -> Doc {
     let members = member_items(
+        node.syntax(),
         node.members()
             .into_iter()
             .flat_map(jolt_java_syntax::RecordBodyMemberList::items),
@@ -64,6 +67,7 @@ pub(crate) fn annotation_interface_body<'a>(
     node: AnnotationInterfaceBody<'a>,
 ) -> Doc {
     let members = member_items(
+        node.syntax(),
         node.members()
             .into_iter()
             .flat_map(jolt_java_syntax::AnnotationInterfaceBodyMemberList::items),
@@ -84,12 +88,17 @@ pub(crate) fn empty_declaration<'a>(f: &mut JavaFormatter<'a>, node: EmptyDeclar
     f.token_opt(node.semicolon())
 }
 
-/// Members as list items, stray `;` elided (N5).
-fn member_items<'a, M: AstNode<'a>>(members: impl Iterator<Item = M>) -> Vec<ListItem<'a>> {
+/// Members as list items, stray `;` elided (N5) when the body is
+/// recovery-free.
+fn member_items<'a, M: AstNode<'a>>(
+    body: SyntaxNode<'a>,
+    members: impl Iterator<Item = M>,
+) -> Vec<ListItem<'a>> {
+    let normalize = body.is_recovery_free();
     members
         .map(|member| {
             let syntax = member.syntax();
-            if K::from_raw(syntax.kind()) == K::EmptyDeclaration {
+            if normalize && K::from_raw(syntax.kind()) == K::EmptyDeclaration {
                 ListItem::Elide(syntax)
             } else {
                 ListItem::Format(syntax)
@@ -107,6 +116,7 @@ fn member_items<'a, M: AstNode<'a>>(members: impl Iterator<Item = M>) -> Vec<Lis
 pub(crate) fn enum_body<'a>(f: &mut JavaFormatter<'a>, node: EnumBody<'a>) -> Doc {
     let open = f.token_opt(node.open_brace());
     let members = member_items(
+        node.syntax(),
         node.members()
             .into_iter()
             .flat_map(jolt_java_syntax::ClassBodyMemberList::items),
@@ -223,7 +233,7 @@ fn enum_constants<'a>(
     }
     let mut removed = Vec::new();
     for token in [removed_comma, moved_semicolon].into_iter().flatten() {
-        removed.push(f.removed(SyntaxElement::Token(token)));
+        removed.push(f.removed_on_own_lines(SyntaxElement::Token(token)));
     }
     let mut moved_comments = f.concat(removed);
     if !move_down {

@@ -1,6 +1,6 @@
 //! Try statements, catch and finally clauses, and resources.
 
-use jolt_fmt::{Doc, cat, indent};
+use jolt_fmt::{Doc, cat, indent, is_unclosed};
 use jolt_java_syntax::{
     CatchClause, CatchClauseList, CatchParameter, CatchTypeList, FinallyClause, Resource,
     ResourceList, ResourceSpecification, ResourceVariableDeclaration, ResourceVariableType,
@@ -9,9 +9,9 @@ use jolt_java_syntax::{
 use jolt_syntax::{AstNode, SyntaxElement};
 
 use super::parenthesized;
-use crate::JavaFormatter;
 use crate::helpers::lists::{joined, list_item};
 use crate::rules::types::inline_modifiers;
+use crate::{JavaFormat, JavaFormatter};
 
 /// `try {` … `} catch (…) {` … `} finally {` … `}`.
 pub(crate) fn try_statement<'a>(f: &mut JavaFormatter<'a>, node: TryStatement<'a>) -> Doc {
@@ -92,6 +92,11 @@ pub(crate) fn resource_specification<'a>(
     f: &mut JavaFormatter<'a>,
     node: ResourceSpecification<'a>,
 ) -> Doc {
+    let before_close = if node.open_paren().is_some_and(is_unclosed::<JavaFormat>) {
+        Doc::NIL
+    } else {
+        f.hard_line()
+    };
     let open = f.token_opt(node.open_paren());
     let resources = node
         .resources()
@@ -112,7 +117,7 @@ pub(crate) fn resource_specification<'a>(
     let inner = f.with_dangling(node.syntax(), inner);
     let inner = indent![f; f.hard_line(), inner];
     let close = f.token_opt(node.close_paren());
-    cat![f; open, inner, f.hard_line(), close]
+    cat![f; open, inner, before_close, close]
 }
 
 pub(crate) fn resource<'a>(f: &mut JavaFormatter<'a>, node: Resource<'a>) -> Doc {

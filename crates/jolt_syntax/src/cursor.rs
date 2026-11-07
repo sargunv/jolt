@@ -200,7 +200,8 @@ impl<'a> SyntaxNode<'a> {
     }
 
     /// Every slot in order, `None` for empty ones. Empty for a malformed node.
-    pub fn slots(self) -> impl Iterator<Item = Option<SyntaxElement<'a>>> + 'a {
+    #[must_use]
+    pub fn slots(self) -> impl DoubleEndedIterator<Item = Option<SyntaxElement<'a>>> + 'a {
         let slots = if self.is_malformed() {
             &[]
         } else {

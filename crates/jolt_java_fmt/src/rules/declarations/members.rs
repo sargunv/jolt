@@ -139,13 +139,14 @@ pub(crate) fn compact_constructor_declaration<'a>(
 
 /// A block whose first statement may be an explicit constructor invocation.
 pub(crate) fn constructor_body<'a>(f: &mut JavaFormatter<'a>, node: ConstructorBody<'a>) -> Doc {
+    let normalize = node.syntax().is_recovery_free();
     let entries: Vec<_> = node
         .entries()
         .into_iter()
         .flat_map(jolt_java_syntax::ConstructorBodyEntryList::items)
         .map(|entry| match entry {
             ConstructorBodyEntry::BlockStatement(statement)
-                if matches!(statement.item(), Some(BlockItem::EmptyStatement(_))) =>
+                if normalize && matches!(statement.item(), Some(BlockItem::EmptyStatement(_))) =>
             {
                 ListItem::Elide(statement.syntax())
             }

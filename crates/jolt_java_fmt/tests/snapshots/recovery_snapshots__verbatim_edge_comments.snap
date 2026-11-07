@@ -1,0 +1,35 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class VerbatimEdgeComments {
+  void m() {
+    call(a  b   /* after a malformed argument */);
+    call(a  b   // ends the malformed argument's line
+    );
+  }
+
+  static Thrown extends RuntimeException {  /* nothing */ }
+}
+
+formatted:
+class VerbatimEdgeComments {
+  void m() {
+    call(a  b /* after a malformed argument */);
+    call(
+      a  b // ends the malformed argument's line
+    );
+  }
+
+  static Thrown extends RuntimeException {/* nothing */
+}
+
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax range=54..55 message=unexpected token in expression
+code=java.parse.unexpected_syntax range=105..106 message=unexpected token in expression
+code=java.parse.expected_syntax range=175..182 message=expected variable name
+code=java.parse.expected_syntax range=217..218 message=expected `;` after field declaration
+code=java.parse.unexpected_syntax range=219..220 message=unexpected token at top level

@@ -1,0 +1,89 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+class VerbatimEdgeComments {
+  void m() {
+    call(a  b   /* after a malformed argument */);
+    call(a  b   // ends the malformed argument's line
+    );
+  }
+
+  static Thrown extends RuntimeException {  /* nothing */ }
+}
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "VerbatimEdgeComments" @ 6..26 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 27..28
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 31..35 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "m" @ 36..37
+            LParen "(" @ 37..38
+            RParen ")" @ 38..39 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 40..41
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "call" @ 46..50 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 50..51
+                          ExpressionList
+                            Bogus
+                              NameExpression
+                                Identifier "a" @ 51..52 trailing=[Whitespace "  "]
+                              Identifier "b" @ 54..55 trailing=[Whitespace "   ", BlockComment "/* after a malformed argument */"]
+                          RParen ")" @ 90..91
+                    Semicolon ";" @ 91..92
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "call" @ 97..101 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 101..102
+                          ExpressionList
+                            Bogus
+                              NameExpression
+                                Identifier "a" @ 102..103 trailing=[Whitespace "  "]
+                              Identifier "b" @ 105..106 trailing=[Whitespace "   ", LineComment "// ends the malformed argument's line"]
+                          RParen ")" @ 151..152 leading=[Newline "\n", Whitespace "    "]
+                    Semicolon ";" @ 152..153
+              RBrace "}" @ 156..157 leading=[Newline "\n", Whitespace "  "]
+          FieldDeclaration
+            ModifierList
+              StaticKw "static" @ 161..167 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "Thrown" @ 168..174 trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                ExtendsKw "extends" @ 175..182 trailing=[Whitespace " "]
+                Identifier "RuntimeException" @ 183..199 trailing=[Whitespace " "]
+                LBrace "{" @ 200..201 trailing=[Whitespace "  ", BlockComment "/* nothing */", Whitespace " "]
+        RBrace "}" @ 217..218
+    Bogus
+      RBrace "}" @ 219..220 leading=[Newline "\n"]
+  Eof "" @ 221..221 leading=[Newline "\n"]
+
+diagnostics:
+code=java.parse.unexpected_syntax range=54..55 message=unexpected token in expression
+code=java.parse.unexpected_syntax range=105..106 message=unexpected token in expression
+code=java.parse.expected_syntax range=175..182 message=expected variable name
+code=java.parse.expected_syntax range=217..218 message=expected `;` after field declaration
+code=java.parse.unexpected_syntax range=219..220 message=unexpected token at top level

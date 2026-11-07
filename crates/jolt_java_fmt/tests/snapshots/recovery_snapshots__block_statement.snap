@@ -8,7 +8,7 @@ class C { void m() { int value = /* keep */ ; } }
 formatted:
 class C {
   void m() {
-    int value = /* keep */;
+    int value = /* keep */ ;
   }
 }
 

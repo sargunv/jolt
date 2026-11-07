@@ -3,7 +3,7 @@
 
 use jolt_fmt::{
     CommentContext, CommentKind, CommentLayout, Doc, FormatLanguage, Formatter, Placement,
-    leading_target, trailing_target,
+    is_unclosed, leading_target, trailing_target,
 };
 use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind as K, is_assignment_operator};
 use jolt_syntax::{RawSyntaxKind, SyntaxElement, SyntaxNode, SyntaxToken};
@@ -267,10 +267,20 @@ fn block_comment_after_opener<'a>(
         kind => is_assignment_operator(kind),
     };
     let empty = JavaFormat::is_closer(next) && next.parent() == prev.parent();
+    // Without the closer or the value (recovery), what follows belongs to an
+    // enclosing node, and the comment stays where the generic rules put it.
+    let inside = || match JavaFormat::closer_for(prev) {
+        Some(_) => !is_unclosed::<JavaFormat>(prev),
+        None => prev
+            .parent()
+            .last_token()
+            .is_some_and(|last| last.id() >= next.id()),
+    };
     if comment.kind == CommentKind::Line
         || comment.layout != CommentLayout::EndOfLine
         || !opener
         || empty
+        || !inside()
     {
         return None;
     }

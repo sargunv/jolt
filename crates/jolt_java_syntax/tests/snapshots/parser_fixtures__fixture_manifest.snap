@@ -325,4 +325,5 @@ syntax/recovery/unterminated-comment.java
 syntax/recovery/unterminated-doc-comment.java
 syntax/recovery/unterminated-text-block-at-eof.java
 syntax/recovery/variable-declarators.java
+syntax/recovery/verbatim-edge-comments.java
 syntax/recovery/wildcard-bounds-and-type-argument-annotations.java
