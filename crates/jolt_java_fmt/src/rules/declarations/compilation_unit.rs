@@ -84,16 +84,15 @@ pub(crate) fn import_declaration<'a>(
 /// How a top-level item is separated from the one before it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Role {
-    /// An import in a sorted section: `section` numbers the section,
-    /// `static_start` marks the first static import after normal ones, and
-    /// `anchor` an import that carries leading comments.
+    /// An import in a sorted section: `section` numbers the section, and
+    /// `anchor` marks an import that carries leading comments.
     Import {
         section: usize,
-        static_start: bool,
+        is_static: bool,
         anchor: bool,
     },
     /// A removed `;` whose comments lead the import after it.
-    ImportCarrier { section: usize, static_start: bool },
+    ImportCarrier { section: usize, is_static: bool },
     /// A removed `;` whose comments stand alone; `last` when no item follows
     /// it (its comments then lead the end of the file).
     Carrier { last: bool },
@@ -114,20 +113,25 @@ fn top_level_separator<'a>(
     let line_or_blank = |f: &JavaFormatter<'a>, blank| {
         if blank { f.empty_line() } else { f.hard_line() }
     };
+    let is_static = |role: Option<Role>| {
+        matches!(
+            role,
+            Some(
+                Role::Import {
+                    is_static: true,
+                    ..
+                } | Role::ImportCarrier {
+                    is_static: true,
+                    ..
+                }
+            )
+        )
+    };
     if section(prev).is_some() && section(prev) == section(next) {
         return match (prev, next) {
             (Some(Role::ImportCarrier { .. }), _) => f.hard_line(),
-            (
-                _,
-                Some(
-                    Role::Import {
-                        static_start: true, ..
-                    }
-                    | Role::ImportCarrier {
-                        static_start: true, ..
-                    },
-                ),
-            ) => f.empty_line(),
+            // The blank line between the normal and the static imports.
+            _ if !is_static(prev) && is_static(next) => f.empty_line(),
             (_, Some(Role::ImportCarrier { .. } | Role::Import { anchor: true, .. })) => {
                 line_or_blank(f, blank)
             }
@@ -263,7 +267,7 @@ fn emit_section<'a>(
             segment.push(unit);
         } else {
             emit_segment(std::mem::take(&mut segment), section, ordered, roles);
-            emit_unit(&unit, section, false, ordered, roles);
+            emit_unit(&unit, section, ordered, roles);
         }
     }
     emit_segment(segment, section, ordered, roles);
@@ -276,15 +280,12 @@ fn emit_segment<'a>(
     roles: &mut HashMap<NodeId, Role>,
 ) {
     let (statics, normals): (Vec<_>, Vec<_>) = units.into_iter().partition(|unit| unit.is_static);
-    let has_normals = !normals.is_empty();
-    for (group, is_static) in [(normals, false), (statics, true)] {
-        let mut first = is_static && has_normals;
+    for group in [normals, statics] {
         for mut run in runs(group) {
             let start = usize::from(run[0].anchor);
             run[start..].sort_by(|a, b| a.key.cmp(&b.key));
             for unit in &run {
-                emit_unit(unit, section, first, ordered, roles);
-                first = false;
+                emit_unit(unit, section, ordered, roles);
             }
         }
     }
@@ -305,19 +306,12 @@ fn runs(group: Vec<Unit<'_>>) -> Vec<Vec<Unit<'_>>> {
 fn emit_unit<'a>(
     unit: &Unit<'a>,
     section: usize,
-    static_start: bool,
     ordered: &mut Vec<ListItem<'a>>,
     roles: &mut HashMap<NodeId, Role>,
 ) {
-    for (index, &carrier) in unit.carriers.iter().enumerate() {
-        let static_start = static_start && index == 0;
-        roles.insert(
-            carrier.id(),
-            Role::ImportCarrier {
-                section,
-                static_start,
-            },
-        );
+    let is_static = unit.is_static;
+    for &carrier in &unit.carriers {
+        roles.insert(carrier.id(), Role::ImportCarrier { section, is_static });
         ordered.push(ListItem::Elide(carrier));
     }
     let node = unit.import.syntax();
@@ -325,7 +319,7 @@ fn emit_unit<'a>(
         node.id(),
         Role::Import {
             section,
-            static_start: static_start && unit.carriers.is_empty(),
+            is_static,
             anchor: unit.anchor,
         },
     );
