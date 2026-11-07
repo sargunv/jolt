@@ -192,7 +192,10 @@ pub(crate) struct Sources<'a> {
     pub(crate) no_config: bool,
 }
 
-/// Resolves settings for directories under one invocation root.
+/// Resolves settings for directories under one invocation root: the
+/// nearest project root (a VCS marker or `root = true`) at or above the
+/// target, or else the invocation directory when the target is under it, or
+/// else the target directory.
 pub(crate) struct Resolver {
     root: PathBuf,
     /// Whether a project root exists at or above `root`.
@@ -236,6 +239,14 @@ impl Resolver {
                 }
             }
         }
+        // Without a project root, discovery runs up to the invocation
+        // directory for a target under it, so `jolt fmt .`, `jolt fmt a/A.java`
+        // and stdin named `a/A.java` all see the same config files.
+        let root = if !bounded && root.starts_with(sources.cwd) {
+            sources.cwd
+        } else {
+            root
+        };
         Ok(Self {
             root: root.to_path_buf(),
             bounded,

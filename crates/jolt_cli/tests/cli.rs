@@ -218,6 +218,17 @@ fn nested_configs_layer_up_to_the_project_root() {
 }
 
 #[test]
+fn without_a_project_root_targets_under_the_invocation_directory_read_its_config() {
+    let project = Project::new(&[
+        ("jolt.toml", "[format]\nindent-width = 4\n"),
+        ("a/A.java", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run(&["fmt", "-", "--stdin-filename", "a/C.java"], NESTED));
+    insta::assert_snapshot!(project.run(&["config", "resolve", "a/A.java"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "a/A.java"], ""));
+}
+
+#[test]
 fn config_locations_in_one_directory() {
     let project = Project::new(&[
         (

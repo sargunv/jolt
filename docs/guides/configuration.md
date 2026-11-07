@@ -65,7 +65,10 @@ A file's settings come from every config between the project root and the file's
 directory, nearer ones taking precedence. The project root is the nearest
 ancestor with a VCS marker (`.git`, `.hg`, `.jj`, `.svn`) or a config with
 `root = true`, so a nested `root = true` stops inheritance from the directories
-above it.
+above it. Without one, the project root is the directory `jolt` runs in when the
+file is under it (so `jolt format .`, `jolt format src/A.java` and
+`jolt format --stdin-filename src/A.java -` agree), and otherwise the file's own
+directory.
 
 ## Command-line Overrides
 
