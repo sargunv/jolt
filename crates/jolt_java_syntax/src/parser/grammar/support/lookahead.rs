@@ -1,88 +1,126 @@
-// Provides a markerless grammar scanner over the same logical tokens as the parser.
+// Provides a markerless grammar scanner over the same tokens as the parser.
+use jolt_syntax::Lookahead;
+
 use super::{
     JavaSyntaxKind, MissingConstructorHeaderAction, Parser, is_literal_expression_start,
     is_primitive_type_start, is_type_argument_recovery_boundary, is_type_argument_value_start,
-    missing_constructor_header_action, over_depth_type_end, type_modifier_len,
+    missing_constructor_header_action, type_modifier_len,
 };
-use crate::parser::source::{
-    LookaheadSummary, MAX_RECURSIVE_PARSE_OWNERS, TokenBuffer, TokenCursor,
-};
+use crate::JavaLanguage;
+use crate::parser::source::{LookaheadSummary, MAX_DEPTH};
 
 impl<'source> Parser<'source> {
     pub(in crate::parser::grammar) fn lookahead(&mut self) -> JavaLookahead<'_, 'source> {
-        let source = self.inner.source;
-        let cursor = self.inner.fork_cursor();
-        JavaLookahead::new(
-            source,
-            &mut self.inner.buffer,
+        let cursor = self.inner.lookahead();
+        JavaLookahead {
             cursor,
-            &mut self.lookahead_summary,
-            self.generic_depth,
-        )
+            split: 0,
+            base: cursor.position(),
+            summary: &mut self.lookahead_summary,
+            generic_depth: self.generic_depth,
+        }
     }
 }
 
-pub(in crate::parser::grammar) struct JavaLookahead<'buffer, 'source> {
-    source: &'source str,
-    buffer: &'buffer mut TokenBuffer<'source>,
-    cursor: TokenCursor,
-    base: TokenCursor,
-    summary: &'buffer mut LookaheadSummary,
+/// The kind left after removing the first `>` of a `>`-family token.
+pub(in crate::parser::grammar) const fn gt_rest(kind: JavaSyntaxKind) -> Option<JavaSyntaxKind> {
+    Some(match kind {
+        JavaSyntaxKind::RShift => JavaSyntaxKind::Gt,
+        JavaSyntaxKind::UnsignedRShift => JavaSyntaxKind::RShift,
+        JavaSyntaxKind::GtEq => JavaSyntaxKind::Assign,
+        JavaSyntaxKind::RShiftEq => JavaSyntaxKind::GtEq,
+        JavaSyntaxKind::UnsignedRShiftEq => JavaSyntaxKind::RShiftEq,
+        _ => return None,
+    })
+}
+
+/// Whether `kind` starts with `>`, so it can close a type argument list.
+pub(in crate::parser::grammar) const fn is_gt_family(kind: JavaSyntaxKind) -> bool {
+    matches!(kind, JavaSyntaxKind::Gt) || gt_rest(kind).is_some()
+}
+
+/// A speculative scanner. It never splits tokens: closing a type argument
+/// list on a `>`-family token consumes one `>` of it virtually (`split`).
+pub(in crate::parser::grammar) struct JavaLookahead<'p, 'source> {
+    cursor: Lookahead<'p, 'source, JavaLanguage>,
+    /// `>` characters already consumed from the current token.
+    split: u8,
+    base: usize,
+    summary: &'p mut LookaheadSummary,
     generic_depth: usize,
 }
 
-impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
-    fn new(
-        source: &'source str,
-        buffer: &'buffer mut TokenBuffer<'source>,
-        cursor: TokenCursor,
-        summary: &'buffer mut LookaheadSummary,
-        generic_depth: usize,
-    ) -> Self {
-        Self {
-            source,
-            buffer,
-            cursor,
-            base: cursor,
-            summary,
-            generic_depth,
+#[derive(Clone, Copy)]
+pub(in crate::parser::grammar) struct Checkpoint {
+    position: usize,
+    split: u8,
+}
+
+impl<'source> JavaLookahead<'_, 'source> {
+    pub(in crate::parser::grammar) fn kind(&self) -> JavaSyntaxKind {
+        let mut kind = self.cursor.current();
+        for _ in 0..self.split {
+            kind = gt_rest(kind).unwrap_or(kind);
+        }
+        kind
+    }
+
+    pub(in crate::parser::grammar) fn nth(&self, n: usize) -> JavaSyntaxKind {
+        if n == 0 {
+            self.kind()
+        } else {
+            self.cursor.nth(n)
         }
     }
 
-    pub(in crate::parser::grammar) fn kind(&mut self) -> JavaSyntaxKind {
-        self.cursor.kind(self.buffer)
+    pub(in crate::parser::grammar) fn text(&self) -> &'source str {
+        self.cursor.nth_text(0)
     }
 
-    pub(in crate::parser::grammar) fn nth_kind(&mut self, n: usize) -> JavaSyntaxKind {
-        self.cursor.nth_kind(self.buffer, n)
+    fn nth_text(&self, n: usize) -> &'source str {
+        self.cursor.nth_text(n)
     }
 
-    pub(in crate::parser::grammar) fn text(&mut self) -> Option<&'source str> {
-        self.cursor.text(self.source, self.buffer)
-    }
-
-    fn nth_text(&mut self, n: usize) -> Option<&'source str> {
-        self.buffer.text_at(self.source, self.cursor.position() + n)
-    }
-
-    pub(in crate::parser::grammar) fn at(&mut self, kind: JavaSyntaxKind) -> bool {
+    pub(in crate::parser::grammar) fn at(&self, kind: JavaSyntaxKind) -> bool {
         self.kind() == kind
     }
 
-    pub(in crate::parser::grammar) fn at_contextual(&mut self, text: &str) -> bool {
-        self.at(JavaSyntaxKind::Identifier) && self.text() == Some(text)
+    pub(in crate::parser::grammar) fn at_contextual(&self, text: &str) -> bool {
+        self.at(JavaSyntaxKind::Identifier) && self.text() == text
     }
 
-    pub(in crate::parser::grammar) fn at_eof(&mut self) -> bool {
+    pub(in crate::parser::grammar) fn at_eof(&self) -> bool {
         self.at(JavaSyntaxKind::Eof)
     }
 
     pub(in crate::parser::grammar) fn bump(&mut self) {
-        self.cursor.bump(self.buffer);
+        self.split = 0;
+        self.cursor.bump();
     }
 
     pub(in crate::parser::grammar) fn position(&self) -> usize {
         self.cursor.position()
+    }
+
+    fn checkpoint(&self) -> Checkpoint {
+        Checkpoint {
+            position: self.cursor.position(),
+            split: self.split,
+        }
+    }
+
+    fn rewind(&mut self, checkpoint: Checkpoint) {
+        self.cursor.set_position(checkpoint.position);
+        self.split = checkpoint.split;
+    }
+
+    fn seek_forward(&mut self, position: usize) {
+        debug_assert!(
+            position >= self.cursor.position(),
+            "lookahead cannot seek backward"
+        );
+        self.split = 0;
+        self.cursor.set_position(position);
     }
 
     pub(in crate::parser::grammar) fn eat(&mut self, kind: JavaSyntaxKind) -> bool {
@@ -103,14 +141,14 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         let has_name = self.at_name_segment();
         if has_name {
             self.bump();
-            while self.at(JavaSyntaxKind::Dot) && self.nth_kind(1) == JavaSyntaxKind::Identifier {
+            while self.at(JavaSyntaxKind::Dot) && self.nth(1) == JavaSyntaxKind::Identifier {
                 self.bump();
                 self.bump();
             }
         }
         if has_name && self.at(JavaSyntaxKind::LParen) {
-            let after = self.summary.after(self.buffer, self.cursor, self.base);
-            self.cursor.seek_forward(after);
+            let after = self.summary.after(self.cursor, self.base);
+            self.seek_forward(after);
         }
 
         true
@@ -121,16 +159,17 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
             return false;
         }
 
-        self.summary.ensure_built(self.buffer, self.base);
-        let start = self.cursor;
+        self.summary.ensure_built(self.cursor, self.base);
+        let start = self.position();
         let mut pending = 0;
         while self.at_annotation_start() {
-            let offset = self.cursor.position() - self.summary.base;
-            let entry = &mut self.summary.boundaries.as_mut().expect("built summary")[offset];
-            if *entry != 0 {
-                self.cursor.seek_forward(*entry - 1);
+            let offset = self.position() - self.summary.base;
+            let entry = self.summary.boundaries.as_mut().expect("built summary")[offset];
+            if entry != 0 {
+                self.seek_forward(entry - 1);
                 break;
             }
+            let entry = &mut self.summary.boundaries.as_mut().expect("built summary")[offset];
             *entry = pending;
             pending = offset + 1;
 
@@ -138,31 +177,31 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
             debug_assert!(skipped);
         }
 
-        let end = self.cursor;
-        let endpoint = end.position() + 1;
+        let end = self.position();
+        let endpoint = end + 1;
         let boundaries = self.summary.boundaries.as_mut().expect("built summary");
         while pending != 0 {
             let index = pending - 1;
             pending = boundaries[index];
             boundaries[index] = endpoint;
         }
-        debug_assert!(end.position() != start.position());
+        debug_assert!(end != start);
         true
     }
 
     fn at_annotation_start(&mut self) -> bool {
-        self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw
+        self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw
     }
 
     fn skip_bounded_annotation(&mut self) -> bool {
-        if !self.at(JavaSyntaxKind::At) || self.nth_kind(1) == JavaSyntaxKind::InterfaceKw {
+        if !self.at(JavaSyntaxKind::At) || self.nth(1) == JavaSyntaxKind::InterfaceKw {
             return false;
         }
 
         self.bump();
         if self.at_name_segment() {
             self.bump();
-            while self.at(JavaSyntaxKind::Dot) && self.nth_kind(1) == JavaSyntaxKind::Identifier {
+            while self.at(JavaSyntaxKind::Dot) && self.nth(1) == JavaSyntaxKind::Identifier {
                 self.bump();
                 self.bump();
             }
@@ -235,14 +274,13 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         if self.at(JavaSyntaxKind::VoidKw) {
             self.bump();
             loop {
-                let checkpoint = self.cursor.checkpoint();
+                let checkpoint = self.checkpoint();
                 self.skip_annotations();
-                if self.at(JavaSyntaxKind::LBracket) && self.nth_kind(1) == JavaSyntaxKind::RBracket
-                {
+                if self.at(JavaSyntaxKind::LBracket) && self.nth(1) == JavaSyntaxKind::RBracket {
                     self.bump();
                     self.bump();
                 } else {
-                    self.cursor.rewind(checkpoint);
+                    self.rewind(checkpoint);
                     break;
                 }
             }
@@ -252,18 +290,46 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         }
     }
 
+    /// Skips a run of annotations and modifiers. Every position the scan
+    /// passes records the run's end, so rescans from inside the run (one per
+    /// token in recovery) are O(1).
     pub(in crate::parser::grammar) fn skip_type_modifiers(&mut self) {
+        self.summary.ensure_built(self.cursor, self.base);
+        let len = self
+            .summary
+            .boundaries
+            .as_ref()
+            .expect("built summary")
+            .len();
+        if self.summary.modifier_ends.len() != len {
+            self.summary.modifier_ends = vec![0; len];
+        }
+        let mut pending = 0;
         loop {
+            let offset = self.position() - self.summary.base;
+            let cached = self.summary.modifier_ends.get(offset).copied().unwrap_or(0);
+            if cached != 0 {
+                self.seek_forward(cached - 1);
+                break;
+            }
+            if let Some(entry) = self.summary.modifier_ends.get_mut(offset) {
+                *entry = pending;
+                pending = offset + 1;
+            }
             if self.skip_annotations() {
                 continue;
             }
-
             if self.at_type_modifier() {
                 self.skip_type_modifier();
                 continue;
             }
-
-            return;
+            break;
+        }
+        let endpoint = self.position() + 1;
+        while pending != 0 {
+            let index = pending - 1;
+            pending = self.summary.modifier_ends[index];
+            self.summary.modifier_ends[index] = endpoint;
         }
     }
 
@@ -319,13 +385,13 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         }
 
         loop {
-            let checkpoint = self.cursor.checkpoint();
+            let checkpoint = self.checkpoint();
             self.skip_annotations();
-            if self.at(JavaSyntaxKind::LBracket) && self.nth_kind(1) == JavaSyntaxKind::RBracket {
+            if self.at(JavaSyntaxKind::LBracket) && self.nth(1) == JavaSyntaxKind::RBracket {
                 self.bump();
                 self.bump();
             } else {
-                self.cursor.rewind(checkpoint);
+                self.rewind(checkpoint);
                 return true;
             }
         }
@@ -347,11 +413,11 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         self.skip_type_arguments();
 
         while self.at(JavaSyntaxKind::Dot) {
-            let checkpoint = self.cursor.checkpoint();
+            let checkpoint = self.checkpoint();
             self.bump();
             self.skip_annotations();
             if !self.at_name_segment() {
-                self.cursor.rewind(checkpoint);
+                self.rewind(checkpoint);
                 break;
             }
 
@@ -373,14 +439,14 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         }
 
         loop {
-            let checkpoint = self.cursor.checkpoint();
+            let checkpoint = self.checkpoint();
             if !self.eat(JavaSyntaxKind::Amp) {
                 return true;
             }
 
             self.skip_annotations();
             if !self.at_type_start() || !self.skip_type() {
-                self.cursor.rewind(checkpoint);
+                self.rewind(checkpoint);
                 return true;
             }
         }
@@ -443,10 +509,10 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     fn skip_type_argument(&mut self) -> bool {
-        if self.generic_depth > MAX_RECURSIVE_PARSE_OWNERS {
-            let end = over_depth_type_end(self.buffer, self.cursor);
-            self.cursor.seek_forward(end);
-            return true;
+        // Past the depth limit the consuming parser recovers anyway; failing
+        // here keeps every scan bounded.
+        if self.generic_depth > MAX_DEPTH as usize {
+            return false;
         }
 
         self.skip_annotations();
@@ -460,12 +526,21 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         }
     }
 
-    pub(in crate::parser::grammar) fn at_type_argument_close(&mut self) -> bool {
-        self.kind() == JavaSyntaxKind::Gt
+    pub(in crate::parser::grammar) fn at_type_argument_close(&self) -> bool {
+        is_gt_family(self.kind())
     }
 
+    /// Consumes one `>`, which may be the first character of a longer token.
     pub(in crate::parser::grammar) fn eat_type_argument_close(&mut self) -> bool {
-        self.eat(JavaSyntaxKind::Gt)
+        let kind = self.kind();
+        if kind == JavaSyntaxKind::Gt {
+            self.bump();
+        } else if is_gt_family(kind) {
+            self.split += 1;
+        } else {
+            return false;
+        }
+        true
     }
 
     pub(in crate::parser::grammar) fn at_name_segment(&mut self) -> bool {
@@ -503,7 +578,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     fn type_modifier_len(&mut self) -> Option<usize> {
-        type_modifier_len(self.kind(), self.text(), self.nth_kind(1), self.nth_text(2))
+        type_modifier_len(self.kind(), self.text(), self.nth(1), self.nth_text(2))
     }
 
     pub(in crate::parser::grammar) fn starts_expression(&mut self) -> bool {
@@ -548,20 +623,16 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
             return false;
         }
 
-        let mut cursor = self.cursor.fork();
-        cursor.bump(self.buffer);
+        let mut cursor = self.cursor;
+        cursor.bump();
         if kind == JavaSyntaxKind::VoidKw {
-            return cursor.kind(self.buffer) == JavaSyntaxKind::Dot
-                && cursor.nth_kind(self.buffer, 1) == JavaSyntaxKind::ClassKw;
+            return cursor.at(JavaSyntaxKind::Dot) && cursor.nth(1) == JavaSyntaxKind::ClassKw;
         }
-        while cursor.kind(self.buffer) == JavaSyntaxKind::LBracket
-            && cursor.nth_kind(self.buffer, 1) == JavaSyntaxKind::RBracket
-        {
-            cursor.bump(self.buffer);
-            cursor.bump(self.buffer);
+        while cursor.at(JavaSyntaxKind::LBracket) && cursor.nth(1) == JavaSyntaxKind::RBracket {
+            cursor.bump();
+            cursor.bump();
         }
 
-        cursor.kind(self.buffer) == JavaSyntaxKind::Dot
-            && cursor.nth_kind(self.buffer, 1) == JavaSyntaxKind::ClassKw
+        cursor.at(JavaSyntaxKind::Dot) && cursor.nth(1) == JavaSyntaxKind::ClassKw
     }
 }

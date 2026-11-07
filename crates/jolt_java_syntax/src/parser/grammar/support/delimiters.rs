@@ -1,23 +1,18 @@
 // Skips or consumes balanced delimiter groups used by grammar lookahead and recovery.
+use jolt_syntax::Lookahead;
+
 use super::{JavaSyntaxKind, Parser};
-use crate::parser::source::{LookaheadSummary, TokenBuffer, TokenCursor};
+use crate::JavaLanguage;
+use crate::parser::source::LookaheadSummary;
 
 // Built on the first parenthesis or annotation query. Token-disjoint entries
 // store the position after a matching `)` for `(`, or the end of a maximal
 // annotation run for queried `@`; zero means no cached fact.
 impl LookaheadSummary {
-    pub(super) fn after(
-        &mut self,
-        buffer: &mut TokenBuffer<'_>,
-        cursor: TokenCursor,
-        floor: TokenCursor,
-    ) -> usize {
-        self.ensure_built(buffer, floor);
+    pub(super) fn after(&mut self, cursor: Lookahead<'_, '_, JavaLanguage>, floor: usize) -> usize {
+        self.ensure_built(cursor, floor);
 
-        let start = cursor.position();
-        let offset = start
-            .checked_sub(self.base)
-            .expect("parenthesis query precedes summary floor");
+        let offset = cursor.position() - self.base;
         self.boundaries
             .as_ref()
             .and_then(|boundaries| boundaries.get(offset))
@@ -27,18 +22,23 @@ impl LookaheadSummary {
             - 1
     }
 
-    pub(super) fn ensure_built(&mut self, buffer: &mut TokenBuffer<'_>, floor: TokenCursor) {
-        if self.boundaries.is_none() {
-            self.build(buffer, floor);
+    /// Builds the table from `floor` on the first query, or again if a query
+    /// starts before the floor of the existing table.
+    pub(super) fn ensure_built(&mut self, cursor: Lookahead<'_, '_, JavaLanguage>, floor: usize) {
+        if self.boundaries.is_none() || floor < self.base {
+            let mut scan = cursor;
+            scan.set_position(floor);
+            self.build(scan);
         }
     }
 
-    fn build(&mut self, buffer: &mut TokenBuffer<'_>, mut cursor: TokenCursor) {
+    fn build(&mut self, mut cursor: Lookahead<'_, '_, JavaLanguage>) {
         self.base = cursor.position();
+        self.modifier_ends.clear();
         let mut boundaries = Vec::new();
         let mut open = 0usize;
         loop {
-            let kind = cursor.kind(buffer);
+            let kind = cursor.current();
             if kind == JavaSyntaxKind::Eof {
                 while open != 0 {
                     let index = open - 1;
@@ -55,12 +55,79 @@ impl LookaheadSummary {
                 boundaries[index] = open;
                 open = index + 1;
             }
-            cursor.bump(buffer);
+            cursor.bump();
             if kind == JavaSyntaxKind::RParen && open != 0 {
                 let index = open - 1;
                 open = boundaries[index];
                 boundaries[index] = cursor.position() + 1;
             }
+        }
+    }
+}
+
+impl Parser<'_> {
+    pub(in crate::parser::grammar) fn skip_balanced_from(
+        &mut self,
+        mut index: usize,
+        open: JavaSyntaxKind,
+        close: JavaSyntaxKind,
+    ) -> usize {
+        let mut depth = 0usize;
+        while self.kind_at(index) != JavaSyntaxKind::Eof {
+            if self.kind_at(index) == open {
+                depth += 1;
+            } else if self.kind_at(index) == close {
+                depth = depth.saturating_sub(1);
+                index += 1;
+                if depth == 0 {
+                    return index;
+                }
+                continue;
+            }
+            index += 1;
+        }
+        index
+    }
+
+    pub(in crate::parser::grammar) fn skip_balanced_delimiter_at(
+        &mut self,
+        index: usize,
+    ) -> Option<usize> {
+        match self.kind_at(index) {
+            JavaSyntaxKind::LParen => {
+                Some(self.skip_balanced_from(index, JavaSyntaxKind::LParen, JavaSyntaxKind::RParen))
+            }
+            JavaSyntaxKind::LBracket => Some(self.skip_balanced_from(
+                index,
+                JavaSyntaxKind::LBracket,
+                JavaSyntaxKind::RBracket,
+            )),
+            _ => None,
+        }
+    }
+
+    pub(in crate::parser::grammar) fn consume_balanced_delimited(
+        &mut self,
+        open: JavaSyntaxKind,
+        close: JavaSyntaxKind,
+    ) {
+        if !self.at(open) {
+            return;
+        }
+
+        let mut depth = 0usize;
+        while !self.at_eof() {
+            if self.at(open) {
+                depth += 1;
+            } else if self.at(close) {
+                depth = depth.saturating_sub(1);
+                self.bump();
+                if depth == 0 {
+                    return;
+                }
+                continue;
+            }
+            self.bump();
         }
     }
 }
@@ -144,7 +211,7 @@ mod tests {
         assert!(lookahead.skip_type());
         assert!(lookahead.at(JavaSyntaxKind::At));
         assert!(lookahead.skip_annotations());
-        assert_eq!(lookahead.text(), Some("value"));
+        assert_eq!(lookahead.text(), "value");
     }
 
     // The forced-summary EOF endpoint is an internal cache contract; surrounding
@@ -152,98 +219,8 @@ mod tests {
     #[test]
     fn unmatched_parenthesis_summary_ends_at_eof() {
         let mut parser = Parser::new("(value");
-        let cursor = parser.inner.fork_cursor();
-        assert_eq!(
-            parser
-                .lookahead_summary
-                .after(&mut parser.inner.buffer, cursor, cursor),
-            2
-        );
-        assert_eq!(
-            parser
-                .lookahead_summary
-                .after(&mut parser.inner.buffer, cursor, cursor),
-            2
-        );
-    }
-}
-
-impl Parser<'_> {
-    pub(in crate::parser::grammar) fn consume_until_enclosing_brace(&mut self) {
-        let mut depth = 0usize;
-        while !self.at_eof() {
-            match self.current_kind() {
-                JavaSyntaxKind::LBrace => depth += 1,
-                JavaSyntaxKind::RBrace if depth == 0 => return,
-                JavaSyntaxKind::RBrace => depth -= 1,
-                _ => {}
-            }
-            self.bump();
-        }
-    }
-
-    pub(in crate::parser::grammar) fn skip_balanced_from(
-        &mut self,
-        mut index: usize,
-        open: JavaSyntaxKind,
-        close: JavaSyntaxKind,
-    ) -> usize {
-        let mut depth = 0usize;
-        while self.kind_at(index) != JavaSyntaxKind::Eof {
-            if self.kind_at(index) == open {
-                depth += 1;
-            } else if self.kind_at(index) == close {
-                depth = depth.saturating_sub(1);
-                index += 1;
-                if depth == 0 {
-                    return index;
-                }
-                continue;
-            }
-            index += 1;
-        }
-        index
-    }
-
-    pub(in crate::parser::grammar) fn skip_balanced_delimiter_at(
-        &mut self,
-        index: usize,
-    ) -> Option<usize> {
-        match self.kind_at(index) {
-            JavaSyntaxKind::LParen => {
-                Some(self.skip_balanced_from(index, JavaSyntaxKind::LParen, JavaSyntaxKind::RParen))
-            }
-            JavaSyntaxKind::LBracket => Some(self.skip_balanced_from(
-                index,
-                JavaSyntaxKind::LBracket,
-                JavaSyntaxKind::RBracket,
-            )),
-            _ => None,
-        }
-    }
-
-    pub(in crate::parser::grammar) fn consume_balanced_delimited(
-        &mut self,
-        open: JavaSyntaxKind,
-        close: JavaSyntaxKind,
-    ) {
-        if !self.at(open) {
-            return;
-        }
-
-        let mut depth = 0usize;
-        while !self.at_eof() {
-            if self.at(open) {
-                depth += 1;
-            } else if self.at(close) {
-                depth = depth.saturating_sub(1);
-                self.bump();
-                if depth == 0 {
-                    return;
-                }
-                continue;
-            }
-            self.bump();
-        }
+        let cursor = parser.inner.lookahead();
+        assert_eq!(parser.lookahead_summary.after(cursor, 0), 2);
+        assert_eq!(parser.lookahead_summary.after(cursor, 0), 2);
     }
 }

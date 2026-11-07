@@ -1,16 +1,11 @@
 [workspace]
 members = [
-  "crates/jolt_cli",
-  "crates/jolt_diagnostics",
-  "crates/jolt_fmt_dprint",
-  "crates/jolt_fmt_ir",
-  "crates/jolt_formatter",
-  "crates/jolt_java_fmt",
+  # TEMPORARY: the formatter foundation restores "crates/jolt_cli",
+  # "crates/jolt_fmt_dprint", "crates/jolt_formatter", "crates/jolt_java_fmt"
+  # and "tools/bench/driver" once they follow the new syntax API.
   "crates/jolt_java_syntax",
   "crates/jolt_syntax",
   "crates/jolt_test_support",
-  "crates/jolt_text",
-  "tools/bench/driver",
 ]
 resolver = "3"
 

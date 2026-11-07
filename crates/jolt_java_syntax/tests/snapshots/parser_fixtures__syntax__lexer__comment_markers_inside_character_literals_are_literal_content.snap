@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+'/'
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      CharacterLiteral "'/'" @ 0..3
+  Eof "" @ 3..3
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..3 message=unexpected token at top level

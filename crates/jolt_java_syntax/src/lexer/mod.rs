@@ -3,11 +3,11 @@ mod unicode;
 
 use std::ops::Range;
 
-use crate::JavaSyntaxKind;
-use crate::language::JavaLanguage;
-use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
-use jolt_syntax::{LanguageLexer, LexedToken, SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
-use jolt_text::{TextRange, TextSize};
+use crate::{JavaLanguage, JavaSyntaxKind};
+use jolt_syntax::{
+    Diagnostic, LexedToken, Lexer, TextRange, TextSize, Trivia as SyntaxTrivia,
+    TriviaKind as SyntaxTriviaKind,
+};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
 pub(crate) use token::{JavaLexDiagnosticCode, LexerDiagnostic};
@@ -35,7 +35,7 @@ impl<'source> JavaLexer<'source> {
     pub(crate) fn next_token_into(
         &mut self,
         trivia: &mut Vec<SyntaxTrivia>,
-    ) -> LexedToken<JavaLanguage> {
+    ) -> LexedToken<JavaSyntaxKind> {
         if self.emitted_eof {
             return self.eof_token_into(trivia.len()..trivia.len());
         }
@@ -63,7 +63,7 @@ impl<'source> JavaLexer<'source> {
         self.scanner.diagnostics
     }
 
-    fn eof_token_into(&self, leading: Range<usize>) -> LexedToken<JavaLanguage> {
+    fn eof_token_into(&self, leading: Range<usize>) -> LexedToken<JavaSyntaxKind> {
         let end = TextSize::new(self.scanner.source.len());
         let trivia_end = leading.end;
         LexedToken {
@@ -75,14 +75,8 @@ impl<'source> JavaLexer<'source> {
     }
 }
 
-impl<'source> LanguageLexer<'source> for JavaLexer<'source> {
-    type Language = JavaLanguage;
-
-    fn new(source: &'source str) -> Self {
-        Self::new(source)
-    }
-
-    fn next_token_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken<JavaLanguage> {
+impl<'source> Lexer<'source, JavaLanguage> for JavaLexer<'source> {
+    fn next_token(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken<JavaSyntaxKind> {
         self.next_token_into(trivia)
     }
 
@@ -100,10 +94,8 @@ struct Scanner<'source> {
 fn lexer_diagnostic(code: JavaLexDiagnosticCode, range: TextRange) -> Diagnostic {
     Diagnostic {
         code: code.id(),
-        severity: Severity::Error,
-        stage: DiagnosticStage::Lexer,
         message: code.message().to_owned(),
-        range: Some(range),
+        range,
     }
 }
 
@@ -287,12 +279,10 @@ impl<'source> Scanner<'source> {
             JavaLexDiagnosticCode::UnterminatedBlockComment,
             TextRange::new(start, self.raw_end_for_pos(start_pos)),
         ));
-        let kind = match kind {
-            SyntaxTriviaKind::BlockComment => SyntaxTriviaKind::UnterminatedBlockComment,
-            SyntaxTriviaKind::DocComment => SyntaxTriviaKind::UnterminatedDocComment,
-            _ => unreachable!("block comment lexer produced a non-block trivia kind"),
-        };
-        SyntaxTrivia::new(kind, TextRange::new(start, TextSize::new(self.pos)).len())
+        SyntaxTrivia::new(
+            SyntaxTriviaKind::UnterminatedBlockComment,
+            TextRange::new(start, TextSize::new(self.pos)).len(),
+        )
     }
 
     fn character_literal(&mut self) -> JavaSyntaxKind {

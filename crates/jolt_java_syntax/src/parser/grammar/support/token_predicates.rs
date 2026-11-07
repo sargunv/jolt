@@ -10,8 +10,7 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn bump_type_modifier(&mut self) {
         let modifier_len = self.type_modifier_len_at(self.position()).unwrap_or(1);
         let modifier = (modifier_len == 3).then(|| self.start());
-        let next = self.position() + modifier_len;
-        while self.position() < next {
+        for _ in 0..modifier_len {
             self.bump();
         }
         if let Some(modifier) = modifier {
@@ -41,18 +40,18 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn at_primitive_type(&mut self) -> bool {
-        is_primitive_type_start(self.current_kind())
+        is_primitive_type_start(self.current())
     }
 
     pub(in crate::parser::grammar) fn starts_array_dimensions(&mut self) -> bool {
         let mut lookahead = self.lookahead();
         lookahead.skip_annotations();
-        lookahead.at(JavaSyntaxKind::LBracket) && lookahead.nth_kind(1) == JavaSyntaxKind::RBracket
+        lookahead.at(JavaSyntaxKind::LBracket) && lookahead.nth(1) == JavaSyntaxKind::RBracket
     }
 
     pub(in crate::parser::grammar) fn starts_dim_expression(&mut self) -> bool {
         let mut lookahead = self.lookahead();
         lookahead.skip_annotations();
-        lookahead.at(JavaSyntaxKind::LBracket) && lookahead.nth_kind(1) != JavaSyntaxKind::RBracket
+        lookahead.at(JavaSyntaxKind::LBracket) && lookahead.nth(1) != JavaSyntaxKind::RBracket
     }
 }

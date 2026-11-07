@@ -6,12 +6,5 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
-[dependencies]
-jolt_diagnostics = { path = "../jolt_diagnostics" }
-jolt_text = { path = "../jolt_text" }
-
-[features]
-bench = []
-
 [lints]
 workspace = true

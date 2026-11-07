@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+static	voidform
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StaticKw "static" @ 0..6 trailing=[Whitespace "\t"]
+      VoidKw "void" @ 7..11 trailing=[Whitespace "\u{c}"]
+      Identifier "form" @ 12..16
+  Eof "" @ 16..16
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..6 message=unexpected token at top level

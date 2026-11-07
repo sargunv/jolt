@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+cl\u0061ss A {}
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "cl\\u0061ss" @ 0..10 trailing=[Whitespace " "]
+      Identifier "A" @ 11..12 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 13..14
+        ClassBodyMemberList
+        RBrace "}" @ 14..15
+  Eof "" @ 15..15
+
+diagnostics:
+(none)

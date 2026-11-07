@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+'\
+'
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      CharacterLiteral "'\\" @ 0..2
+      CharacterLiteral "'" @ 3..4 leading=[Newline "\n"]
+  Eof "" @ 4..4
+
+diagnostics:
+code=java.lex.invalid_escape_sequence range=2..3 message=invalid escape sequence
+code=java.lex.unterminated_character_literal range=0..2 message=unterminated character literal
+code=java.lex.unterminated_character_literal range=3..4 message=unterminated character literal
+code=java.parse.unexpected_syntax range=0..2 message=unexpected token at top level

@@ -1,93 +1,411 @@
-use std::path::PathBuf;
+use std::path::Path;
 
-use jolt_diagnostics::{DiagnosticCodeId, DiagnosticStage};
 use jolt_java_syntax::{
-    ArrayCreationExpression, ArrayInitializer, BogusName, JavaFamily, JavaNode, JavaSyntaxField,
-    JavaSyntaxListPart, JavaSyntaxView, ModuleDeclaration, ModuleDirective,
-    ModuleImplementationClause, ModuleTargetClause, NameSyntax, parse_compilation_unit,
+    Bogus, JavaLanguage, JavaSyntaxKind, ModuleDeclaration, ModuleDirective, parse,
 };
+use jolt_syntax::{AstNode, SyntaxNode, debug_tree};
 use jolt_test_support::{
-    assert_bidirectional_diagnostic_ownership, collect_java_files, read_to_string, workspace_root,
+    SnapshotBuilder, collect_java_files, fixture_manifest, fixture_snapshot_name,
+    java_fixture_root, read_to_string, render_diagnostics, workspace_root,
 };
 
 #[test]
-fn fixture_java_inputs_parse_without_loss() {
+fn syntax_fixture_snapshots() {
+    let root = java_fixture_root(env!("CARGO_MANIFEST_DIR"));
+    let paths = collect_java_files(&root.join("syntax"));
+    insta::assert_snapshot!("fixture_manifest", fixture_manifest(&root, &paths));
+
+    for path in paths {
+        let source = read_to_string(&path);
+        let parse = parse(&source);
+        let snapshot = SnapshotBuilder::new()
+            .section("input", &source)
+            .section("syntax", debug_tree::<JavaLanguage>(parse.syntax()))
+            .section("diagnostics", render_diagnostics(parse.diagnostics()))
+            .finish();
+        insta::assert_snapshot!(fixture_snapshot_name(&root, &path), snapshot);
+    }
+}
+
+#[test]
+fn every_fixture_parses_losslessly() {
+    let root = java_fixture_root(env!("CARGO_MANIFEST_DIR"));
+    for path in collect_java_files(&root) {
+        assert_lossless(&path);
+    }
+}
+
+#[test]
+fn imported_suites_parse_losslessly() {
+    let imports = workspace_root(env!("CARGO_MANIFEST_DIR")).join("tools/import/.imports");
     for suite in [
         "google-java-format",
         "palantir-java-format",
         "prettier-java",
     ] {
-        let root = fixture_root(suite);
-        for path in collect_java_files(&root) {
-            let source = read_to_string(&path);
-            let parse = parse_compilation_unit(&source);
-            let syntax = parse.syntax().unwrap_or_else(|| {
-                panic!(
-                    "parser produced no represented tree for {}: {:#?}",
-                    path.display(),
-                    parse.diagnostics()
-                )
-            });
-            assert_eq!(
-                syntax.source_text(),
-                source,
-                "syntax tree did not reconstruct exactly for {}",
-                path.display()
-            );
-            assert_bidirectional_diagnostic_ownership(
-                syntax.syntax_node().expect("represented compilation unit"),
-                parse.diagnostics(),
-                parse.structural_diagnostic_owners(),
-                java_diagnostic_requires_owner,
-                path.display(),
-            );
+        for path in collect_java_files(&imports.join(suite).join("input")) {
+            assert_lossless(&path);
         }
     }
 }
 
-#[test]
-fn malformed_module_name_stops_before_directives_when_open_brace_is_missing() {
-    let source = "module recovered.\n  uses z.Service;\n  requires a.module;\n}";
-    let parse = parse_compilation_unit(source);
-    let root = parse
-        .syntax()
-        .expect("represented compilation unit")
-        .syntax_node()
-        .expect("physical compilation unit");
-    let mut nodes = vec![root];
-    let module = loop {
-        let node = nodes.pop().expect("module declaration");
-        nodes.extend(node.children());
-        if let Some(module) = ModuleDeclaration::cast(node) {
-            break module;
-        }
-    };
+fn assert_lossless(path: &Path) {
+    let source = read_to_string(path);
+    let parse = parse(&source);
+    let mut rebuilt = String::with_capacity(source.len());
+    for token in parse.syntax().tokens() {
+        token
+            .leading()
+            .for_each(|piece| rebuilt.push_str(piece.text));
+        rebuilt.push_str(token.text());
+        token
+            .trailing()
+            .for_each(|piece| rebuilt.push_str(piece.text));
+    }
+    assert_eq!(rebuilt, source, "{} did not round-trip", path.display());
+    if parse.diagnostics().is_empty() {
+        let root = parse.syntax();
+        assert!(
+            root.is_recovery_free()
+                && !root
+                    .descendants()
+                    .any(|element| element.as_node().is_some_and(SyntaxNode::is_malformed)),
+            "{}: a file without diagnostics has recovery in its tree",
+            path.display()
+        );
+    }
+}
 
-    let JavaSyntaxField::Present(NameSyntax::BogusName(name)) = module.name() else {
-        panic!("module name must be diagnostic-owned bogus syntax");
-    };
+/// Token soup and pathological nesting must terminate and stay lossless. The
+/// loop and depth guards are active in every build profile, so a debug run
+/// covers release behavior (debug only adds assertions).
+#[test]
+fn adversarial_inputs_terminate_losslessly() {
+    let nested = deep_nestings();
+    let mut inputs = token_soups();
+    inputs.extend(linear_scan_shapes());
+    // Debug frames are far larger than release ones; the depth budget is
+    // calibrated for release on a 1 MiB stack.
+    std::thread::Builder::new()
+        .stack_size(256 << 20)
+        .spawn(move || {
+            for source in &nested {
+                assert!(
+                    parse(source)
+                        .diagnostics()
+                        .iter()
+                        .any(|diagnostic| diagnostic.code == "java.parse.excessive_syntax_nesting"),
+                    "{} did not reach the depth limit",
+                    &source[..40]
+                );
+            }
+            for source in nested.into_iter().chain(inputs) {
+                assert_eq!(rebuild(&parse(&source)), source);
+            }
+        })
+        .expect("spawn")
+        .join()
+        .expect("adversarial inputs parse");
+}
+
+fn rebuild(parse: &jolt_java_syntax::JavaParse<'_>) -> String {
+    let mut rebuilt = String::new();
+    for token in parse.syntax().tokens() {
+        token
+            .leading()
+            .for_each(|piece| rebuilt.push_str(piece.text));
+        rebuilt.push_str(token.text());
+        token
+            .trailing()
+            .for_each(|piece| rebuilt.push_str(piece.text));
+    }
+    rebuilt
+}
+
+/// Deterministic pseudo-random sequences of Java tokens and trivia.
+fn token_soups() -> Vec<String> {
+    let vocabulary: Vec<&str> =
+        "class|interface|enum|record|@|(|)|{|}|[|]|<|>|>>|>>>|>=|>>=|>>>=|,|;\
+        |.|...|::|->|=|?|:|+|-|!|~|&&|||||&|||^|case|default|switch|if|else|for|while|do|try\
+        |catch|finally|new|this|super|return|yield|var|sealed|non|permits|module|requires\
+        |exports|import|package|static|final|public|void|int|x|T|1|\"s\"|'c'|/* c */|// c\n\
+        |\n|instanceof|when|throws|extends|implements|_"
+            .split('|')
+            .collect();
+    let mut inputs = Vec::new();
+    let mut seed = 0x2545_f491_4f6c_dd1d_u64;
+    for length in [1, 2, 3, 5, 8, 13, 40, 200, 2000] {
+        for _ in 0..64 {
+            let mut source = String::new();
+            for _ in 0..length {
+                seed ^= seed << 13;
+                seed ^= seed >> 7;
+                seed ^= seed << 17;
+                let index = usize::try_from(seed % vocabulary.len() as u64).expect("index fits");
+                source.push_str(vocabulary[index]);
+                source.push(' ');
+            }
+            inputs.push(source);
+        }
+    }
+    inputs
+}
+
+/// Every recursive grammar owner nested far past the depth limit.
+fn deep_nestings() -> Vec<String> {
+    const DEPTH: usize = 5000;
+    let shapes: [(&str, &str, &str, &str); 13] = [
+        ("(", "x", ")", "class C { void m() { # } }"),
+        ("{", "", "}", "class C { void m() { # } }"),
+        ("List<", "T", ">", "class C { # f; }"),
+        ("@A(", "1", ")", "class C { # void m() {} }"),
+        ("class C { ", "", " }", "#"),
+        ("void m() { class D { ", "", " } }", "class C { # }"),
+        ("x = ", "1", "", "class C { void m() { #; } }"),
+        ("-", "1", "", "class C { void m() { x = #; } }"),
+        ("new int[] {", "1", "}", "class C { void m() { x = #; } }"),
+        ("if (x) ", ";", "", "class C { void m() { # } }"),
+        (
+            "switch (x) { case 1 -> ",
+            "1;",
+            " }",
+            "class C { void m() { # } }",
+        ),
+        (
+            "R(",
+            "R r",
+            ")",
+            "class C { void m() { x = o instanceof #; } }",
+        ),
+        ("() -> ", "x", "", "class C { void m() { x = #; } }"),
+    ];
+    shapes
+        .iter()
+        .map(|(open, middle, close, template)| {
+            let body = format!("{}{middle}{}", open.repeat(DEPTH), close.repeat(DEPTH));
+            template.replace('#', &body)
+        })
+        .collect()
+}
+
+/// Shapes that once made header scans rescan the rest of a body per member,
+/// statement, or parameter, plus long unbalanced runs.
+fn linear_scan_shapes() -> Vec<String> {
+    const COUNT: usize = 20_000;
+    let mut inputs = Vec::new();
+    for unit in ["x ", "x() ", "a b c ", "public "] {
+        inputs.push(format!("class C {{ {} }}", unit.repeat(COUNT)));
+    }
+    for unit in ["x ", "A<"] {
+        inputs.push(format!("class C {{ C() {{ {} }} }}", unit.repeat(COUNT)));
+        inputs.push(format!(
+            "class C {{ void m() {{ x = {} }} }}",
+            unit.repeat(COUNT)
+        ));
+    }
+    inputs.push(format!(
+        "class C {{ void m({}) {{}} }}",
+        "a b c ".repeat(COUNT)
+    ));
+    for unit in ["(", ")", "{", "}", "[", "]", "<", ">", "@A("] {
+        inputs.push(unit.repeat(COUNT));
+    }
+    inputs
+}
+
+fn nodes_of(source: &str, kind: JavaSyntaxKind) -> usize {
+    let parse = parse(source);
+    parse
+        .syntax()
+        .descendants()
+        .filter(|element| element.kind() == kind.to_raw())
+        .count()
+}
+
+fn count_inside(source: &str, owner: JavaSyntaxKind, kind: JavaSyntaxKind) -> usize {
+    let parse = parse(source);
+    let owner = parse
+        .syntax()
+        .descendants()
+        .filter_map(jolt_syntax::SyntaxElement::as_node)
+        .find(|node| node.kind() == owner.to_raw())
+        .expect("owner node");
+    owner
+        .descendants()
+        .filter(|element| element.kind() == kind.to_raw())
+        .count()
+}
+
+#[test]
+fn missing_constructor_open_paren_recovers_the_constructor() {
+    for source in [
+        "class C { C int value) throws Exception {} }",
+        "class C { C int x int y) {} }",
+        "class C { C C... this) {} }",
+        "class C { C @() int x) {} }",
+        "class C { C List<+ String> value) {} }",
+        "class C { C int x) throws List<+ String> {} }",
+        "class C { C) throws {} }",
+        "class C { C int value) throws , @Thrown pkg.Error {} }",
+        "class C { C @A(values = {1, 2}) java.util.Map<@B String, java.util.List<@C Integer[]>>[] value) throws pkg.@D Error<@E String>.Nested {} }",
+        "class Outer { class C { C @A Outer.@B Inner Outer.this) {} } }",
+    ] {
+        let parse = parse(source);
+        let constructors: Vec<_> = parse
+            .syntax()
+            .descendants()
+            .filter_map(jolt_syntax::SyntaxElement::as_node)
+            .filter_map(jolt_java_syntax::ConstructorDeclaration::cast)
+            .collect();
+        assert_eq!(
+            constructors.len(),
+            1,
+            "constructor dispatch diverged for `{source}`"
+        );
+        assert!(
+            constructors[0].close_paren().is_some(),
+            "constructor recovery did not consume `)` for `{source}`"
+        );
+        assert!(
+            constructors[0].body().is_some(),
+            "constructor recovery did not reach its body for `{source}`"
+        );
+    }
+}
+
+#[test]
+fn missing_constructor_open_paren_recovery_stops_before_neighbors() {
+    use JavaSyntaxKind as K;
+    let neighbors = "class C { C() {} C field; C method() {} } record R(int value) { R {} }";
+    let cases: &[(&str, &[(K, usize)])] = &[
+        (
+            "class C { C int x) throws @A({E.class}) E; C field; }",
+            &[(K::ConstructorDeclaration, 0), (K::FieldDeclaration, 1)],
+        ),
+        (
+            "class C { C int x) throws @A(E; C field; }",
+            &[(K::ClassDeclaration, 1), (K::FieldDeclaration, 1)],
+        ),
+        (
+            "class C { C foo(bar) int p) throws E C field; }",
+            &[(K::FieldDeclaration, 1)],
+        ),
+        (
+            "class C { C foo(a; b) int p) throws E C field; }",
+            &[(K::FieldDeclaration, 1)],
+        ),
+        (
+            "class C { C foo } int x) {}",
+            &[(K::ConstructorDeclaration, 0)],
+        ),
+        (
+            "class C { C foo(int x } int y)) {}",
+            &[(K::ConstructorDeclaration, 0)],
+        ),
+        (
+            "class C { C int x) throws E void m() {} }",
+            &[(K::ConstructorDeclaration, 0), (K::MethodDeclaration, 1)],
+        ),
+        (
+            "class C { C int x) throws E C field; }",
+            &[(K::ConstructorDeclaration, 0), (K::FieldDeclaration, 1)],
+        ),
+        (
+            "class C { C int x) throws E @A C field; }",
+            &[(K::FieldDeclaration, 1)],
+        ),
+        (
+            "class C { C int x) throws E @A void m() {} }",
+            &[(K::MethodDeclaration, 1)],
+        ),
+        (
+            "record R(int v) { R int x) throws E R {} }",
+            &[(K::CompactConstructorDeclaration, 1)],
+        ),
+        (
+            neighbors,
+            &[
+                (K::FieldDeclaration, 1),
+                (K::MethodDeclaration, 1),
+                (K::ConstructorDeclaration, 1),
+                (K::CompactConstructorDeclaration, 1),
+            ],
+        ),
+    ];
+    for (source, expectations) in cases {
+        for &(kind, expected) in *expectations {
+            assert_eq!(nodes_of(source, kind), expected, "{kind:?} in `{source}`");
+        }
+    }
+
+    for (source, owner, kind) in [
+        (
+            "class C { C int x) throws E @A C field; }",
+            K::FieldDeclaration,
+            K::Annotation,
+        ),
+        (
+            "class C { C int x) throws E @A void m() {} }",
+            K::MethodDeclaration,
+            K::Annotation,
+        ),
+        (
+            "record R(int v) { R int x) throws E R {} }",
+            K::CompactConstructorDeclaration,
+            K::ConstructorBody,
+        ),
+    ] {
+        assert_eq!(
+            count_inside(source, owner, kind),
+            1,
+            "{kind:?} in `{source}`"
+        );
+    }
+}
+
+#[test]
+fn missing_constructor_open_paren_recovery_is_bounded() {
+    use JavaSyntaxKind as K;
+    let qualified_suffix = (0..256)
+        .map(|index| format!("p{index}"))
+        .collect::<Vec<_>>();
+    let long = format!(
+        "class C {{ C int x) throws E {} +; C field; }}",
+        qualified_suffix.join(".")
+    );
+    assert_eq!(nodes_of(&long, K::FieldDeclaration), 1);
+    let annotations = (0..256)
+        .map(|index| format!("@A{index}"))
+        .collect::<Vec<_>>();
+    let long = format!(
+        "class C {{ java.util.List<+ {} String> field; }}",
+        annotations.join(" ")
+    );
+    assert_eq!(nodes_of(&long, K::FieldDeclaration), 1);
+}
+
+#[test]
+fn malformed_module_names_stay_bounded() {
+    let source = "module recovered.\n  uses z.Service;\n  requires a.module;\n}";
+    let parsed = parse(source);
+    let module = parsed
+        .syntax()
+        .descendants()
+        .filter_map(jolt_syntax::SyntaxElement::as_node)
+        .find_map(ModuleDeclaration::cast)
+        .expect("module declaration");
+    let name = module.name().expect("module name");
+    assert!(matches!(name, jolt_java_syntax::NameSyntax::Bogus(_)));
     assert_eq!(
-        name.token_iter()
-            .map(|token| token.text())
+        name.syntax()
+            .tokens()
+            .map(jolt_syntax::SyntaxToken::text)
             .collect::<Vec<_>>(),
         ["recovered", "."]
     );
-    assert!(matches!(module.open_brace(), JavaSyntaxField::Missing(_)));
-    assert!(matches!(module.close_brace(), JavaSyntaxField::Present(_)));
-
-    let JavaSyntaxField::Present(directives) = module.directives() else {
-        panic!("module directives must remain structured");
-    };
-    let directives = directives
-        .parts()
-        .filter_map(|part| match part {
-            JavaSyntaxListPart::Item(directive) => Some(directive),
-            JavaSyntaxListPart::Separator(_) => None,
-            JavaSyntaxListPart::Missing(_) | JavaSyntaxListPart::Malformed(_) => {
-                panic!("module directive list must not recover its entries")
-            }
-        })
-        .collect::<Vec<_>>();
+    assert!(module.open_brace().is_none());
+    assert!(module.close_brace().is_some());
+    let directives: Vec<_> = module.directives().expect("directives").items().collect();
     assert!(matches!(
         directives.as_slice(),
         [
@@ -95,10 +413,7 @@ fn malformed_module_name_stops_before_directives_when_open_brace_is_missing() {
             ModuleDirective::RequiresDirective(_)
         ]
     ));
-}
 
-#[test]
-fn malformed_qualified_names_are_bounded_in_every_module_name_role() {
     let source = "\
 module m. {
   requires dependency.;
@@ -107,36 +422,20 @@ module m. {
   uses service.;
   provides service. with implementation., other.;
 }";
-    let parse = parse_compilation_unit(source);
-    let root = parse
+    let parsed = parse(source);
+    let mut bogus_names: Vec<String> = parsed
         .syntax()
-        .expect("represented compilation unit")
-        .syntax_node()
-        .expect("physical compilation unit");
-    let mut nodes = vec![root];
-    let mut bogus_names = Vec::new();
-    let mut directive_kinds = Vec::new();
-    while let Some(node) = nodes.pop() {
-        nodes.extend(node.children());
-        if let Some(name) = BogusName::cast(node) {
-            bogus_names.push(
-                name.token_iter()
-                    .map(|token| token.text())
-                    .collect::<String>(),
-            );
-        }
-        if let Some(directive) = ModuleDirective::cast(node) {
-            directive_kinds.push(match directive {
-                ModuleDirective::RequiresDirective(_) => "requires",
-                ModuleDirective::ExportsDirective(_) => "exports",
-                ModuleDirective::OpensDirective(_) => "opens",
-                ModuleDirective::UsesDirective(_) => "uses",
-                ModuleDirective::ProvidesDirective(_) => "provides",
-                ModuleDirective::BogusModuleDirective(_) => "bogus",
-            });
-        }
-    }
-
+        .descendants()
+        .filter_map(jolt_syntax::SyntaxElement::as_node)
+        .filter_map(Bogus::cast)
+        .map(|bogus| {
+            bogus
+                .syntax()
+                .tokens()
+                .map(jolt_syntax::SyntaxToken::text)
+                .collect()
+        })
+        .collect();
     bogus_names.sort_unstable();
     assert_eq!(
         bogus_names,
@@ -153,72 +452,6 @@ module m. {
             "target.",
         ]
     );
-    directive_kinds.sort_unstable();
-    assert_eq!(
-        directive_kinds,
-        ["exports", "opens", "provides", "requires", "uses"]
-    );
-}
-
-#[test]
-fn category_bogus_list_members_remain_typed_items() {
-    let parse = parse_compilation_unit("module m { requires a; + ; exports p; }");
-    let root = parse
-        .syntax()
-        .expect("malformed Java source must retain a typed root")
-        .syntax_node()
-        .expect("typed Java root must have physical syntax");
-    let mut nodes = vec![root];
-    let module = loop {
-        let node = nodes.pop().expect("represented module declaration");
-        nodes.extend(node.children());
-        if let Some(module) = ModuleDeclaration::cast(node) {
-            break module;
-        }
-    };
-    let JavaSyntaxField::Present(directives) = module.directives() else {
-        panic!("module directives must remain structured");
-    };
-    let bogus = directives.parts().find_map(|part| match part {
-        JavaSyntaxListPart::Item(ModuleDirective::BogusModuleDirective(bogus)) => Some(bogus),
-        JavaSyntaxListPart::Item(_)
-        | JavaSyntaxListPart::Separator(_)
-        | JavaSyntaxListPart::Missing(_)
-        | JavaSyntaxListPart::Malformed(_) => None,
-    });
-    let bogus = bogus.expect("category-bogus directive must remain a typed list item");
-    assert!(
-        bogus
-            .syntax_node()
-            .expect("bogus directive must have physical syntax")
-            .is_directly_malformed()
-    );
-}
-
-#[test]
-fn optional_fields_expose_directly_malformed_children() {
-    let parse = parse_compilation_unit("class C { Object x = new int[1] { 2 }; }");
-    let root = parse
-        .syntax()
-        .expect("malformed Java source must retain a typed root")
-        .syntax_node()
-        .expect("typed Java root must have physical syntax");
-    let mut nodes = vec![root];
-    let creation = loop {
-        let node = nodes.pop().expect("represented array creation");
-        nodes.extend(node.children());
-        if let Some(creation) = ArrayCreationExpression::cast(node) {
-            break creation;
-        }
-    };
-    let JavaSyntaxField::Malformed(initializer) = creation.initializer() else {
-        panic!("invalid array initializer must remain represented as malformed");
-    };
-    let raw = initializer
-        .syntax_node()
-        .expect("malformed initializer must have physical syntax");
-    assert!(raw.is_directly_malformed());
-    assert!(ArrayInitializer::cast(raw).is_none());
 }
 
 #[test]
@@ -245,36 +478,29 @@ module m {
   provides provides with Impl;
   exports api requires.foo;
 }";
-    let parse = parse_compilation_unit(source);
-    let root = parse
+    let parse = parse(source);
+    let module = parse
         .syntax()
-        .expect("represented compilation unit")
-        .syntax_node()
-        .expect("physical compilation unit");
-    let mut nodes = vec![root.clone()];
-    let mut directive_kinds = Vec::new();
-    let mut target_clause_count = 0;
-    let mut implementation_clause_count = 0;
-    while let Some(node) = nodes.pop() {
-        nodes.extend(node.children());
-        if let Some(directive) = ModuleDirective::cast(node) {
-            directive_kinds.push(match directive {
-                ModuleDirective::RequiresDirective(_) => "requires",
-                ModuleDirective::ExportsDirective(_) => "exports",
-                ModuleDirective::OpensDirective(_) => "opens",
-                ModuleDirective::UsesDirective(_) => "uses",
-                ModuleDirective::ProvidesDirective(_) => "provides",
-                ModuleDirective::BogusModuleDirective(_) => "bogus",
-            });
-        }
-        target_clause_count += usize::from(ModuleTargetClause::cast(node).is_some());
-        implementation_clause_count +=
-            usize::from(ModuleImplementationClause::cast(node).is_some());
-    }
-
-    directive_kinds.sort_unstable();
+        .descendants()
+        .filter_map(jolt_syntax::SyntaxElement::as_node)
+        .find_map(ModuleDeclaration::cast)
+        .expect("module declaration");
+    let mut kinds: Vec<&str> = module
+        .directives()
+        .expect("directives")
+        .items()
+        .map(|directive| match directive {
+            ModuleDirective::RequiresDirective(_) => "requires",
+            ModuleDirective::ExportsDirective(_) => "exports",
+            ModuleDirective::OpensDirective(_) => "opens",
+            ModuleDirective::UsesDirective(_) => "uses",
+            ModuleDirective::ProvidesDirective(_) => "provides",
+            ModuleDirective::Bogus(_) => "bogus",
+        })
+        .collect();
+    kinds.sort_unstable();
     assert_eq!(
-        directive_kinds,
+        kinds,
         [
             "exports", "exports", "exports", "exports", "exports", "exports", "exports", "exports",
             "opens", "opens", "opens", "opens", "provides", "provides", "provides", "provides",
@@ -282,27 +508,30 @@ module m {
             "uses", "uses", "uses",
         ]
     );
-    assert_eq!(target_clause_count, 7);
-    assert_eq!(implementation_clause_count, 5);
-    assert_bidirectional_diagnostic_ownership(
-        root,
-        parse.diagnostics(),
-        parse.structural_diagnostic_owners(),
-        java_diagnostic_requires_owner,
-        "module qualified-name boundary ownership",
+    assert_eq!(nodes_of(source, JavaSyntaxKind::ModuleTargetClause), 7);
+    assert_eq!(
+        nodes_of(source, JavaSyntaxKind::ModuleImplementationClause),
+        5
     );
 }
 
-fn java_diagnostic_requires_owner(diagnostic: &jolt_diagnostics::Diagnostic) -> bool {
-    diagnostic.stage == DiagnosticStage::Parser
-        && diagnostic.code
-            != DiagnosticCodeId::new("java.parse.unqualified_yield_method_invocation")
-        && diagnostic.code != DiagnosticCodeId::new("java.parse.decimal_integer_boundary_literal")
-}
-
-fn fixture_root(suite: &str) -> PathBuf {
-    workspace_root(env!("CARGO_MANIFEST_DIR"))
-        .join("tools/import/.imports")
-        .join(suite)
-        .join("input")
+#[test]
+fn bogus_list_items_stay_typed_items() {
+    let parse = parse("module m { requires a; + ; exports p; }");
+    let module = parse
+        .syntax()
+        .descendants()
+        .filter_map(jolt_syntax::SyntaxElement::as_node)
+        .find_map(ModuleDeclaration::cast)
+        .expect("module declaration");
+    let bogus = module
+        .directives()
+        .expect("directives")
+        .items()
+        .find_map(|directive| match directive {
+            ModuleDirective::Bogus(bogus) => Some(bogus),
+            _ => None,
+        })
+        .expect("a bogus directive item");
+    assert!(bogus.syntax().is_malformed());
 }

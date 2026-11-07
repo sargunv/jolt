@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"""
+text """ tail
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      TextBlockLiteral "\"\"\"\ntext \"\"\"" @ 0..12 trailing=[Whitespace " "]
+      Identifier "tail" @ 13..17
+  Eof "" @ 17..17
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..12 message=unexpected token at top level

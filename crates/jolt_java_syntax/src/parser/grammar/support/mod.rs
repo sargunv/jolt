@@ -1,4 +1,4 @@
-use super::{JavaParserExt, JavaSyntaxKind, Parser};
+use super::{JavaSyntaxKind, Parser};
 
 mod declaration_predicates;
 mod delimiters;
@@ -7,14 +7,16 @@ mod identifiers;
 mod lookahead;
 mod pattern_predicates;
 mod recovery;
+mod scan_tables;
 mod separated_lists;
 mod statement_predicates;
 mod token_predicates;
 mod type_arguments;
 
-pub(in crate::parser::grammar) use lookahead::JavaLookahead;
+pub(in crate::parser::grammar) use expression_predicates::is_assignment_operator;
+pub(in crate::parser::grammar) use lookahead::{JavaLookahead, gt_rest, is_gt_family};
+pub(in crate::parser) use scan_tables::ScanTables;
 pub(in crate::parser::grammar) use separated_lists::SeparatedElement;
-pub(super) use type_arguments::over_depth_type_end;
 
 #[derive(Clone, Copy)]
 pub(super) enum MissingConstructorHeaderAction {
@@ -101,9 +103,9 @@ pub(super) const fn is_literal_expression_start(kind: JavaSyntaxKind) -> bool {
 
 fn type_modifier_len(
     kind: JavaSyntaxKind,
-    text: Option<&str>,
+    text: &str,
     next_kind: JavaSyntaxKind,
-    next_text: Option<&str>,
+    next_text: &str,
 ) -> Option<usize> {
     if matches!(
         kind,
@@ -119,13 +121,10 @@ fn type_modifier_len(
             | JavaSyntaxKind::NativeKw
             | JavaSyntaxKind::StrictfpKw
             | JavaSyntaxKind::DefaultKw
-    ) || text == Some("sealed")
+    ) || text == "sealed"
     {
         Some(1)
-    } else if text == Some("non")
-        && next_kind == JavaSyntaxKind::Minus
-        && next_text == Some("sealed")
-    {
+    } else if text == "non" && next_kind == JavaSyntaxKind::Minus && next_text == "sealed" {
         Some(3)
     } else {
         None

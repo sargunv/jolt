@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+""" 
+text
+"""
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      TextBlockLiteral "\"\"\"\u{a0}\ntext\n\"\"\"" @ 0..14
+  Eof "" @ 14..14
+
+diagnostics:
+code=java.lex.missing_text_block_line_terminator range=0..3 message=text block opening delimiter must be followed by a line terminator
+code=java.parse.unexpected_syntax range=0..14 message=unexpected token at top level

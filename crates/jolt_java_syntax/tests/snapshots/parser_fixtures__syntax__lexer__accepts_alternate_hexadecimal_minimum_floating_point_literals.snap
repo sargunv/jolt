@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+0x0.000002P-126f 0x0.0_0000_0000_0001P-1022
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      FloatingPointLiteral "0x0.000002P-126f" @ 0..16 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x0.0_0000_0000_0001P-1022" @ 17..43
+  Eof "" @ 43..43
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..16 message=unexpected token at top level

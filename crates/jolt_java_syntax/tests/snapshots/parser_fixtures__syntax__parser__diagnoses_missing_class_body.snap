@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+class A;
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "A" @ 6..7
+      ClassBody
+        ClassBodyMemberList
+      Semicolon ";" @ 7..8
+  Eof "" @ 8..8
+
+diagnostics:
+code=java.parse.expected_syntax range=7..8 message=expected type body

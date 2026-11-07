@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+'\uD835\uDC82'
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      CharacterLiteral "'\\uD835\\uDC82'" @ 0..14
+  Eof "" @ 14..14
+
+diagnostics:
+code=java.lex.invalid_character_literal range=0..14 message=invalid character literal
+code=java.parse.unexpected_syntax range=0..14 message=unexpected token at top level

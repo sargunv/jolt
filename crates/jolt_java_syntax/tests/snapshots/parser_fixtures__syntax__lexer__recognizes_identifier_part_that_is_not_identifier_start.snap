@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+á
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "a\u{301}" @ 0..3
+      VariableDeclaratorList
+        VariableDeclarator
+  Eof "" @ 3..3
+
+diagnostics:
+code=java.parse.expected_syntax range=3..3 message=expected variable name
+code=java.parse.expected_syntax range=3..3 message=expected `;` after field declaration

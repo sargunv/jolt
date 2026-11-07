@@ -1,0 +1,31 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+0x1. 0x.1 0x1p 0x1p+ 0x1p_1 0xp1 0x.p1 0X.p1
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      FloatingPointLiteral "0x1." @ 0..4 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x.1" @ 5..9 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x1p" @ 10..14 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x1p+" @ 15..20 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x1p_1" @ 21..27 trailing=[Whitespace " "]
+      FloatingPointLiteral "0xp1" @ 28..32 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x.p1" @ 33..38 trailing=[Whitespace " "]
+      FloatingPointLiteral "0X.p1" @ 39..44
+  Eof "" @ 44..44
+
+diagnostics:
+code=java.lex.invalid_numeric_literal range=0..4 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=5..9 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=10..14 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=15..20 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=21..27 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=28..32 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=33..38 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=39..44 message=invalid numeric literal
+code=java.parse.unexpected_syntax range=0..4 message=unexpected token at top level

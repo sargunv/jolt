@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"a b"
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StringLiteral "\"a\u{2028}b\"" @ 0..7
+  Eof "" @ 7..7
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..7 message=unexpected token at top level

@@ -1,0 +1,35 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+publicstatic truex falsex nullx
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "publicstatic" @ 0..12 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "truex" @ 13..18 trailing=[Whitespace " "]
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "falsex" @ 19..25 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "nullx" @ 26..31
+  Eof "" @ 31..31
+
+diagnostics:
+code=java.parse.expected_syntax range=19..25 message=expected `;` after field declaration
+code=java.parse.expected_syntax range=31..31 message=expected `;` after field declaration

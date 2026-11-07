@@ -4,20 +4,16 @@ use super::{JavaSyntaxKind, Parser};
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn error_unexpected_top_level_token(&mut self) {
         let error = self.start();
-        let diagnostic = self.pending_unexpected("unexpected token at top level");
+        self.error_unexpected("unexpected token at top level");
         self.recover_top_level();
-        self.complete_recovery(
-            error,
-            JavaSyntaxKind::BogusCompilationUnitItem,
-            [diagnostic],
-        );
+        self.complete(error, JavaSyntaxKind::Bogus);
     }
 
     pub(in crate::parser::grammar) fn error_unexpected_module_token(&mut self) {
         let error = self.start();
-        let diagnostic = self.pending_unexpected("unexpected token in module declaration");
+        self.error_unexpected("unexpected token in module declaration");
         self.recover_module_directive();
-        self.complete_recovery(error, JavaSyntaxKind::BogusModuleDirective, [diagnostic]);
+        self.complete(error, JavaSyntaxKind::Bogus);
     }
 
     pub(in crate::parser::grammar) fn recover_top_level(&mut self) {

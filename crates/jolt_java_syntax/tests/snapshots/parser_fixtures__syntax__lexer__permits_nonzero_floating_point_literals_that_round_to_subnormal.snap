@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+1e-45f 2.5e-324
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      FloatingPointLiteral "1e-45f" @ 0..6 trailing=[Whitespace " "]
+      FloatingPointLiteral "2.5e-324" @ 7..15
+  Eof "" @ 15..15
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..6 message=unexpected token at top level

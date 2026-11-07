@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+"/* not a comment */" "// not a comment"
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      StringLiteral "\"/* not a comment */\"" @ 0..21 trailing=[Whitespace " "]
+      StringLiteral "\"// not a comment\"" @ 22..40
+  Eof "" @ 40..40
+
+diagnostics:
+code=java.parse.unexpected_syntax range=0..21 message=unexpected token at top level

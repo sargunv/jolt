@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ops::Range};
 
-use jolt_text::{TextRange, TextSize};
+use jolt_syntax::{TextRange, TextSize};
 
 use super::{JavaLexDiagnosticCode, LexerDiagnostic, lexer_diagnostic};
 
@@ -13,7 +13,7 @@ pub(crate) struct NormalizedJavaSource<'source> {
     replacements: Vec<UnicodeReplacement>,
 }
 
-impl<'source> NormalizedJavaSource<'source> {
+impl NormalizedJavaSource<'_> {
     pub(crate) fn source(&self) -> &str {
         &self.source
     }
@@ -31,16 +31,12 @@ impl<'source> NormalizedJavaSource<'source> {
 
     pub(crate) fn remap_diagnostics(&self, diagnostics: &mut [LexerDiagnostic]) {
         for diagnostic in diagnostics {
-            diagnostic.range = diagnostic.range.map(|range| self.raw_range(range));
+            diagnostic.range = self.raw_range(diagnostic.range);
         }
     }
 
     pub(crate) fn take_diagnostics(&mut self) -> Vec<LexerDiagnostic> {
         std::mem::take(&mut self.diagnostics)
-    }
-
-    pub(crate) fn into_source(self) -> Cow<'source, str> {
-        self.source
     }
 
     fn raw_offset(&self, normalized_offset: usize) -> usize {

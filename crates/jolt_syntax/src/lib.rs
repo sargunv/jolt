@@ -1,54 +1,23 @@
-//! Shared lossless syntax tree infrastructure for Jolt.
+//! Language-agnostic syntax infrastructure: text positions, diagnostics, the
+//! lossless arena tree with borrowed cursors, and parser support.
 
-mod accessors;
-mod comment;
-mod conservation;
-mod event;
-mod field;
-mod kind;
+mod cursor;
+mod debug_tree;
+mod diagnostic;
 mod language;
-mod normalization;
-mod parse_debug;
 mod parser;
-mod projection;
-#[doc(hidden)]
-pub mod schema;
-mod syntax_tree;
+mod text;
+mod tree;
 
-mod red;
-
-pub use comment::{Comment, CommentKind, Comments};
-#[cfg(debug_assertions)]
-pub use conservation::NormalizationOperation;
-pub use conservation::{
-    ConservationError, SourceIdentity, SourceNodeId, SourceRangeClaim, SourceTokenId,
-    SourceTriviaId, SourceTriviaPiece, SourceTriviaSide, SyntaxConservationTracker,
-    SyntaxVerbatimCore,
-};
-pub use event::{CompletedMarker, Event, Marker, NodeAnchor};
-pub use field::{
-    MalformedSyntax, MissingSyntax, SyntaxField, SyntaxInvariantError, SyntaxListPart,
-};
-pub use kind::RawSyntaxKind;
-pub use language::Language;
-pub use normalization::{
-    NormalizationOwner, NormalizedToken, RemovalClaim, RemovalReason, ReorderClaim, ReorderReason,
-    ReplacementClaim, SynthesisClaim,
-};
-pub use parse_debug::{fmt_diagnostic, fmt_parse_debug};
+pub use cursor::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken, TriviaPiece};
+pub use debug_tree::debug_tree;
+pub use diagnostic::Diagnostic;
+pub use language::{Language, RawSyntaxKind};
 pub use parser::{
-    CursorCheckpoint, LanguageLexer, LexedToken, ParseEvents, Parser, PendingDiagnostic,
-    TokenBuffer, TokenCursor, UnresolvedDiagnosticOwner,
+    CompletedMarker, Event, LexedToken, Lexer, Lookahead, LoopGuard, MAX_DEPTH, Marker,
+    ParseOutput, Parser, TokenSet,
 };
-pub use red::{SyntaxElement, SyntaxNode, SyntaxSlot, SyntaxToken};
-#[cfg(feature = "bench")]
-pub use syntax_tree::SyntaxTreeMetrics;
-pub use syntax_tree::{
-    BuildSyntaxTreeError, SyntaxDiagnosticOwner, SyntaxNodeId, SyntaxTokenData, SyntaxTree,
-    SyntaxTrivia, TriviaKind,
-};
+pub use text::{LineCol, LineIndex, TextRange, TextSize};
 #[doc(hidden)]
-pub use syntax_tree::{
-    FactoryNode, FactorySlot, ParsedChildren, SyntaxFactory, SyntaxTreeSink,
-    build_parser_syntax_tree, build_syntax_tree_with_factory,
-};
+pub use tree::{FactorySlot, NodeSink, ParsedChildren, SyntaxFactory, Trailing};
+pub use tree::{NodeId, SyntaxTree, TokenData, TokenId, Trivia, TriviaKind, build_tree};

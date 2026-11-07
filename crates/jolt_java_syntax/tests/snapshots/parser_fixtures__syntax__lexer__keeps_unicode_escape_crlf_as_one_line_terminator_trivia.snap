@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+a\u000d\u000ab
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "a" @ 0..1
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "b" @ 13..14 leading=[Newline "\\u000d\\u000a"]
+  Eof "" @ 14..14
+
+diagnostics:
+code=java.parse.expected_syntax range=14..14 message=expected `;` after field declaration
