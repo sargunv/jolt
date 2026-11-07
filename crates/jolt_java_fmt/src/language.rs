@@ -29,7 +29,6 @@ fn is_angle_list(token: SyntaxToken<'_>) -> bool {
 
 impl FormatLanguage for JavaFormat {
     type Syntax = JavaLanguage;
-    const EXPAND_DOC_COMMENTS: bool = true;
 
     fn format_node<'a>(f: &mut Formatter<'a, Self>, node: SyntaxNode<'a>) -> Doc {
         crate::dispatch::format_node(f, node)

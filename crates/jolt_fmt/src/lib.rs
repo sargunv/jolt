@@ -79,8 +79,6 @@ pub trait FormatLanguage: Sized + 'static {
     /// marker sits between, before or after the items of the owner's list,
     /// `None` when it is inside an item.
     fn ignore_scope(enclosing: SyntaxNode<'_>) -> Option<SyntaxNode<'_>>;
-    /// Expand an own-line `/** text */` into a multi-line star block.
-    const EXPAND_DOC_COMMENTS: bool;
 }
 
 /// Formats a tree: placement, ignore regions, doc construction, the debug

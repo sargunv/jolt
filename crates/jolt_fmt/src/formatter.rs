@@ -670,11 +670,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .strip_prefix("/**")
             .and_then(|text| text.strip_suffix("*/"))
             .unwrap_or("");
-        if own_line
-            && L::EXPAND_DOC_COMMENTS
-            && comment.kind == CommentKind::Doc
-            && !body.trim().is_empty()
-        {
+        if own_line && comment.kind == CommentKind::Doc && !body.trim().is_empty() {
             return self.builder.reindented(comment.text, Reindent::ExpandedDoc);
         }
         self.builder.comment_text(comment.text, 0)

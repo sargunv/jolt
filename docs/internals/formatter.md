@@ -662,8 +662,6 @@ pub trait FormatLanguage: Sized + 'static {
     /// switch block statement group, module declaration (and their item list
     /// nodes, which map to the owner).
     fn ignore_scope(enclosing: SyntaxNode<'_>) -> Option<SyntaxNode<'_>>;
-    /// Expand an own-line `/** text */` into a multi-line star block.
-    const EXPAND_DOC_COMMENTS: bool;
 }
 ```
 
@@ -971,9 +969,9 @@ with trailing whitespace removed, flagged `line_comment`; a single-line block
 comment's text; a multi-line block comment as
 `reindented(text, Reindent::Comment)` (so continuation lines follow the
 indentation of the line the comment starts on, star lines get one space before
-the `*`); with `EXPAND_DOC_COMMENTS`, a single-line `/** text */` that is
-printed on its own line (a `Leading` `OwnLine` comment, or a dangling comment
-that was `OwnLine` in the source) is expanded to `/**`, `* text`, `*/`. See
+the `*`); a single-line `/** text */` that is printed on its own line (a
+`Leading` `OwnLine` comment, or a dangling comment that was `OwnLine` in the
+source) is expanded to `/**`, `* text`, `*/`. See
 [Java style](./java-style.md#comments).
 
 Why this is idempotent: printing preserves each comment's neighbours (no comment
