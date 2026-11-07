@@ -159,19 +159,20 @@ fn chain<'a>(f: &mut JavaFormatter<'a>, outer: Operation<'a>) -> Doc {
     // The expression `formatted` stands for, for N7.
     let mut formatted_is_binary = matches!(head, Some(Expression::BinaryExpression(_)));
     let mut run: Option<Run> = None;
+    // The trailing comments of the node just finished. They follow its last
+    // operand, outside any readability parentheses around the node, so the
+    // next pass (which sees a parenthesized expression) prints them alike.
+    let mut trailing = Doc::NIL;
     for (depth, &(operation, _)) in spine.iter().enumerate().rev() {
-        let trailing = if depth > 0 {
-            f.trailing_comments(operation.syntax())
-        } else {
-            Doc::NIL
-        };
         match operation {
             Operation::Binary(node) => {
                 // A missing operator joins nothing.
                 let kind = operator_kind(node).unwrap_or(K::Eof);
                 let joins = run.as_ref().is_some_and(|run| flattens(kind, run.kind));
                 let readability = needs_readability_parentheses(node);
-                if !joins {
+                if joins {
+                    run.as_mut().expect("a run joins").rest.push(trailing);
+                } else {
                     if let Some(run) = run.take() {
                         formatted = finish(f, run);
                     }
@@ -182,20 +183,30 @@ fn chain<'a>(f: &mut JavaFormatter<'a>, outer: Operation<'a>) -> Doc {
                     };
                     run = Some(Run {
                         kind,
-                        first,
+                        first: cat![f; first, trailing],
                         rest: Vec::new(),
                     });
                 }
                 let operator = f.token_opt(node.operator());
-                let right = node.right();
-                let mut operand = f.fmt_opt(right);
-                if readability && matches!(right, Some(Expression::BinaryExpression(_))) {
-                    operand = parenthesized(f, operand);
-                }
+                let operand = match node.right() {
+                    Some(Expression::BinaryExpression(right))
+                        if readability && !right.syntax().is_malformed() =>
+                    {
+                        let leading = f.leading_comments(right.syntax());
+                        let body = chain(f, Operation::Binary(right));
+                        let body = parenthesized(f, body);
+                        let trailing = f.trailing_comments(right.syntax());
+                        cat![f; leading, body, trailing]
+                    }
+                    Some(Expression::BinaryExpression(right)) if readability => {
+                        let body = f.fmt(right);
+                        parenthesized(f, body)
+                    }
+                    right => f.fmt_opt(right),
+                };
                 let run = run.as_mut().expect("a run was started");
                 run.kind = kind;
-                run.rest
-                    .extend([f.line(), operator, f.space(), operand, trailing]);
+                run.rest.extend([f.line(), operator, f.space(), operand]);
                 formatted = Doc::NIL;
                 formatted_is_binary = true;
             }
@@ -206,10 +217,15 @@ fn chain<'a>(f: &mut JavaFormatter<'a>, outer: Operation<'a>) -> Doc {
                 let keyword = f.token_opt(node.instanceof_keyword());
                 let target = f.fmt_opt(node.target());
                 let tail = indent![f; f.line(), keyword, f.space(), target];
-                formatted = group![f; formatted, tail, trailing];
+                formatted = group![f; formatted, trailing, tail];
                 formatted_is_binary = false;
             }
         }
+        trailing = if depth > 0 {
+            f.trailing_comments(operation.syntax())
+        } else {
+            Doc::NIL
+        };
     }
     match run {
         Some(run) => finish(f, run),
