@@ -78,7 +78,8 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     if has_items && layout.trailing_comma == TrailingComma::IfBroken {
         if trailing_separator {
             docs.push(f.break_parent());
-        } else if !last_commented {
+        } else if !last_commented && owner.is_recovery_free() {
+            // N8 normalizes only recovery-free lists.
             let comma = f.sticky(",");
             docs.push(f.if_break(comma, Doc::NIL));
         }
