@@ -220,6 +220,7 @@ syntax/parser/parses-primitive-cast-inside-binary-expression.java
 syntax/parser/parses-qualified-contextual-keyword-local-types.java
 syntax/parser/parses-qualified-receiver-parameter.java
 syntax/parser/parses-qualified-this-expression.java
+syntax/parser/parses-receiver-parameter-with-type-arguments.java
 syntax/parser/parses-record-declaration-header-body-and-compact-constructor.java
 syntax/parser/parses-record-type-and-match-all-patterns.java
 syntax/parser/parses-sealed-non-sealed-and-permits-contextual-keywords.java

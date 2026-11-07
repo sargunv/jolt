@@ -17,6 +17,23 @@ pub(in crate::parser) struct ScanTables {
 
 const SAW_INVOCATION: u32 = 1 << 31;
 
+/// Tokens that may appear inside type arguments.
+const fn is_type_token(kind: JavaSyntaxKind) -> bool {
+    matches!(
+        kind,
+        JavaSyntaxKind::Identifier
+            | JavaSyntaxKind::Dot
+            | JavaSyntaxKind::Comma
+            | JavaSyntaxKind::Question
+            | JavaSyntaxKind::ExtendsKw
+            | JavaSyntaxKind::SuperKw
+            | JavaSyntaxKind::Amp
+            | JavaSyntaxKind::At
+            | JavaSyntaxKind::LBracket
+            | JavaSyntaxKind::RBracket
+    ) || super::is_primitive_type_start(kind)
+}
+
 impl ScanTables {
     fn build(&mut self, parser: &Parser<'_>, base: usize) {
         let mut kinds = Vec::new();
@@ -46,6 +63,32 @@ impl ScanTables {
                     }
                 }
                 _ => {}
+            }
+        }
+
+        // The index after the `>` closing a type-argument `<`, for `<` runs
+        // made only of type tokens (a `>>` or `>>>` closes two or three).
+        let mut after_angle = vec![None; kinds.len()];
+        let mut angles: Vec<usize> = Vec::new();
+        for (index, &kind) in kinds.iter().enumerate() {
+            let closes = match kind {
+                JavaSyntaxKind::Lt => {
+                    angles.push(index);
+                    continue;
+                }
+                JavaSyntaxKind::Gt => 1,
+                JavaSyntaxKind::RShift => 2,
+                JavaSyntaxKind::UnsignedRShift => 3,
+                kind if is_type_token(kind) => continue,
+                _ => {
+                    angles.clear();
+                    continue;
+                }
+            };
+            for _ in 0..closes {
+                if let Some(open) = angles.pop() {
+                    after_angle[open] = Some(index + 1);
+                }
             }
         }
 
@@ -83,6 +126,10 @@ impl ScanTables {
                 | JavaSyntaxKind::RParen
                 | JavaSyntaxKind::Semicolon => false,
                 JavaSyntaxKind::ThisKw => true,
+                // Commas inside type arguments do not end the parameter.
+                JavaSyntaxKind::Lt => {
+                    after_angle[index].map_or(receiver[index + 1], |after| receiver[after])
+                }
                 _ => receiver[index + 1],
             };
         }

@@ -1,0 +1,221 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+class Outer<T, U> {
+  void plain(Outer<T, U> this) {}
+
+  void nested(Outer<T, java.util.Map<U, T>> this, int value) {}
+
+  void other(java.util.Map<T, U> map, int value) {}
+}
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Outer" @ 6..11
+      TypeParameterList
+        Lt "<" @ 11..12
+        TypeParameterSeparatedList
+          TypeParameter
+            AnnotationList
+            Identifier "T" @ 12..13
+          Comma "," @ 13..14 trailing=[Whitespace " "]
+          TypeParameter
+            AnnotationList
+            Identifier "U" @ 15..16
+        Gt ">" @ 16..17 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 18..19
+        ClassBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 22..26 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "plain" @ 27..32
+            LParen "(" @ 32..33
+            FormalParameterList
+              ReceiverParameter
+                AnnotationList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Outer" @ 33..38
+                      TypeArgumentList
+                        Lt "<" @ 38..39
+                        TypeArgumentSeparatedList
+                          TypeArgument
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "T" @ 39..40
+                          Comma "," @ 40..41 trailing=[Whitespace " "]
+                          TypeArgument
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "U" @ 42..43
+                        Gt ">" @ 43..44 trailing=[Whitespace " "]
+                ThisKw "this" @ 45..49
+            RParen ")" @ 49..50 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 51..52
+              BlockStatementList
+              RBrace "}" @ 52..53
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 57..61 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "nested" @ 62..68
+            LParen "(" @ 68..69
+            FormalParameterList
+              ReceiverParameter
+                AnnotationList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "Outer" @ 69..74
+                      TypeArgumentList
+                        Lt "<" @ 74..75
+                        TypeArgumentSeparatedList
+                          TypeArgument
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "T" @ 75..76
+                          Comma "," @ 76..77 trailing=[Whitespace " "]
+                          TypeArgument
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  QualifiedName
+                                    QualifiedNameSegmentNode
+                                      AnnotationList
+                                      Identifier "java" @ 78..82
+                                    Dot "." @ 82..83
+                                    NameSegmentDotList
+                                      QualifiedNameSegmentNode
+                                        AnnotationList
+                                        Identifier "util" @ 83..87
+                                      Dot "." @ 87..88
+                                      QualifiedNameSegmentNode
+                                        AnnotationList
+                                        Identifier "Map" @ 88..91
+                                  TypeArgumentList
+                                    Lt "<" @ 91..92
+                                    TypeArgumentSeparatedList
+                                      TypeArgument
+                                        AnnotationList
+                                        ClassType
+                                          ClassTypeSegmentList
+                                            ClassTypeSegmentNode
+                                              AnnotationList
+                                              Name
+                                                Identifier "U" @ 92..93
+                                      Comma "," @ 93..94 trailing=[Whitespace " "]
+                                      TypeArgument
+                                        AnnotationList
+                                        ClassType
+                                          ClassTypeSegmentList
+                                            ClassTypeSegmentNode
+                                              AnnotationList
+                                              Name
+                                                Identifier "T" @ 95..96
+                                    Gt ">" @ 96..97
+                        Gt ">" @ 97..98 trailing=[Whitespace " "]
+                ThisKw "this" @ 99..103
+              Comma "," @ 103..104 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 105..108 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 109..114
+            RParen ")" @ 114..115 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 116..117
+              BlockStatementList
+              RBrace "}" @ 117..118
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 122..126 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "other" @ 127..132
+            LParen "(" @ 132..133
+            FormalParameterList
+              FormalParameter
+                ParameterModifierList
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      QualifiedName
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "java" @ 133..137
+                        Dot "." @ 137..138
+                        NameSegmentDotList
+                          QualifiedNameSegmentNode
+                            AnnotationList
+                            Identifier "util" @ 138..142
+                          Dot "." @ 142..143
+                          QualifiedNameSegmentNode
+                            AnnotationList
+                            Identifier "Map" @ 143..146
+                      TypeArgumentList
+                        Lt "<" @ 146..147
+                        TypeArgumentSeparatedList
+                          TypeArgument
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "T" @ 147..148
+                          Comma "," @ 148..149 trailing=[Whitespace " "]
+                          TypeArgument
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "U" @ 150..151
+                        Gt ">" @ 151..152 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "map" @ 153..156
+              Comma "," @ 156..157 trailing=[Whitespace " "]
+              FormalParameter
+                ParameterModifierList
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 158..161 trailing=[Whitespace " "]
+                AnnotationList
+                Identifier "value" @ 162..167
+            RParen ")" @ 167..168 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 169..170
+              BlockStatementList
+              RBrace "}" @ 170..171
+        RBrace "}" @ 172..173 leading=[Newline "\n"]
+  Eof "" @ 174..174 leading=[Newline "\n"]
+
+diagnostics:
+(none)
