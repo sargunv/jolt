@@ -4,10 +4,10 @@
 
 use jolt_fmt::{Doc, cat, group};
 use jolt_java_syntax::{
-    ArrayAccessExpression, ClassLiteralExpression, FieldAccessExpression, JavaSyntaxKind as K,
-    MethodInvocationExpression, MethodInvocationFormSyntax, MethodReferenceExpression,
-    ObjectCreationExpression, PostfixExpression, QualifiedMethodInvocation, SuperExpression,
-    ThisExpression,
+    ArrayAccessExpression, ClassLiteralExpression, Expression, FieldAccessExpression,
+    JavaSyntaxKind as K, MethodInvocationExpression, MethodInvocationFormSyntax,
+    MethodReferenceExpression, ObjectCreationExpression, PostfixExpression,
+    QualifiedMethodInvocation, SuperExpression, ThisExpression,
 };
 use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode, SyntaxToken};
 
@@ -93,34 +93,27 @@ enum Link<'a> {
     Super(SuperExpression<'a>),
 }
 
-fn cast<'a, N: AstNode<'a>>(node: SyntaxNode<'a>) -> N {
-    N::cast(node).expect("the kind was matched")
-}
-
 fn link(node: SyntaxNode<'_>) -> Option<Link<'_>> {
     if node.is_malformed() {
         return None;
     }
-    Some(match K::from_raw(node.kind()) {
-        K::MethodInvocationExpression => {
-            let call: MethodInvocationExpression<'_> = cast(node);
-            match call.form() {
-                Some(MethodInvocationFormSyntax::QualifiedMethodInvocation(form))
-                    if !form.syntax().is_malformed() =>
-                {
-                    Link::Call(call, form)
-                }
-                _ => Link::Form(call),
+    Some(match Expression::cast(node)? {
+        Expression::MethodInvocationExpression(call) => match call.form() {
+            Some(MethodInvocationFormSyntax::QualifiedMethodInvocation(form))
+                if !form.syntax().is_malformed() =>
+            {
+                Link::Call(call, form)
             }
-        }
-        K::FieldAccessExpression => Link::Field(cast(node)),
-        K::ArrayAccessExpression => Link::Index(cast(node)),
-        K::PostfixExpression => Link::Postfix(cast(node)),
-        K::MethodReferenceExpression => Link::Reference(cast(node)),
-        K::ClassLiteralExpression => Link::ClassLiteral(cast(node)),
-        K::ObjectCreationExpression => Link::New(cast(node)),
-        K::ThisExpression => Link::This(cast(node)),
-        K::SuperExpression => Link::Super(cast(node)),
+            _ => Link::Form(call),
+        },
+        Expression::FieldAccessExpression(node) => Link::Field(node),
+        Expression::ArrayAccessExpression(node) => Link::Index(node),
+        Expression::PostfixExpression(node) => Link::Postfix(node),
+        Expression::MethodReferenceExpression(node) => Link::Reference(node),
+        Expression::ClassLiteralExpression(node) => Link::ClassLiteral(node),
+        Expression::ObjectCreationExpression(node) => Link::New(node),
+        Expression::ThisExpression(node) => Link::This(node),
+        Expression::SuperExpression(node) => Link::Super(node),
         _ => return None,
     })
 }
@@ -190,8 +183,11 @@ fn merges_with_dot(link: Link<'_>) -> bool {
         Link::Super(node) => node.dot(),
         _ => None,
     };
-    dot.and_then(SyntaxToken::prev)
-        .is_some_and(|prev| K::from_raw(prev.kind()) == K::IntegerLiteral)
+    dot.is_some()
+        && link
+            .receiver()
+            .and_then(SyntaxNode::last_token)
+            .is_some_and(|last| K::from_raw(last.kind()) == K::IntegerLiteral)
 }
 
 /// What the link adds after its receiver.
