@@ -5,7 +5,7 @@ use jolt_fmt::{
     CommentContext, CommentKind, CommentLayout, Doc, FormatLanguage, Formatter, Placement,
     leading_target, trailing_target,
 };
-use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind as K};
+use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind as K, is_assignment_operator};
 use jolt_syntax::{RawSyntaxKind, SyntaxElement, SyntaxNode, SyntaxToken};
 
 /// The Java formatter language.
@@ -229,10 +229,12 @@ fn comment_before_body_brace<'a>(
     }
     let header = body.parent()?;
     // A labeled statement's body starts its own line, so a comment before
-    // its `{` already prints where the next pass reads it.
+    // its `{` already prints where the next pass reads it. A header that
+    // ends in an opener is unclosed (recovery); the comment stays on its line.
     if header.first_token() == Some(next)
         || header.parent().is_none()
         || node_kind(header) == K::LabeledStatement
+        || JavaFormat::closer_for(prev).is_some()
     {
         return None;
     }
@@ -249,7 +251,10 @@ fn comment_before_body_brace<'a>(
 
 /// H5: a block comment that ends the line after `(`, `[` or a type-argument
 /// `<` stays inline before the next token, as in the reference, instead of
-/// moving to its own line by G2 (which still applies after `{`).
+/// moving to its own line by G2 (which still applies after `{`). After an
+/// assignment operator it leads the value inline too, which is where the next
+/// pass (reading it as inline) puts it, so a long declaration breaks the same
+/// way on both passes.
 fn block_comment_after_opener<'a>(
     context: &CommentContext<'a>,
     prev: SyntaxToken<'a>,
@@ -259,7 +264,7 @@ fn block_comment_after_opener<'a>(
     let opener = match kind(prev) {
         K::LParen | K::LBracket => true,
         K::Lt => is_angle_list(prev),
-        _ => false,
+        kind => is_assignment_operator(kind),
     };
     let empty = JavaFormat::is_closer(next) && next.parent() == prev.parent();
     if comment.kind == CommentKind::Line

@@ -13,7 +13,7 @@ mod statement_predicates;
 mod token_predicates;
 mod type_arguments;
 
-pub(in crate::parser::grammar) use expression_predicates::is_assignment_operator;
+pub(in crate::parser::grammar) use crate::is_assignment_operator;
 pub(in crate::parser::grammar) use lookahead::{JavaLookahead, gt_rest, is_gt_family};
 pub(in crate::parser) use scan_tables::ScanTables;
 pub(in crate::parser::grammar) use separated_lists::SeparatedElement;

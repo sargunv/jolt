@@ -452,7 +452,18 @@ fn generic_placement<'a, L: FormatLanguage>(
             return Placement::Dangling(prev.parent());
         }
         // G2: an end-of-line comment right after an opener starts the inside.
-        if layout == CommentLayout::EndOfLine && first_in_gap {
+        // After an unclosed opener the next token may lie past the missing
+        // closer (a method body after `void m(`), so the comment stays put,
+        // unless only the end of the file follows.
+        let inside = || {
+            next.kind() == <L::Syntax as Language>::to_raw(<L::Syntax as Language>::EOF)
+                || prev
+                    .parent()
+                    .children()
+                    .filter_map(SyntaxElement::as_token)
+                    .any(|token| token.kind() == closer && token.id() > prev.id())
+        };
+        if layout == CommentLayout::EndOfLine && first_in_gap && inside() {
             return Placement::Leading(syntax_lead(next), CommentLayout::OwnLine);
         }
     }

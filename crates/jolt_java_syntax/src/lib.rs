@@ -12,7 +12,7 @@ pub(crate) use generated::JavaSyntaxFactory;
 pub use generated::*;
 pub use lexer::JavaLexer;
 pub use parser::{JavaParse, parse};
-pub use semantics::{ModifierPartition, binary_precedence, is_contextual};
+pub use semantics::{ModifierPartition, binary_precedence, is_assignment_operator, is_contextual};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct JavaLanguage;

@@ -926,6 +926,25 @@ any other block comment keep their indentation relative to each other:
    */
 ```
 
+### C14. A block comment that ends the line after `=` goes with the value
+
+The reference kept such a comment after `=`, which counted toward the line of
+the declaration, so a long declaration broke its type instead of moving the
+value down; the next pass read the comment as part of the value and broke
+differently. It now leads the value, which moves down with it:
+
+```java
+// reference
+  java.util.function.BiFunction<
+    Integer,
+    Integer,
+    Integer
+  > longDeclaration = /* c */ (x, y) -> y;
+// new
+  java.util.function.BiFunction<Integer, Integer, Integer> longDeclaration =
+    /* c */ (x, y) -> y;
+```
+
 ### L1. No stray blank lines, and no merged switch groups
 
 A broken `for` header with an empty update part (`for (init; cond;)`), and a

@@ -6,6 +6,26 @@ use crate::{
     JavaSyntaxKind, ModifierElement, ModifierList, ParameterModifier, ParameterModifierList,
 };
 
+/// Assignment operator tokens.
+#[must_use]
+pub const fn is_assignment_operator(kind: JavaSyntaxKind) -> bool {
+    matches!(
+        kind,
+        JavaSyntaxKind::Assign
+            | JavaSyntaxKind::PlusEq
+            | JavaSyntaxKind::MinusEq
+            | JavaSyntaxKind::StarEq
+            | JavaSyntaxKind::SlashEq
+            | JavaSyntaxKind::AmpEq
+            | JavaSyntaxKind::BarEq
+            | JavaSyntaxKind::CaretEq
+            | JavaSyntaxKind::PercentEq
+            | JavaSyntaxKind::LShiftEq
+            | JavaSyntaxKind::RShiftEq
+            | JavaSyntaxKind::UnsignedRShiftEq
+    )
+}
+
 /// The precedence of a binary operator token, from 1 (`||`) to 10 (`*`).
 /// `instanceof` shares the relational level.
 #[must_use]

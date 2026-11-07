@@ -42,6 +42,11 @@ pub(crate) fn braced<'a>(
     }
     let inner = cat![f; f.hard_line(), inner];
     let inner = f.indent(inner);
+    // An unclosed body (recovery) ends after its content, so what trails
+    // the content stays on its line.
+    if close.is_nil() {
+        return cat![f; open, inner];
+    }
     cat![f; open, inner, f.hard_line(), close]
 }
 

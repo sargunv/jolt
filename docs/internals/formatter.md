@@ -1243,11 +1243,14 @@ rules. "Header end" below means the `)` closing the header of `if`, `while`,
   the whole statement and print after the synthesized `}` of brace promotion; H4
   keeps `if (a) return; // c` inside the block, as in the reference (fixture
   `brace-promotion-comments`).
-- **H5, block comment at the end of a line after `(`, `[` or `<`.** A block
-  comment with layout `EndOfLine` right after one of these openers (not before
-  its closer, where G1 applies) is `Leading(leading_target(next), Inline)`: it
-  stays inline before the next token, as in the reference (`run( /* d */` / `a)`
-  prints `run(/* d */ a)`). G2 still moves it to its own line after `{`.
+- **H5, block comment at the end of a line after `(`, `[`, `<` or an assignment
+  operator.** A block comment with layout `EndOfLine` right after one of these
+  openers (not before its closer, where G1 applies) or after `=`, `+=`, … is
+  `Leading(leading_target(next), Inline)`: it stays inline before the next
+  token, as in the reference (`run( /* d */` / `a)` prints `run(/* d */ a)`),
+  and is where the next pass, reading it as inline, puts it (after `=` it is
+  part of the value, so a long declaration breaks the same way on both passes;
+  Java style C14). G2 still moves it to its own line after `{`.
 
 Anything else that looks like it needs a hook should first be checked against
 the generic rules; a new hook requires a fixture and an entry here.

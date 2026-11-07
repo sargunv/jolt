@@ -1,25 +1,6 @@
 // Answers expression-level grammar questions before the parser commits to a branch.
 use super::{JavaSyntaxKind, Parser, is_literal_expression_start, is_primitive_type_start};
-use crate::binary_precedence;
-
-/// Assignment operator tokens.
-pub(in crate::parser::grammar) const fn is_assignment_operator(kind: JavaSyntaxKind) -> bool {
-    matches!(
-        kind,
-        JavaSyntaxKind::Assign
-            | JavaSyntaxKind::PlusEq
-            | JavaSyntaxKind::MinusEq
-            | JavaSyntaxKind::StarEq
-            | JavaSyntaxKind::SlashEq
-            | JavaSyntaxKind::AmpEq
-            | JavaSyntaxKind::BarEq
-            | JavaSyntaxKind::CaretEq
-            | JavaSyntaxKind::PercentEq
-            | JavaSyntaxKind::LShiftEq
-            | JavaSyntaxKind::RShiftEq
-            | JavaSyntaxKind::UnsignedRShiftEq
-    )
-}
+use crate::{binary_precedence, is_assignment_operator};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn starts_parenthesized_lambda_expression(&mut self) -> bool {
