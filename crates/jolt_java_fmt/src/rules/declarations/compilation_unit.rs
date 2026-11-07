@@ -159,6 +159,9 @@ fn order_items<'a>(
     roles: &mut HashMap<NodeId, Role>,
 ) -> Vec<ListItem<'a>> {
     let mut ordered = Vec::with_capacity(items.len());
+    let last_content = items
+        .iter()
+        .rposition(|item| !matches!(item, CompilationUnitItem::EmptyDeclaration(_)));
     let mut sections = 0;
     let mut index = 0;
     while index < items.len() {
@@ -173,9 +176,7 @@ fn order_items<'a>(
         }
         let node = item.syntax();
         if let CompilationUnitItem::EmptyDeclaration(_) = item {
-            let last = items[index + 1..]
-                .iter()
-                .all(|item| matches!(item, CompilationUnitItem::EmptyDeclaration(_)));
+            let last = last_content.is_none_or(|content| index > content);
             roles.insert(node.id(), Role::Carrier { last });
             ordered.push(ListItem::Elide(node));
         } else {
