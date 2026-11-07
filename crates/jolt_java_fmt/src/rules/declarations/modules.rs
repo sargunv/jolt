@@ -130,13 +130,16 @@ pub(crate) fn requires_directive<'a>(
         .into_iter()
         .flat_map(jolt_java_syntax::RequiresModifierList::elements)
         .collect();
-    let sortable = modifiers.iter().all(|&modifier| match modifier {
-        ListElement::Item(token) => {
-            let element = SyntaxElement::Token(token);
-            !f.has_leading_comments(element) && !f.has_trailing_comments(element)
-        }
-        _ => false,
-    });
+    // N3 sorts only a recovery-free directive: in a recovered one the order
+    // can decide which word is the module name on the next pass.
+    let sortable = node.syntax().is_recovery_free()
+        && modifiers.iter().all(|&modifier| match modifier {
+            ListElement::Item(token) => {
+                let element = SyntaxElement::Token(token);
+                !f.has_leading_comments(element) && !f.has_trailing_comments(element)
+            }
+            _ => false,
+        });
     if sortable {
         modifiers.sort_by_key(|modifier| {
             !matches!(modifier, ListElement::Item(token) if K::from_raw(token.kind()) == K::StaticKw)
