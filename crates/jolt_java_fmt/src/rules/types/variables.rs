@@ -1,8 +1,9 @@
-//! Formal parameters and variable declarators.
+//! Formal and receiver parameters, and variable declarators.
 
 use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
-    FormalParameter, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
+    FormalParameter, ReceiverParameter, VariableDeclarator, VariableDeclaratorList,
+    VariableInitializer,
 };
 use jolt_syntax::ListElement;
 
@@ -17,10 +18,28 @@ pub(crate) fn formal_parameter<'a>(f: &mut JavaFormatter<'a>, node: FormalParame
     };
     let ty = f.fmt_opt(node.r#type());
     let varargs_annotations = f.fmt_opt(node.varargs_annotations());
+    let varargs_annotations = if varargs_annotations.is_nil() {
+        Doc::NIL
+    } else {
+        cat![f; f.space(), varargs_annotations]
+    };
     let ellipsis = f.token_opt(node.ellipsis());
     let name = f.token_opt(node.name());
     let dimensions = f.fmt_opt(node.dimensions());
     cat![f; modifiers, ty, varargs_annotations, ellipsis, f.space(), name, dimensions]
+}
+
+/// `@A Type Outer.this`.
+pub(crate) fn receiver_parameter<'a>(
+    f: &mut JavaFormatter<'a>,
+    node: ReceiverParameter<'a>,
+) -> Doc {
+    let annotations = f.fmt_opt(node.annotations());
+    let ty = f.fmt_opt(node.r#type());
+    let qualifier = f.token_opt(node.qualifier());
+    let dot = f.token_opt(node.dot());
+    let this = f.token_opt(node.this_keyword());
+    cat![f; annotations, ty, f.space(), qualifier, dot, this]
 }
 
 /// Declarators on one line if they fit, otherwise each after the first on
