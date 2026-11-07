@@ -1,6 +1,6 @@
 //! Lambda expressions and their parameters.
 
-use jolt_fmt::{Doc, cat, group, indent};
+use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
     LambdaExpression, LambdaModifier, LambdaModifierList, LambdaParameter, LambdaParameterList,
 };
@@ -26,14 +26,6 @@ pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpre
                 .flat_map(LambdaParameterList::elements);
             joined(f, parameters, |_| Doc::NIL)
         }
-        None if is_empty(f, node) => {
-            // The reference breaks even an empty `()` when the line does not
-            // fit: `(` / `) -> body`.
-            let open = f.token_opt(node.open_paren());
-            let inner = indent![f; f.soft_line()];
-            let close = f.token_opt(node.close_paren());
-            group![f; open, inner, f.soft_line(), close]
-        }
         None => delimited(
             f,
             node.syntax(),
@@ -51,16 +43,6 @@ pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpre
     let arrow = f.token_opt(node.arrow());
     let body = f.fmt_opt(node.body());
     cat![f; parameters, f.space(), arrow, f.space(), body]
-}
-
-/// `()` with nothing inside, not even comments.
-fn is_empty<'a>(f: &JavaFormatter<'a>, node: LambdaExpression<'a>) -> bool {
-    !f.has_dangling_comments(node.syntax())
-        && node
-            .parameters()
-            .into_iter()
-            .flat_map(LambdaParameterList::elements)
-            .all(|element| matches!(element, ListElement::Missing))
 }
 
 fn removed<'a>(f: &mut JavaFormatter<'a>, token: Option<SyntaxToken<'a>>) -> Doc {

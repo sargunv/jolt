@@ -504,7 +504,8 @@ return () -> {
 
 - A single untyped, unmodified parameter drops its parentheses: `(x) -> x`
   prints `x -> x`. Typed, annotated, `final` or `var` parameters keep them.
-- Parameters that do not fit break as a list: `(`, one per line, `) -> body`.
+- Parameters that do not fit break as a list: `(`, one per line, `) -> body`. An
+  empty `()` never breaks (R5).
 - Expression bodies stay on the arrow line when they fit; block bodies open on
   the arrow line.
 - Method references print without spaces: `String::length`, `int[]::new`,
@@ -1061,4 +1062,24 @@ enum E {
 
   int code;
 }
+```
+
+### R5. An empty lambda parameter list never breaks
+
+The reference broke an empty `()` when the line did not fit, printing `(` and
+`) -> body` on two lines. An empty list now stays `()`, and the body breaks
+instead (Spring `ReactiveRetryInterceptorTests`):
+
+```java
+// reference
+Assert.notNull(
+  method,
+  (
+  ) -> "Method '%s' could not be found.".formatted(name)
+);
+// new
+Assert.notNull(
+  method,
+  () -> "Method '%s' could not be found.".formatted(name)
+);
 ```
