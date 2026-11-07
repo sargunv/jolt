@@ -1533,10 +1533,15 @@ For an input `S` and output `F = format(S)`:
 
 ### Corpus tools
 
-- `mise run hunt` (`examples/jhunt.rs`): the sweep over `tools/import/.imports`
-  with the oracle at three widths and the four comment probe shapes.
-  `KNOWN_OPEN` must be empty from the formatter foundation onward.
-- `examples/jcheck.rs`: replays one file or one probe (`File.java:ownline12`).
+- `mise run hunt` (`examples/jhunt.rs`): the sweep over the repository fixtures
+  and `tools/import/.imports` with the oracle at three widths and the four
+  comment probe shapes: every boundary at every width for the fixtures and the
+  gjf, palantir and prettier inputs up to 4 KiB, sampled boundaries at width 80
+  for larger files and Spring. `KNOWN_OPEN` must be empty. `--mutate` also
+  deletes each token of those small files in turn (the oracle's token check
+  catches code loss); that recovery stress test is outside the gate.
+- `examples/jcheck.rs`: replays one file or one variant (`File.java:ownline12`,
+  `File.java:comment3@40`, `File.java:delete7`).
 - `examples/jref.rs` (new): `jref <dir>` checks `format(F) == F` for every
   `.java` file (or the `formatted:` section of every `.snap`) under `<dir>`;
   `jref --input <in> --expected <out> [--line-width N]` checks

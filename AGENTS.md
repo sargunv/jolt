@@ -30,15 +30,17 @@ Fast, opinionated Java formatter.
   token's trailing trivia, and on a line of its own, so it lands in the next
   token's leading trivia — then checks reparse validity, structure, token and
   comment conservation, and idempotence. The fixtures and the gjf, palantir and
-  prettier inputs up to 4 KiB get every boundary at every width and every
-  one-token deletion; larger files and Spring are sampled. Positions inside a
-  string literal are excluded, since text there is content rather than trivia.
-  Runs in release mode; too slow in debug for the normal test suite. Reports
-  land in `target/hunt/`, capped per failure category. Exits non-zero on any
-  failure category not in `KNOWN_OPEN`, which must stay empty, and on a
-  `KNOWN_OPEN` entry that stops firing. The `jcheck` example re-runs one file,
-  or one variant for a repro, e.g. `.../File.java:ownline12`,
-  `.../File.java:comment3@40` or `.../File.java:delete7`.
+  prettier inputs up to 4 KiB get every boundary at every width; larger files
+  and Spring are sampled. `mise run hunt --mutate` also checks every one-token
+  deletion of those small files, a recovery stress test outside the gate.
+  Positions inside a string literal are excluded, since text there is content
+  rather than trivia. Runs in release mode; too slow in debug for the normal
+  test suite. Reports land in `target/hunt/`, capped per failure category. Exits
+  non-zero on any failure category not in `KNOWN_OPEN`, which must stay empty,
+  and on a `KNOWN_OPEN` entry that stops firing. The `jcheck` example re-runs
+  one file, or one variant for a repro, e.g. `.../File.java:ownline12`,
+  `.../File.java:comment3@40` or `.../File.java:delete7` (`--mutate` adds the
+  deletions to a whole-file check).
 - `mise run jref ...`: compare the formatter with the reference outputs
   (`jref <dir>` checks `format(F) == F` for `.java` files and `.snap`
   `formatted:` sections; `jref --input <in> --expected <out>` checks
