@@ -101,7 +101,10 @@ export default defineConfig({
       },
       {
         text: "Internals",
-        items: [{ text: "Formatter", link: "/internals/formatter" }],
+        items: [
+          { text: "Java style", link: "/internals/java-style" },
+          { text: "Formatter", link: "/internals/formatter" },
+        ],
       },
     ],
     outline: {

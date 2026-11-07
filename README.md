@@ -1,11 +1,8 @@
 # Jolt
 
-Jolt is a simple, portable, and extremely fast formatter for Java source, with a
-predictable and opinionated style.
-
-Jolt runs as a standalone native CLI or as a [dprint](https://dprint.dev)
-WebAssembly plugin. It has a small configuration surface and is designed for
-editor, CI, and large-repository formatting.
+Jolt is a fast, opinionated Java formatter. It runs as a native CLI with no JVM,
+or as a [dprint](https://dprint.dev) WebAssembly plugin, and has three options:
+line width, indent width, and tabs or spaces.
 
 ## Install
 
@@ -30,9 +27,9 @@ dprint add sargunv/jolt
 ## Usage
 
 ```sh
-jolt config init
-jolt format
-jolt format --check
+jolt format            # format the Java files under the current directory
+jolt format --check    # list the files that need formatting
+jolt config init       # write a jolt.toml with the defaults
 ```
 
 ## Docs
@@ -41,3 +38,8 @@ jolt format --check
 - [Installation guide](https://sargunv.github.io/jolt/guides/installation)
 - [Configuration guide](https://sargunv.github.io/jolt/guides/configuration)
 - [CLI reference](https://sargunv.github.io/jolt/reference/cli)
+- [Java style](https://sargunv.github.io/jolt/internals/java-style)
+
+## Development
+
+See [AGENTS.md](./AGENTS.md) for the project map, commands, and invariants.
