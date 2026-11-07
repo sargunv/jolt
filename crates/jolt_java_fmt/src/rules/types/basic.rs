@@ -5,10 +5,10 @@ use jolt_java_syntax::{
     ArrayDimension, ArrayDimensions, ArrayType, ClassType, ClassTypeSegmentNode, PrimitiveType,
     VoidType,
 };
-use jolt_syntax::{AstNode, ListElement};
+use jolt_syntax::AstNode;
 
 use crate::JavaFormatter;
-use crate::helpers::lists::list_item;
+use crate::helpers::lists::{joined, list_item};
 
 pub(crate) fn primitive_type<'a>(f: &mut JavaFormatter<'a>, node: PrimitiveType<'a>) -> Doc {
     let annotations = f.fmt_opt(node.annotations());
@@ -22,20 +22,11 @@ pub(crate) fn void_type<'a>(f: &mut JavaFormatter<'a>, node: VoidType<'a>) -> Do
 
 /// Dotted segments, each with its annotations and type arguments.
 pub(crate) fn class_type<'a>(f: &mut JavaFormatter<'a>, node: ClassType<'a>) -> Doc {
-    let mut docs = Vec::new();
-    for element in node
+    let segments = node
         .segments()
         .into_iter()
-        .flat_map(jolt_java_syntax::ClassTypeSegmentList::elements)
-    {
-        match element {
-            ListElement::Item(segment) => docs.push(f.fmt(segment)),
-            ListElement::Bogus(bogus) => docs.push(f.node(bogus)),
-            ListElement::Separator(dot) => docs.push(f.token(dot)),
-            ListElement::Missing => {}
-        }
-    }
-    f.concat(docs)
+        .flat_map(jolt_java_syntax::ClassTypeSegmentList::elements);
+    joined(f, segments, |_| Doc::NIL)
 }
 
 pub(crate) fn class_type_segment_node<'a>(

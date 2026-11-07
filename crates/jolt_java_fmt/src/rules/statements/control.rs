@@ -8,11 +8,12 @@ use jolt_java_syntax::{
     EnhancedForVariableType, ForInitializer, ForInitializerValue, ForStatement, ForUpdate,
     IfStatement, Statement, StatementExpressionList, SynchronizedStatement, WhileStatement,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode};
+use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode};
 
 use super::{blocks, jumps, parenthesized, statement_separator, switches, tries};
 use crate::JavaFormatter;
 use crate::helpers::bodies::braced;
+use crate::helpers::lists::joined;
 
 /// `if (condition) body`, then ` else body`. An `else if` chain stays flat;
 /// it is walked iteratively (its length is unbounded), each chained `if`'s
@@ -183,16 +184,7 @@ pub(crate) fn for_update<'a>(f: &mut JavaFormatter<'a>, node: ForUpdate<'a>) -> 
 
 /// `a, b` on one line; an end-of-line comment after a `,` ends the line.
 fn expression_list<'a>(f: &mut JavaFormatter<'a>, list: StatementExpressionList<'a>) -> Doc {
-    let mut docs = Vec::new();
-    for element in list.elements() {
-        match element {
-            ListElement::Item(expression) => docs.push(f.fmt(expression)),
-            ListElement::Bogus(bogus) => docs.push(f.node(bogus)),
-            ListElement::Separator(comma) => docs.extend([f.token(comma), f.space()]),
-            ListElement::Missing => {}
-        }
-    }
-    f.concat(docs)
+    joined(f, list.elements(), |f| f.space())
 }
 
 pub(crate) fn synchronized_statement<'a>(

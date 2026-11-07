@@ -9,7 +9,7 @@ use jolt_java_syntax::{
 use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
 use crate::JavaFormatter;
-use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
+use crate::helpers::lists::{ListLayout, TrailingComma, delimited, joined};
 
 pub(crate) fn class_declaration<'a>(f: &mut JavaFormatter<'a>, node: ClassDeclaration<'a>) -> Doc {
     let modifiers = f.fmt_opt(node.modifiers());
@@ -296,14 +296,5 @@ fn comma_items<'a, T: AstNode<'a>>(
     f: &mut JavaFormatter<'a>,
     elements: impl Iterator<Item = ListElement<'a, T>>,
 ) -> Doc {
-    let mut docs = Vec::new();
-    for element in elements {
-        match element {
-            ListElement::Item(item) => docs.push(f.fmt(item)),
-            ListElement::Bogus(bogus) => docs.push(f.node(bogus)),
-            ListElement::Separator(comma) => docs.extend([f.token(comma), f.line()]),
-            ListElement::Missing => {}
-        }
-    }
-    f.concat(docs)
+    joined(f, elements, |f| f.line())
 }

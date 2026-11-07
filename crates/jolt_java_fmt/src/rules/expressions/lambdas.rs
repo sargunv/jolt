@@ -7,7 +7,7 @@ use jolt_java_syntax::{
 use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxToken};
 
 use crate::JavaFormatter;
-use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
+use crate::helpers::lists::{ListLayout, TrailingComma, delimited, joined};
 
 /// `parameters -> body`. Parameters that do not fit break as a list.
 pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpression<'a>) -> Doc {
@@ -20,20 +20,11 @@ pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpre
             cat![f; open, parameter, close]
         }
         None if node.open_paren().is_none() && node.close_paren().is_none() => {
-            let mut docs = Vec::new();
-            for element in node
+            let parameters = node
                 .parameters()
                 .into_iter()
-                .flat_map(LambdaParameterList::elements)
-            {
-                docs.push(match element {
-                    ListElement::Item(parameter) => f.fmt(parameter),
-                    ListElement::Separator(token) => f.token(token),
-                    ListElement::Bogus(node) => f.node(node),
-                    ListElement::Missing => Doc::NIL,
-                });
-            }
-            f.concat(docs)
+                .flat_map(LambdaParameterList::elements);
+            joined(f, parameters, |_| Doc::NIL)
         }
         None if is_empty(f, node) => {
             // The reference breaks even an empty `()` when the line does not

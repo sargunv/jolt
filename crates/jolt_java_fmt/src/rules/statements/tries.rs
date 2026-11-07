@@ -6,11 +6,11 @@ use jolt_java_syntax::{
     ResourceList, ResourceSpecification, ResourceVariableDeclaration, ResourceVariableType,
     TryStatement, TryWithResourcesStatement, VariableAccess,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement};
+use jolt_syntax::{AstNode, SyntaxElement};
 
 use super::parenthesized;
 use crate::JavaFormatter;
-use crate::helpers::lists::list_item;
+use crate::helpers::lists::{joined, list_item};
 use crate::rules::types::inline_modifiers;
 
 /// `try {` … `} catch (…) {` … `} finally {` … `}`.
@@ -93,19 +93,11 @@ pub(crate) fn resource_specification<'a>(
     node: ResourceSpecification<'a>,
 ) -> Doc {
     let open = f.token_opt(node.open_paren());
-    let mut docs = Vec::new();
-    for element in node
+    let resources = node
         .resources()
         .into_iter()
-        .flat_map(ResourceList::elements)
-    {
-        match element {
-            ListElement::Item(resource) => docs.push(f.fmt(resource)),
-            ListElement::Bogus(bogus) => docs.push(f.node(bogus)),
-            ListElement::Separator(semicolon) => docs.extend([f.token(semicolon), f.hard_line()]),
-            ListElement::Missing => {}
-        }
-    }
+        .flat_map(ResourceList::elements);
+    let mut docs = vec![joined(f, resources, |f| f.hard_line())];
     if let Some(semicolon) = node.trailing_semicolon() {
         if node.syntax().is_recovery_free() {
             let removed = f.removed(SyntaxElement::Token(semicolon));

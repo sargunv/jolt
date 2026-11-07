@@ -155,6 +155,24 @@ pub(crate) fn list_item<'a, T: AstNode<'a>>(
     }
 }
 
+/// A list's elements in order, each separator followed by `after` (`space`,
+/// `line`, `hard_line`, or NIL to join directly).
+pub(crate) fn joined<'a, T: AstNode<'a>>(
+    f: &mut JavaFormatter<'a>,
+    elements: impl IntoIterator<Item = ListElement<'a, T>>,
+    after: fn(&JavaFormatter<'a>) -> Doc,
+) -> Doc {
+    let mut docs = Vec::new();
+    for element in elements {
+        let separator = matches!(element, ListElement::Separator(_));
+        docs.push(list_item(f, element));
+        if separator {
+            docs.push(after(f));
+        }
+    }
+    f.concat(docs)
+}
+
 /// A list kind that no rule formats as a unit: its children separated by
 /// spaces. Reaching it is a rule bug.
 pub(crate) fn unexpected_list<'a>(f: &mut JavaFormatter<'a>, node: SyntaxNode<'a>) -> Doc {
