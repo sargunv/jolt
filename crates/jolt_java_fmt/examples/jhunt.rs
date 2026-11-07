@@ -1,7 +1,9 @@
-//! Bug-hunting sweep over the imported corpora in `tools/import/.imports`:
-//! every file at several widths and with every `PROBE_SHAPES` comment shape
-//! injected at token boundaries, checked with the oracle. Run with
-//! `mise run hunt` (release mode). `jcheck` replays one file or probe.
+//! Bug-hunting sweep over the repository fixtures and the imported corpora in
+//! `tools/import/.imports` (`common::SWEEP_SUITES`): every file at several
+//! widths, with every `PROBE_SHAPES` comment shape injected at token
+//! boundaries, and (for small files of the exhaustive suites) with each token
+//! deleted, checked with the oracle. Run with `mise run hunt` (release mode).
+//! `jcheck` replays one file or variant.
 
 use std::path::Path;
 
@@ -23,12 +25,7 @@ fn main() {
         &common::JavaCorpus,
         repo_root,
         &CorpusSweep {
-            suites: &[
-                "google-java-format/input",
-                "palantir-java-format/input",
-                "prettier-java/input",
-                "spring-framework",
-            ],
+            suites: common::SWEEP_SUITES,
             extensions: &["java"],
             out_dir: "java",
             known_open: KNOWN_OPEN,

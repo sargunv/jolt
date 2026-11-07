@@ -32,6 +32,19 @@ pub trait CorpusLanguage: Sync {
                 .collect()
         })
     }
+    /// The byte ranges of the non-empty tokens, which the sweep deletes one
+    /// at a time.
+    fn token_ranges(&self, source: &str) -> Vec<(usize, usize)> {
+        self.with_parse(source, |root, _| {
+            root.tokens()
+                .filter(|token| !token.text().is_empty())
+                .map(|token| {
+                    let range = token.text_range();
+                    (range.start().get(), range.end().get())
+                })
+                .collect()
+        })
+    }
     /// Whether the fixture at `relative` is expected to carry diagnostics.
     fn expects_diagnostics(&self, relative: &str) -> bool;
 }
@@ -74,7 +87,11 @@ fn token_inventory<L: Language>(
             }
             continue;
         }
-        *tokens.entry(token.text().to_owned()).or_default() += 1;
+        // Line endings become `\n` (text blocks included) and lines lose
+        // trailing whitespace (only an unterminated literal has any).
+        let text = token.text().replace("\r\n", "\n").replace('\r', "\n");
+        let text = text.trim_end_matches([' ', '\t', '\x0c']);
+        *tokens.entry(text.to_owned()).or_default() += 1;
     }
     tokens
 }

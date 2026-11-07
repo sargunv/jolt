@@ -57,23 +57,63 @@ pub const PROBE_SHAPES: &[ProbeShape] = &[
     },
 ];
 
-/// Boundary count up to which a shape probes every boundary.
+/// Boundary count up to which a sampled suite probes every boundary.
 pub const SWEEP_EXHAUSTIVE_BOUNDARY_LIMIT: usize = 120;
-/// Boundaries each shape samples in a larger file.
-pub const SWEEP_SAMPLED_PROBES: usize = 3;
-/// The widths the sweep formats every file at.
+/// Boundaries each shape samples in a larger file of a sampled suite.
+pub const SWEEP_SAMPLED_PROBES: usize = 8;
+/// The widths the sweep formats every file at. A sampled suite probes at
+/// [`SWEEP_PROBE_WIDTH`] only; an exhaustive one probes at every width.
 pub const SWEEP_WIDTHS: &[u16] = &[40, 80, 120];
+pub const SWEEP_PROBE_WIDTH: u16 = 80;
+/// Files up to this size in an exhaustive suite get every probe at every
+/// width and every one-token deletion; larger ones are sampled.
+pub const SWEEP_EXHAUSTIVE_MAX_BYTES: usize = 4096;
 /// Samples kept per summary key.
 pub const MAX_SAMPLES_PER_KEY: usize = 20;
+
+/// How thoroughly the sweep checks a suite.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Depth {
+    /// Every boundary of small files; [`SWEEP_SAMPLED_PROBES`] per shape
+    /// otherwise; probes at [`SWEEP_PROBE_WIDTH`].
+    Sampled,
+    /// Every boundary at every width, and every one-token deletion, for
+    /// files up to [`SWEEP_EXHAUSTIVE_MAX_BYTES`]; larger files are sampled.
+    Exhaustive,
+}
+
+impl Depth {
+    /// The depth `source` gets in a suite of this depth.
+    #[must_use]
+    pub const fn for_source(self, source: &str) -> Self {
+        match self {
+            Self::Exhaustive if source.len() <= SWEEP_EXHAUSTIVE_MAX_BYTES => Self::Exhaustive,
+            _ => Self::Sampled,
+        }
+    }
+}
+
+/// One suite of the sweep: a directory relative to the repository root.
+pub struct Suite<'a> {
+    pub dir: &'a str,
+    pub depth: Depth,
+}
 
 /// The boundary indices `shape` probes in a file with `boundaries` token
 /// boundaries.
 #[must_use]
-pub fn probe_boundaries(shape: &ProbeShape, source: &str, boundaries: usize) -> Vec<usize> {
+pub fn probe_boundaries(
+    shape: &ProbeShape,
+    source: &str,
+    boundaries: usize,
+    depth: Depth,
+) -> Vec<usize> {
     if boundaries == 0 {
         return Vec::new();
     }
-    if boundaries <= SWEEP_EXHAUSTIVE_BOUNDARY_LIMIT {
+    if depth.for_source(source) == Depth::Exhaustive
+        || boundaries <= SWEEP_EXHAUSTIVE_BOUNDARY_LIMIT
+    {
         return (0..boundaries).collect();
     }
     (0..SWEEP_SAMPLED_PROBES)
@@ -83,15 +123,92 @@ pub fn probe_boundaries(shape: &ProbeShape, source: &str, boundaries: usize) -> 
         .collect()
 }
 
-/// Parses `<shape><n>` (longest shape name first).
-#[must_use]
-pub fn parse_probe_argument(probe: &str) -> Option<(&'static ProbeShape, usize)> {
-    let mut shapes: Vec<&ProbeShape> = PROBE_SHAPES.iter().collect();
-    shapes.sort_by_key(|shape| std::cmp::Reverse(shape.name.len()));
-    shapes.into_iter().find_map(|shape| {
-        let index = probe.strip_prefix(shape.name)?.parse().ok()?;
-        Some((shape, index))
-    })
+/// One checked variant of a file, as `jcheck` replays it: `<shape><n>`, or
+/// `<shape><n>@<width>` at a width other than [`SWEEP_PROBE_WIDTH`], or
+/// `delete<n>` (the `n`th non-empty token removed).
+#[derive(Clone, Copy)]
+pub enum Variant {
+    Probe {
+        shape: &'static ProbeShape,
+        index: usize,
+        width: u16,
+    },
+    Delete {
+        index: usize,
+    },
+}
+
+impl Variant {
+    /// Parses a variant label (longest shape name first).
+    #[must_use]
+    pub fn parse(label: &str) -> Option<Self> {
+        if let Some(index) = label.strip_prefix("delete") {
+            return Some(Self::Delete {
+                index: index.parse().ok()?,
+            });
+        }
+        let (probe, width) = match label.split_once('@') {
+            Some((probe, width)) => (probe, width.parse().ok()?),
+            None => (label, SWEEP_PROBE_WIDTH),
+        };
+        let mut shapes: Vec<&'static ProbeShape> = PROBE_SHAPES.iter().collect();
+        shapes.sort_by_key(|shape| std::cmp::Reverse(shape.name.len()));
+        shapes.into_iter().find_map(|shape| {
+            let index = probe.strip_prefix(shape.name)?.parse().ok()?;
+            Some(Self::Probe {
+                shape,
+                index,
+                width,
+            })
+        })
+    }
+
+    #[must_use]
+    pub fn label(self) -> String {
+        match self {
+            Self::Probe {
+                shape,
+                index,
+                width,
+            } if width == SWEEP_PROBE_WIDTH => format!("{}{index}", shape.name),
+            Self::Probe {
+                shape,
+                index,
+                width,
+            } => format!("{}{index}@{width}", shape.name),
+            Self::Delete { index } => format!("delete{index}"),
+        }
+    }
+
+    #[must_use]
+    pub const fn width(self) -> u16 {
+        match self {
+            Self::Probe { width, .. } => width,
+            Self::Delete { .. } => SWEEP_PROBE_WIDTH,
+        }
+    }
+
+    /// The variant's source, or `None` when its index is out of range.
+    #[must_use]
+    pub fn source<C: CorpusLanguage>(
+        self,
+        language: &C,
+        source: &str,
+        depth: Depth,
+    ) -> Option<String> {
+        match self {
+            Self::Probe { shape, index, .. } => {
+                let boundaries = language.token_end_offsets(source);
+                let selected = probe_boundaries(shape, source, boundaries.len(), depth);
+                let boundary = boundaries[*selected.get(index)?];
+                Some(probed_source(source, boundary, shape))
+            }
+            Self::Delete { index } => {
+                let (start, end) = *language.token_ranges(source).get(index)?;
+                Some(format!("{}{}", &source[..start], &source[end..]))
+            }
+        }
+    }
 }
 
 #[must_use]
@@ -110,15 +227,18 @@ pub struct SweepFailure {
 }
 
 impl SweepFailure {
-    /// The category with the probe index stripped.
-    #[must_use]
-    pub fn summary_key(&self) -> String {
-        let (probe, check) = self
+    /// The category with the variant's index stripped.
+    fn summary_key(&self) -> String {
+        let (label, check) = self
             .category
             .split_once(':')
             .unwrap_or((self.category.as_str(), ""));
-        let shape = probe.trim_end_matches(|ch: char| ch.is_ascii_digit());
-        format!("{shape}:{check}")
+        let (variant, width) = match label.split_once('@') {
+            Some((variant, _)) => (variant, &label[variant.len()..]),
+            None => (label, ""),
+        };
+        let shape = variant.trim_end_matches(|ch: char| ch.is_ascii_digit());
+        format!("{shape}{width}:{check}")
     }
 }
 
@@ -139,45 +259,72 @@ pub fn sweep_variant<C: CorpusLanguage>(
         .collect()
 }
 
-/// Every sweep check for one file: each width, then each probe shape at
-/// width 80. A probe that makes clean source dirty is skipped (it landed in
-/// something other than trivia).
+/// Every sweep check for one file: each width, then each probe shape (and,
+/// for an exhaustive suite, each deletion). A probe that makes clean source
+/// dirty is skipped (it landed in something other than trivia).
 #[must_use]
-pub fn sweep_source<C: CorpusLanguage>(language: &C, source: &str) -> Vec<SweepFailure> {
+pub fn sweep_source<C: CorpusLanguage>(
+    language: &C,
+    source: &str,
+    depth: Depth,
+) -> Vec<SweepFailure> {
+    let depth = depth.for_source(source);
     let mut failures = Vec::new();
     for &width in SWEEP_WIDTHS {
-        let options = FormatOptions {
-            line_width: width,
-            ..FormatOptions::default()
-        };
         failures.extend(sweep_variant(
             language,
             source,
-            &options,
+            &options(width),
             &format!("w{width}"),
         ));
     }
     let boundaries = language.token_end_offsets(source);
     let clean = parse_facts(language, source).diagnostics.is_empty();
-    let options = FormatOptions::default();
+    let widths = match depth {
+        Depth::Sampled => &[SWEEP_PROBE_WIDTH][..],
+        Depth::Exhaustive => SWEEP_WIDTHS,
+    };
     for shape in PROBE_SHAPES {
-        for (probe, &boundary) in probe_boundaries(shape, source, boundaries.len())
-            .iter()
-            .enumerate()
-        {
+        let selected = probe_boundaries(shape, source, boundaries.len(), depth);
+        for (index, &boundary) in selected.iter().enumerate() {
             let probed = probed_source(source, boundaries[boundary], shape);
             if clean && !parse_facts(language, &probed).diagnostics.is_empty() {
                 continue;
             }
+            for &width in widths {
+                let variant = Variant::Probe {
+                    shape,
+                    index,
+                    width,
+                };
+                failures.extend(sweep_variant(
+                    language,
+                    &probed,
+                    &options(width),
+                    &variant.label(),
+                ));
+            }
+        }
+    }
+    if depth == Depth::Exhaustive {
+        for (index, &(start, end)) in language.token_ranges(source).iter().enumerate() {
+            let deleted = format!("{}{}", &source[..start], &source[end..]);
             failures.extend(sweep_variant(
                 language,
-                &probed,
-                &options,
-                &format!("{}{probe}", shape.name),
+                &deleted,
+                &options(SWEEP_PROBE_WIDTH),
+                &Variant::Delete { index }.label(),
             ));
         }
     }
     failures
+}
+
+fn options(width: u16) -> FormatOptions {
+    FormatOptions {
+        line_width: width,
+        ..FormatOptions::default()
+    }
 }
 
 /// Runs `check`, turning a panic into a `panic` failure.
@@ -197,8 +344,7 @@ pub fn catching(path: &Path, check: impl FnOnce() -> Vec<SweepFailure>) -> Vec<S
 
 /// What a sweep run needs beyond its language.
 pub struct CorpusSweep<'a> {
-    /// Directories under `tools/import/.imports`.
-    pub suites: &'a [&'a str],
+    pub suites: &'a [Suite<'a>],
     pub extensions: &'a [&'a str],
     /// Directory under `target/hunt`.
     pub out_dir: &'a str,
@@ -209,6 +355,7 @@ pub struct CorpusSweep<'a> {
 #[derive(Default)]
 struct Findings {
     counts: BTreeMap<String, usize>,
+    by_file: BTreeMap<PathBuf, usize>,
     retained: BTreeMap<String, usize>,
     samples: Vec<(PathBuf, SweepFailure)>,
 }
@@ -217,6 +364,7 @@ impl Findings {
     fn push(&mut self, path: &Path, failure: SweepFailure) {
         let key = failure.summary_key();
         *self.counts.entry(key.clone()).or_default() += 1;
+        *self.by_file.entry(path.to_path_buf()).or_default() += 1;
         let retained = self.retained.entry(key).or_default();
         if *retained < MAX_SAMPLES_PER_KEY {
             *retained += 1;
@@ -227,6 +375,9 @@ impl Findings {
     fn merge(&mut self, other: Self) {
         for (key, count) in other.counts {
             *self.counts.entry(key).or_default() += count;
+        }
+        for (path, count) in other.by_file {
+            *self.by_file.entry(path).or_default() += count;
         }
         for (path, failure) in other.samples {
             let key = failure.summary_key();
@@ -270,14 +421,15 @@ pub fn run_corpus_sweep<C: CorpusLanguage>(
     sweep: &CorpusSweep<'_>,
 ) -> i32 {
     std::panic::set_hook(Box::new(|_| {}));
-    let imports = repo_root.join("tools/import/.imports");
     let mut files = Vec::new();
     for suite in sweep.suites {
-        let dir = imports.join(suite);
+        let dir = repo_root.join(suite.dir);
         assert!(dir.is_dir(), "missing corpus suite {}", dir.display());
-        collect_files(&dir, sweep.extensions, &mut files);
+        let mut found = Vec::new();
+        collect_files(&dir, sweep.extensions, &mut found);
+        files.extend(found.into_iter().map(|path| (path, suite.depth)));
     }
-    files.sort();
+    files.sort_by(|left, right| left.0.cmp(&right.0));
     let out_dir = repo_root.join("target/hunt").join(sweep.out_dir);
     let _ = fs::remove_dir_all(&out_dir);
     fs::create_dir_all(&out_dir).expect("create hunt output directory");
@@ -372,6 +524,11 @@ fn write_report(findings: &mut Findings, slow: &mut [(PathBuf, u128)], out_dir: 
         }
     }
     let _ = writeln!(report, "\nsummary: {:?}", findings.counts);
+    let mut by_file: Vec<(&PathBuf, &usize)> = findings.by_file.iter().collect();
+    by_file.sort_by_key(|&(_, count)| std::cmp::Reverse(*count));
+    for (path, count) in by_file.into_iter().take(40) {
+        let _ = writeln!(report, "failures: {count} {}", path.display());
+    }
     for (path, ms) in slow.iter().take(20) {
         let _ = writeln!(report, "slow: {ms}ms {}", path.display());
     }
@@ -382,7 +539,7 @@ fn write_report(findings: &mut Findings, slow: &mut [(PathBuf, u128)], out_dir: 
 /// Sweeps `files` on every core, returning the findings and the slow files.
 fn sweep_files<C: CorpusLanguage>(
     language: &C,
-    files: &[PathBuf],
+    files: &[(PathBuf, Depth)],
 ) -> (Findings, Vec<(PathBuf, u128)>) {
     let threads = std::thread::available_parallelism().map_or(4, usize::from);
     let next = std::sync::atomic::AtomicUsize::new(0);
@@ -394,12 +551,14 @@ fn sweep_files<C: CorpusLanguage>(
                     let mut slow = Vec::new();
                     loop {
                         let index = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                        let Some(path) = files.get(index) else {
+                        let Some((path, depth)) = files.get(index) else {
                             break;
                         };
                         let started = std::time::Instant::now();
                         let failures = match fs::read_to_string(path) {
-                            Ok(source) => catching(path, || sweep_source(language, &source)),
+                            Ok(source) => {
+                                catching(path, || sweep_source(language, &source, *depth))
+                            }
                             Err(error) => vec![SweepFailure {
                                 category: "read-error".to_owned(),
                                 detail: error.to_string(),

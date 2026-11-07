@@ -4,7 +4,33 @@
 use jolt_fmt::FormatOptions;
 use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind as K};
 use jolt_syntax::{Diagnostic, SyntaxNode};
-use jolt_test_support::{CorpusLanguage, StructurePolicy};
+use jolt_test_support::{CorpusLanguage, Depth, StructurePolicy, Suite};
+
+/// The sweep's suites (`mise run hunt`, replayed by `jcheck`): the repository
+/// fixtures and the small upstream fixture suites exhaustively, Spring
+/// sampled.
+pub const SWEEP_SUITES: &[Suite<'_>] = &[
+    Suite {
+        dir: "fixtures/java",
+        depth: Depth::Exhaustive,
+    },
+    Suite {
+        dir: "tools/import/.imports/google-java-format/input",
+        depth: Depth::Exhaustive,
+    },
+    Suite {
+        dir: "tools/import/.imports/palantir-java-format/input",
+        depth: Depth::Exhaustive,
+    },
+    Suite {
+        dir: "tools/import/.imports/prettier-java/input",
+        depth: Depth::Exhaustive,
+    },
+    Suite {
+        dir: "tools/import/.imports/spring-framework",
+        depth: Depth::Sampled,
+    },
+];
 
 /// The tree edits the Java formatter may make (N1–N8): import, module
 /// directive, `requires` modifier and declaration modifier reordering, brace

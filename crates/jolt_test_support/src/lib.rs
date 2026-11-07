@@ -13,9 +13,8 @@ pub use oracle::{
     comment_inventory, describe_divergence, diagnostic_codes, parse_facts, structure_fingerprint,
 };
 pub use sweep::{
-    CorpusSweep, PROBE_SHAPES, ProbePosition, ProbeShape, SweepFailure, catching,
-    parse_probe_argument, probe_boundaries, probed_source, run_corpus_sweep, sweep_source,
-    sweep_variant,
+    CorpusSweep, Depth, PROBE_SHAPES, ProbePosition, ProbeShape, Suite, SweepFailure, Variant,
+    catching, probed_source, run_corpus_sweep, sweep_source, sweep_variant,
 };
 
 use std::fmt::Write as _;
