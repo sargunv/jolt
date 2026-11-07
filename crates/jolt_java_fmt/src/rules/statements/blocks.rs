@@ -3,9 +3,9 @@
 use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
     Block, BlockStatement, EmptyStatement, ExpressionStatement, LabeledStatement,
-    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, LocalVariableType, Statement,
+    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, LocalVariableType,
 };
-use jolt_syntax::{AstNode, SyntaxElement};
+use jolt_syntax::AstNode;
 
 use super::{statement_items, statement_separator};
 use crate::JavaFormatter;
@@ -59,23 +59,12 @@ pub(crate) fn empty_statement<'a>(f: &mut JavaFormatter<'a>, node: EmptyStatemen
     f.token_opt(node.semicolon())
 }
 
-/// `label:` on its own line, then the statement. An empty statement after
-/// a colon that carries an inline comment stays on the colon's line: a
-/// line break would turn the comment into an end-of-line comment, which the
-/// next pass moves past the `;`.
+/// `label:` on its own line, then the statement.
 pub(crate) fn labeled_statement<'a>(f: &mut JavaFormatter<'a>, node: LabeledStatement<'a>) -> Doc {
     let label = f.token_opt(node.label());
-    let separator = match (node.colon(), node.body()) {
-        (Some(colon), Some(Statement::EmptyStatement(_)))
-            if f.has_trailing_comments(SyntaxElement::Token(colon)) =>
-        {
-            f.space()
-        }
-        _ => f.hard_line(),
-    };
     let colon = f.token_opt(node.colon());
     let body = f.fmt_opt(node.body());
-    cat![f; label, colon, separator, body]
+    cat![f; label, colon, f.hard_line(), body]
 }
 
 pub(crate) fn expression_statement<'a>(

@@ -1103,3 +1103,15 @@ String[] values = {
   "last", // c
 };
 ```
+
+### R8. A labeled empty statement starts its own line too
+
+A label whose body was an empty statement kept the `;` on the label's line when
+the colon carried an inline comment (`commented: /* nothing */ ;`). The `;` now
+starts its own line like any labeled statement; an inline block comment does not
+move past it, so this is stable:
+
+```java
+commented: /* nothing */
+;
+```

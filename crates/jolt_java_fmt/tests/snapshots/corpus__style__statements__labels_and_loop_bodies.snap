@@ -15,7 +15,8 @@ class Example {
       }
       process(value);
     }
-    empty /* label */ : /* body */ ;
+    empty /* label */ : /* body */
+    ;
     while (/* while */ ready()) {}
     do {
       processNext();
