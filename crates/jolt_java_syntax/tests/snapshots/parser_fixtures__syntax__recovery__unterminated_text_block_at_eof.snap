@@ -1,0 +1,38 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+class UnterminatedTextBlockAtEof {
+  String s = """
+    abc
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "UnterminatedTextBlockAtEof" @ 6..32 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 33..34
+        ClassBodyMemberList
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 37..43 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "s" @ 44..45 trailing=[Whitespace " "]
+                Assign "=" @ 46..47 trailing=[Whitespace " "]
+                VariableInitializer
+                  LiteralExpression
+                    TextBlockLiteral "\"\"\"\n    abc" @ 48..59
+  Eof "" @ 59..59
+
+diagnostics:
+code=java.lex.unterminated_text_block range=48..59 message=unterminated text block
+code=java.parse.expected_syntax range=59..59 message=expected `;` after field declaration
+code=java.parse.expected_syntax range=59..59 message=expected `}` after type body

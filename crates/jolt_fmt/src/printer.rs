@@ -12,6 +12,10 @@ use crate::{Doc, DocBuilder, FormatOptions, Reindent, Sink};
 /// The most commands one fit check visits before answering "does not fit".
 pub const FIT_BUDGET: usize = 4096;
 
+/// The whitespace verbatim lines lose at their ends: what separates tokens.
+/// (Other Unicode whitespace is a token of its own.)
+const BLANK: [char; 3] = [' ', '\t', '\x0c'];
+
 /// Output is handed to the sink in chunks of about this size, so a sink that
 /// compares (check mode) can stop the printer soon after a difference.
 const CHUNK: usize = 1024;
@@ -63,6 +67,7 @@ pub(crate) fn print<S: Sink + ?Sized>(
     root: Doc,
     options: FormatOptions,
     joins: fn(char, char) -> bool,
+    final_newline: bool,
     sink: &mut S,
 ) -> ControlFlow<()> {
     let mut printer = Printer {
@@ -91,7 +96,9 @@ pub(crate) fn print<S: Sink + ?Sized>(
         }],
     };
     printer.run()?;
-    printer.out.push('\n');
+    if final_newline {
+        printer.out.push('\n');
+    }
     printer.sink.write(&printer.out)
 }
 
@@ -286,7 +293,7 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                 let mut lines = lines(text.text).peekable();
                 let first = lines.next().unwrap_or("");
                 let first = if lines.peek().is_some() {
-                    first.trim_end()
+                    first.trim_end_matches(BLANK)
                 } else {
                     first
                 };
@@ -294,14 +301,14 @@ impl<S: Sink + ?Sized> Printer<'_, '_, S> {
                 self.column += display_width(first);
                 while let Some(line) = lines.next() {
                     let line = if lines.peek().is_some() {
-                        line.trim_end()
+                        line.trim_end_matches(BLANK)
                     } else {
                         line
                     };
                     self.out.push('\n');
                     // A blank line gets no indentation; the last line is never
                     // blank, since a text block follows it on the same line.
-                    if line.trim().is_empty() && lines.peek().is_some() {
+                    if line.trim_matches(BLANK).is_empty() && lines.peek().is_some() {
                         self.line_ws.clear();
                         self.column = 0;
                         continue;

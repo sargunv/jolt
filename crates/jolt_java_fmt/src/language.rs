@@ -77,6 +77,11 @@ impl FormatLanguage for JavaFormat {
             || (right == '=' && "+-*/%&|^<>!=".contains(left))
     }
 
+    fn is_open_literal(token: SyntaxToken<'_>) -> bool {
+        let text = token.text();
+        kind(token) == K::TextBlockLiteral && !(text.len() >= 6 && text.ends_with("\"\"\""))
+    }
+
     fn hugs_next(token: SyntaxToken<'_>) -> bool {
         Self::closer_for(token).is_some() || matches!(kind(token), K::Dot | K::DoubleColon | K::At)
     }

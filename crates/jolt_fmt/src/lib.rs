@@ -66,6 +66,10 @@ pub trait FormatLanguage: Sized + 'static {
     /// `right` would lex differently; the printer separates such texts with a
     /// space.
     fn joins(left: char, right: char) -> bool;
+    /// A literal that runs to the end of the file unterminated and would take
+    /// in a final newline printed after it (Java: an unterminated text
+    /// block), so the output ends without one.
+    fn is_open_literal(token: SyntaxToken<'_>) -> bool;
     /// Tokens after which an inline comment is printed with no space.
     fn hugs_next(token: SyntaxToken<'_>) -> bool;
     /// Language exceptions to comment placement, tried before the generic
@@ -83,7 +87,7 @@ pub trait FormatLanguage: Sized + 'static {
 /// Formats a tree: placement, ignore regions, doc construction, the debug
 /// emission check, and printing. A byte order mark at the start of the source
 /// is written first, and a trailing substitute character after the final
-/// newline.
+/// newline (which is left out after an open literal at the end of the file).
 pub fn format<L: FormatLanguage, S: Sink + ?Sized>(
     root: SyntaxNode<'_>,
     options: &FormatOptions,
@@ -98,7 +102,13 @@ pub fn format<L: FormatLanguage, S: Sink + ?Sized>(
     if let Some(bom) = special_trivia(root.first_token(), TriviaKind::ByteOrderMark) {
         sink.write(bom)?;
     }
-    printer::print(&builder, doc, *options, L::joins, sink)?;
+    let open_end = root
+        .last_token()
+        .and_then(SyntaxToken::prev)
+        .is_some_and(|last| {
+            last.text_range().end().get() == root.source().len() && L::is_open_literal(last)
+        });
+    printer::print(&builder, doc, *options, L::joins, !open_end, sink)?;
     if let Some(substitute) = special_trivia(root.last_token(), TriviaKind::TrailingSubstitute) {
         sink.write(substitute)?;
     }
