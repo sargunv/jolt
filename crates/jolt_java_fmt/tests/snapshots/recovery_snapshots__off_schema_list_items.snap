@@ -1,0 +1,76 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+public interface Foo {
+  int other();
+  helper(int x) { return; }
+  default void third() { System.out.println("x"); }
+}
+
+interface I {
+  default I() {}
+}
+
+@interface Note {
+  Note(int a) {}
+  int value();
+}
+
+class A {
+  A() {
+    this(a[], 2);
+  }
+
+  void m() {
+    foo(a[], b);
+    new X(a[], b);
+    int[] o = {a[], b};
+    m(1, 2, x.y[]);
+  }
+}
+
+formatted:
+public interface Foo {
+  int other();
+
+  helper(int x) { return; }
+
+  default void third() {
+    System.out.println("x");
+  }
+}
+
+interface I {
+  default I() {}
+}
+
+@interface Note {
+  Note(int a) {}
+
+  int value();
+}
+
+class A {
+  A() {
+    this(a [], 2);
+  }
+
+  void m() {
+    foo(a [], b);
+    new X(a [], b);
+    int[] o = { a [], b };
+    m(1, 2, x.y []);
+  }
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax range=40..65 message=unexpected ConstructorDeclaration in InterfaceBodyMemberList
+code=java.parse.unexpected_syntax range=137..144 message=invalid constructor modifier
+code=java.parse.unexpected_syntax range=175..189 message=unexpected ConstructorDeclaration in AnnotationInterfaceBodyMemberList
+code=java.parse.unexpected_syntax range=236..238 message=unexpected ArrayDimensions in ExpressionList
+code=java.parse.unexpected_syntax range=271..273 message=unexpected ArrayDimensions in ExpressionList
+code=java.parse.unexpected_syntax range=290..292 message=unexpected ArrayDimensions in ExpressionList
+code=java.parse.unexpected_syntax range=314..316 message=unexpected ArrayDimensions in VariableInitializerList
+code=java.parse.unexpected_syntax range=337..339 message=unexpected ArrayDimensions in ExpressionList

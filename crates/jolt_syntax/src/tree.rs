@@ -337,6 +337,34 @@ pub struct NodeSink<'a> {
     slots: &'a mut Vec<PackedSlot>,
     input: &'a [Child],
     tokens: [u32; 2],
+    token_data: &'a [TokenData],
+    bogus: RawSyntaxKind,
+    mismatches: &'a mut Mismatches,
+}
+
+/// Children that fit no slot of the node the factory built.
+#[derive(Default)]
+struct Mismatches {
+    /// Each one, wrapped in a bogus node or kept raw in a malformed node.
+    unexpected: Vec<Unexpected>,
+    /// Tokens whose parent is a bogus wrapper rather than the new node.
+    wrapped_tokens: Vec<(TokenId, NodeId)>,
+}
+
+/// A factory mismatch the parser may not have reported.
+struct Unexpected {
+    range: TextRange,
+    kind: RawSyntaxKind,
+    parent: RawSyntaxKind,
+}
+
+/// One slot of a list under construction.
+#[derive(Clone, Copy)]
+enum ListSlot {
+    Child(usize),
+    Missing,
+    /// A child that does not fit the list, wrapped in a bogus node.
+    Wrap(usize),
 }
 
 impl NodeSink<'_> {
@@ -358,14 +386,23 @@ impl NodeSink<'_> {
         )
     }
 
-    /// A node that keeps every child in order, in one slot each.
+    /// A node that keeps every child in order, in one slot each. A malformed
+    /// node other than the bogus kind is a factory mismatch.
     pub fn raw(&mut self, kind: RawSyntaxKind, malformed: bool) -> NodeId {
+        if malformed && kind != self.bogus {
+            self.mismatches.unexpected.push(Unexpected {
+                range: self.token_span(self.tokens),
+                kind,
+                parent: kind,
+            });
+        }
         let input = self.input;
         self.push(kind, input.iter().map(|child| Some(child.slot)), malformed)
     }
 
-    /// A list node: every child must match `item` (or the list is
-    /// malformed). Fewer than `minimum` items leave `minimum` missing slots.
+    /// A list node. A child that does not match `item` is wrapped in a bogus
+    /// node, which every list accepts at an item position, so a list is never
+    /// malformed. Fewer than `minimum` items leave missing slots.
     pub fn list(
         &mut self,
         kind: RawSyntaxKind,
@@ -373,19 +410,23 @@ impl NodeSink<'_> {
         minimum: usize,
         item: impl Fn(usize) -> bool,
     ) -> NodeId {
-        if !(0..len).all(item) {
-            self.raw(kind, true)
-        } else if len >= minimum {
-            self.raw(kind, false)
-        } else {
-            self.push(kind, std::iter::repeat_n(None, minimum), false)
-        }
+        let mut slots: Vec<ListSlot> = (0..len)
+            .map(|index| {
+                if item(index) {
+                    ListSlot::Child(index)
+                } else {
+                    ListSlot::Wrap(index)
+                }
+            })
+            .collect();
+        slots.resize(len.max(minimum), ListSlot::Missing);
+        self.push_list(kind, slots)
     }
 
     /// A separated list node. Items and separators alternate; a missing item
     /// or separator gets an empty slot, as does a forbidden trailing or
-    /// required absent final separator. Children that fit neither make the
-    /// list malformed.
+    /// required absent final separator. A child that fits neither is wrapped
+    /// in a bogus node at an item position.
     pub fn separated_list(
         &mut self,
         kind: RawSyntaxKind,
@@ -395,7 +436,7 @@ impl NodeSink<'_> {
         item: impl Fn(usize) -> bool,
         separator: impl Fn(usize) -> bool,
     ) -> NodeId {
-        let mut slots: Vec<Option<usize>> = Vec::with_capacity(len.max(minimum * 2));
+        let mut slots: Vec<ListSlot> = Vec::with_capacity(len.max(minimum * 2));
         let mut cursor = 0;
         let mut count = 0;
         let mut expect_item = true;
@@ -406,35 +447,85 @@ impl NodeSink<'_> {
                 (separator(cursor), item(cursor))
             };
             if fits {
-                slots.push(Some(cursor));
+                slots.push(ListSlot::Child(cursor));
                 count += usize::from(expect_item);
                 cursor += 1;
-            } else if other {
-                slots.push(None);
+            } else if other || !expect_item {
+                // A misfit after an item takes the next item position.
+                slots.push(ListSlot::Missing);
             } else {
-                return self.raw(kind, true);
+                slots.push(ListSlot::Wrap(cursor));
+                count += 1;
+                cursor += 1;
             }
             expect_item = !expect_item;
         }
         match trailing {
-            Trailing::Forbidden if expect_item && !slots.is_empty() => slots.push(None),
-            Trailing::Required if !expect_item && count > 0 => slots.push(None),
+            Trailing::Forbidden if expect_item && !slots.is_empty() => {
+                slots.push(ListSlot::Missing);
+            }
+            Trailing::Required if !expect_item && count > 0 => slots.push(ListSlot::Missing),
             _ => {}
         }
         while count < minimum {
             if count > 0 {
-                slots.push(None);
+                slots.push(ListSlot::Missing);
             }
-            slots.push(None);
+            slots.push(ListSlot::Missing);
             count += 1;
         }
+        self.push_list(kind, slots)
+    }
+
+    fn push_list(&mut self, kind: RawSyntaxKind, slots: Vec<ListSlot>) -> NodeId {
         let input = self.input;
-        self.push(
-            kind,
-            slots
-                .into_iter()
-                .map(|slot| slot.map(|index| input[index].slot)),
-            false,
+        let packed: Vec<Option<PackedSlot>> = slots
+            .into_iter()
+            .map(|slot| match slot {
+                ListSlot::Child(index) => Some(input[index].slot),
+                ListSlot::Missing => None,
+                ListSlot::Wrap(index) => Some(PackedSlot::node(self.wrap(kind, index))),
+            })
+            .collect();
+        self.push(kind, packed.into_iter(), false)
+    }
+
+    /// Wraps input child `index` of a `parent` list in a bogus node.
+    fn wrap(&mut self, parent: RawSyntaxKind, index: usize) -> NodeId {
+        let child = self.input[index];
+        let tokens = match child.slot.unpack() {
+            Slot::Node(node) => self.nodes[node.index()].tokens,
+            Slot::Token(token) => [token.0, token.0 + 1],
+            Slot::Empty => unreachable!("parsed children are never empty"),
+        };
+        self.mismatches.unexpected.push(Unexpected {
+            range: self.token_span(tokens),
+            kind: child.kind,
+            parent,
+        });
+        let outer = std::mem::replace(&mut self.tokens, tokens);
+        let id = self.push(self.bogus, std::iter::once(Some(child.slot)), true);
+        self.tokens = outer;
+        if let Slot::Token(token) = child.slot.unpack() {
+            self.mismatches.wrapped_tokens.push((token, id));
+        }
+        id
+    }
+
+    /// From the first token's text start to the last token's text end.
+    fn token_span(&self, [first, end]: [u32; 2]) -> TextRange {
+        let first = first as usize;
+        let end = end as usize;
+        if first == end {
+            let at = self
+                .token_data
+                .get(first)
+                .map_or(TextSize::from(0), |token| token.range().start());
+            return TextRange::empty(at);
+        }
+        TextRange::new(
+            self.token_data[first].range().start(),
+            self.token_data[end - 1].range().end(),
         )
     }
 
@@ -531,33 +622,17 @@ pub fn build_tree<F: SyntaxFactory>(
     let mut stack: Vec<(RawSyntaxKind, usize, usize)> = Vec::with_capacity(64);
     let mut next_token = 0usize;
     let mut root = None;
+    let mut mismatches = Mismatches::default();
 
     for position in 0..events.len() {
         match events[position] {
-            Event::Start {
-                kind,
-                forward_parent,
-            } => {
-                let stack_start = stack.len();
-                stack.push((kind, pending.len(), next_token));
-                let mut current = position;
-                let mut forward = forward_parent;
-                while forward != 0 {
-                    current += forward as usize;
-                    let Event::Start {
-                        kind,
-                        forward_parent,
-                    } = events[current]
-                    else {
-                        panic!("forward parent must point at a start event");
-                    };
-                    events[current] = Event::Tombstone;
-                    stack.push((kind, pending.len(), next_token));
-                    forward = forward_parent;
-                }
-                // Forward parents are found innermost first; the stack needs
-                // the outermost first.
-                stack[stack_start..].reverse();
+            Event::Start { .. } => {
+                open_nodes(
+                    &mut events,
+                    position,
+                    &mut stack,
+                    (pending.len(), next_token),
+                );
             }
             Event::Token => {
                 assert!(!stack.is_empty(), "token outside of any node");
@@ -585,12 +660,18 @@ pub fn build_tree<F: SyntaxFactory>(
                         u32::try_from(tokens_start).expect("token count fits in u32"),
                         u32::try_from(next_token).expect("token count fits in u32"),
                     ],
+                    token_data: &tokens,
+                    bogus: <F::Language as Language>::to_raw(<F::Language as Language>::BOGUS),
+                    mismatches: &mut mismatches,
                 };
                 let id = factory.make(kind, children, &mut sink);
                 for child in input {
                     if let Slot::Token(token) = child.slot.unpack() {
                         tokens[token.index()].parent = id.0;
                     }
+                }
+                for (token, wrapper) in mismatches.wrapped_tokens.drain(..) {
+                    tokens[token.index()].parent = wrapper.0;
                 }
                 pending.truncate(children_start);
                 if stack.is_empty() {
@@ -618,5 +699,89 @@ pub fn build_tree<F: SyntaxFactory>(
         trivia,
         kind_name: <F::Language as Language>::kind_name,
     };
+    let diagnostics = report_unexpected::<F::Language>(diagnostics, mismatches.unexpected);
     (tree, diagnostics)
+}
+
+/// Pushes the node started at `position` and its forward parents onto
+/// `stack`, outermost first, each starting at `at` (first pending child,
+/// first token).
+fn open_nodes(
+    events: &mut [Event],
+    position: usize,
+    stack: &mut Vec<(RawSyntaxKind, usize, usize)>,
+    at: (usize, usize),
+) {
+    let stack_start = stack.len();
+    let mut current = position;
+    loop {
+        let Event::Start {
+            kind,
+            forward_parent,
+        } = events[current]
+        else {
+            panic!("forward parent must point at a start event");
+        };
+        if current != position {
+            events[current] = Event::Tombstone;
+        }
+        stack.push((kind, at.0, at.1));
+        if forward_parent == 0 {
+            break;
+        }
+        current += forward_parent as usize;
+    }
+    // Forward parents are found innermost first; the stack needs the
+    // outermost first.
+    stack[stack_start..].reverse();
+}
+
+/// Adds an "unexpected" diagnostic for each factory mismatch that no parser
+/// diagnostic (or earlier mismatch) overlaps, so a tree with a malformed node
+/// always has a diagnostic. `O((d + u) log (d + u))`.
+fn report_unexpected<L: Language>(
+    mut diagnostics: Vec<Diagnostic>,
+    mut unexpected: Vec<Unexpected>,
+) -> Vec<Diagnostic> {
+    if unexpected.is_empty() {
+        return diagnostics;
+    }
+    let mut reported: Vec<TextRange> = diagnostics.iter().map(|d| d.range).collect();
+    reported.sort_unstable_by_key(|range| range.start());
+    // The furthest end among the diagnostics up to each index.
+    let mut furthest = Vec::with_capacity(reported.len());
+    let mut end = TextSize::from(0);
+    for range in &reported {
+        end = end.max(range.end());
+        furthest.push(end);
+    }
+    let overlaps_parser = |range: TextRange| {
+        let before = reported.partition_point(|reported| reported.start() <= range.end());
+        before > 0 && furthest[before - 1] >= range.start()
+    };
+    unexpected.sort_by_key(|item| (item.range.start(), std::cmp::Reverse(item.range.end())));
+    let mut accepted_end: Option<TextSize> = None;
+    for item in unexpected {
+        if overlaps_parser(item.range) || accepted_end.is_some_and(|end| end >= item.range.start())
+        {
+            continue;
+        }
+        accepted_end = Some(accepted_end.map_or(item.range.end(), |end| end.max(item.range.end())));
+        let message = if item.kind == item.parent {
+            format!("unexpected syntax in {}", L::kind_name(item.parent))
+        } else {
+            format!(
+                "unexpected {} in {}",
+                L::kind_name(item.kind),
+                L::kind_name(item.parent)
+            )
+        };
+        diagnostics.push(Diagnostic {
+            code: L::UNEXPECTED_CODE,
+            message,
+            range: item.range,
+        });
+    }
+    diagnostics.sort_by_key(|diagnostic| diagnostic.range.start());
+    diagnostics
 }

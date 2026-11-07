@@ -73,8 +73,8 @@ pub fn parse(source: &str) -> JavaParse<'_> {
     if normalized.has_replacements() {
         remap_to_raw_source(&normalized, &mut output);
     }
-    diagnostics.append(&mut output.diagnostics);
-    let (tree, _) = build_tree(source, output, &JavaSyntaxFactory);
+    let (tree, mut parsed) = build_tree(source, output, &JavaSyntaxFactory);
+    diagnostics.append(&mut parsed);
     JavaParse {
         source,
         tree,

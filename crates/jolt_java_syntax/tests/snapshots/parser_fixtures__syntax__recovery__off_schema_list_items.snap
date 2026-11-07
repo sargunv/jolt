@@ -1,0 +1,319 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+public interface Foo {
+  int other();
+  helper(int x) { return; }
+  default void third() { System.out.println("x"); }
+}
+
+interface I {
+  default I() {}
+}
+
+@interface Note {
+  Note(int a) {}
+  int value();
+}
+
+class A {
+  A() {
+    this(a[], 2);
+  }
+
+  void m() {
+    foo(a[], b);
+    new X(a[], b);
+    int[] o = {a[], b};
+    m(1, 2, x.y[]);
+  }
+}
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    InterfaceDeclaration
+      ModifierList
+        PublicKw "public" @ 0..6 trailing=[Whitespace " "]
+      InterfaceKw "interface" @ 7..16 trailing=[Whitespace " "]
+      Identifier "Foo" @ 17..20 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 21..22
+        InterfaceBodyMemberList
+          MethodDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 25..28 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "other" @ 29..34
+            LParen "(" @ 34..35
+            RParen ")" @ 35..36
+            Semicolon ";" @ 36..37
+          Bogus
+            ConstructorDeclaration
+              Identifier "helper" @ 40..46 leading=[Newline "\n", Whitespace "  "]
+              LParen "(" @ 46..47
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 47..50 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "x" @ 51..52
+              RParen ")" @ 52..53 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 54..55 trailing=[Whitespace " "]
+                ConstructorBodyEntryList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 56..62
+                      Semicolon ";" @ 62..63 trailing=[Whitespace " "]
+                RBrace "}" @ 64..65
+          MethodDeclaration
+            ModifierList
+              DefaultKw "default" @ 68..75 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VoidType
+              VoidKw "void" @ 76..80 trailing=[Whitespace " "]
+            Identifier "third" @ 81..86
+            LParen "(" @ 86..87
+            RParen ")" @ 87..88 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 89..90 trailing=[Whitespace " "]
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      QualifiedMethodInvocation
+                        FieldAccessExpression
+                          NameExpression
+                            Identifier "System" @ 91..97
+                          Dot "." @ 97..98
+                          Identifier "out" @ 98..101
+                        Dot "." @ 101..102
+                        Identifier "println" @ 102..109
+                        ArgumentList
+                          LParen "(" @ 109..110
+                          ExpressionList
+                            LiteralExpression
+                              StringLiteral "\"x\"" @ 110..113
+                          RParen ")" @ 113..114
+                    Semicolon ";" @ 114..115 trailing=[Whitespace " "]
+              RBrace "}" @ 116..117
+        RBrace "}" @ 118..119 leading=[Newline "\n"]
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 121..130 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "I" @ 131..132 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 133..134
+        InterfaceBodyMemberList
+          Bogus
+            ConstructorDeclaration
+              ModifierList
+                Bogus
+                  DefaultKw "default" @ 137..144 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "I" @ 145..146
+              LParen "(" @ 146..147
+              RParen ")" @ 147..148 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 149..150
+                ConstructorBodyEntryList
+                RBrace "}" @ 150..151
+        RBrace "}" @ 152..153 leading=[Newline "\n"]
+    AnnotationInterfaceDeclaration
+      At "@" @ 155..156 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 156..165 trailing=[Whitespace " "]
+      Identifier "Note" @ 166..170 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 171..172
+        AnnotationInterfaceBodyMemberList
+          Bogus
+            ConstructorDeclaration
+              Identifier "Note" @ 175..179 leading=[Newline "\n", Whitespace "  "]
+              LParen "(" @ 179..180
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 180..183 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "a" @ 184..185
+              RParen ")" @ 185..186 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 187..188
+                ConstructorBodyEntryList
+                RBrace "}" @ 188..189
+          AnnotationElementDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 192..195 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "value" @ 196..201
+            LParen "(" @ 201..202
+            RParen ")" @ 202..203
+            Semicolon ";" @ 203..204
+        RBrace "}" @ 205..206 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 208..213 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "A" @ 214..215 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 216..217
+        ClassBodyMemberList
+          ConstructorDeclaration
+            Identifier "A" @ 220..221 leading=[Newline "\n", Whitespace "  "]
+            LParen "(" @ 221..222
+            RParen ")" @ 222..223 trailing=[Whitespace " "]
+            ConstructorBody
+              LBrace "{" @ 224..225
+              ConstructorBodyEntryList
+                ConstructorInvocation
+                  ThisKw "this" @ 230..234 leading=[Newline "\n", Whitespace "    "]
+                  ArgumentList
+                    LParen "(" @ 234..235
+                    ExpressionList
+                      NameExpression
+                        Identifier "a" @ 235..236
+                      Bogus
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 236..237
+                            RBracket "]" @ 237..238
+                      Comma "," @ 238..239 trailing=[Whitespace " "]
+                      LiteralExpression
+                        IntegerLiteral "2" @ 240..241
+                    RParen ")" @ 241..242
+                  Semicolon ";" @ 242..243
+              RBrace "}" @ 246..247 leading=[Newline "\n", Whitespace "  "]
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 251..255 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            Identifier "m" @ 256..257
+            LParen "(" @ 257..258
+            RParen ")" @ 258..259 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 260..261
+              BlockStatementList
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "foo" @ 266..269 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 269..270
+                          ExpressionList
+                            NameExpression
+                              Identifier "a" @ 270..271
+                            Bogus
+                              ArrayDimensions
+                                ArrayDimension
+                                  AnnotationList
+                                  LBracket "[" @ 271..272
+                                  RBracket "]" @ 272..273
+                            Comma "," @ 273..274 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "b" @ 275..276
+                          RParen ")" @ 276..277
+                    Semicolon ";" @ 277..278
+                BlockStatement
+                  ExpressionStatement
+                    ObjectCreationExpression
+                      NewKw "new" @ 283..286 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "X" @ 287..288
+                      ArgumentList
+                        LParen "(" @ 288..289
+                        ExpressionList
+                          NameExpression
+                            Identifier "a" @ 289..290
+                          Bogus
+                            ArrayDimensions
+                              ArrayDimension
+                                AnnotationList
+                                LBracket "[" @ 290..291
+                                RBracket "]" @ 291..292
+                          Comma "," @ 292..293 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "b" @ 294..295
+                        RParen ")" @ 295..296
+                    Semicolon ";" @ 296..297
+                BlockStatement
+                  LocalVariableDeclaration
+                    ParameterModifierList
+                    ArrayType
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 302..305 leading=[Newline "\n", Whitespace "    "]
+                      ArrayDimensions
+                        ArrayDimension
+                          AnnotationList
+                          LBracket "[" @ 305..306
+                          RBracket "]" @ 306..307 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "o" @ 308..309 trailing=[Whitespace " "]
+                        Assign "=" @ 310..311 trailing=[Whitespace " "]
+                        VariableInitializer
+                          ArrayInitializer
+                            LBrace "{" @ 312..313
+                            VariableInitializerList
+                              NameExpression
+                                Identifier "a" @ 313..314
+                              Bogus
+                                ArrayDimensions
+                                  ArrayDimension
+                                    AnnotationList
+                                    LBracket "[" @ 314..315
+                                    RBracket "]" @ 315..316
+                              Comma "," @ 316..317 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "b" @ 318..319
+                            RBrace "}" @ 319..320
+                  Semicolon ";" @ 320..321
+                BlockStatement
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      UnqualifiedMethodInvocation
+                        NameExpression
+                          Identifier "m" @ 326..327 leading=[Newline "\n", Whitespace "    "]
+                        ArgumentList
+                          LParen "(" @ 327..328
+                          ExpressionList
+                            LiteralExpression
+                              IntegerLiteral "1" @ 328..329
+                            Comma "," @ 329..330 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "2" @ 331..332
+                            Comma "," @ 332..333 trailing=[Whitespace " "]
+                            FieldAccessExpression
+                              NameExpression
+                                Identifier "x" @ 334..335
+                              Dot "." @ 335..336
+                              Identifier "y" @ 336..337
+                            Bogus
+                              ArrayDimensions
+                                ArrayDimension
+                                  AnnotationList
+                                  LBracket "[" @ 337..338
+                                  RBracket "]" @ 338..339
+                          RParen ")" @ 339..340
+                    Semicolon ";" @ 340..341
+              RBrace "}" @ 344..345 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 346..347 leading=[Newline "\n"]
+  Eof "" @ 348..348 leading=[Newline "\n"]
+
+diagnostics:
+code=java.parse.unexpected_syntax range=40..65 message=unexpected ConstructorDeclaration in InterfaceBodyMemberList
+code=java.parse.unexpected_syntax range=137..144 message=invalid constructor modifier
+code=java.parse.unexpected_syntax range=175..189 message=unexpected ConstructorDeclaration in AnnotationInterfaceBodyMemberList
+code=java.parse.unexpected_syntax range=236..238 message=unexpected ArrayDimensions in ExpressionList
+code=java.parse.unexpected_syntax range=271..273 message=unexpected ArrayDimensions in ExpressionList
+code=java.parse.unexpected_syntax range=290..292 message=unexpected ArrayDimensions in ExpressionList
+code=java.parse.unexpected_syntax range=314..316 message=unexpected ArrayDimensions in VariableInitializerList
+code=java.parse.unexpected_syntax range=337..339 message=unexpected ArrayDimensions in ExpressionList

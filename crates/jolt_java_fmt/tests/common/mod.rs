@@ -37,6 +37,7 @@ pub const STRUCTURE_POLICY: StructurePolicy<K> = StructurePolicy {
         K::EnhancedForStatement,
     ],
     elidable_nodes: &[K::EmptyStatement, K::EmptyDeclaration],
+    splittable_tokens: &[K::Gt, K::RShift, K::UnsignedRShift],
 };
 
 pub struct JavaCorpus;

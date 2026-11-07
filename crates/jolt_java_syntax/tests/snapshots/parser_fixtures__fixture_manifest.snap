@@ -301,6 +301,7 @@ syntax/recovery/normalization/malformed-module-directive-normalization-barrier.j
 syntax/recovery/normalization/requires-modifiers-with-malformed-type.java
 syntax/recovery/normalization-module.java
 syntax/recovery/normalization.java
+syntax/recovery/off-schema-list-items.java
 syntax/recovery/program-containers.java
 syntax/recovery/qualifier-dots-without-qualifiers.java
 syntax/recovery/raw-unicode-escape-ranges.java

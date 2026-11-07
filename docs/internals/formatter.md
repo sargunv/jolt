@@ -382,10 +382,15 @@ Factory rules (generated, see the Java schema):
    with no matching child is left empty and the node gets `HAS_RECOVERY`.
 2. A category slot accepts the category's members and the bogus kind.
 3. A list accepts its item matcher and the bogus kind at every item position.
-   Separated lists record missing items and separators as empty slots, exactly
-   as today.
-4. Any child that fits no slot makes the whole node `MALFORMED` (raw children,
-   kind kept so the node still fits its parent's slot).
+   Separated lists record missing items and separators as empty slots. A list
+   child that fits neither (a constructor in an interface body, `[]` in an
+   argument list) is wrapped in a new bogus node at an item position, so a list
+   node is never malformed and its other items keep their structured layout.
+4. In a fixed node, any child that fits no slot makes the whole node `MALFORMED`
+   (raw children, kind kept so the node still fits its parent's slot).
+5. Every mismatch of rules 3 and 4 that no parser diagnostic overlaps gets an
+   `unexpected` diagnostic from the builder, so a tree with a bogus or malformed
+   node always has a diagnostic and the CLI refuses it by default.
 
 Because of rule 4, a typed accessor never needs a "malformed" variant: a field
 is `Option<T>`, where `None` is absent-or-missing and `Some` is always a node of
@@ -1473,6 +1478,9 @@ For an input `S` and output `F = format(S)`:
    trimmed, star prefixes stripped, doc expansion undone) of `F` equals that of
    `S`.
 4. **Idempotence.** `format(F) == F`.
+5. **Tokens.** For dirty `S` (whose recovered tree the structure check cannot
+   compare), the multiset of token texts of `F` equals that of `S`, ignoring
+   `, ; { } ( )` and counting the `>` family by character.
 
 ### Tests
 

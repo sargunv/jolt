@@ -42,14 +42,41 @@ pub struct ParseFacts {
     pub diagnostics: Vec<Diagnostic>,
     pub comments: BTreeMap<String, usize>,
     pub structure: String,
+    /// Tokens other than normalizable punctuation, by kind and text. The
+    /// structure check covers clean inputs; this covers dirty ones, whose
+    /// recovered trees may reparse differently.
+    pub tokens: BTreeMap<String, usize>,
 }
 
 pub fn parse_facts<C: CorpusLanguage>(language: &C, source: &str) -> ParseFacts {
+    let policy = language.structure_policy();
     language.with_parse(source, |root, diagnostics| ParseFacts {
         diagnostics: diagnostics.to_vec(),
         comments: comment_inventory(root),
-        structure: structure_fingerprint::<C::Syntax>(root, language.structure_policy()),
+        structure: structure_fingerprint::<C::Syntax>(root, policy),
+        tokens: token_inventory::<C::Syntax>(root, policy),
     })
+}
+
+fn token_inventory<L: Language>(
+    root: SyntaxNode<'_>,
+    policy: &StructurePolicy<L::Kind>,
+) -> BTreeMap<String, usize> {
+    let mut tokens = BTreeMap::new();
+    for token in root.tokens() {
+        let kind = L::from_raw(token.kind());
+        if token.text().is_empty() || policy.normalizable_punctuation.contains(&kind) {
+            continue;
+        }
+        if policy.splittable_tokens.contains(&kind) {
+            for piece in token.text().chars() {
+                *tokens.entry(piece.to_string()).or_default() += 1;
+            }
+            continue;
+        }
+        *tokens.entry(token.text().to_owned()).or_default() += 1;
+    }
+    tokens
 }
 
 /// Diagnostic codes with their counts.
@@ -139,6 +166,9 @@ pub struct StructurePolicy<K: 'static> {
     pub brace_promoting_parents: &'static [K],
     /// Nodes that may be dropped.
     pub elidable_nodes: &'static [K],
+    /// Tokens the parser may split, counted by character in the token
+    /// multiset (a split token's pieces relex as one where they touch).
+    pub splittable_tokens: &'static [K],
 }
 
 /// Reports where two fingerprints first diverge.
@@ -387,6 +417,19 @@ fn render_buffered<L: Language>(
     out
 }
 
+/// The entries of `left` that `right` lacks, with the missing counts.
+fn multiset_difference(
+    left: &BTreeMap<String, usize>,
+    right: &BTreeMap<String, usize>,
+) -> BTreeMap<String, usize> {
+    left.iter()
+        .filter_map(|(key, &count)| {
+            let missing = count.saturating_sub(right.get(key).copied().unwrap_or(0));
+            (missing > 0).then(|| (key.clone(), missing))
+        })
+        .collect()
+}
+
 /// Checks the oracle for `source` at `options`, returning the failed checks
 /// as `(check, detail)` pairs. Panics in the formatter propagate.
 pub fn check_source<C: CorpusLanguage>(
@@ -412,6 +455,16 @@ pub fn check_source<C: CorpusLanguage>(
                 "expected: {:?}\nactual: {:?}",
                 diagnostic_codes(&input.diagnostics),
                 diagnostic_codes(&output.diagnostics)
+            ),
+        ));
+    }
+    if !clean && input.tokens != output.tokens {
+        failures.push((
+            "tokens-changed",
+            format!(
+                "expected: {:?}\nactual: {:?}\n{formatted}",
+                multiset_difference(&input.tokens, &output.tokens),
+                multiset_difference(&output.tokens, &input.tokens)
             ),
         ));
     }
