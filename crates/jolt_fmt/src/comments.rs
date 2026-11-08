@@ -225,7 +225,7 @@ struct Attachment {
     comment: u32,
 }
 
-pub(crate) struct BitSet(Vec<u64>);
+struct BitSet(Vec<u64>);
 
 impl BitSet {
     fn new(len: usize) -> Self {
@@ -236,12 +236,12 @@ impl BitSet {
         self.0[index / 64] |= 1 << (index % 64);
     }
 
-    pub(crate) fn contains(&self, index: usize) -> bool {
+    fn contains(&self, index: usize) -> bool {
         self.0[index / 64] & (1 << (index % 64)) != 0
     }
 }
 
-pub(crate) fn key(element: SyntaxElement<'_>) -> u64 {
+fn key(element: SyntaxElement<'_>) -> u64 {
     match element {
         SyntaxElement::Node(node) => (node.id().index() as u64) << 1,
         SyntaxElement::Token(token) => ((token.id().index() as u64) << 1) | 1,
