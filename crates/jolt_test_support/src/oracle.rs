@@ -7,6 +7,8 @@ use std::fmt::Write as _;
 use jolt_fmt::FormatOptions;
 use jolt_syntax::{Diagnostic, Language, SyntaxElement, SyntaxNode, TriviaKind};
 
+use crate::doc_comments;
+
 /// What a language provides to the oracle, the corpus tests and the sweep.
 pub trait CorpusLanguage: Sync {
     type Syntax: Language;
@@ -109,24 +111,111 @@ fn diagnostic_codes(diagnostics: &[Diagnostic]) -> BTreeMap<&'static str, usize>
     codes
 }
 
-/// Every comment by kind and canonical text.
+/// Every comment by kind and canonical text. A `/**` comment has the form
+/// [`doc_comments::javadoc`] gives it, and a run of `///` lines (see
+/// [`MarkdownRuns`]) the form [`doc_comments::markdown`] gives the run.
 #[must_use]
 fn comment_inventory(root: SyntaxNode<'_>) -> BTreeMap<String, usize> {
     let mut comments = BTreeMap::new();
+    let mut runs = MarkdownRuns::default();
     for token in root.tokens() {
         for piece in token.leading().chain(token.trailing()) {
-            let kind = match piece.kind {
-                TriviaKind::LineComment => "line",
-                TriviaKind::BlockComment | TriviaKind::UnterminatedBlockComment => "block",
-                TriviaKind::DocComment => "doc",
-                _ => continue,
+            let (kind, text) = match piece.kind {
+                TriviaKind::Newline => {
+                    runs.newline();
+                    continue;
+                }
+                TriviaKind::LineComment if runs.member(piece.text, &mut comments) => continue,
+                TriviaKind::LineComment => ("line", canonical_comment_text(piece.text)),
+                TriviaKind::BlockComment | TriviaKind::UnterminatedBlockComment => {
+                    ("block", canonical_comment_text(piece.text))
+                }
+                TriviaKind::DocComment => (
+                    "doc",
+                    doc_comments::javadoc(
+                        piece.text,
+                        line_indentation(root.source(), piece.range.start().get()),
+                    )
+                    .unwrap_or_else(|| canonical_comment_text(piece.text)),
+                ),
+                TriviaKind::Whitespace => continue,
+                TriviaKind::ByteOrderMark | TriviaKind::TrailingSubstitute => {
+                    runs.code(&mut comments);
+                    continue;
+                }
             };
-            *comments
-                .entry(format!("{kind}:{}", canonical_comment_text(piece.text)))
-                .or_default() += 1;
+            runs.code(&mut comments);
+            *comments.entry(format!("{kind}:{text}")).or_default() += 1;
+        }
+        if !token.text().is_empty() {
+            runs.code(&mut comments);
         }
     }
+    runs.code(&mut comments);
     comments
+}
+
+/// The spaces and tabs that start the line containing `offset`.
+fn line_indentation(source: &str, offset: usize) -> &str {
+    let start = source[..offset]
+        .rfind(['\n', '\r'])
+        .map_or(0, |index| index + 1);
+    let line = &source[start..];
+    &line[..line.len() - line.trim_start_matches([' ', '\t']).len()]
+}
+
+/// Groups `///` lines into runs from the trivia alone, as javadoc reads them
+/// (JEP 467): lines that start with `///` but not `////`, each starting its
+/// line, one after the other with no blank line between. A `///` comment
+/// after code on its line is an ordinary line comment.
+#[derive(Default)]
+struct MarkdownRuns<'a> {
+    run: Vec<&'a str>,
+    /// Line breaks since the run's last line.
+    newlines: usize,
+    /// Only whitespace since the last line break or the file start.
+    line_start: bool,
+    /// Nothing but trivia seen yet.
+    started: bool,
+}
+
+impl<'a> MarkdownRuns<'a> {
+    fn newline(&mut self) {
+        self.newlines += 1;
+        self.line_start = true;
+    }
+
+    /// Adds a line comment to the run when it is a run member.
+    fn member(&mut self, text: &'a str, comments: &mut BTreeMap<String, usize>) -> bool {
+        let at_line_start = self.line_start || !self.started;
+        if !(at_line_start && text.starts_with("///") && !text.starts_with("////")) {
+            return false;
+        }
+        if !self.run.is_empty() && self.newlines != 1 {
+            self.flush(comments);
+        }
+        self.run.push(text);
+        self.newlines = 0;
+        self.line_start = false;
+        self.started = true;
+        true
+    }
+
+    /// Code or a comment that is not a run member: the run ends.
+    fn code(&mut self, comments: &mut BTreeMap<String, usize>) {
+        self.flush(comments);
+        self.line_start = false;
+        self.started = true;
+    }
+
+    fn flush(&mut self, comments: &mut BTreeMap<String, usize>) {
+        if self.run.is_empty() {
+            return;
+        }
+        let form = doc_comments::markdown(&self.run);
+        *comments.entry(format!("markdown:{form}")).or_default() += 1;
+        self.run.clear();
+    }
 }
 
 /// A comment's text, ignoring delimiters, star decoration, blank lines, and

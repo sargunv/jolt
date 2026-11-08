@@ -1168,10 +1168,34 @@ For an input `S` and output `F = format(S)`:
    `EmptyDeclaration`, `ParenthesizedExpression`, promoted `Block`s and
    `BlockStatementList`/`BlockStatement` wrappers transparent; `, ; { } ( )`
    ignored (`STRUCTURE_POLICY`).
-3. **Comments.** The multiset of comments (kind and canonical text: blank lines
-   and trailing whitespace dropped, star prefixes and one space after them
-   stripped, the indentation all continuation lines share removed) of `F` equals
-   that of `S`. Relative indentation inside a comment is compared.
+3. **Comments.** The multiset of comments (kind and canonical text) of `F`
+   equals that of `S`. The canonical text of a line or block comment drops blank
+   lines and trailing whitespace, strips star prefixes and one space after them,
+   and removes the indentation all continuation lines share, so relative
+   indentation inside a comment is compared. Doc comments are compared by what
+   javadoc reads in them (`jolt_test_support`'s `doc_comments`), so that a
+   layout may rewrap their text but not change it:
+   - A `/**` comment: the whitespace-separated words of the description, with
+     block-level HTML tags (`<p>`, `<li>`, `</ul>`, …) split off as words of
+     their own; each block tag (a line starting with `@` and a letter) with its
+     words; and the verbatim regions (`<pre>`, `<table>`, `{@snippet}`) as exact
+     lines. Each line first loses one leading `*` and one space after it, as N9
+     strips it. Inline tags (`{@…}`, matched by brace balance) are lexed first,
+     so nothing inside one starts a block tag, a block element or a verbatim
+     region. A `/**` comment with a content line that has no leading `*` is
+     compared line by line, each line without the indentation of the source line
+     the comment starts on.
+   - A run of `///` lines (consecutive lines that start with `///` but not
+     `////`, with no blank line between, grouped from the trivia alone, as JEP
+     467 reads them): the run loses `///`, the indentation its lines share and
+     trailing whitespace, is split at block tags outside fenced code, and each
+     part is compared by its pulldown-cmark events (tables on). Adjacent texts
+     are joined and their whitespace runs collapse; code is compared exactly. A
+     line break, hard or soft, is a space: Jolt never writes trailing
+     whitespace, so a two-space hard break can only survive in another spelling.
+     A `///` comment after code on its line is an ordinary line comment.
+     pulldown-cmark is a dependency of `jolt_test_support` only, which every
+     crate uses as a dev-dependency, so it never reaches the CLI or the plugin.
 4. **Idempotence.** `format(F) == F`.
 5. **Tokens.** For dirty `S` (whose recovered tree the structure check cannot
    compare), the multiset of token texts of `F` equals that of `S`, ignoring

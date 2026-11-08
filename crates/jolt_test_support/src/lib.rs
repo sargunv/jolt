@@ -4,6 +4,7 @@
 #![allow(clippy::missing_panics_doc)]
 
 mod corpus;
+mod doc_comments;
 mod oracle;
 mod sweep;
 
