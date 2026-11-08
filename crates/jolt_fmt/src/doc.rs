@@ -152,7 +152,7 @@ impl<'a> DocBuilder<'a> {
     pub fn sticky(&mut self, text: &'a str) -> Doc {
         self.push_text(Text {
             text,
-            width: display_width(text),
+            width: measure(text).0,
             flags: STICKY,
             reindent: None,
         })
@@ -170,13 +170,14 @@ impl<'a> DocBuilder<'a> {
         reindent: Option<Reindent<'a>>,
         flags: u8,
     ) -> Doc {
-        let multiline = has_line_break(text);
-        let width = match reindent {
-            None | Some(Reindent::Strip(_)) if !multiline => display_width(text),
-            None | Some(Reindent::Strip(_)) => display_width(first_line(text)),
-            Some(Reindent::Comment) => comment_lines(text).next().map_or(0, |parts| {
-                parts.iter().map(|part| display_width(part)).sum()
-            }),
+        let (width, multiline) = match reindent {
+            None | Some(Reindent::Strip(_)) => measure(text),
+            Some(Reindent::Comment) => {
+                let width = comment_lines(text).next().map_or(0, |parts| {
+                    parts.iter().map(|part| display_width(part)).sum()
+                });
+                (width, has_line_break(text))
+            }
         };
         self.push_text(Text {
             text,
@@ -189,7 +190,7 @@ impl<'a> DocBuilder<'a> {
     pub(crate) fn comment_text(&mut self, text: &'a str, flags: u8) -> Doc {
         self.push_text(Text {
             text,
-            width: display_width(text),
+            width: measure(text).0,
             flags,
             reindent: None,
         })
@@ -360,6 +361,30 @@ pub(crate) fn lines(text: &str) -> impl Iterator<Item = &str> + Clone {
     })
 }
 
+/// The display width of the first line of `text`, and whether `text` spans
+/// lines, in one pass over its bytes. ASCII is measured as [`display_width`]
+/// measures it; the rest of a text from its first non-ASCII byte goes to
+/// [`display_width`].
+fn measure(text: &str) -> (u32, bool) {
+    let mut width = 0;
+    for (index, byte) in text.bytes().enumerate() {
+        match byte {
+            b'\t' | b' '..=b'~' => width += 1,
+            b'\n' | b'\r' => return (width, true),
+            0x80.. => {
+                // Every byte before `index` is ASCII, so it is a char boundary.
+                let rest = &text[index..];
+                return (
+                    width + display_width(first_line(rest)),
+                    has_line_break(rest),
+                );
+            }
+            _ => {}
+        }
+    }
+    (width, false)
+}
+
 /// Display width, with a tab counting one column.
 pub(crate) fn display_width(text: &str) -> u32 {
     if text.is_ascii() {
@@ -476,4 +501,24 @@ fn is_star_block(content: &str) -> bool {
         && (opener.trim_start().starts_with('*')
             || continuation.is_some_and(|line| line.trim_start().starts_with('*'))
             || content.trim().is_empty())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{display_width, first_line, has_line_break, measure};
+
+    /// The one-pass ASCII measure agrees with `display_width` on every ASCII
+    /// byte, control bytes included, and around the non-ASCII fallback.
+    #[test]
+    fn measure_matches_display_width() {
+        let mut texts: Vec<String> = (0..0x80u8)
+            .map(|byte| format!("a{}b", char::from(byte)))
+            .collect();
+        texts
+            .extend(["", "x\u{7}é\tz", "ab\u{4e2d}\u{301}c\r\nd", "é\n\u{4e2d}"].map(String::from));
+        for text in &texts {
+            let expected = (display_width(first_line(text)), has_line_break(text));
+            assert_eq!(measure(text), expected, "{text:?}");
+        }
+    }
 }
