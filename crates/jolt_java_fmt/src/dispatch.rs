@@ -209,7 +209,7 @@ fn rule(kind: K) -> Rule {
         _ => |f, node| {
             assert!(
                 K::from_raw(node.kind()).is_list(),
-                "{node:?} is a token, not a node"
+                "{node:?} has no rule: a token, or a node kind missing from this table"
             );
             unexpected_list(f, node)
         },
