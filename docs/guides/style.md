@@ -688,9 +688,12 @@ class Example extends Base {
 
 :::
 
-- **After an operator or keyword.** A comment that ends the line after `=`,
-  `return`, `throw`, `yield`, `break`, `continue` or `assert` stays there, and
-  the value continues on the next line one level deeper:
+- **After an operator, keyword or arrow.** A comment that ends the line after
+  `=`, `return`, `throw`, `yield`, `break`, `continue`, `assert`, `->`, or the
+  `&` or `|` between types stays there, and the value continues on the next line
+  one level deeper. A comment on its own line before the value puts the value
+  one level deeper too. An inline block comment after them stays inline, and the
+  value follows it on the same line (`return /* c */ value;`):
 
 ```java
 int field = // a comment ends the line after the operator
@@ -698,6 +701,10 @@ int field = // a comment ends the line after the operator
 return // a comment ends the line after the keyword
   someLongMethodCall(firstArgumentName, secondArgumentName)
     + anotherMethodCall(thirdArgumentName);
+run(
+  () -> // a comment ends the line after the arrow
+    task.run()
+);
 ```
 
 - **In an empty body or list.** Comments in an otherwise empty body or list, and

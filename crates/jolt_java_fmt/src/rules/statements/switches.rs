@@ -13,7 +13,7 @@ use super::statement_items;
 use crate::JavaFormatter;
 use crate::helpers::bodies::{braced_body, statement_separator};
 use crate::helpers::lists::parenthesized;
-use crate::helpers::spaced_node;
+use crate::helpers::{after_token, spaced_node};
 
 pub(crate) fn switch_statement<'a>(f: &mut JavaFormatter<'a>, node: SwitchStatement<'a>) -> Doc {
     switch(
@@ -152,34 +152,24 @@ fn is_inline_block<'a>(f: &JavaFormatter<'a>, statement: SyntaxNode<'a>) -> bool
 /// next line one indent deeper.
 pub(crate) fn switch_rule<'a>(f: &mut JavaFormatter<'a>, node: SwitchRule<'a>) -> Doc {
     let label = f.fmt_opt(node.label());
-    let arrow = f.token_opt(node.arrow());
     let body = match node.body() {
         Some(SwitchRuleBody::Expression(expression)) => {
+            let arrow = f.token_opt(node.arrow());
             let expression = f.fmt(expression);
             let semicolon = f.token_opt(node.semicolon());
             let body = indent![f; f.line(), expression, semicolon];
-            f.group(body)
+            let body = f.group(body);
+            cat![f; arrow, body]
         }
-        // A comment on its own line before a `throw` keeps the statement
-        // one indent deeper, like an expression body. A block stays at the
-        // label's indent: H1 moves a comment before its `{` into it, so only
-        // inline comments lead it.
-        Some(body @ SwitchRuleBody::ThrowStatement(_))
-            if f.leading_comments_break(SyntaxElement::Node(body.syntax())) =>
-        {
-            let body = f.fmt(body);
+        // A `throw` or a block (see `after_token`). H1 moves a comment
+        // before a block's `{` into it, so only inline comments lead it.
+        body => {
+            let body = body.map(|body| (SyntaxElement::Node(body.syntax()), f.fmt(body)));
             let semicolon = f.token_opt(node.semicolon());
-            let body = indent![f; body, semicolon];
-            cat![f; f.space(), body]
+            after_token(f, node.arrow(), body, semicolon)
         }
-        Some(body) => {
-            let body = f.fmt(body);
-            let semicolon = f.token_opt(node.semicolon());
-            cat![f; f.space(), body, semicolon]
-        }
-        None => f.token_opt(node.semicolon()),
     };
-    cat![f; label, f.space(), arrow, body]
+    cat![f; label, f.space(), body]
 }
 
 /// `case a, b when guard` or `default`. Items that do not fit break one per

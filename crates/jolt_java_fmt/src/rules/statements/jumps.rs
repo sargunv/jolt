@@ -1,7 +1,7 @@
 //! `return`, `throw`, `yield`, `break`, `continue` and `assert`: a keyword,
 //! an optional value, and `;`.
 
-use jolt_fmt::{Doc, cat, indent};
+use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
     AssertStatement, BreakStatement, ContinueStatement, ReturnStatement, ThrowStatement,
     YieldStatement,
@@ -9,35 +9,17 @@ use jolt_java_syntax::{
 use jolt_syntax::{AstNode, SyntaxElement, SyntaxToken};
 
 use crate::JavaFormatter;
+use crate::helpers::after_token;
 
-/// `keyword value;`. When a comment ends the keyword's line, the value (and
-/// `;`) continues one indent deeper: after a trailing comment of the keyword
-/// (`return // c`) the pending comment breaks the group and the value may
-/// break further by its own rule; after a comment leading the value that
-/// ends its line, the value keeps that comment on the keyword's line.
+/// `keyword value;` (see `after_token`).
 fn keyword_value<'a>(
     f: &mut JavaFormatter<'a>,
     keyword: Option<SyntaxToken<'a>>,
     value: Option<(SyntaxElement<'a>, Doc)>,
     semicolon: Option<SyntaxToken<'a>>,
 ) -> Doc {
-    let keyword_comments =
-        keyword.is_some_and(|keyword| f.has_trailing_comments(SyntaxElement::Token(keyword)));
-    let keyword = f.token_opt(keyword);
     let semicolon = f.token_opt(semicolon);
-    let Some((element, value)) = value else {
-        return cat![f; keyword, semicolon];
-    };
-    let value = if keyword_comments {
-        let value = indent![f; f.line(), value, semicolon];
-        f.group(value)
-    } else if f.leading_comments_break(element) {
-        let value = indent![f; value, semicolon];
-        cat![f; f.space(), value]
-    } else {
-        cat![f; f.space(), value, semicolon]
-    };
-    cat![f; keyword, value]
+    after_token(f, keyword, value, semicolon)
 }
 
 /// The value of a keyword statement, with the element it starts with.

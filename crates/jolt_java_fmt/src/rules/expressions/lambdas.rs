@@ -8,7 +8,7 @@ use jolt_syntax::{AstNode, ListElement, SyntaxElement};
 
 use crate::JavaFormatter;
 use crate::helpers::lists::{ListLayout, delimited, joined};
-use crate::helpers::spaced;
+use crate::helpers::{after_token, spaced};
 
 /// `parameters -> body`. Parameters that do not fit break as a list.
 pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpression<'a>) -> Doc {
@@ -33,9 +33,11 @@ pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpre
             ListLayout::Plain,
         ),
     };
-    let arrow = f.token_opt(node.arrow());
-    let body = f.fmt_opt(node.body());
-    cat![f; parameters, f.space(), arrow, f.space(), body]
+    let body = node
+        .body()
+        .map(|body| (SyntaxElement::Node(body.syntax()), f.fmt(body)));
+    let body = after_token(f, node.arrow(), body, Doc::NIL);
+    cat![f; parameters, f.space(), body]
 }
 
 /// The parameter of `(x) ->` when N6 removes its parentheses: one parameter

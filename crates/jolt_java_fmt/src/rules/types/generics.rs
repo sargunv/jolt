@@ -11,7 +11,7 @@ use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxToken};
 
 use crate::JavaFormatter;
 use crate::helpers::lists::{ListLayout, delimited};
-use crate::helpers::{spaced, spaced_node};
+use crate::helpers::{after_token, spaced, spaced_node};
 
 /// `<T, U extends V>` as a break-all list.
 pub(crate) fn type_parameter_list<'a>(
@@ -108,52 +108,41 @@ pub(crate) fn union_type<'a>(f: &mut JavaFormatter<'a>, node: UnionType<'a>) -> 
     cat![f; first, rest]
 }
 
-/// `line op space type` for each operator and the type after it. An
-/// operator followed by an end-of-line comment puts its type on the next line
-/// one indent deeper.
+/// `line op space type` for each operator and the type after it (see
+/// `after_token`).
 fn operator_chain<'a>(
     f: &mut JavaFormatter<'a>,
     first_operator: Option<SyntaxToken<'a>>,
     rest: impl Iterator<Item = ListElement<'a, Type<'a>>>,
 ) -> Doc {
     let mut docs = Vec::new();
-    let mut operator = first_operator.map(|token| operator_token(f, token));
+    let mut operator = first_operator;
     for element in rest {
         let ty = match element {
-            ListElement::Item(ty) => f.fmt(ty),
-            ListElement::Bogus(bogus) => f.node(bogus),
+            ListElement::Item(ty) => ty.syntax(),
+            ListElement::Bogus(bogus) => bogus,
             ListElement::Separator(token) => {
-                if let Some(pending) = operator.take() {
-                    docs.push(operand(f, Some(pending), Doc::NIL));
+                if let Some(pending) = operator.replace(token) {
+                    docs.extend([f.line(), after_token(f, Some(pending), None, Doc::NIL)]);
                 }
-                operator = Some(operator_token(f, token));
                 continue;
             }
             ListElement::Missing => continue,
         };
-        docs.push(operand(f, operator.take(), ty));
+        let doc = f.node(ty);
+        let operand = match operator.take() {
+            Some(operator) => after_token(
+                f,
+                Some(operator),
+                Some((SyntaxElement::Node(ty), doc)),
+                Doc::NIL,
+            ),
+            None => doc,
+        };
+        docs.extend([f.line(), operand]);
     }
     if let Some(pending) = operator {
-        docs.push(operand(f, Some(pending), Doc::NIL));
+        docs.extend([f.line(), after_token(f, Some(pending), None, Doc::NIL)]);
     }
     f.concat(docs)
-}
-
-/// The operator's doc, and whether an end-of-line comment follows it.
-fn operator_token<'a>(f: &mut JavaFormatter<'a>, token: SyntaxToken<'a>) -> (Doc, bool) {
-    let commented = f.has_trailing_comments(SyntaxElement::Token(token));
-    let doc = f.token(token);
-    (doc, commented && f.will_break(doc))
-}
-
-fn operand(f: &mut JavaFormatter<'_>, operator: Option<(Doc, bool)>, ty: Doc) -> Doc {
-    let Some((operator, ends_line)) = operator else {
-        return cat![f; f.line(), ty];
-    };
-    if ends_line {
-        let ty = indent![f; f.hard_line(), ty];
-        cat![f; f.line(), operator, ty]
-    } else {
-        cat![f; f.line(), operator, f.space(), ty]
-    }
 }

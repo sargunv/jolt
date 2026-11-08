@@ -1236,7 +1236,7 @@ crates/jolt_java_fmt/
   src/language.rs            impl FormatLanguage: separator and delimiter tables, ignore scopes, hooks H1, H2, H4, H5
   src/dispatch.rs            total match: node kind → rule function
   src/helpers/lists.rs       delimited comma lists, one-element delimited nodes, parenthesized headers, list items
-  src/helpers/mod.rs         `spaced`, `spaced_node`: a space before what follows, if anything does
+  src/helpers/mod.rs         `spaced`, `spaced_node`: a space before what follows, if anything does; `after_token`: the value after a keyword or arrow
   src/helpers/bodies.rs      braced bodies, body items with N5, member and statement separators
   src/helpers/assignment.rs  `left = right` layout
   src/rules/declarations/    compilation unit, imports, modules, type declarations and headers, bodies, members
@@ -1501,12 +1501,16 @@ shape, change the contract here and the owning rule together.
 
 Comment-driven layout rules owned by one module:
 
-- **Keyword values (statements).** `return`, `throw`, `yield`, `break`,
-  `continue` and `assert` print `keyword space value` normally. When the keyword
-  itself has trailing comments (`return // c` / `y + 1;`), they print
-  `keyword group(indent(line, value))` instead: the pending-suffix fit rule
+- **The value after a token (helpers).** `helpers::after_token` prints the value
+  after `return`, `throw`, `yield`, `break`, `continue`, `assert`, a lambda's
+  `->`, a switch rule's `->` before a `throw` or block, and the `&` or `|`
+  between types: `token space value tail` normally. When a trailing comment of
+  the token ends its line (`return // c` / `y + 1;`), it prints
+  `token group(indent(line, value tail))` instead: the pending-suffix fit rule
   breaks the group, so the value continues one indent deeper and may break
-  further by its own rule.
+  further by its own rule. When a leading comment of the value breaks the line,
+  it prints `token space indent(value tail)`, so the comment and the value go
+  one indent deeper.
 - **Promoted empty bodies (statements).** A non-block body that is an
   `EmptyStatement` (`if (a);`) promotes to a block, and the `;` is elided
   exactly as an `EmptyStatement` inside a block is: without comments it vanishes
