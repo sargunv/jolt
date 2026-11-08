@@ -1,6 +1,14 @@
-use super::{EXPRESSION_STOPS, JavaSyntaxKind, Parser, StopSet, support::SeparatedElement};
+//! Expressions.
+
+use jolt_syntax::{CompletedMarker, RawSyntaxKind, TokenSet};
+
+use super::{EXPRESSION_STOPS, JavaSyntaxKind, Parser, support::SeparatedElement};
 use crate::parser::codes;
-use jolt_syntax::CompletedMarker;
+
+/// A `;` or `}` outside the brackets an expression opened ends the enclosing
+/// statement, body or block: no expression contains one, so recovery never
+/// skips past it into the next statement.
+const STATEMENT_ENDS: TokenSet = token_set![Semicolon, RBrace];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) enum LambdaParameterStyle {
@@ -16,11 +24,7 @@ pub(super) struct ParsedLambdaParameter {
 }
 
 impl Parser<'_> {
-    fn expected_bogus_expression(
-        &mut self,
-        message: &str,
-        consume: bool,
-    ) -> jolt_syntax::CompletedMarker {
+    fn expected_bogus_expression(&mut self, message: &str, consume: bool) -> CompletedMarker {
         let expression = self.start();
         self.error_expected(message);
         if consume && !self.at_eof() {
@@ -33,8 +37,8 @@ impl Parser<'_> {
         JavaSyntaxKind::from_raw(expression.kind()) == JavaSyntaxKind::Bogus
     }
 
-    pub(super) fn consume_statement_expression_until(&mut self, stops: &[JavaSyntaxKind]) {
-        if self.at_eof() || stops.contains(&self.current()) {
+    pub(super) fn consume_statement_expression_until(&mut self, stops: TokenSet) {
+        if self.at_eof() || self.at_any(stops) {
             let error = self.start();
             self.error(
                 codes::INVALID_STATEMENT_EXPRESSION,
@@ -57,20 +61,20 @@ impl Parser<'_> {
             expression = self.complete(error, JavaSyntaxKind::Bogus);
         }
 
-        let stop = |kind| kind == JavaSyntaxKind::RBrace || stops.contains(&kind);
-        if !self.at_eof() && !stop(self.current()) {
+        let stops = stops.with(JavaSyntaxKind::RBrace.to_raw());
+        if !self.at_eof() && !self.at_any(stops) {
             let error = self.precede(expression);
             self.error(
                 codes::INVALID_STATEMENT_EXPRESSION,
                 "unexpected token in statement expression",
             );
-            self.skip_balanced(stop);
+            self.skip_balanced(|kind| stops.contains(kind.to_raw()));
             self.complete(error, JavaSyntaxKind::Bogus);
         }
     }
 
     pub(super) fn is_statement_expression(
-        expression: jolt_syntax::RawSyntaxKind,
+        expression: RawSyntaxKind,
         start_kind: JavaSyntaxKind,
     ) -> bool {
         matches!(
@@ -86,61 +90,45 @@ impl Parser<'_> {
             )
     }
 
-    pub(super) fn parse_expression_until<'a>(&mut self, stops: impl Into<StopSet<'a>>) {
-        let stops = stops.into();
-        let stop = |kind| Self::ends_enclosing_statement(kind) || stops.contains(kind);
-        if self.at_eof() || stop(self.current()) {
-            self.expected_bogus_expression("expected expression", false);
-            return;
-        }
-
-        let expression = self.parse_expression();
-        if !self.at_eof() && !stop(self.current()) {
-            let error = self.precede(expression);
-            self.error_unexpected("unexpected token in expression");
-            self.skip_balanced(stop);
-            self.complete(error, JavaSyntaxKind::Bogus);
-        }
+    /// An expression that ends at a token of `stops` or of
+    /// [`STATEMENT_ENDS`]; whatever follows it before one is a `Bogus`.
+    pub(super) fn parse_expression_until(&mut self, stops: TokenSet) {
+        self.parse_until(stops, Self::parse_expression);
     }
 
-    pub(super) fn parse_expression_until_without_leading_lambda<'a>(
+    /// What `parse` parses, ending at a token of `stops` or of
+    /// [`STATEMENT_ENDS`]; whatever follows it before one is a `Bogus`.
+    pub(super) fn parse_until(
         &mut self,
-        stops: impl Into<StopSet<'a>>,
+        stops: TokenSet,
+        parse: impl FnOnce(&mut Self) -> CompletedMarker,
     ) {
-        let stops = stops.into();
-        let stop = |kind| Self::ends_enclosing_statement(kind) || stops.contains(kind);
-        if self.at_eof() || stop(self.current()) {
+        let stops = stops.union(STATEMENT_ENDS);
+        if self.at_eof() || self.at_any(stops) {
             self.expected_bogus_expression("expected expression", false);
             return;
         }
 
-        let expression = self.parse_assignment_expression_without_leading_lambda();
-        if !self.at_eof() && !stop(self.current()) {
+        let expression = parse(self);
+        if !self.at_eof() && !self.at_any(stops) {
             let error = self.precede(expression);
             self.error_unexpected("unexpected token in expression");
-            self.skip_balanced(stop);
+            self.skip_balanced(|kind| stops.contains(kind.to_raw()));
             self.complete(error, JavaSyntaxKind::Bogus);
         }
-    }
-
-    /// A `;` or `}` outside the brackets an expression opened ends the
-    /// enclosing statement, body or block: no expression contains one, so
-    /// recovery never skips past it into the next statement.
-    pub(super) const fn ends_enclosing_statement(kind: JavaSyntaxKind) -> bool {
-        matches!(kind, JavaSyntaxKind::Semicolon | JavaSyntaxKind::RBrace)
     }
 
     /// The end of a list of expressions closed by `close`: `close` itself, or
     /// a token that ends the enclosing statement when `close` is missing.
-    pub(super) fn at_expression_list_close(&mut self, close: JavaSyntaxKind) -> bool {
-        self.at(close) || Self::ends_enclosing_statement(self.current())
+    pub(super) fn at_expression_list_close(&self, close: JavaSyntaxKind) -> bool {
+        self.at(close) || self.at_any(STATEMENT_ENDS)
     }
 
-    pub(super) fn parse_expression(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_expression(&mut self) -> CompletedMarker {
         self.parse_assignment_expression()
     }
 
-    pub(super) fn parse_assignment_expression(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_assignment_expression(&mut self) -> CompletedMarker {
         if let Some(expression) = self.nested(Self::parse_assignment_expression_inner) {
             return expression;
         }
@@ -148,7 +136,7 @@ impl Parser<'_> {
         self.recover_too_deep(EXPRESSION_STOPS)
     }
 
-    fn parse_assignment_expression_inner(&mut self) -> jolt_syntax::CompletedMarker {
+    fn parse_assignment_expression_inner(&mut self) -> CompletedMarker {
         if self.starts_lambda_expression() {
             return self.parse_lambda_expression();
         }
@@ -184,7 +172,7 @@ impl Parser<'_> {
         self.complete(assignment, JavaSyntaxKind::AssignmentExpression)
     }
 
-    pub(super) fn is_assignment_left_hand_side(kind: jolt_syntax::RawSyntaxKind) -> bool {
+    pub(super) fn is_assignment_left_hand_side(kind: RawSyntaxKind) -> bool {
         matches!(
             JavaSyntaxKind::from_raw(kind),
             JavaSyntaxKind::NameExpression
@@ -193,7 +181,7 @@ impl Parser<'_> {
         )
     }
 
-    pub(super) fn parse_conditional_expression(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_conditional_expression(&mut self) -> CompletedMarker {
         let condition = self.parse_binary_expression(0);
         if !self.eat(JavaSyntaxKind::Question) {
             return condition;
@@ -209,10 +197,7 @@ impl Parser<'_> {
         self.complete(conditional, JavaSyntaxKind::ConditionalExpression)
     }
 
-    pub(super) fn parse_binary_expression(
-        &mut self,
-        minimum_precedence: u8,
-    ) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_binary_expression(&mut self, minimum_precedence: u8) -> CompletedMarker {
         let mut lhs = self.parse_unary_expression();
 
         let mut guard = self.loop_guard();
@@ -229,15 +214,8 @@ impl Parser<'_> {
                 if let Some(pattern_start) = self.pattern_start() {
                     self.parse_pattern_until(
                         pattern_start,
-                        &[
-                            JavaSyntaxKind::Semicolon,
-                            JavaSyntaxKind::RParen,
-                            JavaSyntaxKind::RBracket,
-                            JavaSyntaxKind::RBrace,
-                            JavaSyntaxKind::Comma,
-                            JavaSyntaxKind::Colon,
-                            JavaSyntaxKind::Question,
-                            JavaSyntaxKind::Arrow,
+                        token_set![
+                            Semicolon, RParen, RBracket, RBrace, Comma, Colon, Question, Arrow,
                         ],
                     );
                 } else {
@@ -258,7 +236,7 @@ impl Parser<'_> {
         lhs
     }
 
-    pub(super) fn parse_unary_expression(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_unary_expression(&mut self) -> CompletedMarker {
         if let Some(expression) = self.nested(Self::parse_unary_expression_inner) {
             return expression;
         }
@@ -266,7 +244,7 @@ impl Parser<'_> {
         self.recover_too_deep(EXPRESSION_STOPS)
     }
 
-    fn parse_unary_expression_inner(&mut self) -> jolt_syntax::CompletedMarker {
+    fn parse_unary_expression_inner(&mut self) -> CompletedMarker {
         if matches!(
             self.current(),
             JavaSyntaxKind::PlusPlus
@@ -308,7 +286,7 @@ impl Parser<'_> {
         )
     }
 
-    pub(super) fn parse_cast_expression(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_cast_expression(&mut self) -> CompletedMarker {
         let cast = self.start();
         self.expect(JavaSyntaxKind::LParen, "expected `(` in cast expression");
         let mut lookahead = self.lookahead();
@@ -326,7 +304,7 @@ impl Parser<'_> {
         self.complete(cast, JavaSyntaxKind::CastExpression)
     }
 
-    pub(super) fn parse_postfix_expression(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_postfix_expression(&mut self) -> CompletedMarker {
         let mut expression = self.parse_primary_expression();
         let mut type_name_like =
             JavaSyntaxKind::from_raw(expression.kind()) == JavaSyntaxKind::NameExpression;
@@ -352,7 +330,7 @@ impl Parser<'_> {
                 JavaSyntaxKind::LBracket => {
                     let access = self.precede(expression);
                     self.bump();
-                    self.parse_expression_until(&[JavaSyntaxKind::RBracket]);
+                    self.parse_expression_until(token_set![RBracket]);
                     self.expect(JavaSyntaxKind::RBracket, "expected `]` after array index");
                     expression = self.complete(access, JavaSyntaxKind::ArrayAccessExpression);
                     type_name_like = false;
@@ -384,15 +362,15 @@ impl Parser<'_> {
         expression
     }
 
-    pub(super) fn can_call_with_argument_list(kind: jolt_syntax::RawSyntaxKind) -> bool {
+    pub(super) fn can_call_with_argument_list(kind: RawSyntaxKind) -> bool {
         JavaSyntaxKind::from_raw(kind) == JavaSyntaxKind::NameExpression
     }
 
     pub(super) fn parse_dot_suffix(
         &mut self,
-        expression: jolt_syntax::CompletedMarker,
+        expression: CompletedMarker,
         type_name_like: bool,
-    ) -> jolt_syntax::CompletedMarker {
+    ) -> CompletedMarker {
         if self.nth(1) == JavaSyntaxKind::ClassKw {
             let target = self.class_literal_target(expression, type_name_like);
             let suffix = self.precede(target);
@@ -435,7 +413,7 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn parse_primary_expression(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_primary_expression(&mut self) -> CompletedMarker {
         if self.at_contextual("yield") && self.nth(1) == JavaSyntaxKind::LParen {
             let error = self.start();
             self.error(
@@ -447,7 +425,7 @@ impl Parser<'_> {
             return self.complete(error, JavaSyntaxKind::Bogus);
         }
 
-        if self.starts_literal_expression() {
+        if self.lookahead().starts_literal_expression() {
             return self.parse_literal_expression();
         }
 
@@ -477,7 +455,7 @@ impl Parser<'_> {
             if self.at(JavaSyntaxKind::RParen) {
                 self.error_expected("expected expression");
             } else {
-                self.parse_expression_until(&[JavaSyntaxKind::RParen]);
+                self.parse_expression_until(token_set![RParen]);
             }
             self.expect(JavaSyntaxKind::RParen, "expected `)` after expression");
             return self.complete(parenthesized, JavaSyntaxKind::ParenthesizedExpression);
@@ -487,7 +465,7 @@ impl Parser<'_> {
             return self.parse_array_method_reference_type();
         }
 
-        if self.starts_primitive_or_void_class_literal() {
+        if self.lookahead().starts_primitive_or_void_class_literal() {
             let literal = self.start();
             if self.at(JavaSyntaxKind::VoidKw) {
                 self.parse_void_type();
@@ -502,10 +480,10 @@ impl Parser<'_> {
             return self.complete(literal, JavaSyntaxKind::ClassLiteralExpression);
         }
 
-        if self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw {
+        if self.lookahead().at_annotation_start() {
             let annotated = self.start();
             self.parse_annotations();
-            if self.at_name_segment() {
+            if self.lookahead().at_name_segment() {
                 self.bump();
                 return self.complete(annotated, JavaSyntaxKind::NameExpression);
             }
@@ -514,7 +492,7 @@ impl Parser<'_> {
             return self.complete(annotated, JavaSyntaxKind::Bogus);
         }
 
-        if self.at_name_segment() {
+        if self.lookahead().at_name_segment() {
             let name = self.start();
             self.bump();
             return self.complete(name, JavaSyntaxKind::NameExpression);
@@ -524,7 +502,7 @@ impl Parser<'_> {
         self.expected_bogus_expression("expected expression", consume)
     }
 
-    pub(super) fn starts_array_method_reference_type(&mut self) -> bool {
+    pub(super) fn starts_array_method_reference_type(&self) -> bool {
         let mut lookahead = self.lookahead();
         if !lookahead.at_non_void_type_start() || !lookahead.skip_type_base() {
             return false;
@@ -549,9 +527,9 @@ impl Parser<'_> {
 
     fn class_literal_target(
         &mut self,
-        target: jolt_syntax::CompletedMarker,
+        target: CompletedMarker,
         type_name_like: bool,
-    ) -> jolt_syntax::CompletedMarker {
+    ) -> CompletedMarker {
         if type_name_like {
             return target;
         }
@@ -561,10 +539,7 @@ impl Parser<'_> {
         self.complete(bogus, JavaSyntaxKind::Bogus)
     }
 
-    fn method_reference_receiver(
-        &mut self,
-        receiver: jolt_syntax::CompletedMarker,
-    ) -> jolt_syntax::CompletedMarker {
+    fn method_reference_receiver(&mut self, receiver: CompletedMarker) -> CompletedMarker {
         if matches!(
             JavaSyntaxKind::from_raw(receiver.kind()),
             JavaSyntaxKind::LiteralExpression
@@ -590,11 +565,11 @@ impl Parser<'_> {
         self.complete(bogus, JavaSyntaxKind::Bogus)
     }
 
-    pub(super) fn parse_array_method_reference_type(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_array_method_reference_type(&mut self) -> CompletedMarker {
         self.parse_type()
     }
 
-    pub(super) fn parse_lambda_expression(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_lambda_expression(&mut self) -> CompletedMarker {
         if self.at(JavaSyntaxKind::LParen) {
             self.parse_parenthesized_lambda_expression_fragment()
         } else {
@@ -602,9 +577,7 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn parse_unparenthesized_lambda_expression(
-        &mut self,
-    ) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_unparenthesized_lambda_expression(&mut self) -> CompletedMarker {
         let lambda = self.start();
         let parameters = self.start();
         self.parse_lambda_parameter(None);
@@ -617,9 +590,7 @@ impl Parser<'_> {
         self.complete(lambda, JavaSyntaxKind::LambdaExpression)
     }
 
-    pub(super) fn parse_parenthesized_lambda_expression_fragment(
-        &mut self,
-    ) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_parenthesized_lambda_expression_fragment(&mut self) -> CompletedMarker {
         let lambda = self.start();
         self.expect(JavaSyntaxKind::LParen, "expected lambda parameter list");
         let list = self.start();
@@ -693,21 +664,21 @@ impl Parser<'_> {
         let mut varargs = false;
         if has_var_modifier {
             self.parse_annotations();
-            self.expect_variable_identifier("expected lambda parameter name", true);
+            self.expect_variable_identifier("expected lambda parameter name");
             self.parse_array_dimensions();
         } else if starts_typed_parameter {
             self.parse_local_variable_type();
             self.parse_annotations();
             varargs = self.eat(JavaSyntaxKind::Ellipsis);
-            self.expect_variable_identifier("expected lambda parameter name", true);
+            self.expect_variable_identifier("expected lambda parameter name");
             self.parse_array_dimensions();
         } else if has_modifiers {
             self.parse_annotations();
             self.error_expected("expected lambda parameter type after modifiers");
-            self.expect_variable_identifier("expected lambda parameter name", true);
+            self.expect_variable_identifier("expected lambda parameter name");
         } else {
             self.parse_annotations();
-            self.expect_variable_identifier("expected lambda parameter name", true);
+            self.expect_variable_identifier("expected lambda parameter name");
         }
         if expected_style.is_some_and(|expected| style != expected) {
             self.error_expected("lambda parameters must use the same form");
@@ -725,7 +696,7 @@ impl Parser<'_> {
         let mut saw_var = false;
         let mut guard = self.loop_guard();
         while self.check(&mut guard) {
-            if self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw {
+            if self.lookahead().at_annotation_start() {
                 saw_modifier = true;
                 self.parse_annotation();
             } else if self.at(JavaSyntaxKind::FinalKw) {
@@ -746,7 +717,7 @@ impl Parser<'_> {
         (saw_modifier, saw_var)
     }
 
-    pub(super) fn parse_new_expression_fragment(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_new_expression_fragment(&mut self) -> CompletedMarker {
         if self.new_expression_is_array_creation() {
             self.parse_array_creation_expression_fragment()
         } else {
@@ -754,9 +725,7 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn parse_object_creation_expression_fragment(
-        &mut self,
-    ) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_object_creation_expression_fragment(&mut self) -> CompletedMarker {
         let creation = self.start();
         self.parse_object_creation_after_new();
         self.complete(creation, JavaSyntaxKind::ObjectCreationExpression)
@@ -776,7 +745,7 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn parse_object_creation_type(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_object_creation_type(&mut self) -> CompletedMarker {
         let ty = self.start();
         let mut lookahead = self.lookahead();
         lookahead.skip_annotations();
@@ -793,7 +762,7 @@ impl Parser<'_> {
 
         self.parse_annotations();
         self.error_expected("expected class type in object creation");
-        if self.at_primitive_type() {
+        if self.lookahead().at_primitive_type_start() {
             self.bump();
         }
 
@@ -846,9 +815,7 @@ impl Parser<'_> {
         self.parse_optional_type_argument_list();
     }
 
-    pub(super) fn parse_array_creation_expression_fragment(
-        &mut self,
-    ) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_array_creation_expression_fragment(&mut self) -> CompletedMarker {
         let creation = self.start();
         self.bump();
         let ty = self.parse_type();
@@ -895,7 +862,7 @@ impl Parser<'_> {
         let dim = self.start();
         self.parse_annotations();
         self.expect(JavaSyntaxKind::LBracket, "expected `[`");
-        self.parse_expression_until(&[JavaSyntaxKind::RBracket]);
+        self.parse_expression_until(token_set![RBracket]);
         self.expect(JavaSyntaxKind::RBracket, "expected `]`");
         self.complete(dim, JavaSyntaxKind::DimExpression);
     }
@@ -914,7 +881,7 @@ impl Parser<'_> {
                     self.recover_too_deep(EXPRESSION_STOPS);
                 }
             } else {
-                self.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RBrace]);
+                self.parse_expression_until(token_set![Comma, RBrace]);
             }
 
             self.eat(JavaSyntaxKind::Comma);
@@ -935,7 +902,7 @@ impl Parser<'_> {
             "expected argument",
             |parser| parser.at_expression_list_close(JavaSyntaxKind::RParen),
             |parser| {
-                parser.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RParen]);
+                parser.parse_expression_until(token_set![Comma, RParen]);
             },
         );
         self.complete(expressions, JavaSyntaxKind::ExpressionList);
@@ -946,14 +913,14 @@ impl Parser<'_> {
     pub(super) fn parse_method_reference_suffix(&mut self) {
         self.expect(JavaSyntaxKind::DoubleColon, "expected `::`");
         self.parse_optional_type_argument_list();
-        if self.at(JavaSyntaxKind::NewKw) || self.at_name_segment() {
+        if self.at(JavaSyntaxKind::NewKw) || self.lookahead().at_name_segment() {
             self.bump();
         } else {
             self.error_expected("expected method reference target");
         }
     }
 
-    pub(super) fn parse_literal_expression(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_literal_expression(&mut self) -> CompletedMarker {
         let literal = self.start();
         self.bump();
         self.complete(literal, JavaSyntaxKind::LiteralExpression)

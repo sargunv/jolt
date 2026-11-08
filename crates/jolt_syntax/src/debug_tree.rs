@@ -17,8 +17,7 @@ pub fn debug_tree<L: Language>(root: SyntaxNode<'_>) -> String {
         match element {
             SyntaxElement::Node(node) => {
                 output.push_str(L::kind_name(node.kind()));
-                let children: Vec<_> = node.children().collect();
-                stack.extend(children.into_iter().rev().map(|child| (child, depth + 1)));
+                stack.extend(node.children().rev().map(|child| (child, depth + 1)));
             }
             SyntaxElement::Token(token) => {
                 let range = token.text_range();

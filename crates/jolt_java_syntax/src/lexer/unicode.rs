@@ -1,15 +1,19 @@
+//! Unicode escape translation. Java processes Unicode escapes before
+//! tokenization, everywhere in the source. For example, `\u000a` becomes an
+//! actual line terminator before string or comment scanning sees it; it is
+//! not the same as a string escape like `\n`.
+
 use std::{borrow::Cow, ops::Range};
 
-use jolt_syntax::{TextRange, TextSize};
+use jolt_syntax::{Diagnostic, TextRange, TextSize};
 
-use super::{JavaLexDiagnosticCode, LexerDiagnostic, lexer_diagnostic};
+use super::JavaLexDiagnosticCode;
 
-// Java processes Unicode escapes before tokenization, everywhere in the source.
-// For example, `\u000a` becomes an actual line terminator before string or
-// comment scanning sees it; it is not the same as a string escape like `\n`.
+/// The source with its Unicode escapes translated, and the map back to raw
+/// source offsets.
 pub(crate) struct NormalizedJavaSource<'source> {
     source: Cow<'source, str>,
-    diagnostics: Vec<LexerDiagnostic>,
+    diagnostics: Vec<Diagnostic>,
     replacements: Vec<UnicodeReplacement>,
 }
 
@@ -29,13 +33,13 @@ impl NormalizedJavaSource<'_> {
         )
     }
 
-    pub(crate) fn remap_diagnostics(&self, diagnostics: &mut [LexerDiagnostic]) {
+    pub(crate) fn remap_diagnostics(&self, diagnostics: &mut [Diagnostic]) {
         for diagnostic in diagnostics {
             diagnostic.range = self.raw_range(diagnostic.range);
         }
     }
 
-    pub(crate) fn take_diagnostics(&mut self) -> Vec<LexerDiagnostic> {
+    pub(crate) fn take_diagnostics(&mut self) -> Vec<Diagnostic> {
         std::mem::take(&mut self.diagnostics)
     }
 
@@ -88,58 +92,45 @@ pub(crate) fn normalize_unicode_escapes(source: &str) -> NormalizedJavaSource<'_
 
         if has_unicode_escape_marker_at(source, start) && eligibility.is_eligible() {
             if let Some(first_escape) = parse_unicode_escape(source, start) {
-                if is_high_surrogate(first_escape.value)
+                let (ch, raw_end) = if is_high_surrogate(first_escape.value)
                     && has_unicode_escape_marker_at(source, first_escape.end_offset)
                     && let Some(second_escape) =
                         parse_unicode_escape(source, first_escape.end_offset)
                     && is_low_surrogate(second_escape.value)
                 {
-                    let normalized = normalized_source(source, &mut normalized, start);
-                    let normalized_start = normalized.len();
                     let high = first_escape.value - 0xD800;
                     let low = second_escape.value - 0xDC00;
                     let scalar = 0x10000 + ((high << 10) | low);
-                    push_char(
-                        normalized,
-                        &mut eligibility,
+                    (
                         char::from_u32(scalar).expect("valid surrogate pair scalar value"),
-                        true,
-                    );
-                    record_replacement(
-                        &mut replacements,
-                        normalized_start..normalized.len(),
-                        start..second_escape.end_offset,
-                    );
-                    offset = second_escape.end_offset;
-                    continue;
-                }
-
+                        second_escape.end_offset,
+                    )
+                } else {
+                    (
+                        char::from_u32(first_escape.value).unwrap_or(char::REPLACEMENT_CHARACTER),
+                        first_escape.end_offset,
+                    )
+                };
                 let normalized = normalized_source(source, &mut normalized, start);
                 let normalized_start = normalized.len();
-                push_char(
-                    normalized,
-                    &mut eligibility,
-                    char::from_u32(first_escape.value).unwrap_or(char::REPLACEMENT_CHARACTER),
-                    true,
-                );
+                push_char(normalized, &mut eligibility, ch, true);
                 record_replacement(
                     &mut replacements,
                     normalized_start..normalized.len(),
-                    start..first_escape.end_offset,
+                    start..raw_end,
                 );
-                offset = first_escape.end_offset;
+                offset = raw_end;
                 continue;
             }
 
             let end = malformed_unicode_escape_end(source, start);
             let normalized_start = normalized.as_ref().map_or(start, String::len);
-            diagnostics.push(lexer_diagnostic(
-                JavaLexDiagnosticCode::MalformedUnicodeEscape,
-                TextRange::new(
+            diagnostics.push(
+                JavaLexDiagnosticCode::MalformedUnicodeEscape.at(TextRange::new(
                     TextSize::new(normalized_start),
                     TextSize::new(normalized_start + end - start),
-                ),
-            ));
+                )),
+            );
         }
 
         if let Some(normalized) = normalized.as_mut() {

@@ -1,3 +1,6 @@
+//! Parsing: the Java parser and grammar, and the build of the tree from
+//! their events.
+
 mod grammar;
 mod source;
 

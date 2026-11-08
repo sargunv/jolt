@@ -26,6 +26,7 @@ impl TokenId {
     }
 }
 
+/// What a trivia piece is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum TriviaKind {
     Whitespace,
@@ -67,7 +68,8 @@ pub struct TokenData {
     trivia: [u32; 3],
 }
 
-const NO_PARENT: u32 = u32::MAX;
+/// The parent of a node or token not yet placed in a parent, and of the root.
+pub(crate) const NO_PARENT: u32 = u32::MAX;
 
 impl TokenData {
     /// # Panics
@@ -354,8 +356,18 @@ struct Mismatches {
 /// A factory mismatch the parser may not have reported.
 struct Unexpected {
     range: TextRange,
-    kind: RawSyntaxKind,
-    parent: RawSyntaxKind,
+    mismatch: Mismatch,
+}
+
+#[derive(Clone, Copy)]
+enum Mismatch {
+    /// A list child that fits no item position, wrapped in a bogus node.
+    Wrapped {
+        kind: RawSyntaxKind,
+        list: RawSyntaxKind,
+    },
+    /// A node whose children fit none of its kind's shapes.
+    Malformed(RawSyntaxKind),
 }
 
 impl NodeSink<'_> {
@@ -377,14 +389,14 @@ impl NodeSink<'_> {
         )
     }
 
-    /// A node that keeps every child in order, in one slot each. A malformed
-    /// node other than the bogus kind is a factory mismatch.
-    pub fn raw(&mut self, kind: RawSyntaxKind, malformed: bool) -> NodeId {
-        if malformed && kind != self.bogus {
+    /// A `MALFORMED` node that keeps every child in order, in one slot each.
+    /// A malformed node other than the bogus kind is a factory mismatch.
+    pub fn malformed(&mut self, kind: RawSyntaxKind) -> NodeId {
+        if kind != self.bogus {
             self.record_malformed(kind);
         }
         let input = self.input;
-        self.push(kind, input.iter().map(|child| Some(child.slot)), malformed)
+        self.push(kind, input.iter().map(|child| Some(child.slot)), true)
     }
 
     /// A list node. A child that does not match `item` is wrapped in a bogus
@@ -467,10 +479,10 @@ impl NodeSink<'_> {
         self.push(kind, slots.into_iter(), false)
     }
 
-    /// Wraps input child `index` of a `parent` list in a bogus node.
+    /// Wraps input child `index` of a `list` node in a bogus node.
     #[cold]
     #[inline(never)]
-    fn wrap(&mut self, parent: RawSyntaxKind, index: usize) -> NodeId {
+    fn wrap(&mut self, list: RawSyntaxKind, index: usize) -> NodeId {
         let child = self.input[index];
         let tokens = match child.slot.unpack() {
             Slot::Node(node) => self.nodes[node.index()].tokens,
@@ -479,8 +491,10 @@ impl NodeSink<'_> {
         };
         self.mismatches.unexpected.push(Unexpected {
             range: self.token_span(tokens),
-            kind: child.kind,
-            parent,
+            mismatch: Mismatch::Wrapped {
+                kind: child.kind,
+                list,
+            },
         });
         let outer = std::mem::replace(&mut self.tokens, tokens);
         let id = self.push(self.bogus, std::iter::once(Some(child.slot)), true);
@@ -496,8 +510,7 @@ impl NodeSink<'_> {
     fn record_malformed(&mut self, kind: RawSyntaxKind) {
         self.mismatches.unexpected.push(Unexpected {
             range: self.token_span(self.tokens),
-            kind,
-            parent: kind,
+            mismatch: Mismatch::Malformed(kind),
         });
     }
 
@@ -576,7 +589,8 @@ pub trait SyntaxFactory {
     type Language: Language;
 
     /// Places `children` into the fixed slots of `kind`, or stores them raw
-    /// and marks the node `MALFORMED` when they do not fit. Infallible.
+    /// in a `MALFORMED` node ([`NodeSink::malformed`]) when they do not fit.
+    /// Infallible.
     fn make(
         &self,
         kind: RawSyntaxKind,
@@ -607,8 +621,7 @@ pub fn build_tree<F: SyntaxFactory>(
     let mut nodes = Vec::with_capacity(events.len().saturating_sub(token_count) / 2);
     let mut slots = Vec::with_capacity(events.len());
     let mut pending: Vec<Child> = Vec::with_capacity(64);
-    // (kind, first pending child, first token)
-    let mut stack: Vec<(RawSyntaxKind, usize, usize)> = Vec::with_capacity(64);
+    let mut stack: Vec<OpenNode> = Vec::with_capacity(64);
     let mut next_token = 0usize;
     let mut root = None;
     let mut mismatches = Mismatches::default();
@@ -616,12 +629,7 @@ pub fn build_tree<F: SyntaxFactory>(
     for position in 0..events.len() {
         match events[position] {
             Event::Start { .. } => {
-                open_nodes(
-                    &mut events,
-                    position,
-                    &mut stack,
-                    (pending.len(), next_token),
-                );
+                open_nodes(&mut events, position, &mut stack, pending.len(), next_token);
             }
             Event::Token => {
                 assert!(!stack.is_empty(), "token outside of any node");
@@ -633,9 +641,12 @@ pub fn build_tree<F: SyntaxFactory>(
                 next_token += 1;
             }
             Event::Finish => {
-                let (kind, children_start, tokens_start) =
-                    stack.pop().expect("finish event without a start");
-                let input = &pending[children_start..];
+                let OpenNode {
+                    kind,
+                    first_child,
+                    first_token,
+                } = stack.pop().expect("finish event without a start");
+                let input = &pending[first_child..];
                 let children = ParsedChildren {
                     children: input,
                     tokens: &tokens,
@@ -646,7 +657,7 @@ pub fn build_tree<F: SyntaxFactory>(
                     slots: &mut slots,
                     input,
                     tokens: [
-                        u32::try_from(tokens_start).expect("token count fits in u32"),
+                        u32::try_from(first_token).expect("token count fits in u32"),
                         u32::try_from(next_token).expect("token count fits in u32"),
                     ],
                     token_data: &tokens,
@@ -664,7 +675,7 @@ pub fn build_tree<F: SyntaxFactory>(
                         tokens[token.index()].parent = wrapper.0;
                     }
                 }
-                pending.truncate(children_start);
+                pending.truncate(first_child);
                 if stack.is_empty() {
                     assert!(root.replace(id).is_none(), "event stream has two roots");
                 } else {
@@ -694,15 +705,25 @@ pub fn build_tree<F: SyntaxFactory>(
     (tree, diagnostics)
 }
 
-#[inline]
+/// A node whose start event the build has passed and whose finish event it
+/// has not.
+struct OpenNode {
+    kind: RawSyntaxKind,
+    /// Its first child's index in the pending children.
+    first_child: usize,
+    first_token: usize,
+}
+
 /// Pushes the node started at `position` and its forward parents onto
-/// `stack`, outermost first, each starting at `at` (first pending child,
-/// first token).
+/// `stack`, outermost first, each starting at `first_child` and
+/// `first_token`.
+#[inline]
 fn open_nodes(
     events: &mut [Event],
     position: usize,
-    stack: &mut Vec<(RawSyntaxKind, usize, usize)>,
-    at: (usize, usize),
+    stack: &mut Vec<OpenNode>,
+    first_child: usize,
+    first_token: usize,
 ) {
     let stack_start = stack.len();
     let mut current = position;
@@ -717,11 +738,15 @@ fn open_nodes(
         if current != position {
             events[current] = Event::Tombstone;
         }
-        stack.push((kind, at.0, at.1));
-        if forward_parent == 0 {
+        stack.push(OpenNode {
+            kind,
+            first_child,
+            first_token,
+        });
+        let Some(forward_parent) = forward_parent else {
             break;
-        }
-        current += forward_parent as usize;
+        };
+        current += forward_parent.get() as usize;
     }
     // Forward parents are found innermost first; the stack needs the
     // outermost first.
@@ -759,14 +784,15 @@ fn report_unexpected<L: Language>(
             continue;
         }
         accepted_end = Some(accepted_end.map_or(item.range.end(), |end| end.max(item.range.end())));
-        let message = if item.kind == item.parent {
-            format!("unexpected syntax in {}", L::kind_name(item.parent))
-        } else {
-            format!(
-                "unexpected {} in {}",
-                L::kind_name(item.kind),
-                L::kind_name(item.parent)
-            )
+        let message = match item.mismatch {
+            Mismatch::Wrapped { kind, list } => {
+                format!(
+                    "unexpected {} in {}",
+                    L::kind_name(kind),
+                    L::kind_name(list)
+                )
+            }
+            Mismatch::Malformed(kind) => format!("unexpected syntax in {}", L::kind_name(kind)),
         };
         diagnostics.push(Diagnostic {
             code: L::UNEXPECTED_CODE,
