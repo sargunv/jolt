@@ -243,7 +243,7 @@ fn promoted_block(f: &mut JavaFormatter<'_>, content: Doc) -> Doc {
 /// token of a control statement's final non-block body (`if (a) return; //
 /// c`) would trail the whole statement by the generic rules, so it would
 /// print after the synthesized `}` of brace promotion. It trails the body
-/// instead and stays inside the block, as in the reference.
+/// instead and stays inside the block.
 pub(crate) fn promoted_body_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>> {
     if context.comment.layout != CommentLayout::EndOfLine {
         return None;

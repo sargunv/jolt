@@ -262,7 +262,7 @@ fn control_body(prev: SyntaxToken<'_>) -> Option<SyntaxNode<'_>> {
 }
 
 /// H5: a block comment that ends the line after `(`, `[` or a type-argument
-/// `<` stays inline before the next token, as in the reference, instead of
+/// `<` stays inline before the next token instead of
 /// moving to its own line by G2 (which still applies after `{`). After an
 /// assignment operator it leads the value inline too, which is where the next
 /// pass (reading it as inline) puts it, so a long declaration breaks the same

@@ -92,6 +92,7 @@ export default defineConfig({
           { text: "What is Jolt?", link: "/guides/what-is-jolt" },
           { text: "Installation", link: "/guides/installation" },
           { text: "Configuration", link: "/guides/configuration" },
+          { text: "Java style", link: "/guides/style" },
           { text: "Integrations", link: "/guides/integrations" },
         ],
       },
@@ -102,7 +103,6 @@ export default defineConfig({
       {
         text: "Internals",
         items: [
-          { text: "Java style", link: "/internals/java-style" },
           { text: "Formatter", link: "/internals/formatter" },
         ],
       },

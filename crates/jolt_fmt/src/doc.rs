@@ -368,7 +368,7 @@ pub(crate) fn lines(text: &str) -> impl Iterator<Item = &str> + Clone {
     })
 }
 
-/// Display width with a tab counting one column, as in the reference.
+/// Display width, with a tab counting one column.
 pub(crate) fn display_width(text: &str) -> u32 {
     if text.is_ascii() {
         let printable = text

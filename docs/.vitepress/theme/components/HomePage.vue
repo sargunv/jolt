@@ -38,7 +38,7 @@ const MANUAL = [
   {
     name: "Java style",
     desc: "The output Jolt produces, rule by rule.",
-    href: "/internals/java-style",
+    href: "/guides/style",
   },
   {
     name: "How the formatter works",

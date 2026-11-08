@@ -184,7 +184,7 @@ pub(super) enum HeaderEnd<'a> {
 /// of `head`) begins with, has a leading comment that breaks the line, such
 /// as a comment on its own line before the header (after declaration
 /// annotations), or a trailing line comment, that part prints outside the
-/// group, as in the reference. The trailing comments of the last part
+/// group. The trailing comments of the last part
 /// (`tail` or the last clause) print outside it too, so a multi-line comment
 /// before a `;` (a JSNI body, `native void m() /*-{ … }-*/;`) does not break
 /// the header. (Breaks inside the first part, such as a broken return type,
