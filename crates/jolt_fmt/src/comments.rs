@@ -7,11 +7,14 @@ use jolt_syntax::{Language, SyntaxElement, SyntaxNode, SyntaxToken, TextRange, T
 
 use crate::FormatLanguage;
 
+/// The syntax of a comment.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CommentKind {
+    /// `// …`
     Line,
     /// A block comment, including an unterminated one.
     Block,
+    /// `/** … */`
     Doc,
 }
 
@@ -20,17 +23,22 @@ pub enum CommentKind {
 pub enum CommentLayout {
     /// Newline before and after (file start and end count as newlines).
     OwnLine,
-    /// Newline before, code after on the same line.
+    /// Newline before, code after on the same line (block comments only).
     StartOfLine,
-    /// Code before, newline after.
+    /// Code before, newline after. Every line comment that is not
+    /// `OwnLine`, and a block comment followed only by other comments up to
+    /// the end of its line.
     EndOfLine,
     /// Code before and after on the same line.
     Inline,
 }
 
+/// One comment of the source, as placement found it in the trivia.
 #[derive(Clone, Copy, Debug)]
 pub struct Comment<'a> {
+    /// The comment's source text, delimiters included.
     pub text: &'a str,
+    /// Where the text lies in the source.
     pub range: TextRange,
     pub kind: CommentKind,
     /// Newlines since the previous token or comment, capped at 2.
@@ -47,17 +55,26 @@ pub struct Comment<'a> {
     pub(crate) raw: bool,
 }
 
+/// Where a comment is attached. The layout is the one the comment prints
+/// with, which may differ from its source layout.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Placement<'a> {
+    /// Printed before the element by the chokepoint that emits it.
     Leading(SyntaxElement<'a>, CommentLayout),
+    /// Printed after the element by the chokepoint that emits it.
     Trailing(SyntaxElement<'a>, CommentLayout),
+    /// Inside a node with no element to attach to (an empty delimited
+    /// region, or after the last element before a closer); the node's rule
+    /// prints it with [`Formatter::dangling`](crate::Formatter::dangling).
     Dangling(SyntaxNode<'a>),
 }
 
 /// What a language hook sees about one comment.
 pub struct CommentContext<'a, 'p> {
     pub comment: Comment<'a>,
+    /// The token before the comment's gap; `None` at the start of the file.
     pub prev: Option<SyntaxToken<'a>>,
+    /// The token after the comment's gap; `Eof` after the last token.
     pub next: SyntaxToken<'a>,
     root: SyntaxNode<'a>,
     unclosed: &'p Unclosed,
@@ -263,9 +280,29 @@ pub(crate) struct PlacedComment<'a> {
     pub(crate) layout: CommentLayout,
 }
 
+/// A comment record in source order that knows the token after its gap, so
+/// one pair of same-gap tests serves the found and the placed comments.
+pub(crate) trait InGap<'a> {
+    /// The token after the comment's gap.
+    fn next_token(&self) -> SyntaxToken<'a>;
+}
+
+impl<'a> InGap<'a> for PlacedComment<'a> {
+    fn next_token(&self) -> SyntaxToken<'a> {
+        self.next
+    }
+}
+
 /// Whether no comment of the same gap precedes comment `index`.
-pub(crate) fn first_in_gap(comments: &[PlacedComment<'_>], index: usize) -> bool {
-    index == 0 || comments[index - 1].next != comments[index].next
+pub(crate) fn first_in_gap<'a>(comments: &[impl InGap<'a>], index: usize) -> bool {
+    index == 0 || comments[index - 1].next_token() != comments[index].next_token()
+}
+
+/// Whether no comment of the same gap follows comment `index`.
+pub(crate) fn last_in_gap<'a>(comments: &[impl InGap<'a>], index: usize) -> bool {
+    comments
+        .get(index + 1)
+        .is_none_or(|after| after.next_token() != comments[index].next_token())
 }
 
 /// Every comment of a tree with its attachment.
@@ -374,11 +411,10 @@ impl<'a> Found<'a> {
     }
 }
 
-/// Whether no comment of the same gap follows comment `index`.
-fn last_in_gap(found: &[Found<'_>], index: usize) -> bool {
-    found
-        .get(index + 1)
-        .is_none_or(|after| after.next != found[index].next)
+impl<'a> InGap<'a> for Found<'a> {
+    fn next_token(&self) -> SyntaxToken<'a> {
+        self.next
+    }
 }
 
 struct Collector<'a> {
@@ -468,7 +504,7 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
             root,
             unclosed: &unclosed,
         };
-        let first_in_gap = index == 0 || found[index - 1].next != next;
+        let first_in_gap = first_in_gap(&found, index);
         let last_in_gap = last_in_gap(&found, index);
         let mut placement = match L::place_comment(&context) {
             Some(placement) => {

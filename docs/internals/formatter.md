@@ -1,10 +1,12 @@
 # Formatter architecture
 
 This page explains the design of Jolt's formatter for contributors: the crates,
-their public APIs, the core data structures and algorithms with their costs, and
+their contracts, the core data structures and algorithms with their costs, and
 why each mechanism exists. The Java output itself is specified in
-[Java style](../guides/style.md). When a change makes this page wrong, fix the
-page in the same change.
+[Java style](../guides/style.md). The signatures and the contract of each item
+are in its rustdoc (`cargo doc --workspace --no-deps --document-private-items`);
+this page names items by path. When a change makes this page wrong, fix the page
+in the same change.
 
 ## Goals
 
@@ -77,67 +79,21 @@ a language crate would invert the dependency direction.
 
 ## `jolt_syntax`
 
-### Text and diagnostics
+### Text, diagnostics and languages
 
-```rust
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TextSize(u32); // byte offset; sources are < 4 GiB
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub struct TextRange {
-    start: TextSize,
-    end: TextSize,
-}
-pub struct LineIndex {/* line starts */}
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LineCol {
-    pub line: u32,
-    pub col: u32,
-} // zero-based, col in bytes
+Offsets are `TextSize`, a `u32` byte offset (sources are smaller than 4 GiB),
+and ranges are `TextRange`. `LineIndex` turns an offset into a zero-based line
+and byte column. A `Diagnostic` is a lexer or parser error: a stable code (such
+as `java.parse.expected_syntax`), a message and a range. There is no severity,
+stage or owner: every diagnostic is a syntax error at a source range.
 
-impl LineIndex {
-    pub fn new(source: &str) -> Self;
-    pub fn line_col(&self, offset: TextSize) -> LineCol;
-}
-
-/// A lexer or parser error. There is no severity, stage, or owner: every
-/// diagnostic is a syntax error at a source range.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Diagnostic {
-    pub code: &'static str, // stable, e.g. "java.parse.expected_syntax"
-    pub message: String,
-    pub range: TextRange,
-}
-```
-
-### Kinds and languages
-
-```rust
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct RawSyntaxKind(pub u16);
-
-/// Static facts about one language's tree. Implemented by a unit struct
-/// (`JavaLanguage`).
-pub trait Language: Copy + Eq + std::fmt::Debug + 'static {
-    type Kind: Copy + Eq + std::fmt::Debug;
-    const EOF: Self::Kind;
-    /// The single bogus node kind, accepted at every category slot and list
-    /// item position.
-    const BOGUS: Self::Kind;
-    /// Bracket pairs that `Parser::recover_too_deep` keeps balanced.
-    const BRACKETS: &'static [(Self::Kind, Self::Kind)];
-    /// Codes of the diagnostics `expect`, `LoopGuard::check` and
-    /// `recover_too_deep` report.
-    const EXPECTED_CODE: &'static str;
-    const UNEXPECTED_CODE: &'static str;
-    const TOO_DEEP_CODE: &'static str;
-    fn to_raw(kind: Self::Kind) -> RawSyntaxKind;
-    fn from_raw(raw: RawSyntaxKind) -> Self::Kind;
-    /// List nodes (variable-length children). Comment placement never
-    /// attaches to a list node, only to its items.
-    fn is_list(raw: RawSyntaxKind) -> bool;
-    fn kind_name(raw: RawSyntaxKind) -> &'static str;
-}
-```
+`jolt_syntax::Language` holds the static facts the shared crates need about one
+language's tree, implemented by a unit struct (`JavaLanguage`): the `EOF` token,
+the single `BOGUS` node kind, which every category slot and list item position
+accepts, the `BRACKETS` that deep-nesting recovery keeps balanced, the codes of
+the diagnostics the shared parser reports, and which kinds are lists. Comment
+placement never attaches to a list node, only to its items. Kinds are stored as
+`RawSyntaxKind(u16)`.
 
 ### Tree storage
 
@@ -163,123 +119,23 @@ document arena. A struct has one layout in every profile.
 Cursors borrow the tree and the source. They are not generic over the language;
 language crates wrap them in typed nodes.
 
-```rust
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct NodeId(u32);
-#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct TokenId(u32); // source order
+`SyntaxNode`, `SyntaxToken` and `SyntaxElement` (either of the two) are `Copy`
+handles: the tree, the source and a `u32` id. Two handles are equal when they
+have the same id in the same tree; equality and hashing compare the tree
+pointer, not the source, since comparing the source by content would make every
+comparison linear in the file. Every step a formatter takes is `O(1)`: a token's
+parent, the tokens before and after it (one flat token vector in source order),
+and a node's first and last token (a node stores its token range).
+`SyntaxNode::slot` reads one fixed slot for the typed accessors and returns
+`None` for an empty slot and for every slot of a malformed node, whose children
+are raw; `SyntaxNode::children` gives the raw children of any node.
+`SyntaxNode::descendants` walks iteratively, so deep trees cannot overflow the
+stack.
 
-// The tree and its source. Equality and hashing are written by hand to
-// compare the tree pointer only: comparing the source by content would make
-// every comparison linear in the file.
-#[derive(Clone, Copy)]
-struct TreeRef<'a> {
-    tree: &'a SyntaxTree,
-    source: &'a str,
-}
-
-// Identity: the same id in the same tree.
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SyntaxNode<'a> {
-    tree: TreeRef<'a>,
-    id: NodeId,
-}
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SyntaxToken<'a> {
-    tree: TreeRef<'a>,
-    id: TokenId,
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum SyntaxElement<'a> {
-    Node(SyntaxNode<'a>),
-    Token(SyntaxToken<'a>),
-}
-
-impl<'a> SyntaxNode<'a> {
-    pub fn kind(self) -> RawSyntaxKind;
-    pub fn id(self) -> NodeId;
-    pub fn parent(self) -> Option<SyntaxNode<'a>>;
-    /// Typed-accessor slot read. Returns `None` for an empty slot, and for
-    /// every slot of a malformed node (whose children are raw).
-    pub fn slot(self, index: usize) -> Option<SyntaxElement<'a>>;
-    pub fn slots(self) -> impl DoubleEndedIterator<Item = Option<SyntaxElement<'a>>> + 'a;
-    /// Raw non-empty children in order, malformed or not.
-    pub fn children(self) -> impl DoubleEndedIterator<Item = SyntaxElement<'a>> + 'a;
-    pub fn first_token(self) -> Option<SyntaxToken<'a>>; // O(1): token range
-    pub fn last_token(self) -> Option<SyntaxToken<'a>>; // O(1)
-    pub fn tokens(self) -> impl Iterator<Item = SyntaxToken<'a>> + 'a;
-    /// From the first token's text start to the last token's text end
-    /// (outer trivia excluded). Empty nodes give an empty range at the next
-    /// token's text start.
-    pub fn text_range(self) -> TextRange;
-    pub fn is_malformed(self) -> bool;
-    pub fn is_recovery_free(self) -> bool;
-    pub fn source(self) -> &'a str;
-    /// Iterative preorder walk (no recursion; deep trees are fine).
-    pub fn descendants(self) -> impl Iterator<Item = SyntaxElement<'a>> + 'a;
-}
-
-impl<'a> SyntaxToken<'a> {
-    pub fn kind(self) -> RawSyntaxKind;
-    pub fn id(self) -> TokenId;
-    pub fn parent(self) -> SyntaxNode<'a>;
-    pub fn text(self) -> &'a str;
-    pub fn text_range(self) -> TextRange;
-    pub fn leading(self) -> impl Iterator<Item = TriviaPiece<'a>> + 'a;
-    pub fn trailing(self) -> impl Iterator<Item = TriviaPiece<'a>> + 'a;
-    pub fn prev(self) -> Option<SyntaxToken<'a>>; // O(1): flat token vector
-    pub fn next(self) -> Option<SyntaxToken<'a>>;
-}
-
-/// Hand-written once: prints `Kind@start..end`.
-impl std::fmt::Debug for SyntaxNode<'_> {
-    /* … */
-}
-impl std::fmt::Debug for SyntaxToken<'_> {
-    /* … */
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum TriviaKind {
-    Whitespace,
-    Newline,
-    LineComment,
-    BlockComment,
-    DocComment,
-    UnterminatedBlockComment,
-    ByteOrderMark,
-    TrailingSubstitute,
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct TriviaPiece<'a> {
-    pub kind: TriviaKind,
-    pub text: &'a str,
-    pub range: TextRange,
-}
-
-pub trait AstNode<'a>: Copy {
-    fn can_cast(kind: RawSyntaxKind) -> bool;
-    fn cast(node: SyntaxNode<'a>) -> Option<Self>;
-    fn syntax(self) -> SyntaxNode<'a>;
-}
-
-/// One slot of a list.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ListElement<'a, T> {
-    Item(T),
-    Separator(SyntaxToken<'a>),
-    /// A missing item or separator.
-    Missing,
-    /// A `Bogus` node at an item position whose type cannot hold it.
-    Bogus(SyntaxNode<'a>),
-}
-
-impl<'a, T: AstNode<'a>> ListElement<'a, T> {
-    /// The node of an item, or the bogus node in its place; `None` for a
-    /// separator or a missing element.
-    pub fn node(self) -> Option<SyntaxNode<'a>>;
-}
-```
+Typed nodes implement `jolt_syntax::AstNode` (`can_cast`, `cast`, `syntax`). A
+list's elements are `jolt_syntax::ListElement`s: an item, a separator, a missing
+item or separator, or a `Bogus` node at an item position whose type cannot hold
+it.
 
 Trivia attachment: a token's trailing trivia is the horizontal whitespace, line
 comments and single-line block comments that follow it up to (not including) the
@@ -297,79 +153,25 @@ The parser emits events through markers (`start`, `complete`, `precede`,
 a diagnostic at the current token, and the factory discovers missing required
 slots from the children.
 
-```rust
-pub struct TokenSet(u128); // token kinds must fit in 0..128 (asserted by codegen)
-impl TokenSet {
-    pub const fn new(kinds: &[RawSyntaxKind]) -> Self;
-    pub const fn with(self, k: RawSyntaxKind) -> Self;
-    pub const fn union(self, other: Self) -> Self;
-    pub const fn contains(self, k: RawSyntaxKind) -> bool;
-}
+The pieces a grammar is written with:
 
-pub const MAX_DEPTH: u32 = 128;
-
-pub struct Parser<'s, L: Language> {/* token buffer, events, diagnostics, depth */}
-impl<'s, L: Language> Parser<'s, L> {
-    pub fn new(source: &'s str, lexer: impl Lexer<'s, L>) -> Self;
-    pub fn current(&self) -> L::Kind;
-    pub fn nth(&self, n: usize) -> L::Kind;
-    pub fn nth_text(&self, n: usize) -> &'s str;
-    pub fn at(&self, kind: L::Kind) -> bool;
-    pub fn at_any(&self, set: TokenSet) -> bool;
-    pub fn bump(&mut self);
-    pub fn eat(&mut self, kind: L::Kind) -> bool;
-    /// Eats `kind` or records `message` as an `expected` diagnostic at the
-    /// current token. The factory turns the absent token into a missing slot.
-    pub fn expect(&mut self, kind: L::Kind, message: &str) -> bool;
-    pub fn error(&mut self, code: &'static str, message: impl Into<String>);
-    pub fn start(&mut self) -> Marker;
-    /// Replaces the current token in the buffer by a one-byte `first` token
-    /// followed by `rest` covering the remaining bytes. Leading trivia stays
-    /// on `first`, trailing trivia moves to `rest`. Used only by consuming
-    /// grammar (never by lookahead) for Java's `>` family. `first` takes the
-    /// slot of the consumed token before it, so token indices do not change.
-    pub fn split_current(&mut self, first: L::Kind, rest: L::Kind);
-    pub fn loop_guard(&self) -> LoopGuard;
-    /// Runs `parse` one recursion level deeper, or returns `None` without
-    /// running it when `MAX_DEPTH` levels are active. `parser` is the
-    /// parser or a language's wrapper around it (Java's has a `nested`
-    /// method that forwards here).
-    pub fn nested<P: AsMut<Self>, T>(parser: &mut P, parse: impl FnOnce(&mut P) -> T) -> Option<T>;
-    /// Bumps tokens up to EOF or, outside the brackets the skipped tokens
-    /// open, a token `stop` accepts. Expression recovery stops at `;` and
-    /// `}` this way, so it never swallows the end of an enclosing statement
-    /// or block.
-    pub fn skip_balanced(&mut self, stop: impl Fn(L::Kind) -> bool);
-    /// The one deep-nesting recovery. Records a "too deeply nested"
-    /// diagnostic and wraps tokens into a single `BOGUS` node until, at
-    /// bracket depth zero, a token in `stops` or an unmatched closing
-    /// bracket, or EOF. Brackets are `L::BRACKETS`; it never splits tokens.
-    pub fn recover_too_deep(&mut self, stops: TokenSet) -> CompletedMarker;
-    /// A forked read-only cursor for speculative lookahead.
-    pub fn lookahead(&self) -> Lookahead<'_, 's, L>;
-    pub fn finish(self) -> ParseOutput;
-}
-
-/// Release-active progress guard. Every grammar loop that calls back into
-/// grammar functions holds one and calls `check` at the top of each
-/// iteration.
-pub struct LoopGuard {
-    last: u32,
-}
-impl LoopGuard {
-    /// Returns `false` at EOF (the loop must exit). If no token was consumed
-    /// since the previous `check`, wraps the current token in a `BOGUS` node
-    /// with an "unexpected token" diagnostic so the loop always advances.
-    pub fn check<L: Language>(&mut self, p: &mut Parser<'_, L>) -> bool;
-}
-
-pub struct ParseOutput {
-    pub events: Vec<Event>,
-    pub tokens: Vec<TokenData>,
-    pub trivia: Vec<Trivia>,
-    pub diagnostics: Vec<Diagnostic>,
-}
-```
+- `TokenSet`, a `u128` bitset of token kinds (codegen asserts that the token
+  kinds fit in `0..128`).
+- `Parser::expect`, which eats a token or records an `expected` diagnostic; the
+  factory turns the absent token into a missing slot.
+- `LoopGuard`, the release-active progress guard: every grammar loop that calls
+  back into grammar functions holds one and calls `check` at the top of each
+  iteration. If no token was consumed since the previous `check`, it wraps the
+  current token in a `BOGUS` node with an `unexpected` diagnostic.
+- `Parser::nested`, which runs a grammar function one recursion level deeper, or
+  returns `None` without running it when `MAX_DEPTH` (128) levels are active,
+  and `Parser::recover_too_deep`, the one deep-nesting recovery, which wraps
+  tokens into a single `BOGUS` node up to a stop token at bracket depth zero.
+- `Parser::skip_balanced`, which skips tokens up to a stop token outside the
+  brackets the skipped tokens open.
+- `Parser::split_current`, which splits a compound `>` token (see
+  [Lexer](#lexer)).
+- `Parser::lookahead`, a read-only cursor for speculative lookahead.
 
 `Marker` has a drop check: a debug assertion that a marker was completed or
 abandoned. It guards programmer error, not input.
@@ -384,25 +186,8 @@ parsed in a loop and takes one level however long it is.
 
 ### Tree building and the factory
 
-```rust
-#[doc(hidden)]
-pub trait SyntaxFactory {
-    type Language: Language;
-    /// Places `children` into the fixed slots of `kind`, or stores them raw and
-    /// marks the node `MALFORMED` when they do not fit. Infallible.
-    fn make(
-        &self,
-        kind: RawSyntaxKind,
-        children: ParsedChildren<'_>,
-        sink: &mut NodeSink<'_>,
-    ) -> NodeId;
-}
-pub fn build_tree<F: SyntaxFactory>(
-    source: &str,
-    output: ParseOutput,
-    factory: &F,
-) -> (SyntaxTree, Vec<Diagnostic>);
-```
+`jolt_syntax::build_tree` replays the parser's events into the arena and calls
+the language's generated `SyntaxFactory::make` for each node.
 
 The builder is infallible: the marker API cannot produce an unbalanced stream,
 so a malformed event stream is a parser bug and panics with a message.
@@ -433,10 +218,11 @@ verbatim).
 ### Lexer
 
 The lexer translates Unicode escapes into a temporary buffer before lexing and
-maps token and trivia ranges back to the raw source (see
-[Public API](#public-api)). `>` is lexed by maximal munch into `Gt`, `GtEq`,
-`RShift`, `RShiftEq`, `UnsignedRShift`, `UnsignedRShiftEq` and is **never split
-eagerly**, so binary and assignment operators are single tokens.
+maps token and trivia ranges back to the raw source, so the tree is a plain
+borrow of the source and the output keeps escapes exactly as written. `>` is
+lexed by maximal munch into `Gt`, `GtEq`, `RShift`, `RShiftEq`,
+`UnsignedRShift`, `UnsignedRShiftEq` and is **never split eagerly**, so binary
+and assignment operators are single tokens.
 
 Where a type argument or type parameter list expects its closing `>` and the
 current token is one of the compound kinds, the consuming parser calls
@@ -462,80 +248,18 @@ wherever factory rule 2 or 3 applies.
 test fails with a diff when the file is stale and rewrites it when
 `INSTA_UPDATE=always` (what `mise run test --update` sets). The generator is
 plain Rust, not macros, so the generated code is greppable and has real rustdoc.
-It emits:
+It emits the `JavaSyntaxKind` enum, the factory (one match arm per kind), and
+the typed tree:
 
-```rust
-#[repr(u16)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum JavaSyntaxKind {
-    Eof,
-    Unknown,
-    Identifier,
-    /* …tokens… */ CompilationUnit,
-    /* …nodes… */ Bogus,
-}
-impl JavaSyntaxKind {
-    pub const fn is_token(self) -> bool;
-    pub const fn is_list(self) -> bool;
-    pub const fn name(self) -> &'static str;
-    pub const fn to_raw(self) -> RawSyntaxKind;
-    pub fn from_raw(raw: RawSyntaxKind) -> Self;
-}
-
-/// One newtype per node kind.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct ClassDeclaration<'a>(SyntaxNode<'a>);
-impl<'a> AstNode<'a> for ClassDeclaration<'a> {
-    /* can_cast / cast / syntax */
-}
-impl<'a> ClassDeclaration<'a> {
-    pub fn modifiers(self) -> Option<ModifierList<'a>>; // node / list slot
-    pub fn class_keyword(self) -> Option<SyntaxToken<'a>>; // token slot
-    pub fn name(self) -> Option<SyntaxToken<'a>>;
-    pub fn type_parameters(self) -> Option<TypeParameterList<'a>>;
-    pub fn extends(self) -> Option<ExtendsClause<'a>>;
-    pub fn implements(self) -> Option<ImplementsClause<'a>>;
-    pub fn permits(self) -> Option<PermitsClause<'a>>;
-    pub fn body(self) -> Option<ClassBody<'a>>;
-    pub fn missing_body_semicolon(self) -> Option<SyntaxToken<'a>>;
-}
-
-/// One enum per category; every category has a `Bogus` variant.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum Expression<'a> {
-    LiteralExpression(LiteralExpression<'a>),
-    /* … */ Bogus(Bogus<'a>),
-}
-impl<'a> AstNode<'a> for Expression<'a> {
-    /* … */
-}
-
-/// One enum per `choice` field. Every node alternative is a variant; all
-/// token alternatives share `Token`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum ModifierElement<'a> {
-    Annotation(Annotation<'a>),
-    Bogus(Bogus<'a>),
-    NonSealedModifier(NonSealedModifier<'a>),
-    Token(SyntaxToken<'a>),
-}
-
-/// A list exposes items only when its item type holds `Bogus` (a plain list
-/// of a category or choice). Every other list, and every separated list,
-/// exposes only elements (`jolt_syntax::ListElement`), which keep bogus items
-/// and separators, so no rule can skip a bogus item by accident.
-impl<'a> ClassBodyMemberList<'a> {
-    pub fn items(self) -> impl Iterator<Item = ClassBodyMember<'a>> + 'a;
-}
-impl<'a> BlockStatementList<'a> {
-    pub fn elements(self) -> impl Iterator<Item = ListElement<'a, BlockStatement<'a>>> + 'a;
-}
-impl<'a> ExpressionList<'a> {
-    pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Expression<'a>>> + 'a;
-}
-
-pub(crate) struct JavaSyntaxFactory; // impl SyntaxFactory, one match arm per kind
-```
+- One newtype per node kind (`ClassDeclaration`), with one accessor per field.
+  Every accessor returns an `Option`: a token, a node, or a list node.
+- One enum per category (`Expression`) and per `choice` field
+  (`ModifierElement`). Every node alternative is a variant, token alternatives
+  share one `Token` variant, and every such enum has a `Bogus` variant.
+- A list whose item type holds `Bogus` (a plain list of a category or choice)
+  has `items()`. Every other list, and every separated list, has only
+  `elements()`, which yields `ListElement`s that keep bogus items and
+  separators, so no rule can skip a bogus item by accident.
 
 Semantic helpers that are not schema projections are hand-written in
 `jolt_java_syntax/src/semantics.rs` and carry real behavior: operator precedence
@@ -587,103 +311,38 @@ schema choice.
   so the total lookahead cost is `O(tokens × MAX_DEPTH)`. A new lookahead entry
   point needs a bound of the same kind.
 
-### Public API
+### Entry point
 
-```rust
-pub fn parse(source: &str) -> JavaParse<'_>;
-// The tree always refers to the raw source: Unicode escapes are translated
-// into a temporary buffer for lexing, and token and trivia ranges are mapped
-// back to the raw text. So the source is a plain borrow, and the output keeps
-// escapes exactly as written.
-pub struct JavaParse<'s> {/* &'s str source, SyntaxTree, Vec<Diagnostic> */}
-impl<'s> JavaParse<'s> {
-    pub fn root(&self) -> CompilationUnit<'_>; // always present
-    pub fn syntax(&self) -> SyntaxNode<'_>;
-    pub fn diagnostics(&self) -> &[Diagnostic];
-    pub fn source(&self) -> &'s str;
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct JavaLanguage; // impl Language
-```
-
-Parser snapshots use `jolt_syntax::debug_tree::<L>`, an iterative,
-language-agnostic tree dump that names kinds with `L::kind_name`.
+`jolt_java_syntax::parse` returns a `JavaParse`: the source, the tree and the
+diagnostics. Its root is always a `CompilationUnit`. Parser snapshots use
+`jolt_syntax::debug_tree`, an iterative, language-agnostic tree dump that names
+kinds with `Language::kind_name`.
 
 ## `jolt_fmt`
 
-### Public API
+### Entry point and the language trait
 
-```rust
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct FormatOptions {
-    pub line_width: u16,
-    pub indent_width: u8,
-    pub use_tabs: bool,
-} // default 80, 2, false
+`jolt_fmt::format` formats a tree into a `Sink`: comment placement, ignore
+regions, doc construction, the debug emission check, and printing, in that
+order. A `ByteOrderMark` trivia piece at the start of the source is written
+before everything else, and a `TrailingSubstitute` piece after the final
+newline; no rule sees either. The final newline is left out after an open
+literal that ends the file (Java: an unterminated text block), which would take
+it in. The only options are `FormatOptions::line_width`, `indent_width` and
+`use_tabs`.
 
-/// Receives rendered output in chunks; `Break` stops rendering early.
-pub trait Sink {
-    fn write(&mut self, chunk: &str) -> std::ops::ControlFlow<()>;
-}
-impl Sink for String {
-    /* push, Continue */
-}
+A language provides `jolt_fmt::FormatLanguage`:
 
-/// Formats a tree. Placement, ignore regions, doc construction, the debug
-/// emission check, and printing, in that order. A `ByteOrderMark` trivia piece
-/// at the start of the source is written before everything else, and a
-/// `TrailingSubstitute` piece after the final newline; no rule sees either.
-/// The final newline is left out after an open literal that ends the file.
-pub fn format<L: FormatLanguage, S: Sink + ?Sized>(
-    root: SyntaxNode<'_>,
-    options: &FormatOptions,
-    sink: &mut S,
-) -> std::ops::ControlFlow<()>;
-
-/// What a language provides to the shared formatter. Implemented by a local
-/// unit type in the language's formatter crate (`jolt_java_fmt::JavaFormat`).
-/// The token tables take a token, not a kind, because the same kind can play
-/// two roles (Java's `<`/`>` are type-argument delimiters or operators).
-pub trait FormatLanguage: Sized + 'static {
-    type Syntax: Language;
-    /// Formats a node that is not malformed. Called only by `Formatter::node`.
-    fn format_node<'a>(f: &mut Formatter<'a, Self>, node: SyntaxNode<'a>) -> Doc;
-    /// Separators and terminators that no layout ever puts on a new line:
-    /// an end-of-line comment directly before one moves after it (rule S1),
-    /// and an inline comment before one trails the previous element.
-    /// Java: `,` and `;`.
-    fn is_separator(token: SyntaxToken<'_>) -> bool;
-    /// If `token` opens a delimited region of its parent (`( [ {`, and Java's
-    /// type-argument and type-parameter `<`), the kind of its closer.
-    fn closer_for(token: SyntaxToken<'_>) -> Option<RawSyntaxKind>;
-    /// `) ] }` and Java's type-argument and type-parameter `>`.
-    fn is_closer(token: SyntaxToken<'_>) -> bool;
-    /// Whether text ending in `left` directly followed by text starting with
-    /// `right` would lex differently (`- -x`, `a b`, `/ /*c*/`, `< <` in
-    /// recovered type arguments). The printer writes a space between such
-    /// texts, so no rule has to; Java never joins `>` `>`.
-    fn joins(left: char, right: char) -> bool;
-    /// A literal that runs unterminated to the end of the file and would take
-    /// in a final newline printed after it (Java: an unterminated text block),
-    /// so the output ends without one.
-    fn is_open_literal(token: SyntaxToken<'_>) -> bool;
-    /// Tokens after which an inline comment is printed with no space:
-    /// openers (`closer_for` is `Some`), and Java's `.`, `::` and `@`.
-    fn hugs_next(token: SyntaxToken<'_>) -> bool;
-    /// Language exceptions to comment placement, tried before the generic
-    /// rules. `None` falls through.
-    fn place_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>>;
-    /// The item-list owner a formatter-ignore marker belongs to, given the
-    /// enclosing node of the marker: the owner when the marker sits between,
-    /// before or after the items of the owner's list, `None` when it is inside
-    /// an item. Java: compilation unit, type bodies, block, constructor body,
-    /// switch block statement group, module declaration (and their item list
-    /// nodes, which map to the owner).
-    fn ignore_scope(enclosing: SyntaxNode<'_>) -> Option<SyntaxNode<'_>>;
-}
-```
+- `format_node`, the rule dispatch, which only `Formatter::node` calls.
+- Token tables: `is_separator` (rule S1), `closer_for` and `is_closer` (rules G1
+  to G3 and unclosed openers), `hugs_next` (no space before an inline comment),
+  `is_open_literal`, and `joins`, which tells the printer where two texts need a
+  space so that they do not lex as one (`- -x`). The tables take a token, not a
+  kind, because the same kind can play two roles (Java's `<` and `>` delimit
+  type arguments or are operators).
+- `place_comment`, the [comment hooks](#java-comment-hooks), and `ignore_scope`,
+  the [item-list owner](#item-lists-blank-lines-formatter-ignore) of a
+  formatter-ignore marker.
 
 ### Document IR
 
@@ -720,10 +379,10 @@ There is no `fill` or `align`: the Java style never aligns continuation lines,
 and all continuation is one indent level. Newline coalescing (below) handles
 blank lines and line boundaries, so there is one kind of each line command.
 
-Each node stores a `forces_break` bit computed at construction from its children
+Each node stores a `BREAKS` bit computed at construction from its children
 (`hard_line`, `empty_line`, `break_parent`, multi-line text). A group whose bit
 is set is broken without a fit check; this is Prettier's `propagateBreaks`, done
-in `O(1)` per constructed node. A second bit, `lines`, records whether the node
+in `O(1)` per constructed node. A second bit, `LINES`, records whether the node
 has a `line`, `soft_line`, `if_break` or `hang` outside every group inside it:
 whether its layout depends on the mode of a group around it. `group` returns
 contents without that bit unchanged, since a group around them would only add a
@@ -882,9 +541,10 @@ body, switch body or text block is not inside a group, so it qualifies; a forced
 break in the last argument's parameters or arguments, or in a call it is nested
 in, does not, and the list breaks. The list builder offers a hug only when the
 last argument is a lambda with a block body, an anonymous class, a switch
-expression or a text block, and no argument before it has a forced break, so two
-lambda bodies keep the broken list. A group's check and the next-line check
-measure a hug as `broken`, which is always available. One fit check per hug.
+expression or a text block, no argument before it has a forced break, and the
+list is recovery-free and has no dangling comments, so two lambda bodies keep
+the broken list. A group's check and the next-line check measure a hug as
+`broken`, which is always available. One fit check per hug.
 
 The hung probe measures a hug in the value, outside the groups of a breakable
 part, as `hugged`: a breakable part (or a place where the part it is in breaks)
@@ -914,27 +574,20 @@ visits the same commands. Total: `O(doc nodes × 3 × FIT_BUDGET)` worst case,
 
 #### Classification
 
-The placement pass walks every token's trivia once and records each comment:
+The placement pass walks every token's trivia once and records each comment as a
+`jolt_fmt::Comment`: its text and range, its kind (line, block or doc; an
+unterminated comment is a block comment), `lines_before` and `lines_after` (the
+line breaks since the previous token or comment and until the next, capped at
+2), and its source layout:
 
-```rust
-#[derive(Clone, Copy, Debug)]
-pub struct Comment<'a> {
-    pub text: &'a str,
-    pub range: TextRange,
-    pub kind: CommentKind, // Line | Block | Doc (unterminated: Block)
-    pub lines_before: u8,  // newlines since previous token/comment, max 2
-    pub lines_after: u8,   // newlines until next comment/token, max 2
-    pub source_layout: CommentLayout, // placement decides the printed layout
-    pub(crate) raw: bool,  // no `*/`, or delimiters written as escapes
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum CommentLayout {
-    OwnLine,     // newline before and after (file start / EOF count as newlines)
-    StartOfLine, // newline before, code after on the same line (block comments)
-    EndOfLine,   // code before, newline after (every line comment that is not OwnLine)
-    Inline,      // code before and after on the same line (block comments)
-}
-```
+| Layout        | Source                                                    |
+| ------------- | --------------------------------------------------------- |
+| `OwnLine`     | Newline before and after (file start and end count).      |
+| `StartOfLine` | Newline before, code after on the same line (block only). |
+| `EndOfLine`   | Code before, newline after.                               |
+| `Inline`      | Code before and after on the same line (block only).      |
+
+Placement decides the layout the comment prints with, which may differ.
 
 `prev` and `next` are the tokens around a comment (`next` always exists: the
 `Eof` token). The **enclosing node** is the deepest node containing both,
@@ -952,29 +605,10 @@ breaks in the same gaps.
 
 #### Placement
 
-Every comment is attached exactly once:
-
-```rust
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Placement<'a> {
-    Leading(SyntaxElement<'a>, CommentLayout),
-    Trailing(SyntaxElement<'a>, CommentLayout),
-    Dangling(SyntaxNode<'a>),
-}
-pub struct CommentContext<'a, 'p> {
-    pub comment: Comment<'a>,
-    pub prev: Option<SyntaxToken<'a>>,
-    pub next: SyntaxToken<'a>,
-    root: SyntaxNode<'a>,
-    unclosed: &'p Unclosed, // computed once per tree
-}
-impl<'a> CommentContext<'a, '_> {
-    pub fn enclosing(&self) -> SyntaxNode<'a>; // computed on demand
-    pub fn is_unclosed(&self, open: SyntaxToken<'_>) -> bool;
-    /// Whether one of `node`'s child tokens up to `token` is unclosed.
-    pub fn has_unclosed_child_until(&self, node: SyntaxNode<'_>, token: SyntaxToken<'_>) -> bool;
-}
-```
+Every comment is attached exactly once, as a `jolt_fmt::Placement`:
+`Leading(element, layout)`, `Trailing(element, layout)` or `Dangling(node)`. A
+language hook sees a `CommentContext`: the comment, `prev`, `next`, and the
+queries `enclosing`, `is_unclosed` and `has_unclosed_child_until`.
 
 Targets. `leading_target(next)` is the outermost node other than the root whose
 first token is `next`, or the token itself when no such node exists. If that
@@ -1070,8 +704,8 @@ record and annotation-element declarations; `if`, `while`, `do`, `for`,
 `AnnotationArgumentList`, `AnnotationArrayInitializer`, `RecordPattern`). The
 rule of every such kind prints `f.dangling(node)` just before its closer, either
 directly, through `f.with_dangling`, or by passing the node as `owner` to
-`delimited`, `enclosed`, `parenthesized` or `braced_body`. A rule that forgets
-fails the emission check on the first probe that reaches it.
+`delimited`, `enclosed`, `parenthesized`, `braced` or `braced_body`. A rule that
+forgets fails the emission check on the first probe that reaches it.
 
 Storage: one `Vec` of placed comments in source order, each record holding the
 comment, the tokens before and after its gap, its side and its effective layout;
@@ -1148,115 +782,28 @@ in placement or printing, not with a special case in a rule.
 
 ### The `Formatter` context
 
-```rust
-pub struct Formatter<'a, L: FormatLanguage> {/* DocBuilder, Comments, ignore regions, emission counts */}
-impl<'a, L: FormatLanguage> std::ops::DerefMut for Formatter<'a, L> {
-    /* Target = DocBuilder<'a> */
-}
+`jolt_fmt::Formatter` is the context every rule receives. It derefs to the
+`DocBuilder` and holds the placed comments, the ignore regions and the emission
+counters. Its methods fall in three groups:
 
-impl<'a, L: FormatLanguage> Formatter<'a, L> {
-    // ── The chokepoints. Rules emit source only through these. ──
-    /// Leading comments, then (malformed ? verbatim : L::format_node), then
-    /// trailing comments. The only caller of `L::format_node`.
-    pub fn node(&mut self, node: SyntaxNode<'a>) -> Doc;
-    pub fn fmt<N: AstNode<'a>>(&mut self, node: N) -> Doc; // node(n.syntax())
-    pub fn fmt_opt<N: AstNode<'a>>(&mut self, node: Option<N>) -> Doc; // NIL for None
-    /// Leading comments, the token text, trailing comments. Never sticky.
-    pub fn token(&mut self, token: SyntaxToken<'a>) -> Doc;
-    pub fn token_opt(&mut self, token: Option<SyntaxToken<'a>>) -> Doc;
-    /// `node` or `token`, whichever the element is (the generated
-    /// node-or-token enums convert to one with `element()`).
-    pub fn element(&mut self, element: SyntaxElement<'a>) -> Doc;
-    pub fn element_opt(&mut self, element: Option<SyntaxElement<'a>>) -> Doc;
-    /// A node's leading and trailing comments, for a rule that builds the
-    /// node's doc from its children itself instead of through `node`: the
-    /// iterative spines and the `else if` chain, where an interior node's
-    /// leading comments go before the head and its trailing comments after
-    /// the segment that ends it (see Deep spines); the readability
-    /// parentheses of N7, which go between an operand and its comments; and
-    /// the declaration header, whose last clause's trailing comments print
-    /// outside the header group. The node must not be malformed.
-    pub fn leading_comments(&mut self, node: SyntaxNode<'a>) -> Doc;
-    pub fn trailing_comments(&mut self, node: SyntaxNode<'a>) -> Doc;
-    /// Every comment attached to or inside `element`, in source order and in
-    /// their own layouts, without the element's text. For tokens or nodes a
-    /// normalization removes. Returns NIL when there are none.
-    pub fn removed(&mut self, element: SyntaxElement<'a>) -> Doc;
-    /// The node's source from its first token's text to its last token's
-    /// text, interior comments included and marked emitted, as
-    /// `reindented(slice, Reindent::Strip(p))` where `p` is the indentation of
-    /// the source line the node starts on. Text block literals inside are
-    /// emitted as raw `text` pieces between the reindented pieces, so their
-    /// content never changes. A multi-line comment inside with a line that
-    /// does not start with `p` is emitted as `reindented(comment,
-    /// Reindent::Comment)` instead: stripping `p` would shift its lines
-    /// relative to each other. Re-indenting relative to the output line (not
-    /// the document indent) is what makes verbatim output a fixpoint even when
-    /// the node starts mid-line inside an `indent`. Comments attached to
-    /// elements inside the node but lying outside its text print before or
-    /// after the slice (see "Verbatim edges" below).
-    pub fn verbatim(&mut self, node: SyntaxNode<'a>) -> Doc;
-    /// The node's dangling comments, each on its own line (`empty_line`
-    /// between two when the source had a blank line, `space` when they shared
-    /// a source line), with no line before the first or after the last. NIL
-    /// when none.
-    pub fn dangling(&mut self, node: SyntaxNode<'a>) -> Doc;
-    /// `inner`, then `owner`'s dangling comments on their own lines after it,
-    /// separated by a blank line when the source had one there.
-    pub fn with_dangling(&mut self, owner: SyntaxNode<'a>, inner: Doc) -> Doc;
-
-    // ── Queries; they emit nothing. ──
-    /// Any comment attached to the element: leading, trailing or dangling.
-    pub fn has_comments(&self, element: SyntaxElement<'a>) -> bool;
-    pub fn has_leading_comments(&self, element: SyntaxElement<'a>) -> bool;
-    pub fn has_trailing_comments(&self, element: SyntaxElement<'a>) -> bool;
-    pub fn has_dangling_comments(&self, node: SyntaxNode<'a>) -> bool;
-    /// Some leading comment prints a line break between the code before the
-    /// element and the element (its effective layout is not `Inline`).
-    pub fn leading_comments_break(&self, element: SyntaxElement<'a>) -> bool;
-    /// Some trailing comment ends its line.
-    pub fn trailing_comments_break(&self, element: SyntaxElement<'a>) -> bool;
-    /// Any comment attached to the node or located inside its range.
-    pub fn has_comments_within(&self, node: SyntaxNode<'a>) -> bool; // O(log comments)
-    /// The node is an item inside a formatter-ignore region, so a
-    /// normalization (N1, N3) must leave it in place.
-    pub fn in_ignore_region(&self, node: SyntaxNode<'a>) -> bool;
-    /// The source has a blank line before the element's first leading comment
-    /// (or its first token when it has none), counted from the previous token
-    /// or comment. Used for `Separator::blank_line_in_source` and before the
-    /// leading comments of `Eof`.
-    pub fn blank_line_before(&self, element: SyntaxElement<'a>) -> bool;
-
-    // ── Item lists ──
-    pub fn item_list(
-        &mut self,
-        items: impl IntoIterator<Item = ListItem<'a>>,
-        separator: impl FnMut(&mut Self, Separator<'a>) -> Doc,
-    ) -> Doc;
-}
-pub enum ListItem<'a> {
-    Format(SyntaxNode<'a>),
-    Elide(SyntaxNode<'a>),
-}
-pub struct Separator<'a> {
-    pub prev: SyntaxNode<'a>,
-    pub next: SyntaxNode<'a>,
-    /// The positions of `prev` and `next` in the items given to `item_list`,
-    /// so a caller can keep per-item data (import roles, directive groups) in
-    /// a `Vec` beside the items.
-    pub prev_index: usize,
-    pub next_index: usize,
-    pub blank_line_in_source: bool,
-}
-```
-
-`node()` cost: two bitset probes on the fast path.
+- **Chokepoints**, which emit source: `node` (and `fmt`, `fmt_opt` for typed
+  nodes), `token`, `element`, `leading_comments` and `trailing_comments`,
+  `removed`, `verbatim`, `dangling` and `with_dangling`. `node` prints the
+  leading comments, then the node (verbatim when it is malformed, otherwise
+  through `FormatLanguage::format_node`), then the trailing comments. For a node
+  without comments that costs one flag read and one bitset probe.
+- **Queries**, which emit nothing: `has_comments` and its leading, trailing and
+  dangling forms, `leading_comments_break` and `trailing_comments_break`
+  (whether a comment puts a line break there), `has_comments_within`,
+  `in_ignore_region` and `blank_line_before`.
+- **`item_list`**, below.
 
 Rules emit source tokens only with `token`, nodes only with `node`/`fmt`, and
 synthesized punctuation (normalizations) with `text`/`sticky`. Comments are
-emitted only through the chokepoints above (`node`, `token`, `verbatim`,
-`removed`, `dangling`, and `leading_comments`/`trailing_comments` for the rules
-that build a node's doc themselves). A rule says _what_ to format, never how its
+emitted only through the chokepoints. `leading_comments`/`trailing_comments` are
+for the four rules that build a node's doc themselves: the iterative spines and
+the `else if` chain ([Deep spines](#deep-spines)), the readability parentheses
+of N7, and the declaration header. A rule says _what_ to format, never how its
 comments print. A rule formats each element at most once; to use the same
 element in two `if_break` branches, build its `Doc` once and reference the
 handle twice.
@@ -1356,35 +903,21 @@ crates/jolt_java_fmt/
   src/helpers/lists.rs       delimited comma lists, one-element delimited nodes, parenthesized headers, list items
   src/helpers/mod.rs         `spaced`, `spaced_node`: a space before what follows, if anything does; `after_token`: the value after a keyword or arrow
   src/helpers/bodies.rs      braced bodies, body items with N5, member and statement separators
-  src/helpers/assignment.rs  the value after an operator: `left = right`, a switch rule's `-> value;`
+  src/helpers/assignment.rs  the value after an operator: `left = right`, a switch rule's `-> value;`, a cast's operand
   src/rules/declarations/    compilation unit, imports, modules, type declarations and headers, bodies, members
   src/rules/statements/      blocks, control flow, jumps, switch, try
   src/rules/expressions/     operators, binary chains, calls, object creation, lambdas, the receiver spine
   src/rules/types/           types, generics, names, annotations, modifiers, variables, patterns
-  examples/                  jhunt.rs, jcheck.rs, jref.rs
-  tests/                     corpus.rs, recovery_snapshots.rs, corpus_fixtures.rs, probes.rs, deep.rs, style_guide.rs, common/
 ```
 
 insta derives snapshot names from the test file names (`corpus__…`,
 `recovery_snapshots__…`), so renaming a test file renames all its snapshots.
 
-```rust
-pub struct JavaFormat; // impl FormatLanguage<Syntax = JavaLanguage>
-pub type JavaFormatter<'a> = jolt_fmt::Formatter<'a, JavaFormat>;
-pub fn format<S: Sink + ?Sized>(
-    parse: &JavaParse<'_>,
-    options: &FormatOptions,
-    sink: &mut S,
-) -> ControlFlow<()>;
-```
-
-Every rule function has the signature
-
-```rust
-pub(crate) fn class_declaration<'a>(f: &mut JavaFormatter<'a>, node: ClassDeclaration<'a>) -> Doc;
-```
-
-named after the kind in `snake_case`, and is re-exported from its module's
+`JavaFormat` implements `FormatLanguage`, and `JavaFormatter<'a>` is
+`Formatter<'a, JavaFormat>`. Every rule function takes the formatter and its
+typed node and returns a `Doc`
+(`fn class_declaration<'a>(f: &mut JavaFormatter<'a>, node: ClassDeclaration<'a>) -> Doc`).
+It is named after the kind in `snake_case` and re-exported from its module's
 `mod.rs` (`declarations`, `statements`, `expressions`, `types`). `dispatch.rs`
 maps each kind to a small function that calls exactly these names (a table of
 function pointers rather than one large `match` frame, so the depth tests' 128
@@ -1476,140 +1009,24 @@ the generic rules; a new hook requires a fixture and an entry here.
 
 ### Helpers
 
-```rust
-// helpers/lists.rs
-pub(crate) enum ListLayout {
-    /// Parameter, type-argument and pattern lists: `(a, b)` when flat, and
-    /// no trailing comma (Java forbids one there).
-    Plain,
-    /// Argument lists: `Plain`; when the last argument is a lambda with a
-    /// block body, an anonymous class, a switch expression or a text block,
-    /// has a forced break, and the arguments before it have none, the list
-    /// is a `hug` of `open a, b, last close` (spaces for the list's lines)
-    /// and the broken list.
-    Arguments,
-    /// Array and annotation-array initializers: `{ a, b }` when flat; when
-    /// broken, a synthesized `,` (sticky, so it goes before the last
-    /// element's trailing line comment: `last, // c`). A trailing `,` in the
-    /// source forces the broken layout and is printed with `token`.
-    Initializer,
-}
-/// `open item, item close` with the break-all layout: flat if it fits, else
-/// every element on its own line at one more indent and `close` on its own
-/// line. `owner` is `open.parent()` (also when `open` is missing, the node
-/// that would own it); its dangling comments are printed after the last
-/// element, on their own lines (`with_dangling`), preceded by `empty_line`
-/// when the source has a blank line before the first of them. Represented separators go through
-/// `token`, synthesized ones through `sticky`; `Missing` elements print
-/// nothing. Comma-separated lists only: a resource specification (`;`
-/// separators, a removable trailing `;`) is laid out by its own rule with
-/// `parenthesized`. When `open` has no closer
-/// (`jolt_fmt::is_unclosed`, recovery), no line is put where the closer would
-/// go, so what follows continues after the last element, where the source has
-/// it (`parenthesized` and the resource specification do the same).
-pub(crate) fn delimited<'a, T: AstNode<'a>>(
-    f: &mut JavaFormatter<'a>,
-    owner: SyntaxNode<'a>,
-    open: Option<SyntaxToken<'a>>,
-    elements: impl IntoIterator<Item = ListElement<'a, T>>,
-    close: Option<SyntaxToken<'a>>,
-    layout: ListLayout,
-) -> Doc;
-/// `open inner close` for a node with one inner element (array access,
-/// dimension expressions, casts): no breaks of its own; `inner` is indented
-/// when asked, and the owner's dangling comments print on their own lines
-/// before `close`.
-pub(crate) fn enclosed<'a>(
-    f: &mut JavaFormatter<'a>,
-    owner: SyntaxNode<'a>,
-    delimiters: (Option<SyntaxToken<'a>>, Option<SyntaxToken<'a>>),
-    inner: Doc,
-    indent_inner: bool,
-) -> Doc;
-/// `(inner)` that breaks like a call: flat if it fits, otherwise `(` ends the
-/// line, `inner` and the owner's dangling comments continue one indent
-/// deeper, and `)` returns to the outer indent. Statement headers and
-/// parenthesized expressions.
-pub(crate) fn parenthesized<'a>(
-    f: &mut JavaFormatter<'a>,
-    owner: SyntaxNode<'a>,
-    open: Option<SyntaxToken<'a>>,
-    inner: Doc,
-    close: Option<SyntaxToken<'a>>,
-) -> Doc;
-/// A list's elements, each separator followed by `after` (`space`, `line`,
-/// `hard_line`, or NIL to join directly), except a trailing separator
-/// (recovery), which separates nothing.
-pub(crate) fn joined<'a, T: AstNode<'a>>(
-    f: &mut JavaFormatter<'a>,
-    elements: impl IntoIterator<Item = ListElement<'a, T>>,
-    after: Doc,
-) -> Doc;
-/// One list element: the item with `fmt`, a bogus node with `node`.
-pub(crate) fn list_item<'a, T: AstNode<'a>>(
-    f: &mut JavaFormatter<'a>,
-    element: ListElement<'a, T>,
-) -> Doc;
+The shared layouts live in `helpers`, so each shape is implemented once:
 
-// helpers/bodies.rs
-/// `{`, the items at one more indent joined by `item_list` with `separator`,
-/// the owner's dangling comments, `}` (via `braced`).
-pub(crate) fn braced_body<'a>(
-    f: &mut JavaFormatter<'a>,
-    owner: SyntaxNode<'a>,
-    open: Option<SyntaxToken<'a>>,
-    items: impl IntoIterator<Item = ListItem<'a>>,
-    close: Option<SyntaxToken<'a>>,
-    separator: impl FnMut(&mut JavaFormatter<'a>, Separator<'a>) -> Doc,
-) -> Doc;
-/// `open`, already formatted `content` and the owner's dangling comments one
-/// indent deeper on their own lines, `close`; `{}` when both are empty.
-/// Used by `braced_body`, enum bodies (constants then members) and brace
-/// promotion (synthesized braces, no owner).
-pub(crate) fn braced<'a>(
-    f: &mut JavaFormatter<'a>,
-    owner: Option<SyntaxNode<'a>>,
-    open: Doc,
-    content: Doc,
-    close: Doc,
-) -> Doc;
-/// The items of a body as item-list items, each stray `;` (an empty
-/// declaration or empty statement) elided (N5) when `owner` is
-/// recovery-free. Class, interface, record, enum and annotation bodies,
-/// blocks, constructor bodies and switch groups.
-pub(crate) fn body_items<'a>(
-    owner: SyntaxNode<'a>,
-    items: impl IntoIterator<Item = SyntaxNode<'a>>,
-) -> Vec<ListItem<'a>>;
-/// Members: a blank line between two members, except between two fields,
-/// which keep the source's choice (as do the comments of a removed `;`).
-pub(crate) fn member_separator<'a>(f: &mut JavaFormatter<'a>, sep: Separator<'a>) -> Doc;
-/// Statements: a blank line iff the source had one.
-pub(crate) fn statement_separator<'a>(f: &mut JavaFormatter<'a>, sep: Separator<'a>) -> Doc;
-
-// helpers/assignment.rs
-/// `left space`, then `op` and `right`, the formatted `value` node, as
-/// `operator_value` lays them out.
-pub(crate) fn assignment_like<'a>(
-    f: &mut JavaFormatter<'a>,
-    left: Doc,
-    op: Option<SyntaxToken<'a>>,
-    value: Option<SyntaxNode<'a>>,
-    right: Doc,
-) -> Doc;
-/// `op space doc`, the value hanging after the operator: `op hang(line, doc)`,
-/// or `op group(indent(line, doc))` for an operator chain or a conditional and
-/// after a trailing comment of `op` that ends its line.
-pub(crate) fn operator_value<'a>(
-    f: &mut JavaFormatter<'a>,
-    op: Option<SyntaxToken<'a>>,
-    value: Option<SyntaxNode<'a>>,
-    doc: Doc,
-) -> Doc;
-```
-
-Every body goes through `braced`, including switch blocks, module bodies and
-enum bodies, so an empty body prints `{}` with no per-kind exception.
+- `lists::delimited`: a comma-separated list between delimiters with the
+  break-all layout, in one of three `ListLayout`s (parameters and type
+  arguments, call arguments with the [hug](#hang-and-hug) of a last argument
+  with a body, and initializers with N8's trailing comma).
+- `lists::enclosed`: a node with one inner element between delimiters (array
+  access, dimension expressions, casts), with no line breaks of its own.
+- `lists::parenthesized`: `(inner)` that breaks like a call (statement headers,
+  parenthesized expressions, the resource specification).
+- `lists::joined` and `lists::list_item`: a list's elements in order, a bogus
+  item through `node`.
+- `bodies::braced_body`, `bodies::braced`, `bodies::body_items` and the member
+  and statement separators: every braced body, so an empty body prints `{}` with
+  no per-kind exception, and N5.
+- `assignment::assignment_like`, `operator_value` and `value_after`: the value
+  after an operator.
+- `after_token`: the value after a keyword or arrow.
 
 ### Layout contracts between modules
 
@@ -1649,12 +1066,14 @@ Comment-driven layout rules owned by one module:
   further by its own rule. When a leading comment of the value breaks the line,
   it prints `token space indent(value tail)`, so the comment and the value go
   one indent deeper.
-- **The value after an operator (helpers).** `assignment::operator_value` prints
-  `op hang(line, value)`. When a trailing comment of the operator ends its line
-  (`x = // c`), it prints `op group(indent(line, value))` instead, as
-  `after_token` does after a keyword: with a block comment, which is not a line
-  suffix, the hang could keep the value on the comment's line, and the next pass
-  would read the comment as an inline one.
+- **The value after an operator (helpers).** `assignment::value_after` prints
+  `op hang(line, value)`. For an operator chain or a conditional, and when a
+  trailing comment of the operator ends its line (`x = // c`), it prints
+  `op group(indent(line, value))` instead, so that a chain's operands start one
+  level deeper than the operator's line, and, after a comment, as `after_token`
+  does after a keyword: with a block comment, which is not a line suffix, the
+  hang could keep the value on the comment's line, and the next pass would read
+  the comment as an inline one.
 - **Promoted empty bodies (statements).** A non-block body that is an
   `EmptyStatement` (`if (a);`) promotes to an empty block: the `;` is elided
   through `removed`, exactly as an `EmptyStatement` inside a block is, so the
@@ -1670,18 +1089,18 @@ tokens print their comments through `removed`; N6 never removes parentheses that
 carry a comment. The structure fingerprint (`STRUCTURE_POLICY` in
 `jolt_java_fmt/tests/common`) ignores exactly these changes.
 
-| #   | Normalization                                  | Where                                                                                                                                                                             | Extra condition                                                                                                                                                                                                  |
-| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| N1  | Import grouping and sorting                    | Imports of a compilation unit                                                                                                                                                     | Per import: recovery-free, name without interior comments. The comments of a stray `;` between imports lead the import after it, which anchors like an import with leading comments. Duplicate imports are kept. |
-| N2  | Modifier ordering                              | Declaration `ModifierList`                                                                                                                                                        | Keyword runs between comment-carrying or bogus modifiers sort independently.                                                                                                                                     |
-| N3  | Module directive and `requires` modifier order | `ModuleDeclaration`                                                                                                                                                               | Directive recovery-free; comment-carrying directives anchor like imports.                                                                                                                                        |
-| N4  | Brace promotion                                | Non-block bodies of `if`, `else`, `while`, `do`, `for`, enhanced `for`                                                                                                            | Body is not malformed.                                                                                                                                                                                           |
-| N5  | Redundant `;` removal                          | `EmptyStatement` in blocks and switch groups and as a promoted body, `EmptyDeclaration` in compilation units and type bodies, trailing `;` of try resources, enum body separators | Without members, an enum's `;` is removed. With members, the `;` moves up to the last constant past a removed trailing comma, unless the comma or the `;` carries a comment: then both stay as written.          |
-| N6  | Redundant parenthesis removal                  | Parenthesized left operand of a same-precedence binary chain; switch guard `when (x)`; single untyped lambda parameter `(x) ->`                                                   | `has_comments_within` is false for the parenthesized node (or, for the lambda, the parameter list's parentheses carry no comments).                                                                              |
-| N7  | Readability parentheses                        | Binary operands of `&`, `\|`, `^`, `<<`, `>>`, `>>>` that are themselves binary expressions                                                                                       | —                                                                                                                                                                                                                |
-| N8  | Trailing commas                                | Array and annotation array initializers (iff broken); the last enum constant of a body without members                                                                            | —                                                                                                                                                                                                                |
-| N9  | Comment text                                   | Trailing whitespace, re-indentation, star alignment                                                                                                                               | Comment content otherwise unchanged.                                                                                                                                                                             |
-| N10 | Whitespace                                     | Line endings become `\n`; one final newline; BOM and trailing SUB preserved                                                                                                       | —                                                                                                                                                                                                                |
+| #   | Normalization                                  | Where                                                                                                                                                                             | Extra condition                                                                                                                                                                                                                                                                                                                                                                     |
+| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| N1  | Import grouping and sorting                    | Imports of a compilation unit                                                                                                                                                     | Per import: recovery-free, not in an ignore region, name without interior comments; any other import is a barrier that stays in place and splits the section. An import with leading comments is an anchor: it starts a new sorted run and stays first in it. The comments of a stray `;` between imports lead the import after it, which then anchors. Duplicate imports are kept. |
+| N2  | Modifier ordering                              | Declaration `ModifierList`                                                                                                                                                        | Keyword runs between comment-carrying or bogus modifiers sort independently.                                                                                                                                                                                                                                                                                                        |
+| N3  | Module directive and `requires` modifier order | `ModuleDeclaration`                                                                                                                                                               | A directive with leading comments, recovery or in an ignore region is a barrier: it stays in place on its own, and the directives on each side sort separately. `requires` modifiers sort only in a recovery-free directive without comments on them.                                                                                                                               |
+| N4  | Brace promotion                                | Non-block bodies of `if`, `else`, `while`, `do`, `for`, enhanced `for`                                                                                                            | Body is not malformed.                                                                                                                                                                                                                                                                                                                                                              |
+| N5  | Redundant `;` removal                          | `EmptyStatement` in blocks and switch groups and as a promoted body, `EmptyDeclaration` in compilation units and type bodies, trailing `;` of try resources, enum body separators | Without members, an enum's `;` is removed. With members, the `;` moves up to the last constant past a removed trailing comma, unless the comma or the `;` carries a comment: then both stay as written.                                                                                                                                                                             |
+| N6  | Redundant parenthesis removal                  | Parenthesized left operand of a same-precedence binary chain; switch guard `when (x)`; single untyped lambda parameter `(x) ->`                                                   | No comment on or inside the parentheses: `has_comments_within` is false for the parenthesized expression, and for a guard or lambda the parentheses carry no comments, it has no dangling comments, and `has_comments_within` is false for the condition or parameter.                                                                                                              |
+| N7  | Readability parentheses                        | Binary operands of `&`, `\|`, `^`, `<<`, `>>`, `>>>` that are themselves binary expressions                                                                                       | —                                                                                                                                                                                                                                                                                                                                                                                   |
+| N8  | Trailing commas                                | Array and annotation array initializers (iff broken); the last enum constant of a body without members                                                                            | —                                                                                                                                                                                                                                                                                                                                                                                   |
+| N9  | Comment text                                   | Trailing whitespace, re-indentation, star alignment                                                                                                                               | Comment content otherwise unchanged.                                                                                                                                                                                                                                                                                                                                                |
+| N10 | Whitespace                                     | Line endings become `\n`; one final newline; BOM and trailing SUB preserved                                                                                                       | —                                                                                                                                                                                                                                                                                                                                                                                   |
 
 [Java style](../guides/style.md) shows the output of each.
 
@@ -1711,49 +1130,17 @@ a 1 MiB thread (the WASM stack).
 
 The CLI and the dprint plugin use only this API and `jolt_config`.
 
-```rust
-pub use jolt_fmt::{FormatOptions, Sink};
+`jolt_formatter::format` takes the source, a `Language` (detected from the file
+extension by `Language::from_path`), the options, an `OnSyntaxError` policy and
+a sink. With `Refuse`, a source with syntax errors gets `Outcome::Refused` with
+the errors, and nothing is written; otherwise the result is
+`Outcome::Formatted { halted }`, where `halted` means the sink stopped the
+printer early. Feature `serde` forwards to `jolt_fmt/serde`.
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum Language {
-    Java,
-}
-impl Language {
-    pub fn from_path(path: &std::path::Path) -> Option<Language>;
-} // ".java"
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum OnSyntaxError {
-    Refuse,
-    Format,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Outcome {
-    /// Output was written to the sink; `halted` when the sink broke early.
-    Formatted { halted: bool },
-    /// `Refuse` and the source has syntax errors; nothing was written.
-    Refused(Vec<SyntaxError>),
-}
-
-/// Displays as `line:column: code: message`, 1-based.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SyntaxError {/* line, column, code, message */}
-
-pub fn format<S: Sink + ?Sized>(
-    source: &str,
-    language: Language,
-    options: &FormatOptions,
-    on_error: OnSyntaxError,
-    sink: &mut S,
-) -> Outcome;
-```
-
-Feature `serde` forwards to `jolt_fmt/serde`. `check` mode is a sink that
-compares chunks against the source and breaks at the first difference
-(`jolt_cli::format::Compare`); after `Formatted { halted: false }` the CLI also
-checks that the whole source was consumed (the output may be a strict prefix of
-the source).
+`check` mode is a sink that compares chunks against the source and breaks at the
+first difference (`jolt_cli`'s `Compare`); after `Formatted { halted: false }`
+the CLI also checks that the whole source was consumed (the output may be a
+strict prefix of the source).
 
 ## Verification
 

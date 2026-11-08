@@ -19,12 +19,20 @@ pub use comments::{
 pub use doc::{Doc, DocBuilder};
 pub use formatter::{Formatter, ListItem, Separator};
 
+/// The options of one format run. The user-facing options, their names and
+/// their validation live in `jolt_config`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct FormatOptions {
+    /// The width the printer fits lines into, in display columns. Default
+    /// 80.
     pub line_width: u16,
+    /// Columns per indentation level. With `use_tabs`, the width a tab
+    /// counts for fitting. Default 2.
     pub indent_width: u8,
+    /// Indent with one tab per level instead of `indent_width` spaces.
+    /// Default false.
     pub use_tabs: bool,
 }
 
@@ -38,8 +46,11 @@ impl Default for FormatOptions {
     }
 }
 
-/// Receives rendered output in chunks; `Break` stops rendering early.
+/// Receives rendered output in chunks of about 1 KiB; `Break` stops
+/// rendering early, so a sink that compares the output with the source (check
+/// mode) stops the printer soon after the first difference.
 pub trait Sink {
+    /// Takes the next chunk of output.
     fn write(&mut self, chunk: &str) -> ControlFlow<()>;
 }
 
@@ -50,30 +61,44 @@ impl Sink for String {
     }
 }
 
-/// What a language provides to the shared formatter.
+/// What a language provides to the shared formatter. Implemented by a unit
+/// type in the language's formatter crate (`jolt_java_fmt::JavaFormat`).
+///
+/// The token tables take a token, not a kind, because the same kind can play
+/// two roles (Java's `<` and `>` delimit type arguments or are operators).
 pub trait FormatLanguage: Sized + 'static {
+    /// The language's tree.
     type Syntax: Language;
     /// Formats a node that is not malformed. Called only by
     /// [`Formatter::node`].
     fn format_node<'a>(f: &mut Formatter<'a, Self>, node: SyntaxNode<'a>) -> Doc;
-    /// Separators and terminators that no layout puts on a new line.
+    /// Separators and terminators that no layout ever puts on a new line. An
+    /// end-of-line line comment directly before one moves after it
+    /// (placement rule S1), and an inline comment before one trails the
+    /// previous element.
     fn is_separator(token: SyntaxToken<'_>) -> bool;
     /// If `token` opens a delimited region of its parent, the kind of its
-    /// closer.
+    /// closer. Placement rules G1 and G2 and [`is_unclosed`] use it.
     fn closer_for(token: SyntaxToken<'_>) -> Option<RawSyntaxKind>;
+    /// Tokens that close a delimited region: the closers of
+    /// [`closer_for`](Self::closer_for). Placement rule G3 uses it.
     fn is_closer(token: SyntaxToken<'_>) -> bool;
     /// Whether text ending in `left` followed directly by text starting with
-    /// `right` would lex differently; the printer separates such texts with a
-    /// space.
+    /// `right` would lex differently (`- -x`, `a b`, `/ /*c*/`). The printer
+    /// writes a space between such texts, so no rule has to.
     fn joins(left: char, right: char) -> bool;
     /// A literal that runs to the end of the file unterminated and would take
     /// in a final newline printed after it (Java: an unterminated text
     /// block), so the output ends without one.
     fn is_open_literal(token: SyntaxToken<'_>) -> bool;
-    /// Tokens after which an inline comment is printed with no space.
+    /// Tokens after which an inline comment is printed with no space, such
+    /// as the openers of [`closer_for`](Self::closer_for).
     fn hugs_next(token: SyntaxToken<'_>) -> bool;
     /// Language exceptions to comment placement, tried before the generic
-    /// rules.
+    /// rules; `None` falls through to them. A hook may only target elements
+    /// inside the comment's enclosing node; a `Leading` layout is not
+    /// `EndOfLine`, and a `Trailing` layout is `EndOfLine` or `Inline`
+    /// (checked by debug assertions).
     fn place_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>>;
     /// The item-list owner a formatter-ignore marker belongs to, given the
     /// deepest node containing the tokens around it: the owner when the

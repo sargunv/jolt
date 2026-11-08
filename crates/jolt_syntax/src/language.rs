@@ -8,6 +8,8 @@ pub struct RawSyntaxKind(pub u16);
 /// (`JavaLanguage`).
 pub trait Language: Copy + Eq + std::fmt::Debug + 'static {
     type Kind: Copy + Eq + std::fmt::Debug;
+    /// The token that ends every token stream and holds the file's trailing
+    /// trivia.
     const EOF: Self::Kind;
     /// The single bogus node kind, accepted at every category slot and list
     /// item position.

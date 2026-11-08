@@ -36,10 +36,13 @@ impl FormatLanguage for JavaFormat {
         crate::dispatch::format_node(f, node)
     }
 
+    /// `,` and `;`.
     fn is_separator(token: SyntaxToken<'_>) -> bool {
         matches!(kind(token), K::Comma | K::Semicolon)
     }
 
+    /// `(`, `[`, `{`, and the `<` of type arguments and type parameters
+    /// (H2).
     fn closer_for(token: SyntaxToken<'_>) -> Option<RawSyntaxKind> {
         let closer = match kind(token) {
             K::LParen => K::RParen,
@@ -51,6 +54,8 @@ impl FormatLanguage for JavaFormat {
         Some(closer.to_raw())
     }
 
+    /// `)`, `]`, `}`, and the `>` of type arguments and type parameters
+    /// (H2).
     fn is_closer(token: SyntaxToken<'_>) -> bool {
         match kind(token) {
             K::RParen | K::RBracket | K::RBrace => true,
@@ -78,15 +83,18 @@ impl FormatLanguage for JavaFormat {
             || (right == '=' && "+-*/%&|^<>!=".contains(left))
     }
 
+    /// An unterminated text block.
     fn is_open_literal(token: SyntaxToken<'_>) -> bool {
         let text = token.text();
         kind(token) == K::TextBlockLiteral && !(text.len() >= 6 && text.ends_with("\"\"\""))
     }
 
+    /// The openers, `.`, `::` and `@`.
     fn hugs_next(token: SyntaxToken<'_>) -> bool {
         Self::closer_for(token).is_some() || matches!(kind(token), K::Dot | K::DoubleColon | K::At)
     }
 
+    /// Hooks H1 to H5 (see `docs/internals/formatter.md`).
     fn place_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>> {
         let prev = context.prev?;
         body_comment(context, prev)
@@ -95,6 +103,9 @@ impl FormatLanguage for JavaFormat {
             .or_else(|| comment_before_stray_semicolon(context, prev))
     }
 
+    /// The compilation unit, type bodies, blocks, constructor bodies, switch
+    /// block statement groups and the module declaration. Their item list
+    /// nodes map to the owner.
     fn ignore_scope(enclosing: SyntaxNode<'_>) -> Option<SyntaxNode<'_>> {
         match node_kind(enclosing) {
             K::CompilationUnit

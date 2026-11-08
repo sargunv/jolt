@@ -368,7 +368,8 @@ impl<'s, L: Language> Parser<'s, L> {
     /// The one deep-nesting recovery. Records a "too deeply nested"
     /// diagnostic and wraps tokens into a single `BOGUS` node until, at
     /// bracket depth zero, a token in `stops` or an unmatched closing
-    /// bracket, or EOF.
+    /// bracket, or EOF. The brackets are [`Language::BRACKETS`]; it never
+    /// splits a token.
     pub fn recover_too_deep(&mut self, stops: TokenSet) -> CompletedMarker {
         let marker = self.start();
         self.error(

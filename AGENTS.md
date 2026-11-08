@@ -11,8 +11,9 @@ Fast, opinionated Java formatter.
 - `tools/`: corpus import (`import/import.py`), the baseline outputs
   (`baseline.sh`), the profile-guided release build (`pgo.py`), the optimized
   plugin build (`wasm.sh`), and the benchmark (`bench.py`).
-- `docs/internals/formatter.md`: the formatter design (crates, APIs, comment
-  model, verification).
+- `docs/internals/formatter.md`: the formatter design (crates, contracts,
+  comment model, verification). Signatures and per-item contracts live in
+  rustdoc, which `mise run check` builds with warnings denied.
 - `docs/guides/style.md`: the Java output, rule by rule. A test formats its
   examples (`jolt_java_fmt/tests/style_guide.rs`).
 

@@ -27,7 +27,7 @@ fn oracle_failures<C: CorpusLanguage>(
 }
 
 /// Formats every fixture under `root` except `syntax/lexer` and
-/// `syntax/recovery`, checks the oracle at [`ORACLE_WIDTHS`], and
+/// `syntax/recovery`, checks the oracle at `ORACLE_WIDTHS`, and
 /// snapshots the output at width 80. Fixtures expected to carry diagnostics
 /// get the oracle without a snapshot.
 ///

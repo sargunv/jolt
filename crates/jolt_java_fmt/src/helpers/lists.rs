@@ -14,8 +14,10 @@ pub(crate) enum ListLayout {
     Plain,
     /// Argument lists: `Plain`, and a last argument with a body (see
     /// `has_body`) hugs the parentheses when it has a forced break and the
-    /// arguments before it have none: `run(a, () -> {` … `});` (see
-    /// `DocBuilder::hug`).
+    /// arguments before it have none, in a recovery-free list without
+    /// dangling comments: `run(a, () -> {` … `});` (see
+    /// [`DocBuilder::hug`](jolt_fmt::DocBuilder::hug)). So two lambda bodies
+    /// keep the broken list.
     Arguments,
     /// Array and annotation-array initializers: `{ a, b }` when flat; when
     /// broken, a synthesized `,` after the last element (before a trailing
@@ -26,9 +28,20 @@ pub(crate) enum ListLayout {
 
 /// `open item, item close` with the break-all layout: flat if it fits, else
 /// every element on its own line one indent deeper and `close` on its own
-/// line. `owner` is the node that owns `open` (or would); its dangling
-/// comments print after the last element, preceded by a blank line when the
-/// source had one there.
+/// line. `owner` is the node that owns `open` (or would, when `open` is
+/// missing); its dangling comments print after the last element, preceded
+/// by a blank line when the source had one there. Every list node with a
+/// delimiter passes its node as `owner`, so its dangling comments print.
+///
+/// For comma-separated lists only: a source separator prints with `token`,
+/// a synthesized one (N8) with `sticky`, and a `Missing` element prints
+/// nothing. A resource specification (`;` separators and a removable
+/// trailing `;`) has its own rule, which uses [`parenthesized`].
+///
+/// When `open` has no closer ([`jolt_fmt::is_unclosed`], recovery), no line
+/// is put where the closer would go, so what follows continues after the
+/// last element, where the source has it. [`parenthesized`], and so the
+/// resource specification, does the same.
 pub(crate) fn delimited<'a, T: AstNode<'a>>(
     f: &mut JavaFormatter<'a>,
     owner: SyntaxNode<'a>,
