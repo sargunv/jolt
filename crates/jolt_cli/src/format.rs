@@ -232,8 +232,9 @@ struct Walk<'a> {
     /// Each path named on the command line, with the position where it is
     /// first named.
     roots: HashMap<PathBuf, usize>,
-    /// The files claimed for formatting so far, when one root contains
-    /// another and the walk can find a file under both.
+    /// The files claimed for formatting and the paths reported unreadable so
+    /// far, when one root contains another and the walk can find a path under
+    /// both.
     seen: Option<Mutex<HashSet<PathBuf>>>,
     /// The reports so far, each by the position of its root and its path.
     reports: Mutex<Vec<((usize, PathBuf), Report)>>,
@@ -322,6 +323,10 @@ impl Walk<'_> {
             let report = Report::unreadable(format!("{error}\n"));
             return self.report(usize::MAX, PathBuf::new(), report);
         };
+        // The walks of two overlapping roots can both fail to read a path.
+        if !self.claim(path) {
+            return;
+        }
         let index = self.root(path).map_or(usize::MAX, |(index, _)| index);
         let message = format!("{}: {cause}\n", display_path(self.cwd, path));
         self.report(index, path.to_path_buf(), Report::unreadable(message));

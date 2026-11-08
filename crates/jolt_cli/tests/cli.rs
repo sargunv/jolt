@@ -47,6 +47,18 @@ impl Project {
     /// Runs `jolt` in `cwd` (relative to the project) and renders the result.
     fn run_in(&self, cwd: &str, args: &[&str], stdin: &str) -> String {
         let before = self.files();
+        let mut rendered = self.output(cwd, args, stdin);
+        for (path, contents) in self.files() {
+            if before.get(&path) != Some(&contents) {
+                let _ = write!(rendered, "--- wrote {path}\n{contents}");
+            }
+        }
+        self.normalize(&rendered)
+    }
+
+    /// Runs `jolt` in `cwd` (relative to the project) and renders its exit
+    /// status and output, without the files it wrote.
+    fn output(&self, cwd: &str, args: &[&str], stdin: &str) -> String {
         let mut child = Command::new(env!("CARGO_BIN_EXE_jolt"))
             .args(args)
             .current_dir(self.dir.path().join(cwd))
@@ -69,12 +81,7 @@ impl Project {
                 let _ = write!(rendered, "--- {label}\n{}", String::from_utf8_lossy(bytes));
             }
         }
-        for (path, contents) in self.files() {
-            if before.get(&path) != Some(&contents) {
-                let _ = write!(rendered, "--- wrote {path}\n{contents}");
-            }
-        }
-        self.normalize(&rendered)
+        rendered
     }
 
     fn run(&self, args: &[&str], stdin: &str) -> String {
@@ -103,11 +110,7 @@ impl Project {
 }
 
 fn collect(root: &Path, dir: &Path, files: &mut BTreeMap<String, String>) {
-    // A directory a test made unreadable is left out.
-    let Ok(entries) = fs::read_dir(dir) else {
-        return;
-    };
-    for entry in entries {
+    for entry in fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
         if path.is_dir() {
             collect(root, &path, files);
@@ -213,12 +216,24 @@ fn errors_fail_only_what_they_affect() {
 fn unreadable_directory() {
     use std::os::unix::fs::PermissionsExt as _;
 
-    let project = Project::new(&[("A.java", NESTED), ("locked/B.java", NESTED)]);
-    let locked = project.dir.path().join("locked");
+    let project = Project::new(&[
+        ("A.java", NESTED),
+        ("sub/B.java", NESTED),
+        ("sub/locked/C.java", NESTED),
+    ]);
+    let locked = project.dir.path().join("sub/locked");
     fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).unwrap();
-    let output = project.run(&["fmt"], "");
+    // Overlapping paths report the directory they share once.
+    let outputs = [
+        &["fmt", "--check"][..],
+        &["fmt", "--check", ".", "sub"],
+        &["fmt", "--check", ".", "sub/locked"],
+    ]
+    .map(|args| project.normalize(&project.output(".", args, "")));
     fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).unwrap();
-    insta::assert_snapshot!(output);
+    for output in outputs {
+        insta::assert_snapshot!(output);
+    }
 }
 
 /// Each file is formatted once, and reported under the first named path

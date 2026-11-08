@@ -2,17 +2,12 @@
 source: crates/jolt_cli/tests/cli.rs
 expression: output
 ---
-$ jolt fmt
+$ jolt fmt --check
 status: 2
+--- stdout
+A.java
+sub/B.java
 --- stderr
-locked: Permission denied (os error 13)
-Reformatted 1 of 1 file in $TIME
-1 path could not be read
---- wrote A.java
-class A {
-  void f() {
-    if (ready) {
-      go();
-    }
-  }
-}
+sub/locked: Permission denied (os error 13)
+Checked 2 files in $TIME
+2 files need formatting, 1 path could not be read
