@@ -26,11 +26,14 @@ impl Language {
 /// What to do with a source that has syntax errors.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OnSyntaxError {
+    /// Write nothing and return the errors ([`Outcome::Refused`]).
     Refuse,
+    /// Format anyway: the parsed pieces get the normal rules, and what the
+    /// parser could not shape prints as written.
     Format,
 }
 
-/// What [`format`] did.
+/// What [`format()`] did.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Outcome {
     /// Output was written to the sink; `halted` when the sink broke early.

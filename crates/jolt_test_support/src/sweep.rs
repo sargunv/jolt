@@ -65,11 +65,11 @@ const MAX_SAMPLES_PER_KEY: usize = 20;
 /// How thoroughly the sweep checks a suite.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Depth {
-    /// Every boundary of small files; [`SAMPLED_PROBES`] per shape
-    /// otherwise; probes at [`PROBE_WIDTH`].
+    /// Every boundary of small files; `SAMPLED_PROBES` per shape
+    /// otherwise; probes at `PROBE_WIDTH`.
     Sampled,
     /// Every boundary at every width (and every one-token deletion when
-    /// mutating) for files up to [`EXHAUSTIVE_MAX_BYTES`]; larger files
+    /// mutating) for files up to `EXHAUSTIVE_MAX_BYTES`; larger files
     /// are sampled.
     Exhaustive,
 }
@@ -113,7 +113,7 @@ fn probe_boundaries(
 }
 
 /// One checked variant of a file, as `jcheck` replays it: `<shape><n>`, or
-/// `<shape><n>@<width>` at a width other than [`PROBE_WIDTH`], or
+/// `<shape><n>@<width>` at a width other than `PROBE_WIDTH`, or
 /// `delete<n>` (the `n`th non-empty token removed).
 #[derive(Clone, Copy)]
 pub enum Variant {

@@ -10,6 +10,10 @@ steps {
         glob = List("**/*.rs")
         check = "cargo clippy --workspace --all-targets --all-features -- -D warnings"
     }
+    ["cargo-doc"] {
+        glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
+        check = "RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --document-private-items"
+    }
     ["cargo-machete"] {
         glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
         check = "cargo machete"
