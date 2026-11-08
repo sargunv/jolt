@@ -59,9 +59,11 @@ the differences readers notice first:
   breaks there (`Runnable task = () -> {`).
 - **Member chains.** After a simple receiver such as a local variable or a class
   name, Jolt keeps the first call on the receiver's line
-  (`builder.withName(name)`), and a single call stays on its receiver's line
-  when moving it doesn't make it fit (`this.registry.register(` / `endpoint,` /
-  …). google-java-format starts every call on a new line.
+  (`builder.withName(name)`); google-java-format breaks a chain of several calls
+  before each call (`builder` / `.withName(name)`). A single call after a call
+  stays on the line of that call's `)` when moving it doesn't make it fit
+  (`assertThat(` / … / `).isEqualTo(3);`), where google-java-format moves it to
+  a line of its own (`)` / `.isEqualTo(3);`).
 - **Javadoc.** google-java-format rewraps Javadoc text, and expands a one-line
   Javadoc that doesn't fit. Jolt keeps the text of every comment as written and
   only realigns the `*` at the start of its lines.
@@ -475,7 +477,21 @@ switch (value) {
   group one more. Each `case …:` label is on its own line. A group whose only
   statement is a block keeps the block on the label line (`case 1: {`).
 - A rule's expression body (`case X -> value;`) that doesn't fit is laid out as
-  an [assignment's value](#assignment) is.
+  an [assignment's value](#assignment) is. After a label that wraps, the body
+  starts on the next line:
+
+```java
+switch (shape) {
+  case Point(
+      int xCoordinateValue,
+      int yCoordinateValue,
+      int zCoordinateValue
+    ) when xCoordinateValue > 0 ->
+    describePoint(xCoordinateValue, yCoordinateValue, "first quadrant");
+  default -> {}
+}
+```
+
 - Label lists (`case null, default`) and guards (`when …`) stay on the label
   line. Redundant parentheses around a guard are removed, unless a comment is on
   or inside them.
@@ -525,18 +541,32 @@ allowed =
   user.isActive()
     && account.hasPermission("write")
     && featureFlags.isEnabled("collaborative-editing");
+CompletableFuture<ServerResponse> responseFuture =
+  CompletableFuture.supplyAsync(() -> {
+    return render();
+  });
+SomeHandlerType handler =
+  new SomeHandlerType(firstArgumentValue, secondArgument) {
+    public void run() {}
+  };
 ```
 
 - A value that doesn't fit on the operator's line moves to the next line, one
-  level deeper, if it fits there.
+  level deeper, if it fits there. A call that stays open for a last argument
+  with a body (see [Calls](#calls)) counts as fitting there if its line fits up
+  to the body.
 - Otherwise the value starts on the operator's line and breaks by its own rule,
   as a `return` value does: a call breaks its arguments, a lambda or an
   anonymous class opens its body, an array initializer opens its braces. The
-  value stays on the operator's line only if the line then fits, and only if
-  what breaks is the last part of the value on that line. When an earlier part
-  would have to break instead, such as the type arguments before a call's
-  arguments or a lambda's parameters before its body, the value moves to the
-  next line.
+  value stays on the operator's line only if the line then fits, what breaks is
+  the last part of the value on that line, and on the next line the same part
+  would have to break as well. When an earlier part would have to break instead,
+  such as the type arguments before a call's arguments or a lambda's parameters
+  before its body, or when the part would fit on the next line, such as the
+  header of an anonymous class, the value moves to the next line.
+- The lines the value breaks into must be indented deeper than the line it
+  starts on. When the operator ends a continuation line, such as a switch label
+  whose pattern or guard wraps, the value moves to the next line.
 - An operator chain (`a && b`, `a + b`, `a instanceof T`) or a conditional that
   doesn't fit always moves to the next line, so that its operands line up one
   level deeper.
@@ -627,10 +657,13 @@ return com.example.deep.config.ConflictResolutionFactory
   its line (`builder.withFirstValue(…)`, `Foo.builder()`). After a qualified
   receiver (`this.a.b`, `com.example.Factory`) the first call starts a new line
   too.
-- A single call after a receiver that doesn't keep it on its line (a qualified
-  name, a call, `new Foo()`) is laid out as an [assignment's value](#assignment)
-  is: it moves to the next line only if that makes it fit. Otherwise it stays on
-  the receiver's line and its arguments break:
+- When the last call is the only one after the receiver
+  (`this.registry.register(…)`, `assertThat(…).isTrue()`), or the only one after
+  the first call that stays on the receiver's line
+  (`Mono.fromCallable(…).subscribeOn(…)`), it is laid out as an
+  [assignment's value](#assignment) is: it moves to the next line only if that
+  makes it fit. Otherwise it stays on the line where the receiver ends and its
+  arguments break:
 
 ```java
 this.endpointRegistry.registerListenerContainer(
@@ -641,6 +674,9 @@ this.endpointRegistry.registerListenerContainer(
 assertThat(
   registry.getListenerContainer("firstListenerName").getConcurrencyLimit()
 ).isEqualTo(3);
+return Mono.fromCallable(() -> {
+  return compute();
+}).subscribeOn(Schedulers.boundedElastic());
 ```
 
 ### Lambdas and method references
