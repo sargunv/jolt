@@ -565,9 +565,16 @@ schema choice.
 - Recovery has exactly three representations: an empty required slot (missing),
   a `Bogus` node at a category or list position (unexpected tokens), and a
   `MALFORMED` node whose children did not fit its shape. There is no other.
-- The parenthesis/annotation lookahead table is built in linear time and answers
-  indexed queries. Whether a formal parameter is a receiver (`X<T, U> this`) is
-  a forward scan of that parameter, capped at 512 tokens.
+- One lookahead table, built in linear time when the parser is created, stores
+  for every token where the scans that start there end: the matching `)` or `]`
+  of a `(` or `[`, the first `{` or `;` of a member header and the first `;` or
+  `}` of a statement outside brackets, and the end of a run of annotations and
+  of a run of annotations and modifiers. Queries are `O(1)`. Splitting a `>`
+  token changes no token the table depends on and no token index. Whether a
+  `for` header has a top-level `:` and whether a switch label ends in `->` are
+  forward scans that skip bracketed groups through the table. Whether a formal
+  parameter is a receiver (`X<T, U> this`) is a forward scan of that parameter,
+  capped at 512 tokens.
 - Every other speculative lookahead (type arguments, casts, lambda heads,
   modifiers) scans at most one type, annotation or header whose nesting is
   capped at `MAX_DEPTH`, or answers balanced-bracket questions from the table,

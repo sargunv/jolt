@@ -1,4 +1,5 @@
-// Contains recovery paths for malformed syntax after a parser error is reported.
+//! Recovery paths for malformed syntax after a parser error is reported.
+
 use super::{JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
@@ -27,7 +28,7 @@ impl Parser<'_> {
         }
     }
 
-    pub(in crate::parser::grammar) fn at_program_item_recovery_boundary(&mut self) -> bool {
+    pub(in crate::parser::grammar) fn at_program_item_recovery_boundary(&self) -> bool {
         self.starts_package_declaration()
             || self.at(JavaSyntaxKind::ImportKw)
             || self.starts_module_declaration()
@@ -48,5 +49,32 @@ impl Parser<'_> {
         }
 
         self.eat(JavaSyntaxKind::Semicolon);
+    }
+
+    /// Consumes an `open` group up to its matching `close`, or to EOF. Other
+    /// brackets inside are not matched.
+    pub(in crate::parser::grammar) fn consume_balanced_delimited(
+        &mut self,
+        open: JavaSyntaxKind,
+        close: JavaSyntaxKind,
+    ) {
+        if !self.at(open) {
+            return;
+        }
+
+        let mut depth = 0usize;
+        while !self.at_eof() {
+            if self.at(open) {
+                depth += 1;
+            } else if self.at(close) {
+                depth = depth.saturating_sub(1);
+                self.bump();
+                if depth == 0 {
+                    return;
+                }
+                continue;
+            }
+            self.bump();
+        }
     }
 }

@@ -1,10 +1,21 @@
-use super::{BODY_STOPS, JavaSyntaxKind, Parser, StopSet, support::SeparatedElement};
+//! Type, member, and parameter declarations.
+
+use jolt_syntax::TokenSet;
+
+use super::{BODY_STOPS, JavaSyntaxKind, Parser, support::SeparatedElement};
 use crate::parser::codes;
+
+/// Whether a variable may be the unnamed variable `_`.
+#[derive(Clone, Copy)]
+pub(super) enum Unnamed {
+    Allowed,
+    Forbidden,
+}
 
 impl Parser<'_> {
     pub(super) fn parse_type_declaration(&mut self) {
         let type_decl = self.start();
-        self.parse_modifier_list();
+        self.parse_modifier_list(ModifierContext::Type);
 
         let kind = if self.at(JavaSyntaxKind::At) && self.nth(1) == JavaSyntaxKind::InterfaceKw {
             self.bump();
@@ -76,36 +87,18 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn parse_modifier_list(&mut self) {
-        self.parse_modifier_list_for(ModifierContext::Type);
-    }
-
-    pub(super) fn parse_field_modifier_list(&mut self) {
-        self.parse_modifier_list_for(ModifierContext::Field);
-    }
-
-    pub(super) fn parse_method_modifier_list(&mut self) {
-        self.parse_modifier_list_for(ModifierContext::Method);
-    }
-
-    pub(super) fn parse_constructor_modifier_list(&mut self) {
-        self.parse_modifier_list_for(ModifierContext::Constructor);
-    }
-
-    pub(super) fn parse_annotation_element_modifier_list(&mut self) {
-        self.parse_modifier_list_for(ModifierContext::AnnotationElement);
-    }
-
-    fn parse_modifier_list_for(&mut self, context: ModifierContext) {
+    /// The modifiers of a declaration; a modifier `context` does not allow is
+    /// a `Bogus`.
+    fn parse_modifier_list(&mut self, context: ModifierContext) {
         let modifiers = self.start();
         let start = self.position();
 
         let mut guard = self.loop_guard();
         while self.check(&mut guard) {
-            if self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw {
+            if self.lookahead().at_annotation_start() {
                 self.parse_annotation();
-            } else if self.at_type_modifier() {
-                if context.allows(self) {
+            } else if self.lookahead().at_type_modifier() {
+                if context.allows(self.current()) {
                     self.bump_type_modifier();
                 } else {
                     let error = self.start();
@@ -128,10 +121,7 @@ impl Parser<'_> {
     pub(super) fn parse_annotations(&mut self) {
         let annotations = self.start();
         let mut guard = self.loop_guard();
-        while self.at(JavaSyntaxKind::At)
-            && self.nth(1) != JavaSyntaxKind::InterfaceKw
-            && self.check(&mut guard)
-        {
+        while self.lookahead().at_annotation_start() && self.check(&mut guard) {
             self.parse_annotation();
         }
         self.complete(annotations, JavaSyntaxKind::AnnotationList);
@@ -141,10 +131,7 @@ impl Parser<'_> {
         let annotations = self.start();
         let start = self.position();
         let mut guard = self.loop_guard();
-        while self.at(JavaSyntaxKind::At)
-            && self.nth(1) != JavaSyntaxKind::InterfaceKw
-            && self.check(&mut guard)
-        {
+        while self.lookahead().at_annotation_start() && self.check(&mut guard) {
             self.parse_annotation();
         }
         if self.position() == start {
@@ -158,9 +145,9 @@ impl Parser<'_> {
         let modifiers = self.start();
         let mut guard = self.loop_guard();
         while self.check(&mut guard) {
-            if self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw {
+            if self.lookahead().at_annotation_start() {
                 self.parse_annotation();
-            } else if self.at_type_modifier() {
+            } else if self.lookahead().at_type_modifier() {
                 self.parse_bogus_parameter_modifier();
             } else {
                 break;
@@ -243,7 +230,7 @@ impl Parser<'_> {
         let parameter = self.start();
         self.parse_annotations();
         if !self.at_type_identifier()
-            && !self.at_name_segment()
+            && !self.lookahead().at_name_segment()
             && !matches!(self.current(), JavaSyntaxKind::Comma)
             && !self.at_type_argument_close()
             && !self.at_eof()
@@ -320,7 +307,7 @@ impl Parser<'_> {
         }
         let names = self.start();
         self.parse_comma_separated("expected name", Self::at_header_clause_end, |parser| {
-            parser.consume_qualified_name_or_report();
+            parser.consume_qualified_name_required();
         });
         self.complete(names, JavaSyntaxKind::NameList);
     }
@@ -438,9 +425,9 @@ impl Parser<'_> {
 
     pub(super) fn parse_field_declaration(&mut self) {
         let field = self.start();
-        self.parse_field_modifier_list();
+        self.parse_modifier_list(ModifierContext::Field);
         self.parse_type();
-        self.parse_variable_declarator_list();
+        self.parse_variable_declarator_list_until(token_set![Semicolon], Unnamed::Forbidden);
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after field declaration",
@@ -448,24 +435,17 @@ impl Parser<'_> {
         self.complete(field, JavaSyntaxKind::FieldDeclaration);
     }
 
-    pub(super) fn parse_variable_declarator_list(&mut self) {
-        self.parse_variable_declarator_list_until_with(&[JavaSyntaxKind::Semicolon], false);
-    }
-
-    pub(super) fn parse_variable_declarator_list_until(&mut self, stops: &[JavaSyntaxKind]) {
-        self.parse_variable_declarator_list_until_with(stops, true);
-    }
-
-    pub(super) fn parse_variable_declarator_list_until_with(
+    /// The declarators of a field or local variable declaration.
+    pub(super) fn parse_variable_declarator_list_until(
         &mut self,
-        stops: &[JavaSyntaxKind],
-        allow_unnamed: bool,
+        stops: TokenSet,
+        unnamed: Unnamed,
     ) {
         let list = self.start();
         // Unguarded: every further iteration first eats a `,`.
         loop {
-            self.parse_variable_declarator_until(stops, allow_unnamed);
-            if stops.contains(&self.current()) {
+            self.parse_variable_declarator_until(stops, unnamed);
+            if self.at_any(stops) {
                 break;
             }
             if !self.eat(JavaSyntaxKind::Comma) {
@@ -475,21 +455,17 @@ impl Parser<'_> {
         self.complete(list, JavaSyntaxKind::VariableDeclaratorList);
     }
 
-    pub(super) fn parse_variable_declarator_until(
-        &mut self,
-        stops: &[JavaSyntaxKind],
-        allow_unnamed: bool,
-    ) {
+    pub(super) fn parse_variable_declarator_until(&mut self, stops: TokenSet, unnamed: Unnamed) {
         let declarator = self.start();
-        let has_name = if allow_unnamed {
-            self.at_variable_identifier()
-        } else {
-            self.at_name_segment()
+        let lookahead = self.lookahead();
+        let has_name = match unnamed {
+            Unnamed::Allowed => lookahead.at_variable_identifier(),
+            Unnamed::Forbidden => lookahead.at_name_segment(),
         };
         let at_boundary = self.at_eof()
             || self.at(JavaSyntaxKind::Comma)
             || self.at(JavaSyntaxKind::RBrace)
-            || stops.contains(&self.current());
+            || self.at_any(stops);
         if !has_name
             && !at_boundary
             && !matches!(
@@ -501,38 +477,41 @@ impl Parser<'_> {
             while !self.at_eof()
                 && !self.at(JavaSyntaxKind::Comma)
                 && !self.at(JavaSyntaxKind::RBrace)
-                && !stops.contains(&self.current())
+                && !self.at_any(stops)
             {
                 self.bump();
             }
             self.complete(declarator, JavaSyntaxKind::VariableDeclarator);
             return;
         }
-        self.parse_variable_declarator_id(allow_unnamed);
+        self.parse_variable_declarator_id(unnamed);
         if self.eat(JavaSyntaxKind::Assign) {
             self.parse_variable_initializer_until(stops);
         }
         self.complete(declarator, JavaSyntaxKind::VariableDeclarator);
     }
 
-    pub(super) fn parse_variable_declarator_id(&mut self, allow_unnamed: bool) {
-        self.expect_variable_identifier("expected variable name", allow_unnamed);
+    pub(super) fn parse_variable_declarator_id(&mut self, unnamed: Unnamed) {
+        match unnamed {
+            Unnamed::Allowed => self.expect_variable_identifier("expected variable name"),
+            Unnamed::Forbidden => self.expect_named_identifier("expected variable name"),
+        }
         self.parse_array_dimensions();
     }
 
-    pub(super) fn parse_variable_initializer_until(&mut self, stops: &[JavaSyntaxKind]) {
+    pub(super) fn parse_variable_initializer_until(&mut self, stops: TokenSet) {
         let initializer = self.start();
         if self.at(JavaSyntaxKind::LBrace) {
             self.parse_array_initializer_fragment();
         } else {
-            self.parse_expression_until(StopSet::new(stops).with_extra(JavaSyntaxKind::Comma));
+            self.parse_expression_until(stops.with(JavaSyntaxKind::Comma.to_raw()));
         }
         self.complete(initializer, JavaSyntaxKind::VariableInitializer);
     }
 
     pub(super) fn parse_method_declaration(&mut self) {
         let method = self.start();
-        self.parse_method_modifier_list();
+        self.parse_modifier_list(ModifierContext::Method);
         self.parse_optional_type_parameter_list();
         self.parse_optional_annotations();
         self.parse_result_type();
@@ -546,7 +525,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_annotation_element(&mut self) {
         let element = self.start();
-        self.parse_annotation_element_modifier_list();
+        self.parse_modifier_list(ModifierContext::AnnotationElement);
         self.parse_type();
         self.expect_named_identifier("expected annotation element name");
         self.expect(JavaSyntaxKind::LParen, "expected `(`");
@@ -571,7 +550,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_constructor_declaration(&mut self) {
         let constructor = self.start();
-        self.parse_constructor_modifier_list();
+        self.parse_modifier_list(ModifierContext::Constructor);
         self.parse_optional_type_parameter_list();
         self.expect_type_identifier("expected constructor name");
         self.parse_formal_parameter_section();
@@ -582,7 +561,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_compact_constructor_declaration(&mut self) {
         let constructor = self.start();
-        self.parse_constructor_modifier_list();
+        self.parse_modifier_list(ModifierContext::Constructor);
         self.expect_type_identifier("expected compact constructor name");
         self.parse_constructor_block();
         self.complete(constructor, JavaSyntaxKind::CompactConstructorDeclaration);
@@ -652,14 +631,14 @@ impl Parser<'_> {
             valid = false;
         }
         self.parse_annotations();
-        while self.at_type_modifier() {
+        while self.lookahead().at_type_modifier() {
             self.error_unexpected("invalid receiver parameter modifier");
             valid = false;
             self.bump_type_modifier();
             self.parse_annotations();
         }
         self.parse_type();
-        if self.at_name_segment() && self.nth(1) == JavaSyntaxKind::Dot {
+        if self.lookahead().at_name_segment() && self.nth(1) == JavaSyntaxKind::Dot {
             self.bump();
             self.bump();
         }
@@ -689,7 +668,7 @@ impl Parser<'_> {
         self.parse_type();
         self.parse_annotations();
         let varargs = self.eat(JavaSyntaxKind::Ellipsis);
-        self.expect_variable_identifier("expected parameter name", true);
+        self.expect_variable_identifier("expected parameter name");
         self.parse_array_dimensions();
         let misplaced_varargs = varargs && !self.at(JavaSyntaxKind::RParen) && !self.at_eof();
         if misplaced_varargs {
@@ -701,24 +680,21 @@ impl Parser<'_> {
         varargs
     }
 
-    pub(super) fn parse_variable_modifiers(&mut self) -> bool {
+    pub(super) fn parse_variable_modifiers(&mut self) {
         let modifiers = self.start();
-        let start = self.position();
         let mut guard = self.loop_guard();
         while self.check(&mut guard) {
-            if self.at(JavaSyntaxKind::At) && self.nth(1) != JavaSyntaxKind::InterfaceKw {
+            if self.lookahead().at_annotation_start() {
                 self.parse_annotation();
             } else if self.at(JavaSyntaxKind::FinalKw) {
                 self.bump();
-            } else if self.at_type_modifier() {
+            } else if self.lookahead().at_type_modifier() {
                 self.parse_bogus_parameter_modifier();
             } else {
                 break;
             }
         }
-        let has_modifiers = self.position() != start;
         self.complete(modifiers, JavaSyntaxKind::ParameterModifierList);
-        has_modifiers
     }
 
     pub(super) fn parse_optional_throws_clause(&mut self) {
@@ -873,7 +849,7 @@ impl Parser<'_> {
                 JavaSyntaxKind::LBracket => {
                     let access = self.precede(expression);
                     self.bump();
-                    self.parse_expression_until(&[JavaSyntaxKind::RBracket]);
+                    self.parse_expression_until(token_set![RBracket]);
                     self.expect(JavaSyntaxKind::RBracket, "expected `]` after array index");
                     expression = self.complete(access, JavaSyntaxKind::ArrayAccessExpression);
                 }
@@ -916,7 +892,7 @@ impl Parser<'_> {
     pub(super) fn parse_enum_constant(&mut self) {
         let constant = self.start();
         self.parse_annotations();
-        self.expect_variable_identifier("expected enum constant name", false);
+        self.expect_named_identifier("expected enum constant name");
         if self.at(JavaSyntaxKind::LParen) {
             self.parse_argument_list();
         }
@@ -962,6 +938,7 @@ impl Parser<'_> {
     }
 }
 
+/// The kind of declaration a modifier list belongs to.
 #[derive(Clone, Copy)]
 enum ModifierContext {
     Type,
@@ -972,10 +949,11 @@ enum ModifierContext {
 }
 
 impl ModifierContext {
-    fn allows(self, parser: &mut Parser<'_>) -> bool {
+    /// Whether a modifier of `kind` may modify a declaration of this kind.
+    const fn allows(self, kind: JavaSyntaxKind) -> bool {
         match self {
             Self::Type => !matches!(
-                parser.current(),
+                kind,
                 JavaSyntaxKind::NativeKw
                     | JavaSyntaxKind::SynchronizedKw
                     | JavaSyntaxKind::TransientKw
@@ -983,7 +961,7 @@ impl ModifierContext {
                     | JavaSyntaxKind::DefaultKw
             ),
             Self::Field => matches!(
-                parser.current(),
+                kind,
                 JavaSyntaxKind::PublicKw
                     | JavaSyntaxKind::ProtectedKw
                     | JavaSyntaxKind::PrivateKw
@@ -993,7 +971,7 @@ impl ModifierContext {
                     | JavaSyntaxKind::VolatileKw
             ),
             Self::Method => matches!(
-                parser.current(),
+                kind,
                 JavaSyntaxKind::PublicKw
                     | JavaSyntaxKind::ProtectedKw
                     | JavaSyntaxKind::PrivateKw
@@ -1006,13 +984,12 @@ impl ModifierContext {
                     | JavaSyntaxKind::DefaultKw
             ),
             Self::Constructor => matches!(
-                parser.current(),
+                kind,
                 JavaSyntaxKind::PublicKw | JavaSyntaxKind::ProtectedKw | JavaSyntaxKind::PrivateKw
             ),
-            Self::AnnotationElement => matches!(
-                parser.current(),
-                JavaSyntaxKind::PublicKw | JavaSyntaxKind::AbstractKw
-            ),
+            Self::AnnotationElement => {
+                matches!(kind, JavaSyntaxKind::PublicKw | JavaSyntaxKind::AbstractKw)
+            }
         }
     }
 
