@@ -1,6 +1,6 @@
 [package]
 name = "jolt_cli"
-version = "0.20260721.0"
+version = "0.20261108.0"
 description = "Fast, opinionated Java formatter"
 repository = "https://github.com/sargunv/jolt"
 license = "Apache-2.0"
