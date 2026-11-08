@@ -1,6 +1,6 @@
 //! Try statements, catch and finally clauses, and resources.
 
-use jolt_fmt::{Doc, cat, indent, is_unclosed};
+use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
     CatchClause, CatchClauseList, CatchParameter, CatchTypeList, FinallyClause, Resource,
     ResourceList, ResourceSpecification, ResourceVariableDeclaration, ResourceVariableType,
@@ -9,9 +9,9 @@ use jolt_java_syntax::{
 use jolt_syntax::{AstNode, SyntaxElement};
 
 use super::parenthesized;
+use crate::JavaFormatter;
 use crate::helpers::lists::{joined, list_item};
 use crate::rules::types::inline_modifiers;
-use crate::{JavaFormat, JavaFormatter};
 
 /// `try {` … `} catch (…) {` … `} finally {` … `}`.
 pub(crate) fn try_statement<'a>(f: &mut JavaFormatter<'a>, node: TryStatement<'a>) -> Doc {
@@ -85,24 +85,18 @@ pub(crate) fn finally_clause<'a>(f: &mut JavaFormatter<'a>, node: FinallyClause<
     cat![f; keyword, f.space(), body]
 }
 
-/// Always broken: `(`, one resource per line ending in `;` except the last,
-/// `)`. A trailing `;` after the last resource is removed (N5); its comments
-/// keep their own line before `)`.
+/// `(a; b)` that breaks like a call: one resource per line ending in `;`
+/// except the last. A trailing `;` after the last resource is removed (N5);
+/// its comments keep their own line before `)`.
 pub(crate) fn resource_specification<'a>(
     f: &mut JavaFormatter<'a>,
     node: ResourceSpecification<'a>,
 ) -> Doc {
-    let before_close = if node.open_paren().is_some_and(is_unclosed::<JavaFormat>) {
-        Doc::NIL
-    } else {
-        f.hard_line()
-    };
-    let open = f.token_opt(node.open_paren());
     let resources = node
         .resources()
         .into_iter()
         .flat_map(ResourceList::elements);
-    let mut docs = vec![joined(f, resources, |f| f.hard_line())];
+    let mut docs = vec![joined(f, resources, |f| f.line())];
     if let Some(semicolon) = node.trailing_semicolon() {
         if node.syntax().is_recovery_free() {
             let removed = f.removed(SyntaxElement::Token(semicolon));
@@ -114,10 +108,13 @@ pub(crate) fn resource_specification<'a>(
         }
     }
     let inner = f.concat(docs);
-    let inner = f.with_dangling(node.syntax(), inner);
-    let inner = indent![f; f.hard_line(), inner];
-    let close = f.token_opt(node.close_paren());
-    cat![f; open, inner, before_close, close]
+    parenthesized(
+        f,
+        node.syntax(),
+        node.open_paren(),
+        inner,
+        node.close_paren(),
+    )
 }
 
 pub(crate) fn resource<'a>(f: &mut JavaFormatter<'a>, node: Resource<'a>) -> Doc {

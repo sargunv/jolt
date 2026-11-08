@@ -8,10 +8,7 @@ class C { void m() { try (a + /* resource */ ; b) {} catch (A | /* catch */ | B 
 formatted:
 class C {
   void m() {
-    try (
-      a + /* resource */;
-      b
-    ) {} catch (A | /* catch */ | B e) {}
+    try (a + /* resource */; b) {} catch (A | /* catch */ | B e) {}
   }
 }
 

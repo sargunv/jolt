@@ -19,10 +19,7 @@ class Example {
   }
 
   void annotated() throws Exception {
-    try (
-      @Nonnull AutoCloseable declared = open();
-      this.existing
-    ) {
+    try (@Nonnull AutoCloseable declared = open(); this.existing) {
       use(declared);
     }
   }

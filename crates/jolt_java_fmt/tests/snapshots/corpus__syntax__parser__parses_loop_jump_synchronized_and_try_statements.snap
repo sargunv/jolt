@@ -22,10 +22,7 @@ class Flow {
     } finally {
       values.clear();
     }
-    try (
-      var ignored = open();
-      existing
-    ) {}
+    try (var ignored = open(); existing) {}
     return 0;
   }
 

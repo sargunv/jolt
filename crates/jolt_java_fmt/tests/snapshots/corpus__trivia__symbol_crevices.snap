@@ -30,7 +30,8 @@ class SymbolCrevices
     /* JOLT-TRIVIA:param-type-name */ name /* JOLT-TRIVIA:param-name-before-comma */,
     int... /* JOLT-TRIVIA:varargs-before-name */ numbers /* JOLT-TRIVIA:param-name-before-close */
   )
-    throws java /* JOLT-TRIVIA:throws-fqn-1 */ .io /* JOLT-TRIVIA:throws-fqn-2 */ .IOException {
+    throws
+      java /* JOLT-TRIVIA:throws-fqn-1 */ .io /* JOLT-TRIVIA:throws-fqn-2 */ .IOException {
     /* JOLT-TRIVIA:throws-before-body */
     /* JOLT-TRIVIA:empty-statement-after-semi */
     helper /* JOLT-TRIVIA:call-name-before-paren */ (

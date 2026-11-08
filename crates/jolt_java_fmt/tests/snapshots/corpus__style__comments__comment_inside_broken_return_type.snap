@@ -10,8 +10,7 @@ class CommentInsideBrokenReturnType {
       Pair<Pair<T, T>, Pair<T, T>>
     >,
     Pair<Pair<Pair<T, T>, Pair<T, T>>, Pair<Pair<T, T>, Pair<T, T>>>
-  > method(int x)
-    throws Exception {
+  > method(int x) throws Exception {
     return null;
   }
 }

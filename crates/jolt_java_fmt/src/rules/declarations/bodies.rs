@@ -142,7 +142,8 @@ pub(crate) fn enum_body<'a>(f: &mut JavaFormatter<'a>, node: EnumBody<'a>) -> Do
 }
 
 /// The constants with their separators and the `;`, and the comments that
-/// start the section after them. The `;` that ends the constants moves up to
+/// start the section after them. Without members, the `;` is removed and the
+/// last constant gets a comma. With members, the `;` moves up to
 /// the last constant, past a removed trailing comma, whose comments follow it
 /// on its line (`B, // c` / `;` prints `B; // c`). When the comma or the `;`
 /// has a comment that starts a line before it, or the `;` has comments after
@@ -170,8 +171,9 @@ fn enum_constants<'a>(
         .rposition(|element| matches!(element, ListElement::Item(_) | ListElement::Bogus(_)));
     let mut constants = Vec::new();
     let mut removed_comma = None;
-    // A comma is synthesized after the last constant unless one follows it.
-    let synthesize_comma = normalize && separator.is_none() && !has_members;
+    // Without members, the `;` is redundant: it is removed, and a comma is
+    // synthesized after the last constant unless one follows it.
+    let synthesize_comma = normalize && !has_members;
     let mut needs_comma = false;
     for (index, element) in elements.into_iter().enumerate() {
         let constant = match element {
@@ -181,6 +183,7 @@ fn enum_constants<'a>(
                 needs_comma = false;
                 if last_constant.is_some_and(|last| index > last)
                     && normalize
+                    && has_members
                     && separator.is_some()
                 {
                     removed_comma = Some(comma);
@@ -199,7 +202,7 @@ fn enum_constants<'a>(
     }
     let mut semicolon_comments = Doc::NIL;
     match separator {
-        Some(semicolon) if normalize && last_constant.is_some() => {
+        Some(semicolon) if normalize && has_members && last_constant.is_some() => {
             constants.push(f.sticky(";"));
             let comma = removed_comma.map(SyntaxElement::Token);
             let semicolon = SyntaxElement::Token(semicolon);
@@ -222,9 +225,14 @@ fn enum_constants<'a>(
         Some(semicolon) if has_members || !normalize => {
             constants.push(f.token(semicolon));
         }
-        Some(semicolon) => constants.push(f.removed(SyntaxElement::Token(semicolon))),
-        None if needs_comma => constants.push(f.sticky(",")),
-        None => {}
+        separator => {
+            if needs_comma {
+                constants.push(f.sticky(","));
+            }
+            if let Some(semicolon) = separator {
+                constants.push(f.removed(SyntaxElement::Token(semicolon)));
+            }
+        }
     }
     (f.concat(constants), semicolon_comments)
 }

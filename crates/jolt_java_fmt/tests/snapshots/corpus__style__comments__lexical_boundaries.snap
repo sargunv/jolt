@@ -20,12 +20,8 @@ class CommentLexicalBoundaries {
 
   void adjacent() {
     /*alpha*/ /**/ /*beta*/
-    /**
-     * *
-     */
-    /**
-     * **
-     */
+    /****/
+    /*****/
     /*/*/
     /* **/
     /* ***/

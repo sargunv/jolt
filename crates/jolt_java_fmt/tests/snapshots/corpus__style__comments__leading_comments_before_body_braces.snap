@@ -37,7 +37,7 @@ enum LeadingCommentBeforeEnumBrace {
   CONSTANT {
     /* leads an enum constant body brace */
     int inner;
-  };
+  },
 }
 
 record LeadingCommentBeforeRecordBrace(int value) {

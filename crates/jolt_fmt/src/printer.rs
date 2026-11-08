@@ -267,7 +267,7 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
     }
 
     fn write(&mut self, text: &Text<'_>) {
-        if text.flags & MULTILINE == 0 && text.reindent != Some(Reindent::ExpandedDoc) {
+        if text.flags & MULTILINE == 0 {
             self.out.push_str(text.text);
             self.column += text.width;
             return;
@@ -321,12 +321,12 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 }
                 self.verbatim_base = base;
             }
-            Some(reindent @ (Reindent::Comment | Reindent::ExpandedDoc)) => {
+            Some(Reindent::Comment) => {
                 let base = std::mem::take(&mut self.line_ws);
                 let mut first = true;
                 let out = &mut self.out;
                 let column = &mut self.column;
-                comment_lines(text.text, reindent == Reindent::ExpandedDoc, |parts| {
+                comment_lines(text.text, |parts| {
                     if first {
                         first = false;
                     } else {

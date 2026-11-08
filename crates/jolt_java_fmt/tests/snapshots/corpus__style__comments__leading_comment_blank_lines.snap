@@ -32,9 +32,7 @@ class LeadingCommentBlankLines {
 
   int afterComment = 5;
 
-  /**
-   * Doc comment separated from its method.
-   */
+  /** Doc comment separated from its method. */
 
   void documented() {
     // comment separated from the statement it leads

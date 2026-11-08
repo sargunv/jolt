@@ -8,9 +8,7 @@ import java.io.InputStream;
 @interface A {}
 
 class LeadingCommentOwnership {
-  /**
-   * Before a structured modifier that precedes an annotation.
-   */
+  /** Before a structured modifier that precedes an annotation. */
   @A
   public static class DocumentedModifierFirst {}
 
@@ -34,24 +32,19 @@ class LeadingCommentOwnership {
   public // Trailing modifier comment.
   static class Trailing {}
 
-  /**
-   * Generic method documentation.
-   */
+  /** Generic method documentation. */
   <T> @A T method(T value) {
     return value;
   }
 
-  /**
-   * Generic constructor documentation.
-   */
+  /** Generic constructor documentation. */
   <T> LeadingCommentOwnership(T value) {}
 
   void declarations(
     Iterable<String> values,
     InputStream input,
     Object candidate
-  )
-    throws Exception {
+  ) throws Exception {
     int before = 0;
     // Local variable documentation.
     @A
@@ -81,30 +74,22 @@ class LeadingCommentOwnership {
 class AnnotatedType {}
 
 record Compact(int value) {
-  /**
-   * Compact constructor documentation.
-   */
+  /** Compact constructor documentation. */
   @A
   Compact {}
 }
 
 @interface Elements {
-  /**
-   * Annotated element documentation.
-   */
+  /** Annotated element documentation. */
   @A
   String value();
 
-  /**
-   * Modified element documentation.
-   */
+  /** Modified element documentation. */
   public String explicit();
 }
 
 enum Values {
-  /**
-   * Annotated constant documentation.
-   */
+  /** Annotated constant documentation. */
   @Deprecated
   A,
   B,

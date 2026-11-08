@@ -33,8 +33,6 @@ pub enum Reindent<'a> {
     /// A multi-line block comment: star blocks are re-aligned under the
     /// opening delimiter, other lines are trimmed (see [`comment_lines`]).
     Comment,
-    /// A single-line doc comment expanded into a three-line star block.
-    ExpandedDoc,
     /// Verbatim source: `prefix` is removed from each continuation line that
     /// starts with it.
     Strip(&'a str),
@@ -187,15 +185,14 @@ impl<'a> DocBuilder<'a> {
         let width = match reindent {
             None | Some(Reindent::Strip(_)) if !multiline => display_width(text),
             None | Some(Reindent::Strip(_)) => display_width(first_line(text)),
-            Some(Reindent::Comment | Reindent::ExpandedDoc) => {
+            Some(Reindent::Comment) => {
                 let mut width = None;
-                comment_lines(text, reindent == Some(Reindent::ExpandedDoc), |parts| {
+                comment_lines(text, |parts| {
                     width.get_or_insert_with(|| parts.iter().map(|part| display_width(part)).sum());
                 });
                 width.unwrap_or(0)
             }
         };
-        let multiline = multiline || reindent == Some(Reindent::ExpandedDoc);
         self.push_text(Text {
             text,
             width,
@@ -389,17 +386,17 @@ pub(crate) fn display_width(text: &str) -> u32 {
 }
 
 /// The output lines of a block comment, each given as parts to concatenate:
-/// a multi-line doc comment (`/**`), or any comment with `expand_doc`, is a
-/// star block whose opener text moves to its own line; a multi-line block
+/// a multi-line doc comment (`/**`) is a star block whose opener text moves to its own line; a multi-line block
 /// comment whose continuation starts with `*` is a star block that keeps its
 /// opener text; any other comment keeps its continuation lines' indentation
 /// relative to each other. A star line keeps its text after the `*` and one
 /// space, so `<pre>` code stays indented.
-pub(crate) fn comment_lines<'t>(text: &'t str, expand_doc: bool, mut emit: impl FnMut(&[&'t str])) {
+pub(crate) fn comment_lines<'t>(text: &'t str, mut emit: impl FnMut(&[&'t str])) {
     let doc = text.starts_with("/**") && !text.starts_with("/**/");
     let content = strip_delimiters(text);
     let multiline = has_line_break(content);
-    if !(doc && (multiline || expand_doc)) && !is_star_block(content) {
+    let star_block = (doc && multiline) || is_star_block(content);
+    if !star_block {
         let mut lines = lines(text.trim());
         emit(&[lines.next().unwrap_or("").trim()]);
         let shared = shared_indentation(lines.clone());

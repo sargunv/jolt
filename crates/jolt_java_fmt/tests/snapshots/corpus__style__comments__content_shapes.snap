@@ -6,9 +6,7 @@ formatted:
 class CommentContentShapes {
   // /* block markers */ /** doc markers */ ////
   /* // line marker and /// more */
-  /**
-   * // line marker and {@code /* spaced star-slash * /}
-   */
+  /** // line marker and {@code /* spaced star-slash * /} */
   /* Καλημέρα 世界 café */
   //// repeated slash line
 

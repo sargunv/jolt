@@ -63,27 +63,15 @@ class RecoveredStatements {
   }
 
   void resources(AutoCloseable existing) {
-    try (
-      AutoCloseable missing /* resource-initializer */
-    ) {}
-    try (
-      AutoCloseable first = open(), /* resource-extra */ second = open()
-    ) {}
-    try (
-      AutoCloseable first = open(), /* resource-trailing */
-    ) {}
+    try (AutoCloseable missing /* resource-initializer */) {}
+    try (AutoCloseable first = open(), /* resource-extra */ second = open()) {}
+    try (AutoCloseable first = open(), /* resource-trailing */) {}
     try (
       /* resource-missing-access */
     ) {}
-    try (
-      existing /* resource-junk */ @
-    ) {}
-    try (
-      call() /* resource-invalid-access */
-    ) {}
-    try (
-      var malformed = /* resource-trailing */ ;
-    ) {}
+    try (existing /* resource-junk */ @) {}
+    try (call() /* resource-invalid-access */) {}
+    try (var malformed = /* resource-trailing */ ;) {}
     try {} catch (Exception exception /* catch-dimension */ []) {}
   }
 
@@ -137,9 +125,7 @@ class RecoveredStatements {
   }
 
   void missingResourceTry(AutoCloseable resource) {
-    try (
-      resource
-    ) catch (Exception exception) {}
+    try (resource) catch (Exception exception) {}
   }
 }
 

@@ -7,7 +7,8 @@ class Runner {
   public Runner() throws IOException, TimeoutException {}
 
   public Runner(Request request, ExecutionContext executionContext)
-    throws /* ctor */ IOException, // io
+    throws
+      /* ctor */ IOException, // io
       TimeoutException {}
 
   public Result compute(
@@ -15,7 +16,8 @@ class Runner {
     ExecutionContext executionContext,
     RetryPolicy retryPolicy
   )
-    throws /* checked */ IOException, // io
+    throws
+      /* checked */ IOException, // io
       TimeoutException {}
 }
 

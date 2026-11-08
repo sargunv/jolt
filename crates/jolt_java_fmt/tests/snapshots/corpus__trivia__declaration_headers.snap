@@ -9,9 +9,7 @@ public /* JOLT-TRIVIA:after-public */ final class DeclarationHeaders<
 >
   extends Base /* JOLT-TRIVIA:after-extends */
   implements Runnable /* JOLT-TRIVIA:after-implements */ {
-  /**
-   * JOLT-TRIVIA:field-doc
-   */
+  /** JOLT-TRIVIA:field-doc */
   private /* JOLT-TRIVIA:field-modifier */ String name /* JOLT-TRIVIA:field-name */ =
     "x";
 
