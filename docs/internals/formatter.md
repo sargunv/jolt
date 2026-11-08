@@ -1202,8 +1202,9 @@ only in `mise run hunt`, because it is too slow for the normal suite.
   formats; review their diffs for loss, duplication and stability.
 - `jolt_java_fmt/tests/corpus_fixtures.rs`: the oracle at width 80 over the
   imported upstream fixture suites
-  (`tools/import/.imports/{google-java-format,palantir-java-format,prettier-java}/input`).
-  This is the only imported-corpus check `mise run test` runs.
+  (`tools/import/.imports/{google-java-format,palantir-java-format,prettier-java}/input`)
+  and the CommonMark spec examples (`commonmark-spec/input`, below). This is the
+  only imported-corpus check `mise run test` runs.
 - `jolt_java_fmt/tests/probes.rs`: every comment probe shape at every token
   boundary of the fixtures under `fixtures/java/style/comments/` and
   `fixtures/java/trivia/`, plus a list of small constructs, with the full oracle
@@ -1250,6 +1251,16 @@ only in `mise run hunt`, because it is too slow for the normal suite.
   shows them file by file. Review those differences before changing output, and
   describe them in the PR. `import.py` keeps dot-named entries of `.imports`
   when it re-imports.
+- `tools/import/import.py` imports the corpora at pinned commits: the gjf,
+  palantir and prettier-java test inputs, Spring, an OpenJDK slice, and the
+  CommonMark spec examples. The OpenJDK slice is the files listed in
+  `tools/import/openjdk-files.txt`, fetched with a shallow sparse checkout: the
+  JDK sources with `///` doc comments, and a sample with `{@snippet}`,
+  `<!-- -->` and `/**` lines without a leading `*`. The CommonMark examples are
+  generated at import time, each as a `///` comment on a method, because the
+  spec's licence (CC-BY-SA) asks for attribution and share-alike; examples a
+  `///` comment can't carry unchanged (a line starting with `/`, or `\u`) are
+  left out.
 
 ### Performance
 

@@ -40,6 +40,7 @@ fn imported_suites_parse_losslessly() {
         "google-java-format",
         "palantir-java-format",
         "prettier-java",
+        "commonmark-spec",
     ] {
         for path in collect_java_files(&imports.join(suite).join("input")) {
             assert_lossless(&path);

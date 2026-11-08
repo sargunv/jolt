@@ -19,7 +19,7 @@ root=$PWD
 
 imports=$root/tools/import/.imports
 base=$imports/.baseline
-corpora="google-java-format palantir-java-format prettier-java spring-framework"
+corpora="google-java-format palantir-java-format prettier-java spring-framework openjdk commonmark-spec"
 
 build() {
   revision=$(git rev-parse --verify "${1:-origin/main}^{commit}")
