@@ -6,7 +6,7 @@ use jolt_java_syntax::{
     ImplementsClause, InterfaceDeclaration, JavaSyntaxKind as K, NameList, PermitsClause,
     RecordComponentList, RecordDeclaration, ThrowsClause, TypeList,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
+use jolt_syntax::{AstNode, ListElement, SyntaxNode, SyntaxToken};
 
 use crate::JavaFormatter;
 use crate::helpers::lists::{ListLayout, delimited, joined};
@@ -25,9 +25,8 @@ pub(crate) fn class_declaration<'a>(f: &mut JavaFormatter<'a>, node: ClassDeclar
         node.implements().map(AstNode::syntax),
         node.permits().map(AstNode::syntax),
     ];
-    let lead = node.class_keyword().map(SyntaxElement::Token);
     let end = HeaderEnd::Clauses(clauses.into_iter().flatten().collect());
-    let header = header(f, lead, head, end);
+    let header = header(f, head, end);
     with_body(
         f,
         modifiers,
@@ -52,9 +51,8 @@ pub(crate) fn interface_declaration<'a>(
         node.extends().map(AstNode::syntax),
         node.permits().map(AstNode::syntax),
     ];
-    let lead = node.interface_keyword().map(SyntaxElement::Token);
     let end = HeaderEnd::Clauses(clauses.into_iter().flatten().collect());
-    let header = header(f, lead, head, end);
+    let header = header(f, head, end);
     with_body(
         f,
         modifiers,
@@ -89,11 +87,10 @@ pub(crate) fn record_declaration<'a>(
         close,
         ListLayout::Plain,
     ));
-    let lead = node.record_keyword().map(SyntaxElement::Token);
     let end = implements.map_or(HeaderEnd::Tail(tail), |clause| {
         HeaderEnd::Clauses(vec![clause])
     });
-    let header = header(f, lead, head, end);
+    let header = header(f, head, end);
     with_body(
         f,
         modifiers,
@@ -111,9 +108,8 @@ pub(crate) fn enum_declaration<'a>(f: &mut JavaFormatter<'a>, node: EnumDeclarat
         f.token_opt(node.name()),
     ];
     let implements = node.implements().map(AstNode::syntax);
-    let lead = node.enum_keyword().map(SyntaxElement::Token);
     let end = HeaderEnd::Clauses(implements.into_iter().collect());
-    let header = header(f, lead, head, end);
+    let header = header(f, head, end);
     with_body(
         f,
         modifiers,
@@ -135,8 +131,7 @@ pub(crate) fn annotation_interface_declaration<'a>(
         f.space(),
         f.token_opt(node.name()),
     ];
-    let lead = node.at().map(SyntaxElement::Token);
-    let header = header(f, lead, head, HeaderEnd::Tail(None));
+    let header = header(f, head, HeaderEnd::Tail(None));
     with_body(
         f,
         modifiers,
@@ -182,30 +177,10 @@ pub(super) enum HeaderEnd<'a> {
 /// The header group of a declaration: `head`, then each clause, every
 /// clause on its own line one indent deeper when the header does not fit.
 ///
-/// When `lead`, the element the header's first part (the first non-NIL doc
-/// of `head`) begins with, has a leading comment that breaks the line, such
-/// as a comment on its own line before the header (after declaration
-/// annotations), or a trailing line comment, that part prints outside the
-/// group. The trailing comments of the last part
-/// (`tail` or the last clause) print outside it too, so a multi-line comment
-/// before a `;` (a JSNI body, `native void m() /*-{ … }-*/;`) does not break
-/// the header. (Breaks inside the first part, such as a broken return type,
-/// keep it in the group.)
-pub(super) fn header<'a>(
-    f: &mut JavaFormatter<'a>,
-    lead: Option<SyntaxElement<'a>>,
-    mut head: Vec<Doc>,
-    end: HeaderEnd<'a>,
-) -> Doc {
-    let apart = lead
-        .is_some_and(|lead| f.leading_comments_break(lead) || f.has_trailing_line_comment(lead));
-    let first = head
-        .iter()
-        .position(|doc| !doc.is_nil())
-        .filter(|_| apart)
-        .map_or(0, |i| i + 1);
-    let rest = head.split_off(first);
-    let first = f.concat(head);
+/// The trailing comments of the last part (`tail` or the last clause) print
+/// outside the group, so a multi-line comment before a `;` (a JSNI body,
+/// `native void m() /*-{ … }-*/;`) does not break the header.
+pub(super) fn header<'a>(f: &mut JavaFormatter<'a>, head: Vec<Doc>, end: HeaderEnd<'a>) -> Doc {
     let (tail, clauses) = match end {
         HeaderEnd::Tail(tail) => (tail, Vec::new()),
         HeaderEnd::Clauses(clauses) => (None, clauses),
@@ -223,11 +198,11 @@ pub(super) fn header<'a>(
         };
         docs.push(indent![f; f.line(), clause]);
     }
-    let rest = f.concat(rest);
-    let rest = f.group(rest);
+    let head = f.concat(head);
+    let head = f.group(head);
     let clauses = f.concat(docs);
     let clauses = f.group(clauses);
-    cat![f; first, rest, clauses, after]
+    cat![f; head, clauses, after]
 }
 
 /// The rule of a header clause, without the clause's own comments.
