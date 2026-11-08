@@ -1,0 +1,18 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: output
+---
+$ jolt fmt
+status: 2
+--- stderr
+locked: Permission denied (os error 13)
+Reformatted 1 of 1 file in $TIME
+1 path could not be read
+--- wrote A.java
+class A {
+  void f() {
+    if (ready) {
+      go();
+    }
+  }
+}

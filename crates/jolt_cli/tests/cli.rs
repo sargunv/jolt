@@ -103,7 +103,11 @@ impl Project {
 }
 
 fn collect(root: &Path, dir: &Path, files: &mut BTreeMap<String, String>) {
-    for entry in fs::read_dir(dir).unwrap() {
+    // A directory a test made unreadable is left out.
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries {
         let path = entry.unwrap().path();
         if path.is_dir() {
             collect(root, &path, files);
@@ -186,6 +190,61 @@ fn path_errors() {
     insta::assert_snapshot!(project.run(&["fmt", "README.md"], ""));
     insta::assert_snapshot!(project.run(&["fmt", "Missing.java"], ""));
     insta::assert_snapshot!(project.run(&["fmt", "-", "README.md"], ""));
+}
+
+/// An error fails only the files or the path it is about. The run formats
+/// every other file, prints each error once, and exits 2.
+#[test]
+fn errors_fail_only_what_they_affect() {
+    let project = Project::new(&[
+        ("A.java", NESTED),
+        ("broken/jolt.toml", "[format]\nline-wdith = 80\n"),
+        ("broken/B.java", NESTED),
+        ("broken/nested/C.java", NESTED),
+        ("ok/D.java", NESTED),
+        ("README.md", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "--threads", "4"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "Missing.java", "README.md", "."], ""));
+}
+
+#[cfg(unix)]
+#[test]
+fn unreadable_directory() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let project = Project::new(&[("A.java", NESTED), ("locked/B.java", NESTED)]);
+    let locked = project.dir.path().join("locked");
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).unwrap();
+    let output = project.run(&["fmt"], "");
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).unwrap();
+    insta::assert_snapshot!(output);
+}
+
+/// Each file is formatted once, and reported under the first named path
+/// that contains it. Files under one named path are sorted.
+#[test]
+fn overlapping_paths() {
+    let project = Project::new(&[
+        ("src/A.java", NESTED),
+        ("src/b/B.java", NESTED),
+        ("src/b/C.java", NESTED),
+        ("other/D.java", NESTED),
+        ("Z.java", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run(
+        &[
+            "fmt",
+            "--check",
+            "Z.java",
+            "src/b",
+            "other",
+            "src",
+            "src/b/B.java",
+            "Z.java"
+        ],
+        ""
+    ));
 }
 
 #[test]

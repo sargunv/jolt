@@ -6,3 +6,5 @@ $ jolt fmt README.md
 status: 2
 --- stderr
 README.md: unsupported file extension
+Reformatted 0 of 1 file in $TIME
+1 file could not be formatted

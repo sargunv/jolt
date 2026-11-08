@@ -80,4 +80,6 @@ jolt fmt --check .
 
 `jolt fmt` exits with status 0 on success, 1 when `--check` finds files that
 need formatting, and 2 on errors: syntax errors, an invalid config, or a path
-that is missing or can't be read or written.
+that is missing or can't be read or written. An error stops only the files it
+affects. For example, an invalid `jolt.toml` stops the files under its
+directory. Jolt still formats every other file and reports every error.
