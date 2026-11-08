@@ -85,7 +85,9 @@ struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     line: Line,
     /// The last character written on the current line, if it is not a space.
     last: Option<char>,
-    /// The last text written ends a run of doc line comments.
+    /// The current output line starts with a doc line comment.
+    doc_line: bool,
+    /// The last text written ends a doc line comment that starts its line.
     run_ended: bool,
     language: Language<J>,
     suffixes: Vec<Command>,
@@ -114,6 +116,7 @@ pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
         pending: Pending::None,
         line: Line::FileStart,
         last: None,
+        doc_line: false,
         run_ended: false,
         language,
         suffixes: Vec::new(),
@@ -275,18 +278,19 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 indent: command.indent,
             };
         }
-        // A doc line comment right after the end of a run starts another run:
-        // a blank line keeps the two apart.
-        if self.run_ended
-            && let Pending::Newlines { count: 1, indent } = self.pending
-            && self
+        if let Pending::Newlines { count, indent } = self.pending {
+            let doc_line = self
                 .language
                 .doc_line
-                .is_some_and(|opener| is_doc_line(text.text, opener))
-        {
-            self.pending = Pending::Newlines { count: 2, indent };
+                .is_some_and(|opener| is_doc_line(text.text, opener));
+            // A doc line comment right after the end of a run starts another
+            // run: a blank line keeps the two apart.
+            if doc_line && self.run_ended && count == 1 {
+                self.pending = Pending::Newlines { count: 2, indent };
+            }
+            self.doc_line = doc_line;
         }
-        self.run_ended = text.flags & RUN_END != 0;
+        self.run_ended = self.doc_line && text.flags & RUN_END != 0;
         self.flush_pending();
         let bytes = text.text.as_bytes();
         if let Some(last) = self.last {

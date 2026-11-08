@@ -437,9 +437,12 @@ suffix buffer, and output buffered into chunks for the sink. Its line handling:
   next text on the same output line (including the next flushed suffix) is
   preceded by a newline at the current indent. Two trailing line comments can
   therefore never be merged into one comment, whatever the rules produce.
-- **Doc line runs stay apart.** After a text flagged `run_end`, a text that
-  starts the next line and is a doc line comment (it starts with
-  `DOC_LINE_COMMENT`) gets a blank line before it instead. Consecutive doc line
+- **Doc line runs stay apart.** After a line that starts with a doc line comment
+  (a text that starts with `DOC_LINE_COMMENT`) and ends with a text flagged
+  `run_end`, a doc line comment that starts the next line gets a blank line
+  before it instead. The comment printer flags the last line of every run, and
+  also a doc line comment in no run (one that ends a line of code in the
+  source), which placement may put on a line of its own. Consecutive doc line
   comments are one doc comment to javadoc, so two runs that a layout puts on
   adjacent lines (a comment moved into a body by H1 above the first member's
   `///` run, or the comments of a removed `;`) would merge into one.
@@ -768,7 +771,7 @@ whatever separator the rule itself put at that position: `a /* c */ + b`,
 `C` is the comment doc:
 
 - A line comment: its text with trailing whitespace removed, flagged
-  `line_comment`.
+  `line_comment`, and `run_end` when it is a doc line comment.
 - A single-line block comment: its text.
 - A multi-line block comment: `reindented(text, Reindent::Comment)`, so
   continuation lines follow the indentation of the line the comment starts on. A

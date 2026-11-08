@@ -18,4 +18,9 @@ class DocLineCommentRuns
   int fourth; /// A doc line after code is an ordinary line comment
   /// so this run stays one line.
   int fifth;
+
+  int sixth // before the semicolon
+  ; /// After code, so no doc comment; placement moves it to its own line.
+  /// The seventh member.
+  int seventh;
 }

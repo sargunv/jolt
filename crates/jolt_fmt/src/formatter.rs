@@ -691,9 +691,17 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             return self.doc_line_run(index, end as usize, starts_line);
         }
         if comment.kind == CommentKind::Line {
-            return self
-                .builder
-                .comment_text(comment.text.trim_end(), LINE_COMMENT);
+            // A doc line comment that is in no run (it ends a line of code in
+            // the source) may still start its output line, as one that S1's
+            // neighbour forces onto its own line does; it ends a run there.
+            let doc_line = L::DOC_LINE_COMMENT
+                .is_some_and(|opener| comments::is_doc_line(comment.text, opener));
+            let flags = if doc_line {
+                LINE_COMMENT | RUN_END
+            } else {
+                LINE_COMMENT
+            };
+            return self.builder.comment_text(comment.text.trim_end(), flags);
         }
         if comment.raw {
             return self.builder.text(comment.text.trim_end());
