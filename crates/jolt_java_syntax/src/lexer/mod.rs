@@ -424,17 +424,14 @@ impl<'source> Scanner<'source> {
     }
 
     fn number_literal(&mut self) -> JavaSyntaxKind {
-        let start_pos = self.pos;
-        let start = self
-            .current_range()
-            .expect("literal starts before EOF")
-            .start();
-        let kind = if self.current_char() == Some('.') {
+        let start = self.pos;
+        // Whether the literal is valid as far as its radix form is concerned.
+        let (kind, valid) = if self.current_char() == Some('.') {
             self.bump();
             self.consume_digits_for_radix(10);
             self.consume_decimal_exponent();
             self.consume_float_suffix();
-            JavaSyntaxKind::FloatingPointLiteral
+            (JavaSyntaxKind::FloatingPointLiteral, true)
         } else if self.current_char() == Some('0') && matches!(self.peek_char(1), Some('x' | 'X')) {
             self.bump();
             self.bump();
@@ -462,37 +459,27 @@ impl<'source> Scanner<'source> {
             }
             if floating {
                 self.consume_float_suffix();
-                if before_digits == self.pos {
-                    self.invalid_numeric_literal(start);
-                }
-                if !has_binary_exponent {
-                    self.invalid_numeric_literal(start);
-                }
-                if !has_whole_digits && !has_fraction_digits {
-                    self.invalid_numeric_literal(start);
-                }
-                JavaSyntaxKind::FloatingPointLiteral
+                (
+                    JavaSyntaxKind::FloatingPointLiteral,
+                    has_binary_exponent && (has_whole_digits || has_fraction_digits),
+                )
             } else {
+                let has_digits = before_digits != self.pos;
                 self.consume_integer_suffix();
-                if before_digits == self.pos {
-                    self.invalid_numeric_literal(start);
-                }
-                JavaSyntaxKind::IntegerLiteral
+                (JavaSyntaxKind::IntegerLiteral, has_digits)
             }
         } else if self.current_char() == Some('0') && matches!(self.peek_char(1), Some('b' | 'B')) {
             self.bump();
             self.bump();
             let before_digits = self.pos;
             self.consume_digits_for_radix(2);
+            let has_digits = before_digits != self.pos;
             let invalid_digit = self.current_char().is_some_and(|ch| ch.is_ascii_digit());
             if invalid_digit {
                 self.consume_digits_for_radix(10);
             }
             self.consume_integer_suffix();
-            if before_digits == self.pos || invalid_digit {
-                self.invalid_numeric_literal(start);
-            }
-            JavaSyntaxKind::IntegerLiteral
+            (JavaSyntaxKind::IntegerLiteral, has_digits && !invalid_digit)
         } else {
             self.consume_digits_for_radix(10);
             let mut floating = false;
@@ -513,14 +500,25 @@ impl<'source> Scanner<'source> {
             }
 
             if floating {
-                JavaSyntaxKind::FloatingPointLiteral
+                (JavaSyntaxKind::FloatingPointLiteral, true)
             } else {
-                JavaSyntaxKind::IntegerLiteral
+                // A leading zero makes the literal octal (JLS 3.10.1).
+                let text = &self.source[start..self.pos];
+                let bad_octal = text.starts_with('0') && text.contains(['8', '9']);
+                (JavaSyntaxKind::IntegerLiteral, !bad_octal)
             }
         };
 
-        self.validate_numeric_literal(start_pos, start, kind);
-        self.validate_octal_literal(start_pos, start, kind);
+        let text = &self.source[start..self.pos];
+        if !valid || !underscores_are_between_digits(text) || exponent_is_missing_digits(text, kind)
+        {
+            self.diagnostics.push(
+                JavaLexDiagnosticCode::InvalidNumericLiteral.at(TextRange::new(
+                    TextSize::new(start),
+                    TextSize::new(self.pos),
+                )),
+            );
+        }
         kind
     }
 
@@ -726,44 +724,6 @@ impl<'source> Scanner<'source> {
         if matches!(self.current_char(), Some('l' | 'L')) {
             self.bump();
         }
-    }
-
-    fn validate_numeric_literal(
-        &mut self,
-        start_pos: usize,
-        start: TextSize,
-        kind: JavaSyntaxKind,
-    ) {
-        let text = &self.source[start_pos..self.pos];
-        if !underscores_are_between_digits(text) || exponent_is_missing_digits(text, kind) {
-            self.invalid_numeric_literal(start);
-        }
-    }
-
-    fn validate_octal_literal(&mut self, start_pos: usize, start: TextSize, kind: JavaSyntaxKind) {
-        let rest = &self.source[start_pos..];
-        if kind != JavaSyntaxKind::IntegerLiteral
-            || !rest.starts_with('0')
-            || rest.starts_with("0x")
-            || rest.starts_with("0X")
-            || rest.starts_with("0b")
-            || rest.starts_with("0B")
-        {
-            return;
-        }
-
-        let text = &self.source[start_pos..self.pos];
-        let digits = text.trim_end_matches(['l', 'L']);
-        if digits.chars().any(|ch| matches!(ch, '8' | '9')) {
-            self.invalid_numeric_literal(start);
-        }
-    }
-
-    fn invalid_numeric_literal(&mut self, start: TextSize) {
-        self.diagnostics.push(
-            JavaLexDiagnosticCode::InvalidNumericLiteral
-                .at(TextRange::new(start, TextSize::new(self.pos))),
-        );
     }
 
     fn bump_escape_tail(&mut self) {
