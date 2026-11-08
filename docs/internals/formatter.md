@@ -343,6 +343,9 @@ A language provides `jolt_fmt::FormatLanguage`:
 - `place_comment`, the [comment hooks](#java-comment-hooks), and `ignore_scope`,
   the [item-list owner](#item-lists-blank-lines-formatter-ignore) of a
   formatter-ignore marker.
+- `DOC_LINE_COMMENT`, the opener of a doc line comment (Java: `///`), and
+  `doc_comment`, the layout of a [doc comment](#doc-comments) that starts its
+  output line.
 
 ### Document IR
 
@@ -357,6 +360,7 @@ formatted.
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `text(&'a str)`                 | Literal text. A text containing a line break (a text block literal) is written raw (line breaks as `\n`) and cannot be flat.                                                                                                                                                                                                                                                                                                                                                                           |
 | `sticky(&'a str)`               | A synthesized separator (`,` `;`) that is printed before a pending line suffix instead of flushing it (see printer).                                                                                                                                                                                                                                                                                                                                                                                   |
+| `line_comment(&'a str)`         | The last text of a run of doc line comments, for a `doc_comment` layout: the line ends after it, and a doc line comment that starts the next line gets a blank line first (see printer).                                                                                                                                                                                                                                                                                                               |
 | `reindented(&'a str, Reindent)` | Inside `jolt_fmt` only (comment printing and verbatim output). A multi-line source slice (a block comment, or verbatim source) whose continuation lines the printer rewrites while writing them: `Reindent::Comment` lays out a block comment's lines (see Printing); `Reindent::Strip(prefix)` removes `prefix` from a line that starts with it. Each continuation line is then written after the indentation of the output line the text started on; blank lines get no indentation. Cannot be flat. |
 | `space()`                       | One space; dropped at line start and before a newline; consecutive spaces collapse into one.                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `line()`                        | Space when flat, newline when broken.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -390,8 +394,10 @@ fit check. So every group has a line break of its own, which the
 [hang](#hang-and-hug)'s probe relies on.
 
 Text side-table flags: `sticky`, `line_comment` (set by the comment printer for
-line comments; see the printer's "line comments end their line"), the multi-line
-mode (`raw` for `text`, the `Reindent` mode for `reindented`), and
+line comments; see the printer's "line comments end their line"), `run_end` (the
+last text of a run of doc line comments, set with `line_comment` by
+`DocBuilder::line_comment`; see the printer's "doc line runs stay apart"), the
+multi-line mode (`raw` for `text`, the `Reindent` mode for `reindented`), and
 `verbatim_start` on the first text of a verbatim node (see
 [Verbatim edges](#item-lists-blank-lines-formatter-ignore)). Display width is
 the sum of `unicode-width` widths of the characters, with a tab inside a text
@@ -431,6 +437,12 @@ suffix buffer, and output buffered into chunks for the sink. Its line handling:
   next text on the same output line (including the next flushed suffix) is
   preceded by a newline at the current indent. Two trailing line comments can
   therefore never be merged into one comment, whatever the rules produce.
+- **Doc line runs stay apart.** After a text flagged `run_end`, a text that
+  starts the next line and is a doc line comment (it starts with
+  `DOC_LINE_COMMENT`) gets a blank line before it instead. Consecutive doc line
+  comments are one doc comment to javadoc, so two runs that a layout puts on
+  adjacent lines (a comment moved into a body by H1 above the first member's
+  `///` run, or the comments of a removed `;`) would merge into one.
 - **End of input.** Flush suffixes, then exactly one `\n` (also for an empty
   file).
 
@@ -707,15 +719,23 @@ directly, through `f.with_dangling`, or by passing the node as `owner` to
 `delimited`, `enclosed`, `parenthesized`, `braced` or `braced_body`. A rule that
 forgets fails the emission check on the first probe that reaches it.
 
+**Doc line runs.** After placement, one linear pass groups doc line comments
+(line comments that start with `DOC_LINE_COMMENT` and not with one more of its
+last character: `///` but not `////`) into runs: comments on their own lines in
+the source, one after the other in one gap with no blank line between, with the
+same target, side and layout. Javadoc reads such a run as one doc comment (JEP
+467). The first comment of a run, its head, prints the whole run; see
+[Doc comments](#doc-comments).
+
 Storage: one `Vec` of placed comments in source order, each record holding the
-comment, the tokens before and after its gap, its side and its effective layout;
-attachments in a `Vec` sorted by `(target, side, source order)`; two bitsets
-(`NodeId`, `TokenId`) answer "has attached comments" in `O(1)`, so elements
-without comments never search. Placement is
-`O(tokens + trivia + Σ_comments a(c))`, where `a(c)` is the number of nodes that
-begin or end at the comment's adjacent tokens (the target walk stops as soon as
-a parent starts or ends elsewhere). That is bounded by tree depth and is large
-only at the head of a deep left-nested spine.
+comment, the tokens before and after its gap, its target, side and effective
+layout, and its place in a doc line run; attachments in a `Vec` sorted by
+`(target, side, source order)`; two bitsets (`NodeId`, `TokenId`) answer "has
+attached comments" in `O(1)`, so elements without comments never search.
+Placement is `O(tokens + trivia + Σ_comments a(c))`, where `a(c)` is the number
+of nodes that begin or end at the comment's adjacent tokens (the target walk
+stops as soon as a parent starts or ends elsewhere). That is bounded by tree
+depth and is large only at the head of a deep left-nested spine.
 
 #### Printing
 
@@ -764,8 +784,37 @@ whatever separator the rule itself put at that position: `a /* c */ + b`,
   their continuation lines share.
 - An unterminated comment: its text, written raw.
 - Any other single-line comment: its text as written.
+- The head of a doc line run: the run's lines, each a line comment, one per
+  line; the last is flagged `run_end`. The run's other comments print nothing
+  (they still count as emitted, where their attachment is printed), and the head
+  uses the last line's `lines_after`. In `removed`, when the last comment is in
+  a run, its head is the comment that prints no line after itself.
 
 See [Java style](../guides/style.md) for the resulting output.
+
+#### Doc comments
+
+A doc comment that starts its output line is laid out by the language's
+`FormatLanguage::doc_comment` hook when it returns a doc; `None` prints the
+comment as in the list above. A doc comment is a doc block comment
+(`DocCommentSource::Block`, `/** … */`) or a doc line run
+(`DocCommentSource::Lines`, one text per `///` line, trailing whitespace kept),
+with its placement target. The chokepoints call the hook only for a comment that
+starts its output line, since only there no group's fit check measures past the
+line break before it into the comment, so its layout can't change the code
+around it:
+
+- a comment printed `OwnLine` (leading, trailing or dangling);
+- a dangling comment whose `lines_before` is not 0 (`own_lines` puts one with
+  `lines_before == 0` on the line of the code before it);
+- the last comment `removed` keeps, which leads on its own line.
+
+The comment must also lie outside every formatter-ignore region (the Javadoc of
+an ignored member is printed as written), and its target must be recovery-free
+(the target node, or a token target's parent): a comment layout is a
+normalization (N9), and normalizations apply only to recovery-free nodes. Rules
+never see doc comments. The Java hook returns `None`: Java doc comments print as
+written.
 
 Why this is idempotent: printing preserves each comment's neighbours (no comment
 crosses a token, except across separators by S1, which is decided the same way

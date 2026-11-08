@@ -3,8 +3,9 @@
 
 use std::ops::ControlFlow;
 
+use crate::comments::is_doc_line;
 use crate::doc::{
-    Kind, LINE_COMMENT, MULTILINE, Reindent, STICKY, Text, VERBATIM_START, comment_lines,
+    Kind, LINE_COMMENT, MULTILINE, RUN_END, Reindent, STICKY, Text, VERBATIM_START, comment_lines,
     display_width, lines,
 };
 use crate::{Doc, DocBuilder, FormatOptions, Sink};
@@ -58,6 +59,14 @@ enum Pending {
     },
 }
 
+/// What the printer needs from the language.
+pub(crate) struct Language<J: Fn(char, char) -> bool> {
+    /// [`FormatLanguage::joins`](crate::FormatLanguage::joins).
+    pub(crate) joins: J,
+    /// [`FormatLanguage::DOC_LINE_COMMENT`](crate::FormatLanguage::DOC_LINE_COMMENT).
+    pub(crate) doc_line: Option<&'static str>,
+}
+
 struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     docs: &'p DocBuilder<'a>,
     options: FormatOptions,
@@ -76,7 +85,9 @@ struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     line: Line,
     /// The last character written on the current line, if it is not a space.
     last: Option<char>,
-    joins: J,
+    /// The last text written ends a run of doc line comments.
+    run_ended: bool,
+    language: Language<J>,
     suffixes: Vec<Command>,
     /// The fit check's stack, kept to reuse its allocation.
     fit_stack: Vec<Fit>,
@@ -87,7 +98,7 @@ pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
     docs: &DocBuilder<'_>,
     root: Doc,
     options: FormatOptions,
-    joins: J,
+    language: Language<J>,
     final_newline: bool,
     sink: &mut S,
 ) -> ControlFlow<()> {
@@ -103,7 +114,8 @@ pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
         pending: Pending::None,
         line: Line::FileStart,
         last: None,
-        joins,
+        run_ended: false,
+        language,
         suffixes: Vec::new(),
         fit_stack: Vec::new(),
         stack: vec![Command {
@@ -263,6 +275,18 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 indent: command.indent,
             };
         }
+        // A doc line comment right after the end of a run starts another run:
+        // a blank line keeps the two apart.
+        if self.run_ended
+            && let Pending::Newlines { count: 1, indent } = self.pending
+            && self
+                .language
+                .doc_line
+                .is_some_and(|opener| is_doc_line(text.text, opener))
+        {
+            self.pending = Pending::Newlines { count: 2, indent };
+        }
+        self.run_ended = text.flags & RUN_END != 0;
         self.flush_pending();
         let bytes = text.text.as_bytes();
         if let Some(last) = self.last {
@@ -271,7 +295,7 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 Some(&byte) if byte.is_ascii() => Some(char::from(byte)),
                 _ => text.text.chars().next(),
             };
-            if first.is_some_and(|first| (self.joins)(last, first)) {
+            if first.is_some_and(|first| (self.language.joins)(last, first)) {
                 self.out.push(' ');
                 self.column += 1;
             }
@@ -885,7 +909,7 @@ fn leading_ws(line: &str) -> &str {
 
 #[cfg(test)]
 mod tests {
-    use super::{FIT_BUDGET, print};
+    use super::{FIT_BUDGET, Language, print};
     use crate::{DocBuilder, FormatOptions};
 
     /// The fit check is bounded: a group whose flat contents take more than
@@ -900,11 +924,15 @@ mod tests {
             let contents = docs.concat(parts);
             let root = docs.group(contents);
             let mut out = String::new();
+            let language = Language {
+                joins: |_, _| false,
+                doc_line: None,
+            };
             let _ = print(
                 &docs,
                 root,
                 FormatOptions::default(),
-                |_, _| false,
+                language,
                 true,
                 &mut out,
             );

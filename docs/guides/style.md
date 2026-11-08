@@ -851,6 +851,33 @@ log(
 );
 ```
 
+- **Markdown doc comments.** Consecutive `///` lines are one Markdown doc
+  comment. When Jolt moves a `///` comment next to another one, as it moves a
+  comment before a body's `{` into the body, a blank line keeps the two apart,
+  so they don't become one doc comment:
+
+::: code-group
+
+```java [Input]
+class Example
+/// Not documentation: no declaration follows.
+{
+  /// Runs it.
+  void run() {}
+}
+```
+
+```java [Output]
+class Example {
+  /// Not documentation: no declaration follows.
+
+  /// Runs it.
+  void run() {}
+}
+```
+
+:::
+
 - **Comment text.** Trailing whitespace is removed. Jolt doesn't rewrap or
   otherwise change the text of a comment. A block comment whose lines start with
   `*` is realigned so the `*`s line up under the opening `/*`, and each line

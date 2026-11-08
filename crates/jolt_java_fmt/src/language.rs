@@ -2,8 +2,8 @@
 //! formatter-ignore scopes, and comment hooks H1 to H5.
 
 use jolt_fmt::{
-    CommentContext, CommentKind, CommentLayout, Doc, FormatLanguage, Formatter, Placement,
-    leading_target, trailing_target,
+    CommentContext, CommentKind, CommentLayout, Doc, DocBuilder, DocComment, FormatLanguage,
+    Formatter, Placement, leading_target, trailing_target,
 };
 use jolt_java_syntax::{
     IfStatement, JavaLanguage, JavaSyntaxKind as K, Statement, is_assignment_operator,
@@ -31,6 +31,13 @@ fn is_angle_list(token: SyntaxToken<'_>) -> bool {
 
 impl FormatLanguage for JavaFormat {
     type Syntax = JavaLanguage;
+
+    const DOC_LINE_COMMENT: Option<&'static str> = Some("///");
+
+    /// Doc comments print as written (normalization N9).
+    fn doc_comment<'a>(_docs: &mut DocBuilder<'a>, _comment: &DocComment<'a, '_>) -> Option<Doc> {
+        None
+    }
 
     fn format_node<'a>(f: &mut Formatter<'a, Self>, node: SyntaxNode<'a>) -> Doc {
         crate::dispatch::format_node(f, node)

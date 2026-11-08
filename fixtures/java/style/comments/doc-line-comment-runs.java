@@ -1,0 +1,21 @@
+class DocLineCommentRuns
+/// Before the body brace: moves into the body, where a blank line keeps it
+/// apart from the run of the first member.
+{
+  /// The first member.
+  void first() {}
+
+  /// Before a removed semicolon.
+  ;
+  /// The second member.
+  void second() {}
+
+  /// A run
+  //// ends at a line of four slashes,
+  /// and starts again after it.
+  int third;
+
+  int fourth; /// A doc line after code is an ordinary line comment
+  /// so this run stays one line.
+  int fifth;
+}

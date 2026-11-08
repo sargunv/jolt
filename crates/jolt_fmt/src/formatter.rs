@@ -6,9 +6,9 @@ use std::ops::{Deref, DerefMut};
 
 use jolt_syntax::{SyntaxElement, SyntaxNode, SyntaxToken, TextRange, TextSize, TriviaKind};
 
-use crate::comments::{self, CommentKind, CommentLayout, Comments, Side};
-use crate::doc::{LINE_COMMENT, Reindent, VERBATIM_START, has_line_break, lines};
-use crate::{Doc, DocBuilder, FormatLanguage, cat};
+use crate::comments::{self, CommentKind, CommentLayout, Comments, PlacedComment, Run, Side};
+use crate::doc::{LINE_COMMENT, RUN_END, Reindent, VERBATIM_START, has_line_break, lines};
+use crate::{Doc, DocBuilder, DocComment, DocCommentSource, FormatLanguage, cat};
 
 /// One item of an [`Formatter::item_list`].
 #[derive(Clone, Copy, Debug)]
@@ -215,9 +215,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     }
 
     /// `removed`, and whether the source has a blank line after the last
-    /// comment. That comment prints no line after itself when it leads the
-    /// element on its own line: with the element gone, the code that
-    /// follows decides the line break.
+    /// comment. That comment (the head of its run, when it ends a run of doc
+    /// line comments) prints no line after itself when it leads the element
+    /// on its own line: with the element gone, the code that follows decides
+    /// the line break.
     fn removed_comments(&mut self, element: SyntaxElement<'a>) -> (Doc, bool) {
         let mut indices: Vec<usize> = self
             .comments
@@ -232,6 +233,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             return (Doc::NIL, false);
         };
         let blank_after = self.comments.list[last].comment.lines_after >= 2;
+        let last = self.run_head(last);
         let docs: Vec<Doc> = indices
             .into_iter()
             .map(|index| {
@@ -239,7 +241,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 if index == last
                     && (placed.side, placed.layout) == (Side::Leading, CommentLayout::OwnLine)
                 {
-                    let text = self.comment_doc(index);
+                    let text = self.comment_doc(index, true);
                     cat![self; Doc::HARD_LINE, text]
                 } else {
                     self.attached_comment(index)
@@ -363,6 +365,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     fn own_lines(&mut self, indices: &[usize]) -> Doc {
         let mut docs = Vec::with_capacity(indices.len() * 2 + 1);
         for (position, &index) in indices.iter().enumerate() {
+            if self.comments.list[index].run == Run::Member {
+                self.emitted[index] += 1;
+                continue;
+            }
             docs.push(if position == 0 {
                 Doc::BREAK_PARENT
             } else {
@@ -372,8 +378,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                     _ => Doc::EMPTY_LINE,
                 }
             });
-            // Dangling comments always print on their own lines.
-            docs.push(self.comment_doc(index));
+            // Dangling comments always print on their own lines, but one
+            // that shares the line of the code before it starts no line.
+            let starts_line = self.comments.list[index].comment.lines_before != 0;
+            docs.push(self.comment_doc(index, starts_line));
         }
         self.builder.concat(docs)
     }
@@ -494,10 +502,17 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         let Some(start) = node.first_token().map(|token| token.text_range().start()) else {
             return false;
         };
-        let index = self.regions.partition_point(|region| region.end() <= start);
+        self.in_region(start)
+    }
+
+    /// Whether `offset` lies in a formatter-ignore region.
+    fn in_region(&self, offset: TextSize) -> bool {
+        let index = self
+            .regions
+            .partition_point(|region| region.end() <= offset);
         self.regions
             .get(index)
-            .is_some_and(|region| region.start() <= start)
+            .is_some_and(|region| region.start() <= offset)
     }
 
     // ── Item lists ──
@@ -594,8 +609,16 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             return Doc::NIL;
         }
         let placed = self.comments.list[index];
-        let blank_after = placed.comment.lines_after >= 2;
-        let text = self.comment_doc(index);
+        let end = match placed.run {
+            Run::Head(end) => end as usize,
+            Run::Member => {
+                self.emitted[index] += 1;
+                return Doc::NIL;
+            }
+            Run::None => index,
+        };
+        let blank_after = self.comments.list[end].comment.lines_after >= 2;
+        let text = self.comment_doc(index, placed.layout == CommentLayout::OwnLine);
         match (placed.side, placed.layout) {
             (Side::Leading, CommentLayout::OwnLine) => {
                 let after = self.line_break(blank_after);
@@ -655,10 +678,18 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
     }
 
-    /// The comment's text, counted as emitted.
-    fn comment_doc(&mut self, index: usize) -> Doc {
+    /// The comment's doc, counted as emitted: the whole run for the head of
+    /// a run of doc line comments. A doc comment that starts its output line
+    /// (`starts_line`) goes to [`FormatLanguage::doc_comment`] when it lies
+    /// outside the formatter-ignore regions and its target has no recovery
+    /// (a normalization applies only to recovery-free nodes).
+    fn comment_doc(&mut self, index: usize, starts_line: bool) -> Doc {
         self.emitted[index] += 1;
-        let comment = self.comments.list[index].comment;
+        let placed = self.comments.list[index];
+        let comment = placed.comment;
+        if let Run::Head(end) = placed.run {
+            return self.doc_line_run(index, end as usize, starts_line);
+        }
         if comment.kind == CommentKind::Line {
             return self
                 .builder
@@ -667,6 +698,19 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         if comment.raw {
             return self.builder.text(comment.text.trim_end());
         }
+        if comment.kind == CommentKind::Doc
+            && starts_line
+            && self.formats_doc(placed)
+            && let Some(doc) = L::doc_comment(
+                &mut self.builder,
+                &DocComment {
+                    source: DocCommentSource::Block(comment.text),
+                    target: placed.target,
+                },
+            )
+        {
+            return doc;
+        }
         if has_line_break(comment.text) {
             let indentation = line_indentation(self.source, comment.range.start());
             return self
@@ -674,6 +718,61 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 .reindented(comment.text, Reindent::Comment(indentation));
         }
         self.builder.comment_text(comment.text, 0)
+    }
+
+    /// The run of doc line comments from `head` to `end`: the language's
+    /// layout when it starts its line, or else each line as written, one per
+    /// line. Its last text ends the run (see [`DocBuilder::line_comment`]).
+    fn doc_line_run(&mut self, head: usize, end: usize, starts_line: bool) -> Doc {
+        let texts: Vec<&'a str> = self.comments.list[head..=end]
+            .iter()
+            .map(|placed| placed.comment.text)
+            .collect();
+        let placed = self.comments.list[head];
+        if starts_line
+            && self.formats_doc(placed)
+            && let Some(doc) = L::doc_comment(
+                &mut self.builder,
+                &DocComment {
+                    source: DocCommentSource::Lines(&texts),
+                    target: placed.target,
+                },
+            )
+        {
+            return doc;
+        }
+        let mut docs = Vec::with_capacity(texts.len() * 2);
+        for (position, text) in texts.iter().enumerate() {
+            if position > 0 {
+                docs.push(Doc::HARD_LINE);
+            }
+            let flags = if position + 1 == texts.len() {
+                LINE_COMMENT | RUN_END
+            } else {
+                LINE_COMMENT
+            };
+            docs.push(self.builder.comment_text(text.trim_end(), flags));
+        }
+        self.builder.concat(docs)
+    }
+
+    /// Whether the language may lay out the doc comment `placed`: it lies
+    /// outside the formatter-ignore regions, and its target has no recovery.
+    fn formats_doc(&self, placed: PlacedComment<'a>) -> bool {
+        let recovery_free = match placed.target {
+            SyntaxElement::Node(node) => node.is_recovery_free(),
+            SyntaxElement::Token(token) => token.parent().is_recovery_free(),
+        };
+        recovery_free && !self.in_region(placed.comment.range.start())
+    }
+
+    /// The head of the run of doc line comments that comment `index` is in,
+    /// or `index` itself.
+    fn run_head(&self, mut index: usize) -> usize {
+        while self.comments.list[index].run == Run::Member {
+            index -= 1;
+        }
+        index
     }
 }
 

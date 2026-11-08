@@ -55,6 +55,25 @@ pub struct Comment<'a> {
     pub(crate) raw: bool,
 }
 
+/// A doc comment that starts its output line, as
+/// [`FormatLanguage::doc_comment`] sees it.
+#[derive(Clone, Copy, Debug)]
+pub struct DocComment<'a, 'r> {
+    pub source: DocCommentSource<'a, 'r>,
+    /// The element the comment is attached to (the node, when dangling).
+    pub target: SyntaxElement<'a>,
+}
+
+/// The source text of a [`DocComment`].
+#[derive(Clone, Copy, Debug)]
+pub enum DocCommentSource<'a, 'r> {
+    /// A doc block comment (`/** … */`), delimiters included.
+    Block(&'a str),
+    /// A run of doc line comments (`///` lines), one text per line, each
+    /// with its opener and without its line break.
+    Lines(&'r [&'a str]),
+}
+
 /// Where a comment is attached. The layout is the one the comment prints
 /// with, which may differ from its source layout.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -275,9 +294,73 @@ pub(crate) struct PlacedComment<'a> {
     pub(crate) prev: Option<SyntaxToken<'a>>,
     /// The token after the comment's gap (the comments between two tokens).
     pub(crate) next: SyntaxToken<'a>,
+    /// The element the comment is attached to (the node, when dangling).
+    pub(crate) target: SyntaxElement<'a>,
     pub(crate) side: Side,
     /// The effective layout, which placement may change from the source's.
     pub(crate) layout: CommentLayout,
+    pub(crate) run: Run,
+}
+
+/// A comment's place in a run of doc line comments (`///` in Java): line
+/// comments that start with [`FormatLanguage::DOC_LINE_COMMENT`], each on
+/// its own line, one after the other in one gap with no blank line between,
+/// with the same attachment. The first prints the whole run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Run {
+    /// Not a doc line comment.
+    None,
+    /// The first line of a run, with the index of its last line (its own
+    /// index when the run is one line).
+    Head(u32),
+    /// A later line of a run: printed by the head, so it prints nothing.
+    Member,
+}
+
+/// Whether `text` is a doc line comment for the opener `opener`: it starts
+/// with the opener, and the opener's last character does not repeat (`///`
+/// but not `////`).
+pub(crate) fn is_doc_line(text: &str, opener: &str) -> bool {
+    text.strip_prefix(opener).is_some_and(|rest| {
+        opener
+            .chars()
+            .next_back()
+            .is_none_or(|last| !rest.starts_with(last))
+    })
+}
+
+/// Groups the doc line comments of `list` into runs, in one pass.
+fn group_runs(list: &mut [PlacedComment<'_>], opener: Option<&str>) {
+    let Some(opener) = opener else {
+        return;
+    };
+    let mut head: Option<usize> = None;
+    for index in 0..list.len() {
+        let placed = list[index];
+        let doc_line = placed.comment.kind == CommentKind::Line
+            && placed.comment.source_layout == CommentLayout::OwnLine
+            && is_doc_line(placed.comment.text, opener);
+        if !doc_line {
+            head = None;
+            continue;
+        }
+        let joins = head.is_some_and(|head| {
+            let before = list[index - 1];
+            let first = list[head];
+            before.next == placed.next
+                && placed.comment.lines_before == 1
+                && (first.target, first.side, first.layout)
+                    == (placed.target, placed.side, placed.layout)
+        });
+        let own = u32::try_from(index).expect("comment count fits in u32");
+        if let Some(head) = head.filter(|_| joins) {
+            list[head].run = Run::Head(own);
+            list[index].run = Run::Member;
+        } else {
+            head = Some(index);
+            list[index].run = Run::Head(own);
+        }
+    }
 }
 
 /// A comment record in source order that knows the token after its gap, so
@@ -550,8 +633,10 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
             comment,
             prev,
             next,
+            target: element,
             side,
             layout,
+            run: Run::None,
         });
         attachments.push(Attachment {
             key: key(element),
@@ -559,6 +644,7 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
             comment: u32::try_from(index).expect("comment count fits in u32"),
         });
     }
+    group_runs(&mut list, L::DOC_LINE_COMMENT);
     attachments.sort_unstable_by_key(|a| (a.key, a.side, a.comment));
     Comments {
         list,

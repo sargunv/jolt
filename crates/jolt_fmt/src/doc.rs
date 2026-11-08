@@ -75,6 +75,10 @@ pub(crate) const MULTILINE: u8 = 4;
 /// The first text of a verbatim node: the printer records the indentation of
 /// the current output line as the base its `Strip` pieces re-indent against.
 pub(crate) const VERBATIM_START: u8 = 8;
+/// The last text of a run of doc line comments: a doc line comment that
+/// starts the next line belongs to another run, so the printer writes a blank
+/// line before it.
+pub(crate) const RUN_END: u8 = 16;
 
 #[derive(Clone, Copy, Debug)]
 #[allow(clippy::struct_field_names)]
@@ -206,6 +210,14 @@ impl<'a> DocBuilder<'a> {
             flags: flags | if multiline { MULTILINE } else { 0 },
             reindent,
         })
+    }
+
+    /// The last text of a run of doc line comments (`///` lines): the line
+    /// ends after it, as after any line comment, and a doc line comment that
+    /// starts the next line is kept apart from the run by a blank line, so
+    /// the two never read as one run.
+    pub fn line_comment(&mut self, text: &'a str) -> Doc {
+        self.comment_text(text, LINE_COMMENT | RUN_END)
     }
 
     pub(crate) fn comment_text(&mut self, text: &'a str, flags: u8) -> Doc {
