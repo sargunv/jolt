@@ -1,0 +1,12 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--config\", \"conf/explicit.toml\", \"--no-config\", \"-\"],\nNESTED)"
+---
+$ jolt fmt --config conf/explicit.toml --no-config -
+status: 2
+--- stderr
+error: the argument '--config <CONFIG>' cannot be used with '--no-config'
+
+Usage: jolt format --config <CONFIG> <PATHS>...
+
+For more information, try '--help'.

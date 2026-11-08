@@ -3,11 +3,11 @@ source: crates/jolt_cli/tests/cli.rs
 expression: "project.run(&[\"fmt\", \"--threads\", \"2\", \".\"], \"\")"
 ---
 $ jolt fmt --threads 2 .
-status: 1
+status: 2
 --- stderr
 A.java:1:7: java.parse.expected_syntax: expected type name
 A.java:2:1: java.parse.expected_syntax: expected `}` after type body
-Formatted 2 files in $TIME
+Reformatted 1 of 2 files in $TIME
 1 file could not be formatted
 --- wrote B.java
 class A {

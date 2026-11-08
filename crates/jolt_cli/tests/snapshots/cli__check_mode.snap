@@ -3,7 +3,7 @@ source: crates/jolt_cli/tests/cli.rs
 expression: "project.run(&[\"fmt\", \"--check\", \"--threads\", \"2\", \".\"], \"\")"
 ---
 $ jolt fmt --check --threads 2 .
-status: 1
+status: 2
 --- stdout
 src/A.java
 src/B.java

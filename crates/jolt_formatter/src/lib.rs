@@ -1,10 +1,10 @@
 //! The formatter facade for the CLI and the dprint plugin: language detection
 //! and one `format` entry point.
 
-use std::path::Path;
+use std::{fmt, path::Path};
 
 pub use jolt_fmt::{FormatOptions, Sink};
-pub use jolt_syntax::{Diagnostic, LineIndex};
+use jolt_syntax::LineIndex;
 
 /// A source language Jolt formats.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -30,12 +30,35 @@ pub enum OnSyntaxError {
     Format,
 }
 
+/// What [`format`] did.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum FormatResult {
+pub enum Outcome {
     /// Output was written to the sink; `halted` when the sink broke early.
     Formatted { halted: bool },
     /// `Refuse` and the source has syntax errors; nothing was written.
-    Refused(Vec<Diagnostic>),
+    Refused(Vec<SyntaxError>),
+}
+
+/// A syntax error in the source. Displays as `line:column: code: message`,
+/// with a 1-based line and column.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SyntaxError {
+    line: u32,
+    column: u32,
+    code: &'static str,
+    message: String,
+}
+
+impl fmt::Display for SyntaxError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self {
+            line,
+            column,
+            code,
+            message,
+        } = self;
+        write!(f, "{line}:{column}: {code}: {message}")
+    }
 }
 
 /// Formats `source` as `language` into `sink`.
@@ -45,15 +68,29 @@ pub fn format<S: Sink + ?Sized>(
     options: &FormatOptions,
     on_error: OnSyntaxError,
     sink: &mut S,
-) -> FormatResult {
+) -> Outcome {
     match language {
         Language::Java => {
             let parse = jolt_java_syntax::parse(source);
             if on_error == OnSyntaxError::Refuse && !parse.diagnostics().is_empty() {
-                return FormatResult::Refused(parse.diagnostics().to_vec());
+                let lines = LineIndex::new(source);
+                let errors = parse
+                    .diagnostics()
+                    .iter()
+                    .map(|diagnostic| {
+                        let at = lines.line_col(diagnostic.range.start());
+                        SyntaxError {
+                            line: at.line + 1,
+                            column: at.col + 1,
+                            code: diagnostic.code,
+                            message: diagnostic.message.clone(),
+                        }
+                    })
+                    .collect();
+                return Outcome::Refused(errors);
             }
             let halted = jolt_java_fmt::format(&parse, options, sink).is_break();
-            FormatResult::Formatted { halted }
+            Outcome::Formatted { halted }
         }
     }
 }
