@@ -35,7 +35,9 @@ enum Command {
     /// Format source files.
     #[command(
         visible_alias = "fmt",
-        after_help = "Exit status: 0 on success, 1 when --check finds files that need formatting, \
+        after_help = "An error stops only the files it affects: Jolt formats every other file and \
+                      reports every error.\n\n\
+                      Exit status: 0 on success, 1 when --check finds files that need formatting, \
                       2 on errors (syntax errors, invalid config, unreadable or missing paths)."
     )]
     Format(FormatArgs),

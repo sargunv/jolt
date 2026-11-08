@@ -6,3 +6,5 @@ $ jolt fmt Missing.java
 status: 2
 --- stderr
 Missing.java: path does not exist
+Reformatted 0 of 0 files in $TIME
+1 path could not be read

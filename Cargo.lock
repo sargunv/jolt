@@ -341,7 +341,6 @@ dependencies = [
  "insta",
  "jolt_config",
  "jolt_formatter",
- "rayon",
  "schemars",
  "serde",
  "serde_json",

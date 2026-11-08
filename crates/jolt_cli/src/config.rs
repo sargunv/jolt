@@ -10,7 +10,7 @@ use std::{
     fmt::Write as _,
     fs,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex, OnceLock, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
 use clap::Args;
@@ -245,18 +245,21 @@ impl Settings {
 }
 
 /// Resolves the settings for the directories of one invocation, parsing each
-/// config file once and resolving each directory once.
+/// config file once. The formatter threads share one resolver.
 pub(crate) struct Resolver {
     cwd: PathBuf,
     cli: Layer,
     /// The settings for every directory when discovery is off.
     fixed: Option<Arc<Settings>>,
     /// The parsed config files of each directory seen so far.
-    dirs: HashMap<PathBuf, Dir>,
+    dirs: Mutex<HashMap<PathBuf, Arc<OnceLock<Loaded<Dir>>>>>,
     /// The settings by the directory discovery falls back to when there is no
     /// project root, then by directory.
-    resolved: HashMap<PathBuf, HashMap<PathBuf, Arc<Settings>>>,
+    resolved: RwLock<HashMap<PathBuf, HashMap<PathBuf, Loaded<Settings>>>>,
 }
+
+/// A cached value, or the error that building it gave.
+type Loaded<T> = Result<Arc<T>>;
 
 impl Resolver {
     pub(crate) fn new(cwd: &Path, args: &ConfigArgs, format: FormatConfig) -> Result<Self> {
@@ -290,14 +293,14 @@ impl Resolver {
                 Arc::new(settings)
             }),
             cli,
-            dirs: HashMap::new(),
-            resolved: HashMap::new(),
+            dirs: Mutex::default(),
+            resolved: RwLock::default(),
         })
     }
 
     /// The settings for files in `dir`, command-line overrides included.
     /// `dir` is at or under `target`, the path named on the command line.
-    pub(crate) fn settings(&mut self, dir: &Path, target: &Path) -> Result<Arc<Settings>> {
+    pub(crate) fn settings(&self, dir: &Path, target: &Path) -> Result<Arc<Settings>> {
         if let Some(settings) = &self.fixed {
             return Ok(Arc::clone(settings));
         }
@@ -308,47 +311,78 @@ impl Resolver {
         } else {
             target
         };
-        if let Some(settings) = self.resolved.get(fallback).and_then(|dirs| dirs.get(dir)) {
-            return Ok(Arc::clone(settings));
+        if let Some(settings) = read(&self.resolved)
+            .get(fallback)
+            .and_then(|dirs| dirs.get(dir))
+        {
+            return settings.clone();
         }
-        let fallback = fallback.to_path_buf();
+        // Threads that miss together each layer the configs, which is cheap:
+        // each config file is still parsed once.
+        let settings = self.resolve(dir, fallback);
+        write(&self.resolved)
+            .entry(fallback.to_path_buf())
+            .or_default()
+            .entry(dir.to_path_buf())
+            .or_insert(settings)
+            .clone()
+    }
+
+    fn resolve(&self, dir: &Path, fallback: &Path) -> Result<Arc<Settings>> {
         let mut settings = Settings::default();
-        for ancestor in self.discovery_path(dir, &fallback)? {
-            for config in &self.dirs[ancestor].configs {
+        for ancestor in self.discovery_path(dir, fallback)? {
+            for config in &ancestor.configs {
                 settings.add(config);
             }
         }
         settings.apply(&self.cli);
-        let settings = Arc::new(settings);
-        self.resolved
-            .entry(fallback)
-            .or_default()
-            .insert(dir.to_path_buf(), Arc::clone(&settings));
-        Ok(settings)
+        Ok(Arc::new(settings))
     }
 
     /// The directories whose configs apply to `dir`, outermost first: up to
     /// the nearest project root, or else up to `fallback`.
-    fn discovery_path<'p>(&mut self, dir: &'p Path, fallback: &Path) -> Result<Vec<&'p Path>> {
+    fn discovery_path(&self, dir: &Path, fallback: &Path) -> Result<Vec<Arc<Dir>>> {
         let mut path = Vec::new();
-        let mut bounded = false;
+        let mut end = None;
         for ancestor in dir.ancestors() {
-            path.push(ancestor);
-            if !self.dirs.contains_key(ancestor) {
-                self.dirs
-                    .insert(ancestor.to_path_buf(), Dir::load(ancestor)?);
+            if end.is_none() && ancestor == fallback {
+                end = Some(path.len());
             }
-            if self.dirs[ancestor].project_root {
-                bounded = true;
+            let loaded = self.dir(ancestor)?;
+            let project_root = loaded.project_root;
+            path.push(loaded);
+            if project_root {
+                end = None;
                 break;
             }
         }
-        if !bounded && let Some(end) = path.iter().position(|ancestor| *ancestor == fallback) {
+        if let Some(end) = end {
             path.truncate(end + 1);
         }
         path.reverse();
         Ok(path)
     }
+
+    /// The config files in `dir`. The first thread to ask loads them, outside
+    /// the map's lock, so threads load different directories at once.
+    fn dir(&self, dir: &Path) -> Result<Arc<Dir>> {
+        let cell = {
+            let mut dirs = self.dirs.lock().unwrap_or_else(PoisonError::into_inner);
+            match dirs.get(dir) {
+                Some(cell) => Arc::clone(cell),
+                None => Arc::clone(dirs.entry(dir.to_path_buf()).or_default()),
+            }
+        };
+        cell.get_or_init(|| Dir::load(dir).map(Arc::new)).clone()
+    }
+}
+
+fn read<T>(lock: &RwLock<T>) -> RwLockReadGuard<'_, T> {
+    lock.read().unwrap_or_else(PoisonError::into_inner)
+}
+
+fn write<T>(lock: &RwLock<T>) -> RwLockWriteGuard<'_, T> {
+    lock.write().unwrap_or_else(PoisonError::into_inner)
 }
 
 /// The config files in a directory, lowest precedence first, and whether the

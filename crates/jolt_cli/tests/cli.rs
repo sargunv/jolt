@@ -47,6 +47,18 @@ impl Project {
     /// Runs `jolt` in `cwd` (relative to the project) and renders the result.
     fn run_in(&self, cwd: &str, args: &[&str], stdin: &str) -> String {
         let before = self.files();
+        let mut rendered = self.output(cwd, args, stdin);
+        for (path, contents) in self.files() {
+            if before.get(&path) != Some(&contents) {
+                let _ = write!(rendered, "--- wrote {path}\n{contents}");
+            }
+        }
+        self.normalize(&rendered)
+    }
+
+    /// Runs `jolt` in `cwd` (relative to the project) and renders its exit
+    /// status and output, without the files it wrote.
+    fn output(&self, cwd: &str, args: &[&str], stdin: &str) -> String {
         let mut child = Command::new(env!("CARGO_BIN_EXE_jolt"))
             .args(args)
             .current_dir(self.dir.path().join(cwd))
@@ -69,12 +81,7 @@ impl Project {
                 let _ = write!(rendered, "--- {label}\n{}", String::from_utf8_lossy(bytes));
             }
         }
-        for (path, contents) in self.files() {
-            if before.get(&path) != Some(&contents) {
-                let _ = write!(rendered, "--- wrote {path}\n{contents}");
-            }
-        }
-        self.normalize(&rendered)
+        rendered
     }
 
     fn run(&self, args: &[&str], stdin: &str) -> String {
@@ -186,6 +193,73 @@ fn path_errors() {
     insta::assert_snapshot!(project.run(&["fmt", "README.md"], ""));
     insta::assert_snapshot!(project.run(&["fmt", "Missing.java"], ""));
     insta::assert_snapshot!(project.run(&["fmt", "-", "README.md"], ""));
+}
+
+/// An error fails only the files or the path it is about. The run formats
+/// every other file, prints each error once, and exits 2.
+#[test]
+fn errors_fail_only_what_they_affect() {
+    let project = Project::new(&[
+        ("A.java", NESTED),
+        ("broken/jolt.toml", "[format]\nline-wdith = 80\n"),
+        ("broken/B.java", NESTED),
+        ("broken/nested/C.java", NESTED),
+        ("ok/D.java", NESTED),
+        ("README.md", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "--threads", "4"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "Missing.java", "README.md", "."], ""));
+}
+
+#[cfg(unix)]
+#[test]
+fn unreadable_directory() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let project = Project::new(&[
+        ("A.java", NESTED),
+        ("sub/B.java", NESTED),
+        ("sub/locked/C.java", NESTED),
+    ]);
+    let locked = project.dir.path().join("sub/locked");
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).unwrap();
+    // Overlapping paths report the directory they share once.
+    let outputs = [
+        &["fmt", "--check"][..],
+        &["fmt", "--check", ".", "sub"],
+        &["fmt", "--check", ".", "sub/locked"],
+    ]
+    .map(|args| project.normalize(&project.output(".", args, "")));
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).unwrap();
+    for output in outputs {
+        insta::assert_snapshot!(output);
+    }
+}
+
+/// Each file is formatted once, and reported under the first named path
+/// that contains it. Files under one named path are sorted.
+#[test]
+fn overlapping_paths() {
+    let project = Project::new(&[
+        ("src/A.java", NESTED),
+        ("src/b/B.java", NESTED),
+        ("src/b/C.java", NESTED),
+        ("other/D.java", NESTED),
+        ("Z.java", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run(
+        &[
+            "fmt",
+            "--check",
+            "Z.java",
+            "src/b",
+            "other",
+            "src",
+            "src/b/B.java",
+            "Z.java"
+        ],
+        ""
+    ));
 }
 
 #[test]

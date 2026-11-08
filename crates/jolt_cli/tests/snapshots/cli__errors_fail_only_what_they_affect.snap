@@ -1,0 +1,17 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--check\", \"--threads\", \"4\"], \"\")"
+---
+$ jolt fmt --check --threads 4
+status: 2
+--- stdout
+A.java
+ok/D.java
+--- stderr
+$TEMP/broken/jolt.toml: TOML parse error at line 2, column 1
+  |
+2 | line-wdith = 80
+  | ^^^^^^^^^^
+unknown field `line-wdith`, expected one of `line-width`, `indent-width`, `use-tabs`
+Checked 4 files in $TIME
+2 files need formatting, 2 files could not be formatted
