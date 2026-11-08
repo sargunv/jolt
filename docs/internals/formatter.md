@@ -168,19 +168,24 @@ pub struct NodeId(u32);
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TokenId(u32); // source order
 
-// Equality and hashing are identity: (tree pointer, id), written by hand
-// because the borrowed source a cursor also carries must not take part
-// (comparing it would make every comparison linear in the file).
+// The tree and its source. Equality and hashing are written by hand to
+// compare the tree pointer only: comparing the source by content would make
+// every comparison linear in the file.
 #[derive(Clone, Copy)]
+struct TreeRef<'a> {
+    tree: &'a SyntaxTree,
+    source: &'a str,
+}
+
+// Identity: the same id in the same tree.
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SyntaxNode<'a> {
     tree: TreeRef<'a>,
-    source: &'a str,
     id: NodeId,
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SyntaxToken<'a> {
     tree: TreeRef<'a>,
-    source: &'a str,
     id: TokenId,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -198,7 +203,7 @@ impl<'a> SyntaxNode<'a> {
     pub fn slot(self, index: usize) -> Option<SyntaxElement<'a>>;
     pub fn slots(self) -> impl DoubleEndedIterator<Item = Option<SyntaxElement<'a>>> + 'a;
     /// Raw non-empty children in order, malformed or not.
-    pub fn children(self) -> impl Iterator<Item = SyntaxElement<'a>> + 'a;
+    pub fn children(self) -> impl DoubleEndedIterator<Item = SyntaxElement<'a>> + 'a;
     pub fn first_token(self) -> Option<SyntaxToken<'a>>; // O(1): token range
     pub fn last_token(self) -> Option<SyntaxToken<'a>>; // O(1)
     pub fn tokens(self) -> impl Iterator<Item = SyntaxToken<'a>> + 'a;
@@ -257,7 +262,7 @@ pub trait AstNode<'a>: Copy {
     fn syntax(self) -> SyntaxNode<'a>;
 }
 
-/// One slot of a separated list.
+/// One slot of a list.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ListElement<'a, T> {
     Item(T),
@@ -289,6 +294,8 @@ slots from the children.
 pub struct TokenSet(u128); // token kinds must fit in 0..128 (asserted by codegen)
 impl TokenSet {
     pub const fn new(kinds: &[RawSyntaxKind]) -> Self;
+    pub const fn with(self, k: RawSyntaxKind) -> Self;
+    pub const fn union(self, other: Self) -> Self;
     pub const fn contains(self, k: RawSyntaxKind) -> bool;
 }
 
@@ -301,6 +308,7 @@ impl<'s, L: Language> Parser<'s, L> {
     pub fn nth(&self, n: usize) -> L::Kind;
     pub fn nth_text(&self, n: usize) -> &'s str;
     pub fn at(&self, kind: L::Kind) -> bool;
+    pub fn at_any(&self, set: TokenSet) -> bool;
     pub fn bump(&mut self);
     pub fn eat(&mut self, kind: L::Kind) -> bool;
     /// Eats `kind` or records `message` as an `expected` diagnostic at the
@@ -311,7 +319,8 @@ impl<'s, L: Language> Parser<'s, L> {
     /// Replaces the current token in the buffer by a one-byte `first` token
     /// followed by `rest` covering the remaining bytes. Leading trivia stays
     /// on `first`, trailing trivia moves to `rest`. Used only by consuming
-    /// grammar (never by lookahead) for Java's `>` family.
+    /// grammar (never by lookahead) for Java's `>` family. `first` takes the
+    /// slot of the consumed token before it, so token indices do not change.
     pub fn split_current(&mut self, first: L::Kind, rest: L::Kind);
     pub fn loop_guard(&self) -> LoopGuard;
     /// Runs `parse` one recursion level deeper, or returns `None` without
