@@ -8,14 +8,13 @@ Fast, opinionated Java formatter.
   `jolt_cli` (the `jolt` binary) and `jolt_fmt_dprint` (the dprint plugin) use
   only the `jolt_formatter` facade and `jolt_config`, the one definition of the
   user-facing format options.
-- `tools/`: corpus import (`import/import.py`), the regression reference
-  (`jolt-ref.sh`), the profile-guided release build (`pgo.py`), the optimized
+- `tools/`: corpus import (`import/import.py`), the baseline outputs
+  (`baseline.sh`), the profile-guided release build (`pgo.py`), the optimized
   plugin build (`wasm.sh`), and the benchmark (`bench.py`).
-- `docs/internals/formatter.md`: the formatter design contract (crates, APIs,
-  comment model, verification). Amend it in the same change when an
-  implementation has to deviate.
-- `docs/internals/java-style.md`: the normative Java output and its deliberate
-  changes from the reference.
+- `docs/internals/formatter.md`: the formatter design (crates, APIs, comment
+  model, verification).
+- `docs/guides/style.md`: the Java output, rule by rule. A test formats its
+  examples (`jolt_java_fmt/tests/style_guide.rs`).
 
 ## Useful Commands
 
@@ -41,13 +40,14 @@ Fast, opinionated Java formatter.
   entry that stops firing. The `jcheck` example re-runs one file, or one variant
   for a repro, e.g. `.../File.java:ownline12`, `.../File.java:comment3@40` or
   `.../File.java:delete7`.
-- `mise run jref ...`: compare the formatter with the reference outputs
-  (`jref <dir>` checks `format(F) == F` for `.java` files and `.snap`
-  `formatted:` sections; `jref --input <in> --expected <out>` checks
-  `format(in) == out`). The reference outputs and the reference binary live in
-  `tools/import/.imports/.jolt-ref/`, which `tools/jolt-ref.sh build` recreates
-  and `tools/jolt-ref.sh compare <binary>` diffs against; differences from them
-  must be explained by "Deliberate changes" in `docs/internals/java-style.md`.
+- `tools/baseline.sh build [revision]` formats the imported corpora with the CLI
+  built at a revision (default `origin/main`) into
+  `tools/import/.imports/.baseline/`, and `tools/baseline.sh compare <binary>`
+  counts the files another build formats differently. Review those differences
+  before changing output, and describe them in the PR.
+- `mise run jref ...`: compare the formatter with expected outputs (`jref <dir>`
+  checks `format(F) == F` for `.java` files and `.snap` `formatted:` sections;
+  `jref --input <in> --expected <out>` checks `format(in) == out`).
 - `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
   plugin.
 - `mise run bench`: time formatting the Spring corpus with hyperfine and print
@@ -62,6 +62,24 @@ Fast, opinionated Java formatter.
   pinned google-java-format as a useful reference.
 
 Run `mise tasks ls --all` for the full task list.
+
+## Documentation
+
+Documentation describes Jolt as it is, for a reader who does not know its
+history. Change it when a code change makes existing text wrong, and fix that
+text in place. Notes about what changed ("now", "no longer", "before"), issue
+numbers and comparisons with earlier output belong in the PR description, where
+the reviewer who knows the old behavior reads them.
+
+- `docs/guides/style.md` states the output for users: rules, then examples. When
+  an output change doesn't fit a rule, change the rule in the same PR rather
+  than adding a special case to the formatter. Compare with other formatters
+  only under "Compared with google-java-format", and check those claims by
+  running google-java-format.
+- `docs/internals/formatter.md` explains the design to contributors: the crates,
+  their contracts, and why each mechanism exists.
+- Many readers know Java but not formatter internals, and read English as a
+  second language, so say what the formatter does in literal terms.
 
 ## Project Invariants
 

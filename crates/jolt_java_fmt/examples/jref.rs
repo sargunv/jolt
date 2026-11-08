@@ -1,4 +1,5 @@
-//! Compares the formatter against the reference outputs.
+//! Compares the formatter with expected outputs, such as the baseline
+//! outputs `tools/baseline.sh` writes.
 //!
 //! - `jref <dir> [--line-width N] [--out DIR]`: checks `format(F) == F` for
 //!   every `.java` file, and for the `formatted:` section of every `.snap`,

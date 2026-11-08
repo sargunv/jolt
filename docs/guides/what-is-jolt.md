@@ -13,7 +13,7 @@ built to stay fast on large codebases: a lossless syntax tree that borrows the
 source, and a single-pass
 [Wadler/Prettier](https://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf)-style
 document printer. See [how the formatter works](/internals/formatter) for the
-design and [Java style](/internals/java-style) for the output it produces.
+design and [Java style](/guides/style) for the output it produces.
 
 Configuration stays small: line width, indent width, and tabs or spaces.
 

@@ -470,7 +470,7 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     ..entry
                 }),
                 // The suffix (an end-of-line comment) counts toward the width
-                // of the line it ends, as in the reference.
+                // of the line it ends.
                 Kind::LineSuffix(child) => {
                     suffix_pending = true;
                     stack.push(Fit {

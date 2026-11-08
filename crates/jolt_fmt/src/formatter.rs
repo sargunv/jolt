@@ -246,7 +246,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         // Text blocks are written raw. A multi-line comment with a line that
         // does not start with the node's indentation, which stripping it
         // would shift relative to the comment's other lines, is re-indented
-        // as a comment (C13).
+        // as a comment.
         let mut apart: Vec<(TextRange, Option<Reindent<'a>>)> = node
             .tokens()
             .filter(|token| has_line_break(token.text()))

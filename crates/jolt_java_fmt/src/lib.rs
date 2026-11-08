@@ -1,6 +1,6 @@
 //! The Java formatter: the Java `FormatLanguage`, node dispatch, shared
 //! helpers, and the layout rules. See `docs/internals/formatter.md` and
-//! `docs/internals/java-style.md`.
+//! `docs/guides/style.md`.
 
 mod dispatch;
 mod helpers;

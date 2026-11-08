@@ -14,7 +14,7 @@ What it promises:
   errors are refused by default rather than guessed at.
 - **One style, few options.** Line width, indent width, and tabs or spaces. No
   compatibility modes, no per-construct knobs. The style is written down in
-  [Java style](../../docs/internals/java-style.md).
+  [Java style](../../docs/guides/style.md).
 - **Layout only.** The formatter may sort imports and normalize a closed list of
   punctuation (see [the formatter design](../../docs/internals/formatter.md)),
   but it never renames, removes unused imports, or refactors.

@@ -38,7 +38,7 @@ jolt config init       # write a jolt.toml with the defaults
 - [Installation guide](https://sargunv.github.io/jolt/guides/installation)
 - [Configuration guide](https://sargunv.github.io/jolt/guides/configuration)
 - [CLI reference](https://sargunv.github.io/jolt/reference/cli)
-- [Java style](https://sargunv.github.io/jolt/internals/java-style)
+- [Java style](https://sargunv.github.io/jolt/guides/style)
 
 ## Development
 

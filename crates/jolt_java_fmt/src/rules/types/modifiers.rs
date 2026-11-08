@@ -59,7 +59,7 @@ pub(crate) fn modifier_list<'a>(f: &mut JavaFormatter<'a>, node: ModifierList<'a
 }
 
 /// Declarations whose annotations all go on their own lines before the
-/// keywords, wherever they were written (the reference's choice).
+/// keywords, wherever they were written.
 const fn hoists_annotations(parent: K) -> bool {
     matches!(
         parent,

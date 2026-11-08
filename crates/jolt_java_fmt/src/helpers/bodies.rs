@@ -24,8 +24,7 @@ pub(crate) fn braced_body<'a>(
 
 /// `open`, then `content` and `owner`'s dangling comments one indent deeper
 /// on their own lines (a blank line between the two when the source had
-/// one), then `close` on its own line. A body with neither prints `{}`
-/// (D1).
+/// one), then `close` on its own line. A body with neither prints `{}`.
 pub(crate) fn braced<'a>(
     f: &mut JavaFormatter<'a>,
     owner: Option<SyntaxNode<'a>>,
