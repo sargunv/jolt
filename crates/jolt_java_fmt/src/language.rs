@@ -1,9 +1,9 @@
 //! The Java `FormatLanguage`: separator and delimiter tables, the
-//! formatter-ignore scopes, and comment hooks H1, H2, H4 and H5.
+//! formatter-ignore scopes, and comment hooks H1 to H5.
 
 use jolt_fmt::{
     CommentContext, CommentKind, CommentLayout, Doc, FormatLanguage, Formatter, Placement,
-    leading_target,
+    leading_target, trailing_target,
 };
 use jolt_java_syntax::{
     IfStatement, JavaLanguage, JavaSyntaxKind as K, Statement, is_assignment_operator,
@@ -92,6 +92,7 @@ impl FormatLanguage for JavaFormat {
         body_comment(context, prev)
             .or_else(|| promoted_body_comment(context, prev))
             .or_else(|| block_comment_after_opener(context, prev))
+            .or_else(|| comment_before_stray_semicolon(context, prev))
     }
 
     fn ignore_scope(enclosing: SyntaxNode<'_>) -> Option<SyntaxNode<'_>> {
@@ -314,6 +315,33 @@ fn promoted_body_comment<'a>(
         node = parent;
     }
     None
+}
+
+/// H3: an end-of-line comment before a stray `;` (an empty statement or
+/// declaration, which N5 removes when no comment is on it) trails the code
+/// before it, where S1 would move it onto the `;`. So `} // c` followed by
+/// `;` keeps the comment on the `}` line, and the `;` goes. After an opener
+/// G2 still applies.
+fn comment_before_stray_semicolon<'a>(
+    context: &CommentContext<'a, '_>,
+    prev: SyntaxToken<'a>,
+) -> Option<Placement<'a>> {
+    let next = context.next;
+    let stray = kind(next) == K::Semicolon
+        && matches!(
+            node_kind(next.parent()),
+            K::EmptyStatement | K::EmptyDeclaration
+        );
+    if context.comment.source_layout != CommentLayout::EndOfLine
+        || !stray
+        || JavaFormat::closer_for(prev).is_some()
+    {
+        return None;
+    }
+    Some(Placement::Trailing(
+        trailing_target::<JavaLanguage>(prev),
+        CommentLayout::EndOfLine,
+    ))
 }
 
 fn is_header_clause(node: SyntaxNode<'_>) -> bool {

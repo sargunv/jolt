@@ -16,8 +16,7 @@ enum EmptyWithComments {
 class CommentRunsAroundRemovedTokens {
   void method() {
     label:
-    {} /* a */
-    ; // b
+    {} /* a */ // b
     for (/* a */ /* b */;;) {
       break;
     }

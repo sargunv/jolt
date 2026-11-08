@@ -643,8 +643,10 @@ section, which keep a comment next to the code it describes.
   before a member or statement stay attached to it.
 - **End of line.** A comment that ends its line stays at the end of the line. A
   `,` or `;` after it moves before it, so a comma or semicolon never starts a
-  line, except an enum's `;` kept on its own line (see [Enums](#enums)). A line
-  comment always ends the line, and counts toward the line width.
+  line, except an enum's `;` kept on its own line (see [Enums](#enums)) and a
+  stray `;`, which stays after the comment and is removed or goes on its own
+  line (`} // c` followed by `;` prints `} // c`). A line comment always ends
+  the line, and counts toward the line width.
 - **Inline.** A block comment between code on one line stays inline, with one
   space on each side, except none after an opening bracket, `.`, `::` or `@`,
   and none before a closing bracket, `,` or `;`.

@@ -757,8 +757,9 @@ suffix buffer, and output buffered into chunks for the sink. Its line handling:
   end-of-line comment from being carried past a token: `} // c` followed by
   `else` prints `} // c` / `else`. Only synthesized separators are `sticky`
   (`b // c` followed by a synthesized trailing `,` prints `b, // c`); a
-  represented `,` or `;` never follows a pending suffix, because placement rule
-  S1 already attached the comment after it.
+  represented `,` or `;` never follows a pending suffix: placement rule S1
+  attached the comment after it, or the `;` is a stray one (hook H3), which
+  starts its own line.
 - **Line comments end their line.** After a text flagged `line_comment`, the
   next text on the same output line (including the next flushed suffix) is
   preceded by a newline at the current indent. Two trailing line comments can
@@ -1233,7 +1234,7 @@ multiset catches that.
 ```text
 crates/jolt_java_fmt/
   src/lib.rs                 pub fn format, JavaFormat, type JavaFormatter
-  src/language.rs            impl FormatLanguage: separator and delimiter tables, ignore scopes, hooks H1, H2, H4, H5
+  src/language.rs            impl FormatLanguage: separator and delimiter tables, ignore scopes, hooks H1 to H5
   src/dispatch.rs            total match: node kind → rule function
   src/helpers/lists.rs       delimited comma lists, one-element delimited nodes, parenthesized headers, list items
   src/helpers/mod.rs         `spaced`, `spaced_node`: a space before what follows, if anything does; `after_token`: the value after a keyword or arrow
@@ -1322,6 +1323,15 @@ rules. "Header end" below means the `)` closing the header of `if`, `while`,
 - **H2, type-argument angles.** `<`/`>` of `TypeArgumentList` and
   `TypeParameterList` are openers/closers (via `closer_for`/`is_closer`); `<`
   and `>` as operators are not.
+- **H3, end-of-line comment before a stray `;`.** The comment is `EndOfLine`,
+  `next` is the `;` of an `EmptyStatement` or `EmptyDeclaration`, and `prev` is
+  not an opener (G2 applies there):
+  `Trailing(trailing_target(prev), EndOfLine)`. Without H3, S1 would move the
+  comment onto the `;`, N5 would keep that `;` for the comment, and `} // c`
+  followed by `;` would print the comment after the `;` on the next line. With
+  H3 the comment stays on the `}` line, and the `;`, which has no comment of its
+  own, is removed. A stray `;` that stays (recovery, or a switch group's only
+  `;`) starts its own line.
 - **H4, end-of-line comment after a promoted body.** The comment is `EndOfLine`
   and `prev` is the last token of a non-block body of an `if`, `else`, `while`,
   `for` or enhanced `for` (not an `else if` chain): `Trailing(body, EndOfLine)`.

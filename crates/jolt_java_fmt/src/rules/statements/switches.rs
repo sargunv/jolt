@@ -120,8 +120,14 @@ pub(crate) fn switch_block_statement_group<'a>(
     {
         statements[0] = ListItem::Format(first);
     }
+    // The statements that print: a removed `;` prints nothing, except
+    // verbatim in a formatter-ignore region.
+    let mut printed = statements.iter().filter_map(|&item| match item {
+        ListItem::Elide(node) if !f.in_ignore_region(node) => None,
+        ListItem::Format(node) | ListItem::Elide(node) => Some(node),
+    });
     if label_count == 1
-        && let [ListItem::Format(statement)] = statements[..]
+        && let (Some(statement), None) = (printed.next(), printed.next())
         && is_inline_block(f, statement)
     {
         let block = f.node(statement);
