@@ -1661,7 +1661,8 @@ only in `mise run hunt`, because it is too slow for the normal suite.
   `format(in) == out` file by file. It prints totals and writes each mismatch's
   actual output and a summary to `target/jref/`. Input files with syntax errors
   are skipped and counted separately, since the CLI refuses them and leaves them
-  untouched.
+  untouched. Inputs without an expected output are counted as missing. It exits
+  1 when an output differs or is missing.
 - `tools/baseline.sh build [revision]` builds the CLI at a revision (default
   `origin/main`) and formats the imported corpora with it into
   `tools/import/.imports/.baseline/`: `input/`, `output/` (width 80),
