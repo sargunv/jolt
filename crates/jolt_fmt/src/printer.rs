@@ -421,14 +421,14 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
             }
             Some(Reindent::Comment(indentation)) => {
                 // Laid out again as written when it is a doc comment with a
-                // line without `*` (see `comment_lines`).
+                // line without `*` or a ruler (see `comment_lines`).
                 let (len, column) = (self.out.len(), self.column);
-                let star_less = Cell::new(false);
-                self.write_comment(comment_lines(text.text, indentation, false, &star_less));
-                if star_less.get() {
+                let kept = Cell::new(false);
+                self.write_comment(comment_lines(text.text, indentation, false, &kept));
+                if kept.get() {
                     self.out.truncate(len);
                     self.column = column;
-                    self.write_comment(comment_lines(text.text, indentation, true, &star_less));
+                    self.write_comment(comment_lines(text.text, indentation, true, &kept));
                 }
             }
         }

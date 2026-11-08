@@ -209,8 +209,8 @@ impl<'a> DocBuilder<'a> {
                 let width = if bare {
                     3
                 } else {
-                    let star_less = Cell::new(false);
-                    comment_lines(text, indentation, keeps_lines(text), &star_less)
+                    let kept = Cell::new(false);
+                    comment_lines(text, indentation, keeps_lines(text), &kept)
                         .next()
                         .map_or(0, |parts| {
                             parts.iter().map(|part| display_width(part)).sum()
@@ -490,29 +490,30 @@ pub(crate) type CommentLine<'t> = [&'t str; 3];
 /// The output lines of a block comment: a multi-line doc comment (`/**`) is
 /// a star block whose opener text moves to its own line; a multi-line block
 /// comment whose continuation starts with `*` is a star block that keeps its
-/// opener text. A star line keeps its text after the `*` and one space, so
-/// `<pre>` code stays indented.
+/// opener text. A star line keeps its text after the `*` (all of a doc
+/// comment's leading `*`s, as javadoc reads it) and one space, so `<pre>`
+/// code stays indented.
 ///
-/// A doc comment with a line without `*` ([`keeps_lines`]) keeps its lines as
-/// written: each loses `indentation`, the indentation of the source line the
-/// comment starts on, when it starts with it. Any other comment keeps its
-/// continuation lines' indentation relative to each other.
+/// A doc comment that [`keeps_lines`] keeps its lines as written: each loses
+/// `indentation`, the indentation of the source line the comment starts on,
+/// when it starts with it. Any other comment keeps its continuation lines'
+/// indentation relative to each other.
 ///
 /// The caller says whether the doc comment is kept as written (`as_written`),
-/// or finds out while laying it out as a star block: `star_less` is set when
-/// a continuation line without `*` turns up, and the caller lays the comment
-/// out again as written. Such comments are rare, so most doc comments are
-/// scanned once.
+/// or finds out while laying it out as a star block: `kept` is set when a
+/// continuation line without `*` or a ruler turns up, and the caller lays
+/// the comment out again as written. Such comments are rare, so most doc
+/// comments are scanned once.
 pub(crate) fn comment_lines<'t>(
     text: &'t str,
     indentation: &'t str,
     as_written: bool,
-    star_less: &'t Cell<bool>,
+    kept: &'t Cell<bool>,
 ) -> impl Iterator<Item = CommentLine<'t>> {
     let doc = text.starts_with("/**") && !text.starts_with("/**/");
     let content = strip_delimiters(text);
     let multiline = has_line_break(content);
-    let as_written = doc && multiline && as_written;
+    let as_written = doc && multiline && (as_written || text.starts_with("/***"));
     let star_block = (doc && multiline && !as_written) || (!doc && is_star_block(content));
     // Exactly one of the two layouts is `Some`.
     let plain = (!star_block).then(|| {
@@ -546,6 +547,16 @@ pub(crate) fn comment_lines<'t>(
         let body = lines
             .filter_map(move |line| {
                 let line = match line.trim_start().strip_prefix('*') {
+                    // A doc comment line loses its whole run of `*`s, as
+                    // javadoc reads it; a ruler keeps the comment as
+                    // written.
+                    Some(rest) if multiline && doc => {
+                        if rest.starts_with('*') && is_ruler(rest) {
+                            kept.set(true);
+                        }
+                        let rest = rest.trim_start_matches('*').trim_end();
+                        rest.strip_prefix(' ').unwrap_or(rest)
+                    }
                     Some(rest) if multiline => {
                         let rest = rest.trim_end();
                         rest.strip_prefix(' ').unwrap_or(rest)
@@ -553,7 +564,7 @@ pub(crate) fn comment_lines<'t>(
                     _ => {
                         let line = line.trim();
                         if doc && continuation && !line.is_empty() {
-                            star_less.set(true);
+                            kept.set(true);
                         }
                         line
                     }
@@ -602,27 +613,45 @@ fn strip_delimiters(text: &str) -> &str {
         .unwrap_or(body)
 }
 
-/// Whether `text` is a multi-line doc comment (`/**`) with a continuation
-/// line that has text but no leading `*`. Javadoc keeps the indentation of
-/// such a line, so the comment is kept as written (see [`comment_lines`])
-/// instead of being made a star block, which could shift a code sample in
-/// `<pre>`. Most lines start with spaces and a `*`, which a scan for `\n`
-/// answers; any other line is checked as text, Unicode whitespace counting
-/// as blank.
+/// Whether `text` is a multi-line doc comment (`/**`) kept as written (see
+/// [`comment_lines`]) instead of being made a star block:
+///
+/// - a continuation line has text but no leading `*`: javadoc keeps the
+///   indentation of such a line, so a star block could shift a code sample
+///   in `<pre>`;
+/// - it is a banner: it starts with `/***`, or a line is made only of two or
+///   more `*`s (javadoc reads such a ruler as a blank line, which a star
+///   block would print as one).
+///
+/// Most lines start with spaces and a `*`, which a scan for `\n` answers; any
+/// other line is checked as text, Unicode whitespace counting as blank.
 pub(crate) fn keeps_lines(text: &str) -> bool {
     if !text.starts_with("/**") || text.starts_with("/**/") {
         return false;
     }
     let content = strip_delimiters(text);
+    if !has_line_break(content) {
+        return false;
+    }
+    if text.starts_with("/***") {
+        return true;
+    }
     let star_less = |line: &str| {
         !line.trim_start_matches([' ', '\t']).starts_with('*')
             && !line.trim().is_empty()
             && !line.trim_start().starts_with('*')
     };
+    let kept = |(index, line): (usize, &str)| (index > 0 && star_less(line)) || is_ruler(line);
     if content.as_bytes().contains(&b'\r') {
-        return lines(content).skip(1).any(star_less);
+        return lines(content).enumerate().any(kept);
     }
-    content.split('\n').skip(1).any(star_less)
+    content.split('\n').enumerate().any(kept)
+}
+
+/// Whether a doc comment line is a ruler made only of two or more `*`s.
+fn is_ruler(line: &str) -> bool {
+    let line = line.trim();
+    line.len() >= 2 && line.bytes().all(|byte| byte == b'*')
 }
 
 fn is_star_block(content: &str) -> bool {

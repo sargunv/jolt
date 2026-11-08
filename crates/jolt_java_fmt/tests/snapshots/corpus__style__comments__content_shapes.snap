@@ -13,8 +13,8 @@ class CommentContentShapes {
   /**
    * First paragraph.
    *
-   * * Deliberately doubled body star.
-   * ** Deliberately tripled body star.
+   * Deliberately doubled body star.
+   * Deliberately tripled body star.
    * @param value text with <T>, {@code //}, and * /.
    * @return value
    */

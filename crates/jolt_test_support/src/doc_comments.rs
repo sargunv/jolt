@@ -40,11 +40,10 @@ const VERBATIM_ELEMENTS: &[&str] = &["pre", "table"];
 /// The canonical form of a `/**` comment, or `None` when `text` is not a
 /// terminated `/**` comment with literal delimiters.
 ///
-/// Each line loses its indentation, then one `*` and one space after it, and
-/// its trailing whitespace. (Javadoc strips the whole run of leading `*`s;
-/// Jolt's frame realignment, normalization N9, strips one, which the form
-/// follows until the doc comment layout strips runs.) Then the form is, in
-/// order:
+/// Each line of a multi-line comment loses its indentation, then its run of
+/// `*`s and one space after them, as javadoc reads it, and its trailing
+/// whitespace; a comment on one line loses only its delimiters and the
+/// whitespace around its text. Then the form is, in order:
 ///
 /// - the whitespace-separated words of the description, with block-level
 ///   HTML tags split off as words of their own;
@@ -93,7 +92,7 @@ pub(crate) fn javadoc(text: &str, indentation: &str) -> Option<String> {
             let line = line.trim_start();
             match line.strip_prefix('*') {
                 Some(rest) if multiline => {
-                    let rest = rest.trim_end();
+                    let rest = rest.trim_start_matches('*').trim_end();
                     rest.strip_prefix(' ').unwrap_or(rest)
                 }
                 _ => line.trim(),
