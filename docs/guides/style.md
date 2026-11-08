@@ -278,10 +278,12 @@ enum Color {
 ```
 
 - Constants go one per line. Without members, every constant is followed by a
-  comma, including the last, and a `;` after the constants is removed. With
-  members, the last constant is followed by `;`, then a blank line and the
-  members.
-- A comment after the last constant stays on its line, after the comma or `;`:
+  comma, including the last, and a `;` after the constants is removed, its
+  comments where they were. With members, the last constant is followed by `;`,
+  then a blank line and the members.
+- A comment after the last constant stays on its line, after the comma or `;`.
+  With members, when a comment is on the comma after the last constant or on the
+  `;`, both stay as written, and the `;` goes on its own line after the comma:
 
 ::: code-group
 
@@ -292,6 +294,12 @@ enum E {
 }
 
 enum F {
+  B // last
+  ;
+  int code;
+}
+
+enum G {
   B, // last
   ;
   int code;
@@ -309,12 +317,17 @@ enum F {
 
   int code;
 }
+
+enum G {
+  B, // last
+  ;
+
+  int code;
+}
 ```
 
 :::
 
-- Comments on their own line before the `;` move after it, with a blank line on
-  each side.
 - Constant annotations go on their own lines. Arguments format like a call's,
   and bodies like a class body.
 
@@ -455,7 +468,8 @@ switch (value) {
 - A rule (`case X ->`) whose body doesn't fit breaks after `->`, with the body
   one level deeper.
 - Label lists (`case null, default`) and guards (`when …`) stay on the label
-  line. Redundant parentheses around a guard are removed.
+  line. Redundant parentheses around a guard are removed, unless a comment is on
+  or inside them.
 - A switch expression formats the same way.
 
 ### Try
@@ -627,7 +641,10 @@ section, which keep a comment next to the code it describes.
   before a member or statement stay attached to it.
 - **End of line.** A comment that ends its line stays at the end of the line. A
   `,` or `;` after it moves before it, so a comma or semicolon never starts a
-  line. A line comment always ends the line, and counts toward the line width.
+  line, except an enum's `;` kept on its own line (see [Enums](#enums)) and a
+  stray `;`, which stays after the comment and is removed or goes on its own
+  line (`} // c` followed by `;` prints `} // c`). A line comment always ends
+  the line, and counts toward the line width.
 - **Inline.** A block comment between code on one line stays inline, with one
   space on each side, except none after an opening bracket, `.`, `::` or `@`,
   and none before a closing bracket, `,` or `;`.
@@ -671,9 +688,12 @@ class Example extends Base {
 
 :::
 
-- **After an operator or keyword.** A comment that ends the line after `=`,
-  `return`, `throw`, `yield`, `break`, `continue` or `assert` stays there, and
-  the value continues on the next line one level deeper:
+- **After an operator, keyword or arrow.** A comment that ends the line after
+  `=`, `return`, `throw`, `yield`, `break`, `continue`, `assert`, `->`, or the
+  `&` or `|` between types stays there, and the value continues on the next line
+  one level deeper. A comment on its own line before the value puts the value
+  one level deeper too. An inline block comment after them stays inline, and the
+  value follows it on the same line (`return /* c */ value;`):
 
 ```java
 int field = // a comment ends the line after the operator
@@ -681,6 +701,10 @@ int field = // a comment ends the line after the operator
 return // a comment ends the line after the keyword
   someLongMethodCall(firstArgumentName, secondArgumentName)
     + anotherMethodCall(thirdArgumentName);
+run(
+  () -> // a comment ends the line after the arrow
+    task.run()
+);
 ```
 
 - **In an empty body or list.** Comments in an otherwise empty body or list, and

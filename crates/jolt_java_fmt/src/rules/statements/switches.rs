@@ -13,7 +13,7 @@ use super::statement_items;
 use crate::JavaFormatter;
 use crate::helpers::bodies::{braced_body, statement_separator};
 use crate::helpers::lists::parenthesized;
-use crate::helpers::spaced_node;
+use crate::helpers::{after_token, spaced_node};
 
 pub(crate) fn switch_statement<'a>(f: &mut JavaFormatter<'a>, node: SwitchStatement<'a>) -> Doc {
     switch(
@@ -120,13 +120,6 @@ pub(crate) fn switch_block_statement_group<'a>(
     {
         statements[0] = ListItem::Format(first);
     }
-    if label_count == 1
-        && let [ListItem::Format(statement)] = statements[..]
-        && is_inline_block(f, statement)
-    {
-        let block = f.node(statement);
-        return cat![f; labels, f.space(), block];
-    }
     // The comments of removed `;` after the last statement print at the
     // labels' indent, where the next pass reads them (leading the next group
     // or dangling in the switch block).
@@ -135,8 +128,15 @@ pub(crate) fn switch_block_statement_group<'a>(
         .rposition(|item| matches!(item, ListItem::Format(_)))
         .map_or(0, |last| last + 1);
     let removed = statements.split_off(kept);
-    let statements = f.item_list(statements, statement_separator);
     let removed = f.item_list(removed, |f, _| f.hard_line());
+    if label_count == 1
+        && let [ListItem::Format(statement)] = statements[..]
+        && is_inline_block(f, statement)
+    {
+        let block = f.node(statement);
+        return cat![f; labels, f.space(), block, removed];
+    }
+    let statements = f.item_list(statements, statement_separator);
     if statements.is_nil() {
         return cat![f; labels, removed];
     }
@@ -161,34 +161,24 @@ fn is_inline_block<'a>(f: &JavaFormatter<'a>, statement: SyntaxNode<'a>) -> bool
 /// next line one indent deeper.
 pub(crate) fn switch_rule<'a>(f: &mut JavaFormatter<'a>, node: SwitchRule<'a>) -> Doc {
     let label = f.fmt_opt(node.label());
-    let arrow = f.token_opt(node.arrow());
     let body = match node.body() {
         Some(SwitchRuleBody::Expression(expression)) => {
+            let arrow = f.token_opt(node.arrow());
             let expression = f.fmt(expression);
             let semicolon = f.token_opt(node.semicolon());
             let body = indent![f; f.line(), expression, semicolon];
-            f.group(body)
+            let body = f.group(body);
+            cat![f; arrow, body]
         }
-        // A comment on its own line before a `throw` keeps the statement
-        // one indent deeper, like an expression body. A block stays at the
-        // label's indent: H1 moves a comment before its `{` into it, so only
-        // inline comments lead it.
-        Some(body @ SwitchRuleBody::ThrowStatement(_))
-            if f.leading_comments_break(SyntaxElement::Node(body.syntax())) =>
-        {
-            let body = f.fmt(body);
+        // A `throw` or a block (see `after_token`). H1 moves a comment
+        // before a block's `{` into it, so only inline comments lead it.
+        body => {
+            let body = body.map(|body| (SyntaxElement::Node(body.syntax()), f.fmt(body)));
             let semicolon = f.token_opt(node.semicolon());
-            let body = indent![f; body, semicolon];
-            cat![f; f.space(), body]
+            after_token(f, node.arrow(), body, semicolon)
         }
-        Some(body) => {
-            let body = f.fmt(body);
-            let semicolon = f.token_opt(node.semicolon());
-            cat![f; f.space(), body, semicolon]
-        }
-        None => f.token_opt(node.semicolon()),
     };
-    cat![f; label, f.space(), arrow, body]
+    cat![f; label, f.space(), body]
 }
 
 /// `case a, b when guard` or `default`. Items that do not fit break one per
@@ -229,41 +219,34 @@ pub(crate) fn case_pattern<'a>(f: &mut JavaFormatter<'a>, node: CasePattern<'a>)
 }
 
 /// `when condition`. Parentheses around the condition are removed (N6)
-/// unless comments are involved.
+/// unless a comment is on or inside them.
 pub(crate) fn guard<'a>(f: &mut JavaFormatter<'a>, node: Guard<'a>) -> Doc {
     let when = f.token_opt(node.when_keyword());
     let condition = f.fmt_opt(node.condition());
     let (open, close) = (node.open_paren(), node.close_paren());
     let condition = match (open, close) {
         (None, None) => condition,
-        (Some(open), Some(close)) if removable_parentheses(f, node, open, close) => {
-            let open = f.removed(SyntaxElement::Token(open));
-            let close = f.removed(SyntaxElement::Token(close));
-            cat![f; open, condition, close]
-        }
+        (Some(open), Some(close)) if removable_parentheses(f, node, open, close) => condition,
         _ => parenthesized(f, node.syntax(), open, condition, close),
     };
     cat![f; when, f.space(), condition]
 }
 
-/// N6 for a guard: the guard is recovery-free, its parentheses carry no
-/// comments, and no comment sits between `(` and the condition or on its own
-/// line before `)`. Comments inside the condition, and an inline comment
-/// after it (`when (i > 0 /* c */)`), stay with the condition.
+/// N6 for a guard: the guard is recovery-free and no comment is within the
+/// parentheses (on them, dangling between them, or within the condition).
+/// The guard node also spans `when` and the comments around it, so this
+/// checks the parenthesized span rather than the whole guard.
 fn removable_parentheses<'a>(
     f: &JavaFormatter<'a>,
     node: Guard<'a>,
     open: SyntaxToken<'a>,
     close: SyntaxToken<'a>,
 ) -> bool {
-    let token_comments = |token| f.has_comments(SyntaxElement::Token(token));
-    let condition_comments = node.condition().is_some_and(|condition| {
-        let condition = SyntaxElement::Node(condition.syntax());
-        f.has_leading_comments(condition) || f.trailing_comments_break(condition)
-    });
     node.syntax().is_recovery_free()
-        && !token_comments(open)
-        && !token_comments(close)
+        && !f.has_comments(SyntaxElement::Token(open))
+        && !f.has_comments(SyntaxElement::Token(close))
         && !f.has_dangling_comments(node.syntax())
-        && !condition_comments
+        && node
+            .condition()
+            .is_none_or(|condition| !f.has_comments_within(condition.syntax()))
 }

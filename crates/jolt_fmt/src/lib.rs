@@ -14,6 +14,7 @@ use jolt_syntax::{Language, RawSyntaxKind, SyntaxNode, SyntaxToken, TriviaKind};
 
 pub use comments::{
     Comment, CommentContext, CommentKind, CommentLayout, Placement, is_unclosed, leading_target,
+    trailing_target,
 };
 pub use doc::{Doc, DocBuilder};
 pub use formatter::{Formatter, ListItem, Separator};

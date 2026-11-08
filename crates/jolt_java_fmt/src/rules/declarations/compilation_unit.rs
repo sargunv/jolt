@@ -18,12 +18,20 @@ pub(crate) fn compilation_unit<'a>(f: &mut JavaFormatter<'a>, node: CompilationU
         .map(|list| list.items().collect())
         .unwrap_or_default();
     let Ordered { items, roles, .. } = order_items(f, &items);
+    // The items after the last formatted one are removed `;`s, whose
+    // comments lead the end of the file.
+    let last_content = items
+        .iter()
+        .rposition(|item| matches!(item, ListItem::Format(_)))
+        .unwrap_or(0);
     let body = f.item_list(items, |f, separator| {
+        let at_end = separator.next_index > last_content;
         top_level_separator(
             f,
             separator,
             roles[separator.prev_index],
             roles[separator.next_index],
+            at_end,
         )
     });
     let Some(eof) = node.eof() else {
@@ -72,34 +80,27 @@ pub(crate) fn import_declaration<'a>(
     f.concat(docs)
 }
 
-/// How a top-level item is separated from the one before it.
+/// An import in a sorted section, or a removed `;` whose comments lead it
+/// (a carrier): `section` numbers the section, and `anchor` marks an import
+/// that carries leading comments or carriers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Role {
-    /// An import in a sorted section: `section` numbers the section, and
-    /// `anchor` marks an import that carries leading comments.
-    Import {
-        section: usize,
-        is_static: bool,
-        anchor: bool,
-    },
-    /// A removed `;` whose comments lead the import after it.
-    ImportCarrier { section: usize, is_static: bool },
-    /// A removed `;` whose comments stand alone; `last` when no item follows
-    /// it (its comments then lead the end of the file).
-    Carrier { last: bool },
+struct ImportRole {
+    section: usize,
+    is_static: bool,
+    anchor: bool,
 }
 
-/// The top-level items in output order, each with its role (`None` for an
-/// item that is not an import and not a removed `;`).
+/// The top-level items in output order, each with its import role (`None`
+/// for an item that is not an import or a carrier).
 struct Ordered<'a> {
     items: Vec<ListItem<'a>>,
-    roles: Vec<Option<Role>>,
+    roles: Vec<Option<ImportRole>>,
     /// The number of import sections so far.
     sections: usize,
 }
 
 impl<'a> Ordered<'a> {
-    fn push(&mut self, item: ListItem<'a>, role: Option<Role>) {
+    fn push(&mut self, item: ListItem<'a>, role: Option<ImportRole>) {
         self.items.push(item);
         self.roles.push(role);
     }
@@ -138,72 +139,61 @@ impl<'a> Ordered<'a> {
     }
 
     fn import_unit(&mut self, unit: &Unit<'a>, section: usize) {
-        let is_static = unit.is_static;
-        for &carrier in &unit.carriers {
-            self.push(
-                ListItem::Elide(carrier),
-                Some(Role::ImportCarrier { section, is_static }),
-            );
-        }
-        let role = Role::Import {
+        let role = Some(ImportRole {
             section,
-            is_static,
+            is_static: unit.is_static,
             anchor: unit.anchor,
-        };
-        self.push(ListItem::Format(unit.import.syntax()), Some(role));
+        });
+        for &carrier in &unit.carriers {
+            self.push(ListItem::Elide(carrier), role);
+        }
+        self.push(ListItem::Format(unit.import.syntax()), role);
     }
 }
 
 fn top_level_separator<'a>(
     f: &mut JavaFormatter<'a>,
     separator: Separator<'a>,
-    prev: Option<Role>,
-    next: Option<Role>,
+    prev: Option<ImportRole>,
+    next: Option<ImportRole>,
+    at_end: bool,
 ) -> Doc {
-    let section = |role: Option<Role>| match role {
-        Some(Role::Import { section, .. } | Role::ImportCarrier { section, .. }) => Some(section),
-        _ => None,
-    };
     let blank = separator.blank_line_in_source;
-    let is_static = |role: Option<Role>| {
-        matches!(
-            role,
-            Some(
-                Role::Import {
-                    is_static: true,
-                    ..
-                } | Role::ImportCarrier {
-                    is_static: true,
-                    ..
-                }
-            )
-        )
-    };
-    if section(prev).is_some() && section(prev) == section(next) {
-        return match (prev, next) {
-            (Some(Role::ImportCarrier { .. }), _) => f.hard_line(),
+    if let (Some(prev), Some(next)) = (prev, next)
+        && prev.section == next.section
+    {
+        return if is_semicolon(separator.prev) {
+            // A carrier and the import it leads.
+            f.hard_line()
+        } else if !prev.is_static && next.is_static {
             // The blank line between the normal and the static imports.
-            _ if !is_static(prev) && is_static(next) => f.empty_line(),
-            (_, Some(Role::ImportCarrier { .. } | Role::Import { anchor: true, .. })) => {
-                f.line_break(blank)
-            }
-            _ => f.hard_line(),
+            f.empty_line()
+        } else if next.anchor {
+            f.line_break(blank)
+        } else {
+            f.hard_line()
         };
     }
-    // A carrier is separated from what precedes it like the item after it
-    // would be, and from that item as in the source. Two fields of a compact
+    // The comments of a removed `;` keep the source's line breaks after
+    // them, and before them at the end of the file. Two fields of a compact
     // source file keep the source's choice, as in a class body.
     let is_field = |node: SyntaxNode<'_>| K::from_raw(node.kind()) == K::FieldDeclaration;
-    match (prev, next) {
-        (Some(Role::Carrier { .. }), _) | (_, Some(Role::Carrier { last: true })) => {
-            f.line_break(blank)
-        }
-        _ if is_field(separator.prev) && is_field(separator.next) => f.line_break(blank),
-        _ => f.empty_line(),
+    if is_semicolon(separator.prev)
+        || at_end
+        || (is_field(separator.prev) && is_field(separator.next))
+    {
+        f.line_break(blank)
+    } else {
+        f.empty_line()
     }
 }
 
-/// One import with the comment-carrying `;` items that lead it.
+fn is_semicolon(node: SyntaxNode<'_>) -> bool {
+    K::from_raw(node.kind()) == K::EmptyDeclaration
+}
+
+/// One import of a section, with the `;` items before it, whose comments
+/// lead it.
 struct Unit<'a> {
     carriers: Vec<SyntaxNode<'a>>,
     import: ImportDeclaration<'a>,
@@ -221,23 +211,19 @@ fn order_items<'a>(f: &JavaFormatter<'a>, items: &[CompilationUnitItem<'a>]) -> 
         roles: Vec::with_capacity(items.len()),
         sections: 0,
     };
-    let last_content = items
-        .iter()
-        .rposition(|item| !matches!(item, CompilationUnitItem::EmptyDeclaration(_)));
     let mut index = 0;
     while index < items.len() {
         let item = items[index];
         if let CompilationUnitItem::ImportDeclaration(_) = item {
             let end = section_end(items, index);
-            let units = import_units(f, &items[index..end], &mut ordered);
+            let units = import_units(f, &items[index..end]);
             ordered.import_section(units);
             index = end;
             continue;
         }
         let node = item.syntax();
-        if let CompilationUnitItem::EmptyDeclaration(_) = item {
-            let last = last_content.is_none_or(|content| index > content);
-            ordered.push(ListItem::Elide(node), Some(Role::Carrier { last }));
+        if is_semicolon(node) {
+            ordered.push(ListItem::Elide(node), None);
         } else {
             ordered.push(ListItem::Format(node), None);
         }
@@ -260,39 +246,38 @@ fn section_end(items: &[CompilationUnitItem<'_>], start: usize) -> usize {
     end
 }
 
-/// The imports of a section with the `;` items that lead them. A `;`
-/// without comments vanishes wherever it is listed, so it is listed first.
-fn import_units<'a>(
-    f: &JavaFormatter<'a>,
-    items: &[CompilationUnitItem<'a>],
-    ordered: &mut Ordered<'a>,
-) -> Vec<Unit<'a>> {
+/// The imports of a section, each with the `;` items before it.
+fn import_units<'a>(f: &JavaFormatter<'a>, items: &[CompilationUnitItem<'a>]) -> Vec<Unit<'a>> {
     let mut units = Vec::new();
-    let mut carriers = Vec::new();
-    for &item in items {
-        match item {
-            CompilationUnitItem::ImportDeclaration(import) => {
-                let name = import.name();
-                let anchor = !carriers.is_empty()
-                    || f.has_leading_comments(SyntaxElement::Node(import.syntax()));
-                let mut key = name.map(name_key).unwrap_or_default();
-                if import.star().is_some() {
-                    key.push_str(".*");
-                }
-                units.push(Unit {
-                    carriers: std::mem::take(&mut carriers),
-                    import,
-                    key,
-                    is_static: import.static_keyword().is_some(),
-                    anchor,
-                    sortable: import.syntax().is_recovery_free()
-                        && name.is_some_and(|name| !f.has_comments_within(name.syntax()))
-                        && !f.in_ignore_region(import.syntax()),
-                });
-            }
-            _ if f.has_comments_within(item.syntax()) => carriers.push(item.syntax()),
-            _ => ordered.push(ListItem::Elide(item.syntax()), None),
+    let mut start = 0;
+    for (index, &item) in items.iter().enumerate() {
+        let CompilationUnitItem::ImportDeclaration(import) = item else {
+            continue;
+        };
+        let carriers: Vec<SyntaxNode<'a>> = items[start..index]
+            .iter()
+            .map(|item| item.syntax())
+            .collect();
+        start = index + 1;
+        let anchor = carriers
+            .iter()
+            .any(|&carrier| f.has_comments_within(carrier))
+            || f.has_leading_comments(SyntaxElement::Node(import.syntax()));
+        let name = import.name();
+        let mut key = name.map(name_key).unwrap_or_default();
+        if import.star().is_some() {
+            key.push_str(".*");
         }
+        units.push(Unit {
+            carriers,
+            import,
+            key,
+            is_static: import.static_keyword().is_some(),
+            anchor,
+            sortable: import.syntax().is_recovery_free()
+                && name.is_some_and(|name| !f.has_comments_within(name.syntax()))
+                && !f.in_ignore_region(import.syntax()),
+        });
     }
     units
 }

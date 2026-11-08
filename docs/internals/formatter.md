@@ -757,8 +757,9 @@ suffix buffer, and output buffered into chunks for the sink. Its line handling:
   end-of-line comment from being carried past a token: `} // c` followed by
   `else` prints `} // c` / `else`. Only synthesized separators are `sticky`
   (`b // c` followed by a synthesized trailing `,` prints `b, // c`); a
-  represented `,` or `;` never follows a pending suffix, because placement rule
-  S1 already attached the comment after it.
+  represented `,` or `;` never follows a pending suffix: placement rule S1
+  attached the comment after it, or the `;` is a stray one (hook H3), which is
+  removed or starts its own line.
 - **Line comments end their line.** After a text flagged `line_comment`, the
   next text on the same output line (including the next flushed suffix) is
   preceded by a newline at the current indent. Two trailing line comments can
@@ -1072,12 +1073,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// their own layouts, without the element's text. For tokens or nodes a
     /// normalization removes. Returns NIL when there are none.
     pub fn removed(&mut self, element: SyntaxElement<'a>) -> Doc;
-    /// `removed` for several elements, in source order, printed like dangling
-    /// comments (each on its own line, except that comments that shared a
-    /// source line share it), for the comments that a rule moves to lines of
-    /// their own (those of an enum's moved `;`, N5): the next pass reads them
-    /// as own-line comments, so they must print as those do.
-    pub fn removed_on_own_lines(&mut self, elements: &[SyntaxElement<'a>]) -> Doc;
     /// The node's source from its first token's text to its last token's
     /// text, interior comments included and marked emitted, as
     /// `reindented(slice, Reindent::Strip(p))` where `p` is the indentation of
@@ -1107,8 +1102,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     pub fn has_leading_comments(&self, element: SyntaxElement<'a>) -> bool;
     pub fn has_trailing_comments(&self, element: SyntaxElement<'a>) -> bool;
     pub fn has_dangling_comments(&self, node: SyntaxNode<'a>) -> bool;
-    /// A trailing line comment.
-    pub fn has_trailing_line_comment(&self, element: SyntaxElement<'a>) -> bool;
     /// Some leading comment prints a line break between the code before the
     /// element and the element (its effective layout is not `Inline`).
     pub fn leading_comments_break(&self, element: SyntaxElement<'a>) -> bool;
@@ -1172,14 +1165,12 @@ handle twice.
   Nothing is emitted before the first item or after the last, so bodies never
   start or end with a blank line.
 - **Elision.** An `Elide` item prints `removed(item)`; if that is NIL the item
-  vanishes (no separator), otherwise its comments stand in its place. Its
-  trailing comments that lie before it in the source (moved onto it by S1, as in
-  `} // c` then a stray `;`) end the previous item's line: they are printed
-  before the separator, unless an item vanished in between. The last comment of
-  an elided item, when it is an own-line leading comment, is not followed by its
-  blank line itself; instead a blank line after it in the source counts as a
-  blank line before the next item (`Separator::blank_line_in_source`), so every
-  body keeps the source's blank line there.
+  vanishes (no separator), otherwise its comments stand in its place. The last
+  comment of an elided item, when it is an own-line leading comment, is not
+  followed by its blank line itself; instead a blank line after it in the source
+  counts as a blank line before the next item
+  (`Separator::blank_line_in_source`), so every body keeps the source's blank
+  line there.
 - **Formatter-ignore.** An item (`Format` or `Elide`) whose first token's text
   starts inside an ignore region prints `verbatim(item)` between its own leading
   and trailing comments (including the markers), which are formatted normally.
@@ -1251,10 +1242,10 @@ multiset catches that.
 ```text
 crates/jolt_java_fmt/
   src/lib.rs                 pub fn format, JavaFormat, type JavaFormatter
-  src/language.rs            impl FormatLanguage: separator and delimiter tables, ignore scopes, hooks H1, H2, H4, H5
+  src/language.rs            impl FormatLanguage: separator and delimiter tables, ignore scopes, hooks H1 to H5
   src/dispatch.rs            total match: node kind → rule function
   src/helpers/lists.rs       delimited comma lists, one-element delimited nodes, parenthesized headers, list items
-  src/helpers/mod.rs         `spaced`, `spaced_node`: a space before what follows, if anything does
+  src/helpers/mod.rs         `spaced`, `spaced_node`: a space before what follows, if anything does; `after_token`: the value after a keyword or arrow
   src/helpers/bodies.rs      braced bodies, body items with N5, member and statement separators
   src/helpers/assignment.rs  `left = right` layout
   src/rules/declarations/    compilation unit, imports, modules, type declarations and headers, bodies, members
@@ -1340,6 +1331,14 @@ rules. "Header end" below means the `)` closing the header of `if`, `while`,
 - **H2, type-argument angles.** `<`/`>` of `TypeArgumentList` and
   `TypeParameterList` are openers/closers (via `closer_for`/`is_closer`); `<`
   and `>` as operators are not.
+- **H3, end-of-line comment before a stray `;`.** The comment is `EndOfLine`,
+  `next` is the `;` of an `EmptyStatement` or `EmptyDeclaration`, and `prev` is
+  not an opener (G2 applies there):
+  `Trailing(trailing_target(prev), EndOfLine)`. Without H3, S1 would move the
+  comment onto the `;`, so `} // c` followed by `;` would print the comment on
+  the next line: on a line of its own when N5 removes the `;`, after it when the
+  `;` stays (recovery, or a switch group's only `;`). With H3 the comment stays
+  on the `}` line, and a `;` that stays starts its own line.
 - **H4, end-of-line comment after a promoted body.** The comment is `EndOfLine`
   and `prev` is the last token of a non-block body of an `if`, `else`, `while`,
   `for` or enhanced `for` (not an `else if` chain): `Trailing(body, EndOfLine)`.
@@ -1516,12 +1515,16 @@ shape, change the contract here and the owning rule together.
 
 Comment-driven layout rules owned by one module:
 
-- **Keyword values (statements).** `return`, `throw`, `yield`, `break`,
-  `continue` and `assert` print `keyword space value` normally. When the keyword
-  itself has trailing comments (`return // c` / `y + 1;`), they print
-  `keyword group(indent(line, value))` instead: the pending-suffix fit rule
+- **The value after a token (helpers).** `helpers::after_token` prints the value
+  after `return`, `throw`, `yield`, `break`, `continue`, `assert`, a lambda's
+  `->`, a switch rule's `->` before a `throw` or block, and the `&` or `|`
+  between types: `token space value tail` normally. When a trailing comment of
+  the token ends its line (`return // c` / `y + 1;`), it prints
+  `token group(indent(line, value tail))` instead: the pending-suffix fit rule
   breaks the group, so the value continues one indent deeper and may break
-  further by its own rule.
+  further by its own rule. When a leading comment of the value breaks the line,
+  it prints `token space indent(value tail)`, so the comment and the value go
+  one indent deeper.
 - **Promoted empty bodies (statements).** A non-block body that is an
   `EmptyStatement` (`if (a);`) promotes to an empty block: the `;` is elided
   through `removed`, exactly as an `EmptyStatement` inside a block is, so the
@@ -1533,22 +1536,22 @@ Normalizations are the closed list below. Each applies only when the owning node
 `is_recovery_free()`; for N5 in a body or switch group, that is the body or
 group, so a body with an error keeps its stray `;`s (an unclosed body that
 dropped one would move its comments out of the body on the next pass). Removed
-tokens print their comments through `removed`. The structure fingerprint
-(`STRUCTURE_POLICY` in `jolt_java_fmt/tests/common`) ignores exactly these
-changes.
+tokens print their comments through `removed`; N6 never removes parentheses that
+carry a comment. The structure fingerprint (`STRUCTURE_POLICY` in
+`jolt_java_fmt/tests/common`) ignores exactly these changes.
 
-| #   | Normalization                                  | Where                                                                                                                                                                             | Extra condition                                                                                                                                                                                                                                                                                 |
-| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| N1  | Import grouping and sorting                    | Imports of a compilation unit                                                                                                                                                     | Per import: recovery-free, name without interior comments. An elided item whose comments survive (a stray `;` carrying a comment) is a barrier like a non-sortable import. Duplicate imports are kept.                                                                                          |
-| N2  | Modifier ordering                              | Declaration `ModifierList`                                                                                                                                                        | Keyword runs between comment-carrying or bogus modifiers sort independently.                                                                                                                                                                                                                    |
-| N3  | Module directive and `requires` modifier order | `ModuleDeclaration`                                                                                                                                                               | Directive recovery-free; comment-carrying directives anchor like imports.                                                                                                                                                                                                                       |
-| N4  | Brace promotion                                | Non-block bodies of `if`, `else`, `while`, `do`, `for`, enhanced `for`                                                                                                            | Body is not malformed.                                                                                                                                                                                                                                                                          |
-| N5  | Redundant `;` removal                          | `EmptyStatement` in blocks and switch groups and as a promoted body, `EmptyDeclaration` in compilation units and type bodies, trailing `;` of try resources, enum body separators | Without members, an enum's `;` is removed. With members, the `;` moves up to the last constant past a removed trailing comma, whose comments follow it on its line (`B, // c` `;` → `B; // c`); comments that start a line before the comma or the `;` print after a blank line following `B;`. |
-| N6  | Redundant parenthesis removal                  | Parenthesized left operand of a same-precedence binary chain; switch guard `when (x)`; single untyped lambda parameter `(x) ->`                                                   | `has_comments_within` is false for the parenthesized node (or, for the lambda, the parameter list's parentheses carry no comments).                                                                                                                                                             |
-| N7  | Readability parentheses                        | Binary operands of `&`, `\|`, `^`, `<<`, `>>`, `>>>` that are themselves binary expressions                                                                                       | —                                                                                                                                                                                                                                                                                               |
-| N8  | Trailing commas                                | Array and annotation array initializers (iff broken); the last enum constant of a body without members                                                                            | —                                                                                                                                                                                                                                                                                               |
-| N9  | Comment text                                   | Trailing whitespace, re-indentation, star alignment                                                                                                                               | Comment content otherwise unchanged.                                                                                                                                                                                                                                                            |
-| N10 | Whitespace                                     | Line endings become `\n`; one final newline; BOM and trailing SUB preserved                                                                                                       | —                                                                                                                                                                                                                                                                                               |
+| #   | Normalization                                  | Where                                                                                                                                                                             | Extra condition                                                                                                                                                                                                  |
+| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| N1  | Import grouping and sorting                    | Imports of a compilation unit                                                                                                                                                     | Per import: recovery-free, name without interior comments. The comments of a stray `;` between imports lead the import after it, which anchors like an import with leading comments. Duplicate imports are kept. |
+| N2  | Modifier ordering                              | Declaration `ModifierList`                                                                                                                                                        | Keyword runs between comment-carrying or bogus modifiers sort independently.                                                                                                                                     |
+| N3  | Module directive and `requires` modifier order | `ModuleDeclaration`                                                                                                                                                               | Directive recovery-free; comment-carrying directives anchor like imports.                                                                                                                                        |
+| N4  | Brace promotion                                | Non-block bodies of `if`, `else`, `while`, `do`, `for`, enhanced `for`                                                                                                            | Body is not malformed.                                                                                                                                                                                           |
+| N5  | Redundant `;` removal                          | `EmptyStatement` in blocks and switch groups and as a promoted body, `EmptyDeclaration` in compilation units and type bodies, trailing `;` of try resources, enum body separators | Without members, an enum's `;` is removed. With members, the `;` moves up to the last constant past a removed trailing comma, unless the comma or the `;` carries a comment: then both stay as written.          |
+| N6  | Redundant parenthesis removal                  | Parenthesized left operand of a same-precedence binary chain; switch guard `when (x)`; single untyped lambda parameter `(x) ->`                                                   | `has_comments_within` is false for the parenthesized node (or, for the lambda, the parameter list's parentheses carry no comments).                                                                              |
+| N7  | Readability parentheses                        | Binary operands of `&`, `\|`, `^`, `<<`, `>>`, `>>>` that are themselves binary expressions                                                                                       | —                                                                                                                                                                                                                |
+| N8  | Trailing commas                                | Array and annotation array initializers (iff broken); the last enum constant of a body without members                                                                            | —                                                                                                                                                                                                                |
+| N9  | Comment text                                   | Trailing whitespace, re-indentation, star alignment                                                                                                                               | Comment content otherwise unchanged.                                                                                                                                                                             |
+| N10 | Whitespace                                     | Line endings become `\n`; one final newline; BOM and trailing SUB preserved                                                                                                       | —                                                                                                                                                                                                                |
 
 [Java style](../guides/style.md) shows the output of each.
 
@@ -1565,7 +1568,7 @@ not recurse through `f.node` along the spine: they walk the spine with an
 explicit loop, format the leaves with `f.node`, and emit each interior spine
 node's comments with `leading_comments` (before the head) and
 `trailing_comments` (after the segment the node ends with), its dangling
-comments in its segment, and `removed` for parentheses removed by N6. A
+comments in its segment. Parentheses removed by N6 carry no comments. A
 malformed spine node stops the walk and is formatted with `f.node`. The
 `else if` chain is walked the same way by `if_statement`. Every other recursion
 is bounded by the parser's `MAX_DEPTH`. `tests/deep.rs` formats a 20 000-long

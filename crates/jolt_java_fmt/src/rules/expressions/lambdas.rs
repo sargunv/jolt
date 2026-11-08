@@ -4,22 +4,17 @@ use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
     LambdaExpression, LambdaModifierList, LambdaParameter, LambdaParameterList,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxToken};
+use jolt_syntax::{AstNode, ListElement, SyntaxElement};
 
 use crate::JavaFormatter;
 use crate::helpers::lists::{ListLayout, delimited, joined};
-use crate::helpers::spaced;
+use crate::helpers::{after_token, spaced};
 
 /// `parameters -> body`. Parameters that do not fit break as a list.
 pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpression<'a>) -> Doc {
     let parameters = match single_untyped_parameter(f, node) {
-        Some(parameter) => {
-            // N6: `(x) ->` prints `x ->`.
-            let open = removed(f, node.open_paren());
-            let parameter = f.fmt(parameter);
-            let close = removed(f, node.close_paren());
-            cat![f; open, parameter, close]
-        }
+        // N6: `(x) ->` prints `x ->`.
+        Some(parameter) => f.fmt(parameter),
         None if node.open_paren().is_none() && node.close_paren().is_none() => {
             let parameters = node
                 .parameters()
@@ -38,13 +33,11 @@ pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpre
             ListLayout::Plain,
         ),
     };
-    let arrow = f.token_opt(node.arrow());
-    let body = f.fmt_opt(node.body());
-    cat![f; parameters, f.space(), arrow, f.space(), body]
-}
-
-fn removed<'a>(f: &mut JavaFormatter<'a>, token: Option<SyntaxToken<'a>>) -> Doc {
-    token.map_or(Doc::NIL, |token| f.removed(SyntaxElement::Token(token)))
+    let body = node
+        .body()
+        .map(|body| (SyntaxElement::Node(body.syntax()), f.fmt(body)));
+    let body = after_token(f, node.arrow(), body, Doc::NIL);
+    cat![f; parameters, f.space(), body]
 }
 
 /// The parameter of `(x) ->` when N6 removes its parentheses: one parameter

@@ -8,7 +8,7 @@ use jolt_java_syntax::{
     FieldDeclaration, FormalParameterList, InstanceInitializer, MethodBody, MethodDeclaration,
     StaticInitializer,
 };
-use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode, SyntaxToken};
+use jolt_syntax::{AstNode, SyntaxNode, SyntaxToken};
 
 use super::types::{HeaderEnd, header, split_close};
 use crate::JavaFormatter;
@@ -43,16 +43,6 @@ pub(crate) fn method_declaration<'a>(
         f.space(),
         f.token_opt(node.name()),
     ]);
-    let lead = node
-        .type_parameters()
-        .map(AstNode::syntax)
-        .or_else(|| {
-            node.return_annotations()
-                .map(AstNode::syntax)
-                .filter(|annotations| annotations.first_token().is_some())
-        })
-        .or_else(|| node.return_type().map(AstNode::syntax))
-        .map(SyntaxElement::Node);
     let throws = node.throws();
     let ends_head = throws.is_none() && node.dimensions().is_none();
     let (close, tail) = split_close(node.close_paren(), ends_head);
@@ -67,7 +57,7 @@ pub(crate) fn method_declaration<'a>(
     let end = throws.map_or(HeaderEnd::Tail(tail), |throws| {
         HeaderEnd::Clauses(vec![throws.syntax()])
     });
-    let header = header(f, lead, head, end);
+    let header = header(f, head, end);
     let body = match node.body() {
         Some(MethodBody::Block(block)) => spaced_node(f, Some(block)),
         Some(MethodBody::Token(semicolon)) => f.token(semicolon),
@@ -87,10 +77,6 @@ pub(crate) fn constructor_declaration<'a>(
         head.extend([f.fmt(parameters), f.space()]);
     }
     head.push(f.token_opt(node.name()));
-    let lead = node
-        .type_parameters()
-        .map(|parameters| SyntaxElement::Node(parameters.syntax()))
-        .or_else(|| node.name().map(SyntaxElement::Token));
     let throws = node.throws();
     let (close, tail) = split_close(node.close_paren(), throws.is_none());
     head.push(parameters(
@@ -103,7 +89,7 @@ pub(crate) fn constructor_declaration<'a>(
     let end = throws.map_or(HeaderEnd::Tail(tail), |throws| {
         HeaderEnd::Clauses(vec![throws.syntax()])
     });
-    let header = header(f, lead, head, end);
+    let header = header(f, head, end);
     let body = spaced_node(f, node.body());
     cat![f; modifiers, header, body]
 }
