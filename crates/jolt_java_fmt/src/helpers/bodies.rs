@@ -25,6 +25,12 @@ pub(crate) fn braced_body<'a>(
 /// `open`, then `content` and `owner`'s dangling comments one indent deeper
 /// on their own lines (a blank line between the two when the source had
 /// one), then `close` on its own line. A body with neither prints `{}`.
+///
+/// Every body goes through here, so an empty body prints `{}` with no
+/// per-kind exception: [`braced_body`] (type bodies, blocks, constructor
+/// bodies, switch blocks, module bodies), enum bodies (constants, then
+/// members), and brace promotion (N4), whose braces are synthesized and
+/// which has no `owner`.
 pub(crate) fn braced<'a>(
     f: &mut JavaFormatter<'a>,
     owner: Option<SyntaxNode<'a>>,
@@ -65,7 +71,10 @@ fn is_stray_semicolon(node: SyntaxNode<'_>) -> bool {
 }
 
 /// The items of a body as item-list items, each stray `;` elided (N5) when
-/// `owner` is recovery-free.
+/// `owner` is recovery-free: class, interface, record, enum and annotation
+/// bodies, blocks, constructor bodies and switch groups. A body with an error
+/// keeps its stray `;`s, because an unclosed body that dropped one would move
+/// its comments out of the body on the next pass.
 pub(crate) fn body_items<'a>(
     owner: SyntaxNode<'a>,
     items: impl IntoIterator<Item = SyntaxNode<'a>>,

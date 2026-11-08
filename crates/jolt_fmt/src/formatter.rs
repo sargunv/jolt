@@ -24,13 +24,40 @@ pub enum ListItem<'a> {
 /// their positions in the list given to [`Formatter::item_list`].
 #[derive(Clone, Copy, Debug)]
 pub struct Separator<'a> {
+    /// The item before the separator.
     pub prev: SyntaxNode<'a>,
+    /// The item after the separator.
     pub next: SyntaxNode<'a>,
+    /// The position of `prev` in the items given to
+    /// [`Formatter::item_list`], so a caller can keep per-item data (import
+    /// roles, directive groups) in a `Vec` beside the items.
     pub prev_index: usize,
+    /// The position of `next` in the items given to
+    /// [`Formatter::item_list`].
     pub next_index: usize,
+    /// The source has a blank line before `next` (see
+    /// [`Formatter::blank_line_before`]), or after the last comment of an
+    /// elided item between the two.
     pub blank_line_in_source: bool,
 }
 
+/// The context a language's rules build a document with. It owns the
+/// [`DocBuilder`] (and derefs to it), the comment placement of the tree, the
+/// formatter-ignore regions and one emission counter per comment.
+///
+/// Rules emit source tokens only with [`token`](Self::token), nodes only with
+/// [`node`](Self::node) or [`fmt`](Self::fmt), and synthesized punctuation
+/// (normalizations) with [`DocBuilder::text`] or [`DocBuilder::sticky`].
+/// Comments are emitted only through the chokepoints: `node`, `token`,
+/// [`verbatim`](Self::verbatim), [`removed`](Self::removed),
+/// [`dangling`](Self::dangling), and
+/// [`leading_comments`](Self::leading_comments) and
+/// [`trailing_comments`](Self::trailing_comments) for the rules that build a
+/// node's doc themselves. A rule says what to format, never how its comments
+/// print. A rule formats each element at most once; to use the same element
+/// in both branches of [`DocBuilder::if_break`], it builds the element's
+/// `Doc` once and uses the handle twice. Debug builds check after layout that
+/// every comment was emitted exactly once.
 pub struct Formatter<'a, L: FormatLanguage> {
     builder: DocBuilder<'a>,
     comments: Comments<'a>,
@@ -99,7 +126,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     // ── The chokepoints ──
 
     /// Leading comments, then the node (verbatim when malformed), then
-    /// trailing comments. The only caller of `L::format_node`.
+    /// trailing comments. The only caller of
+    /// [`FormatLanguage::format_node`]. For a node without comments this
+    /// costs one flag read and one bitset probe beyond the rule itself.
     pub fn node(&mut self, node: SyntaxNode<'a>) -> Doc {
         let body = if node.is_malformed() {
             self.verbatim(node)
@@ -109,26 +138,31 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         self.with_comments(SyntaxElement::Node(node), body)
     }
 
+    /// [`node`](Self::node) for a typed node.
     pub fn fmt<N: jolt_syntax::AstNode<'a>>(&mut self, node: N) -> Doc {
         self.node(node.syntax())
     }
 
+    /// [`fmt`](Self::fmt), or NIL for `None`.
     pub fn fmt_opt<N: jolt_syntax::AstNode<'a>>(&mut self, node: Option<N>) -> Doc {
         node.map_or(Doc::NIL, |node| self.fmt(node))
     }
 
-    /// Leading comments, the token text, trailing comments.
+    /// Leading comments, the token text, trailing comments. The text is
+    /// never sticky: only synthesized separators are.
     pub fn token(&mut self, token: SyntaxToken<'a>) -> Doc {
         let text = self.builder.text(token.text());
         self.with_comments(SyntaxElement::Token(token), text)
     }
 
+    /// [`token`](Self::token), or NIL for `None`.
     pub fn token_opt(&mut self, token: Option<SyntaxToken<'a>>) -> Doc {
         token.map_or(Doc::NIL, |token| self.token(token))
     }
 
     /// [`node`](Self::node) or [`token`](Self::token), whichever `element`
-    /// is.
+    /// is (the generated node-or-token enums convert to one with
+    /// `element()`).
     pub fn element(&mut self, element: SyntaxElement<'a>) -> Doc {
         match element {
             SyntaxElement::Node(node) => self.node(node),
@@ -136,6 +170,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
     }
 
+    /// [`element`](Self::element), or NIL for `None`.
     pub fn element_opt(&mut self, element: Option<SyntaxElement<'a>>) -> Doc {
         element.map_or(Doc::NIL, |element| self.element(element))
     }
@@ -150,10 +185,22 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         cat![self; leading, body, trailing]
     }
 
+    /// The node's leading comments, for a rule that builds the node's doc
+    /// from its children itself instead of through [`node`](Self::node).
+    /// There are four such rules: the iterative spines and the `else if`
+    /// chain, where an interior node's leading comments go before the head
+    /// and its trailing comments after the segment that ends it; the
+    /// readability parentheses of N7, which go between an operand and its
+    /// comments; and the declaration header, whose last clause's trailing
+    /// comments print outside the header group. The node must not be
+    /// malformed (a malformed node goes through `node`, which prints it
+    /// verbatim).
     pub fn leading_comments(&mut self, node: SyntaxNode<'a>) -> Doc {
         self.comments_on(SyntaxElement::Node(node), Side::Leading)
     }
 
+    /// The node's trailing comments; see
+    /// [`leading_comments`](Self::leading_comments) for who may call it.
     pub fn trailing_comments(&mut self, node: SyntaxNode<'a>) -> Doc {
         self.comments_on(SyntaxElement::Node(node), Side::Trailing)
     }
@@ -200,12 +247,27 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         (self.builder.concat(docs), blank_after)
     }
 
-    /// The node's source from its first to its last token, interior comments
-    /// included, re-indented relative to the output line it starts on. Text
-    /// blocks (multi-line tokens) are written raw. Comments attached to
-    /// elements inside the node but lying outside its text (trailing its last
-    /// token, or moved onto its first by S1) print around it, as the node's
-    /// own formatting would have printed them.
+    /// The node's source from its first token's text to its last token's
+    /// text, interior comments included and counted as emitted. The slice is
+    /// written with its continuation lines re-indented: each line loses the
+    /// indentation of the source line the node starts on (when it starts
+    /// with it) and gains the indentation of the output line the node starts
+    /// on. Re-indenting against the output line, not the document's indent,
+    /// is what makes verbatim output a fixpoint even when the node starts in
+    /// the middle of a line inside an `indent`.
+    ///
+    /// Two kinds of piece are written apart from the slice. Text blocks
+    /// (multi-line tokens) are written raw, so their content never changes.
+    /// A multi-line comment with a line that does not start with that source
+    /// indentation is re-indented as a comment (see the printer's comment
+    /// layout), because stripping the indentation would shift its lines
+    /// relative to each other.
+    ///
+    /// Comments attached to elements inside the node but lying outside its
+    /// text (trailing its last token, attached below it by hook H4 or the
+    /// trailing walk's recovery exception, or moved onto its first token by
+    /// S1) print before or after the slice in their attachment's layout, as
+    /// the node's own formatting would have printed them.
     pub fn verbatim(&mut self, node: SyntaxNode<'a>) -> Doc {
         let range = node.text_range();
         if node.last_token().is_none() || range.is_empty() {
@@ -342,6 +404,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         self.comments.has(element)
     }
 
+    /// Any leading comment attached to the element.
     #[must_use]
     pub fn has_leading_comments(&self, element: SyntaxElement<'a>) -> bool {
         self.comments
@@ -350,6 +413,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .is_some()
     }
 
+    /// Any trailing comment attached to the element.
     #[must_use]
     pub fn has_trailing_comments(&self, element: SyntaxElement<'a>) -> bool {
         self.comments
@@ -376,6 +440,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .any(|index| self.comments.list[index].layout != CommentLayout::Inline)
     }
 
+    /// Any dangling comment attached to the node.
     #[must_use]
     pub fn has_dangling_comments(&self, node: SyntaxNode<'a>) -> bool {
         self.comments
@@ -384,7 +449,8 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .is_some()
     }
 
-    /// Any comment attached to the node or located inside its range.
+    /// Any comment attached to the node or located inside its range. Costs
+    /// a bitset probe and a binary search over the comments.
     #[must_use]
     pub fn has_comments_within(&self, node: SyntaxNode<'a>) -> bool {
         self.comments.has(SyntaxElement::Node(node))
@@ -392,7 +458,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     }
 
     /// The source has a blank line before the element's first leading comment,
-    /// or before its first token when it has none.
+    /// or before its first token when it has none, counted from the previous
+    /// token or comment. Item lists use it for
+    /// [`Separator::blank_line_in_source`], and the compilation unit before
+    /// the leading comments of `Eof`.
     #[must_use]
     pub fn blank_line_before(&self, element: SyntaxElement<'a>) -> bool {
         if let Some(first) = self.comments.attached(element, Side::Leading).next() {
@@ -413,7 +482,8 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     }
 
     /// Whether `node` is an item inside a formatter-ignore region, so a
-    /// normalization must leave it in place.
+    /// normalization (import sorting, module directive sorting) must leave it
+    /// in place.
     #[must_use]
     pub fn in_ignore_region(&self, node: SyntaxNode<'a>) -> bool {
         let Some(start) = node.first_token().map(|token| token.text_range().start()) else {
@@ -428,6 +498,13 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     // ── Item lists ──
 
     /// Items separated by `separator`, with elision and formatter-ignore.
+    /// `separator` chooses the line between two items. An
+    /// [`Elide`](ListItem::Elide) item prints only its comments, and
+    /// vanishes with its separator when it has none. An item in an ignore
+    /// region prints verbatim between its own comments, and the line after
+    /// it keeps the source's choice (a blank line or not) instead of calling
+    /// `separator`. Nothing is printed before the first item or after the
+    /// last.
     pub fn item_list(
         &mut self,
         items: impl IntoIterator<Item = ListItem<'a>>,

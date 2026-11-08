@@ -151,6 +151,7 @@ impl<'a> SyntaxNode<'a> {
         self.tree.tree
     }
 
+    /// The parent node; `None` for the root. `O(1)`.
     #[must_use]
     pub fn parent(self) -> Option<Self> {
         let parent = self.data().parent;
@@ -194,18 +195,21 @@ impl<'a> SyntaxNode<'a> {
             .filter_map(move |slot| self.element(slot.unpack()))
     }
 
+    /// The first token, in `O(1)` (a node stores its token range).
     #[must_use]
     pub fn first_token(self) -> Option<SyntaxToken<'a>> {
         let [start, end] = self.data().tokens;
         (start < end).then(|| self.token(TokenId(start)))
     }
 
+    /// The last token, in `O(1)`.
     #[must_use]
     pub fn last_token(self) -> Option<SyntaxToken<'a>> {
         let [start, end] = self.data().tokens;
         (start < end).then(|| self.token(TokenId(end - 1)))
     }
 
+    /// Every token of the node in source order.
     pub fn tokens(self) -> impl Iterator<Item = SyntaxToken<'a>> + 'a {
         let [start, end] = self.data().tokens;
         (start..end).map(move |id| self.token(TokenId(id)))
@@ -235,11 +239,16 @@ impl<'a> SyntaxNode<'a> {
         )
     }
 
+    /// The node is the bogus kind, or its children did not fit its kind's
+    /// shape and are stored raw. Its slots then read as empty, and the
+    /// formatter prints it verbatim.
     #[must_use]
     pub fn is_malformed(self) -> bool {
         self.data().flags & MALFORMED != 0
     }
 
+    /// Neither the node nor any descendant is malformed or has a missing
+    /// required slot.
     #[must_use]
     pub fn is_recovery_free(self) -> bool {
         self.data().flags & HAS_RECOVERY == 0
@@ -278,6 +287,7 @@ impl<'a> SyntaxToken<'a> {
         self.id
     }
 
+    /// The node that holds the token. `O(1)`: a token stores its parent.
     #[must_use]
     pub fn parent(self) -> SyntaxNode<'a> {
         SyntaxNode {
@@ -286,6 +296,7 @@ impl<'a> SyntaxToken<'a> {
         }
     }
 
+    /// The token's source text, without trivia.
     #[must_use]
     pub fn text(self) -> &'a str {
         let range = self.text_range();
@@ -297,6 +308,9 @@ impl<'a> SyntaxToken<'a> {
         self.data().range()
     }
 
+    /// The trivia before the token: everything after the previous token's
+    /// trailing trivia. The final `Eof` token holds the file's trailing
+    /// trivia.
     pub fn leading(self) -> impl Iterator<Item = TriviaPiece<'a>> + 'a {
         let data = self.data();
         TriviaPieces {
@@ -306,6 +320,10 @@ impl<'a> SyntaxToken<'a> {
         }
     }
 
+    /// The trivia after the token up to (not including) the next line break:
+    /// horizontal whitespace, line comments and single-line block comments. A
+    /// block comment that contains a line break ends it and, like everything
+    /// after it, is the next token's leading trivia.
     pub fn trailing(self) -> impl Iterator<Item = TriviaPiece<'a>> + 'a {
         let data = self.data();
         TriviaPieces {
@@ -315,6 +333,8 @@ impl<'a> SyntaxToken<'a> {
         }
     }
 
+    /// The token before this one in the source. `O(1)`: tokens are one flat
+    /// vector in source order.
     #[must_use]
     pub fn prev(self) -> Option<Self> {
         let id = self.id.0.checked_sub(1)?;
@@ -324,6 +344,7 @@ impl<'a> SyntaxToken<'a> {
         })
     }
 
+    /// The token after this one in the source. `O(1)`.
     #[must_use]
     pub fn next(self) -> Option<Self> {
         let id = self.id.0 + 1;

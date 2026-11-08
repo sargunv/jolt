@@ -8,6 +8,8 @@ use crate::TextRange;
 pub struct Diagnostic {
     /// A stable code, e.g. `java.parse.expected_syntax`.
     pub code: &'static str,
+    /// What is wrong, for a human reader.
     pub message: String,
+    /// The source range the error is reported at, usually a token.
     pub range: TextRange,
 }
