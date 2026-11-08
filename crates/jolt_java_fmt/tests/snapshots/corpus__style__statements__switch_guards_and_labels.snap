@@ -7,7 +7,7 @@ class SwitchGuardsAndLabels {
   int guards(Object value) {
     return switch (value) {
       case String s when s.isEmpty() -> 0;
-      case Integer i when i > 0 /* positive */ -> i;
+      case Integer i when (i > 0 /* positive */) -> i;
       case Long l when (/* kept */ l > 0) -> 1;
       case String s when s.length() > 10
         && s.startsWith("prefix")

@@ -229,7 +229,7 @@ pub(crate) fn case_pattern<'a>(f: &mut JavaFormatter<'a>, node: CasePattern<'a>)
 }
 
 /// `when condition`. Parentheses around the condition are removed (N6)
-/// unless comments are involved.
+/// unless a comment is inside them.
 pub(crate) fn guard<'a>(f: &mut JavaFormatter<'a>, node: Guard<'a>) -> Doc {
     let when = f.token_opt(node.when_keyword());
     let condition = f.fmt_opt(node.condition());
@@ -246,24 +246,21 @@ pub(crate) fn guard<'a>(f: &mut JavaFormatter<'a>, node: Guard<'a>) -> Doc {
     cat![f; when, f.space(), condition]
 }
 
-/// N6 for a guard: the guard is recovery-free, its parentheses carry no
-/// comments, and no comment sits between `(` and the condition or on its own
-/// line before `)`. Comments inside the condition, and an inline comment
-/// after it (`when (i > 0 /* c */)`), stay with the condition.
+/// N6 for a guard: the guard is recovery-free and no comment is within the
+/// parentheses (on them, dangling between them, or within the condition).
+/// The guard node also spans `when` and the comments around it, so this
+/// checks the parenthesized span rather than the whole guard.
 fn removable_parentheses<'a>(
     f: &JavaFormatter<'a>,
     node: Guard<'a>,
     open: SyntaxToken<'a>,
     close: SyntaxToken<'a>,
 ) -> bool {
-    let token_comments = |token| f.has_comments(SyntaxElement::Token(token));
-    let condition_comments = node.condition().is_some_and(|condition| {
-        let condition = SyntaxElement::Node(condition.syntax());
-        f.has_leading_comments(condition) || f.trailing_comments_break(condition)
-    });
     node.syntax().is_recovery_free()
-        && !token_comments(open)
-        && !token_comments(close)
+        && !f.has_comments(SyntaxElement::Token(open))
+        && !f.has_comments(SyntaxElement::Token(close))
         && !f.has_dangling_comments(node.syntax())
-        && !condition_comments
+        && node
+            .condition()
+            .is_none_or(|condition| !f.has_comments_within(condition.syntax()))
 }
