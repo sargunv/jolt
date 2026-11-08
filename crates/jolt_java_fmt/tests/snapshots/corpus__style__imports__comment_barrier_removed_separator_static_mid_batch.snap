@@ -5,7 +5,9 @@ expression: snapshot
 formatted:
 import static java.utils.*;
 import static something.Different;
+
 ; /*hunt*/
+
 import static abc.def;
 import static abc.def.Something;
 import static one.last;

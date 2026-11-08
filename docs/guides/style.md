@@ -93,9 +93,11 @@ class A {}
 - Package annotations go one per line before `package`.
 - A stray `;` between top-level declarations is removed, unless a comment is on
   it: on its line, or on its own line before it. A `;` that stays goes on its
-  own line, and the imports before and after it sort separately.
+  own line, with a blank line before and after it like a top-level declaration,
+  and the imports before and after it sort separately.
 - In a compact source file (`void main() { … }`), the top-level members format
-  and are separated like class members, at column 0.
+  and are separated like class members, at column 0, except a `;` that stays,
+  which is separated as above.
 
 ### Imports
 

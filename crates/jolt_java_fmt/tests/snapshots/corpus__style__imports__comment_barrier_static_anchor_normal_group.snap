@@ -9,7 +9,9 @@ import something.Different;
 
 import static abc.def;
 import static java.utils.*;
+
 ; /*hunt*/
+
 import one.last;
 
 import static abc.def.Something;

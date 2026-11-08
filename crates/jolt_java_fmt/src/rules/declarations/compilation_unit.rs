@@ -159,13 +159,9 @@ fn top_level_separator<'a>(
         };
     }
     // Two fields of a compact source file keep the source's choice, as in a
-    // class body, and so does a `;` kept for its comments.
+    // class body.
     let kind = |node: SyntaxNode<'_>| K::from_raw(node.kind());
-    let (prev, next) = (kind(separator.prev), kind(separator.next));
-    if (prev, next) == (K::FieldDeclaration, K::FieldDeclaration)
-        || prev == K::EmptyDeclaration
-        || next == K::EmptyDeclaration
-    {
+    if (kind(separator.prev), kind(separator.next)) == (K::FieldDeclaration, K::FieldDeclaration) {
         f.line_break(blank)
     } else {
         f.empty_line()

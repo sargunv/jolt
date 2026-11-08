@@ -4,7 +4,9 @@ expression: snapshot
 ---
 formatted:
 import static java.utils.*;
+
 ; /*hunt*/
+
 import one.last;
 
 class C {}

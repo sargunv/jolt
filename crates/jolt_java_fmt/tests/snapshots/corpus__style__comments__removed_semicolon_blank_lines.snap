@@ -6,6 +6,7 @@ formatted:
 // a detached comment on a removed top-level semicolon
 
 ;
+
 class RemovedSemicolonBlankLines {
   int x;
   // a detached comment on a removed member semicolon
