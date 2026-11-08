@@ -29,7 +29,17 @@ use jolt_fmt::{Doc, DocBuilder};
 /// comments those are). The layout starts at the comment's column.
 pub fn javadoc<'a>(docs: &mut DocBuilder<'a>, text: &'a str) -> Option<Doc> {
     let lines = frame::javadoc(text)?;
-    let mut layout = layout::Layout::new(docs);
+    let mut layout = layout::Layout::new(docs, layout::Flavour::Javadoc);
     html::parse(&lines, &mut layout);
     Some(layout.finish())
+}
+
+/// Lays out a Markdown doc comment (JEP 467): a run of `///` lines, each with
+/// its `///` and without its line break, that starts its output line. The
+/// layout starts at the comment's column and ends the line after the run.
+pub fn markdown<'a>(docs: &mut DocBuilder<'a>, run: &[&'a str]) -> Doc {
+    let (lines, frame) = frame::markdown(run);
+    let mut layout = layout::Layout::new(docs, layout::Flavour::Markdown { frame });
+    markdown::parse(&lines, &mut layout);
+    layout.finish()
 }

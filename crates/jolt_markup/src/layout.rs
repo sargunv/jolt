@@ -7,6 +7,10 @@
 //! (which is broken in the rest of the command stack, so its line break ends
 //! the check). Each comment shares one wrap point doc per indentation, so a
 //! word costs one text and two child slots.
+//!
+//! The flavour sets the frame: ` * ` inside `/**` and `*/` for Javadoc, and
+//! the run's own `///` frame for Markdown, whose last text ends the line
+//! ([`DocBuilder::line_comment`]).
 
 use jolt_fmt::{Doc, DocBuilder, cat};
 
@@ -26,6 +30,15 @@ pub(crate) enum Join {
 /// The frame of a doc block comment line and the spaces of its indentation.
 const FRAME: &str = " *                                                                ";
 
+/// The comment's delimiters and the frame of its lines.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Flavour<'a> {
+    /// `/**` and ` */` around lines framed by ` * `.
+    Javadoc,
+    /// Lines framed by `frame`: `///` and the run's shared indentation.
+    Markdown { frame: &'a str },
+}
+
 /// A line that has been asked for but not started: it starts before the
 /// next word or verbatim line.
 #[derive(Clone, Copy, Debug)]
@@ -37,6 +50,7 @@ struct Start {
 /// Builds the docs of one doc comment.
 pub(crate) struct Layout<'d, 'a> {
     docs: &'d mut DocBuilder<'a>,
+    flavour: Flavour<'a>,
     /// Everything after the first line's start.
     parts: Vec<Doc>,
     pending: Option<Start>,
@@ -50,12 +64,15 @@ pub(crate) struct Layout<'d, 'a> {
     hang: u16,
     /// The wrap point for each indentation used so far.
     wraps: Vec<(u16, Doc)>,
+    /// The last text and its index in `parts`.
+    last: Option<(usize, &'a str)>,
 }
 
 impl<'d, 'a> Layout<'d, 'a> {
-    pub(crate) const fn new(docs: &'d mut DocBuilder<'a>) -> Self {
+    pub(crate) const fn new(docs: &'d mut DocBuilder<'a>, flavour: Flavour<'a>) -> Self {
         Self {
             docs,
+            flavour,
             parts: Vec::new(),
             pending: None,
             first: None,
@@ -63,7 +80,12 @@ impl<'d, 'a> Layout<'d, 'a> {
             multiline: false,
             hang: 0,
             wraps: Vec::new(),
+            last: None,
         }
+    }
+
+    const fn markdown(&self) -> bool {
+        matches!(self.flavour, Flavour::Markdown { .. })
     }
 
     /// Starts a new line before the next word, after a blank line when
@@ -88,15 +110,20 @@ impl<'d, 'a> Layout<'d, 'a> {
     /// Adds a word, joined to the word before it by `join` unless it starts
     /// a line. A word that would start new structure at the start of a line
     /// ([`tags::starts_structure`]) never follows a wrap point: it is glued
-    /// to the word before it with a space.
+    /// to the word before it with a space. In Markdown, neither does a word
+    /// after one that ends in `\`, which a line break would make a hard
+    /// break.
     pub(crate) fn word(&mut self, text: &'a str, join: Join) {
         if let Some(start) = self.pending.take() {
             self.start_line(start);
         } else if !self.started {
             self.first = Some(0);
         } else {
+            let markdown = self.markdown();
+            let glued = tags::starts_structure(text, markdown)
+                || (markdown && self.last.is_some_and(|(_, last)| last.ends_with('\\')));
             match join {
-                Join::Wrap if !tags::starts_structure(text) => {
+                Join::Wrap if !glued => {
                     let wrap = self.wrap(self.hang);
                     self.parts.push(wrap);
                 }
@@ -105,8 +132,35 @@ impl<'d, 'a> Layout<'d, 'a> {
             }
         }
         self.started = true;
-        let text = self.docs.text(text);
-        self.parts.push(text);
+        self.push_text(text);
+    }
+
+    /// Ends a Markdown line with a hard break (`\`); the caller starts the
+    /// next line. After a word that ends in `\` it goes after a space, so that the two
+    /// don't read as an escaped `\`.
+    pub(crate) fn hard_break(&mut self) {
+        if self.last.is_some_and(|(_, last)| last.ends_with('\\')) {
+            self.parts.push(self.docs.space());
+            self.push_text("\\");
+        } else {
+            let text = self.docs.glued("\\");
+            self.last = Some((self.parts.len(), "\\"));
+            self.parts.push(text);
+        }
+    }
+
+    /// Adds a text. In Markdown it is glued to a frame before it: the
+    /// printer's join check would put a space between `///` and `*` or `=`
+    /// (`///**` is not `/// **`). Not a text that starts with `/`, where
+    /// that space keeps the line from starting with `////`, which ends a run.
+    fn push_text(&mut self, text: &'a str) {
+        self.last = Some((self.parts.len(), text));
+        let doc = if self.markdown() && !text.starts_with('/') {
+            self.docs.glued(text)
+        } else {
+            self.docs.text(text)
+        };
+        self.parts.push(doc);
     }
 
     /// Adds a line printed as written, `raw` from its frame on: only the
@@ -119,13 +173,23 @@ impl<'d, 'a> Layout<'d, 'a> {
         {
             self.blank_line();
         }
-        self.started = true;
+        let started = std::mem::replace(&mut self.started, true);
         self.multiline = true;
-        let raw = if raw.is_empty() { "*" } else { raw };
-        let space = self.docs.text(&FRAME[..1]);
-        let text = self.docs.text(raw);
-        let line = self.docs.hard_line();
-        self.parts.extend([line, space, text]);
+        match self.flavour {
+            Flavour::Javadoc => {
+                let raw = if raw.is_empty() { "*" } else { raw };
+                let line = self.docs.hard_line();
+                let space = self.docs.text(&FRAME[..1]);
+                self.parts.extend([line, space]);
+                self.push_text(raw);
+            }
+            Flavour::Markdown { .. } => {
+                if started {
+                    self.parts.push(self.docs.hard_line());
+                }
+                self.push_text(raw);
+            }
+        }
     }
 
     fn start_line(&mut self, start: Start) {
@@ -143,20 +207,38 @@ impl<'d, 'a> Layout<'d, 'a> {
     }
 
     fn blank_line(&mut self) {
-        let blank = self.docs.text(&FRAME[..2]);
+        let blank = match self.flavour {
+            Flavour::Javadoc => &FRAME[..2],
+            Flavour::Markdown { frame } => frame.trim_end(),
+        };
         self.parts.push(self.docs.hard_line());
-        self.parts.push(blank);
+        self.push_text(blank);
     }
 
-    /// `" * "` and `indent` spaces.
+    /// The frame (`" * "`, or the Markdown frame) and `indent` spaces.
     fn frame(&mut self, indent: u16) -> Doc {
-        let mut width = 3 + usize::from(indent);
+        if let Flavour::Markdown { frame } = self.flavour {
+            let frame = self.docs.text(frame);
+            if indent == 0 {
+                return frame;
+            }
+            let spaces = self.spaces(indent);
+            return self.docs.concat([frame, spaces]);
+        }
+        let width = 3 + usize::from(indent);
         let first = self.docs.text(&FRAME[..width.min(FRAME.len())]);
         if width <= FRAME.len() {
             return first;
         }
-        let mut docs = vec![first];
-        width -= FRAME.len();
+        let rest = u16::try_from(width - FRAME.len()).unwrap_or(u16::MAX);
+        let rest = self.spaces(rest);
+        self.docs.concat([first, rest])
+    }
+
+    /// `width` spaces.
+    fn spaces(&mut self, width: u16) -> Doc {
+        let mut width = usize::from(width);
+        let mut docs = Vec::new();
         while width > 0 {
             let chunk = width.min(FRAME.len() - 2);
             docs.push(self.docs.text(&FRAME[2..2 + chunk]));
@@ -179,9 +261,21 @@ impl<'d, 'a> Layout<'d, 'a> {
         wrap
     }
 
-    /// The comment: `/** text */` on one line when it is one line of words
-    /// that fits, else the opener and closer on lines of their own.
+    /// The comment. For Javadoc, `/** text */` on one line when it is one
+    /// line of words that fits, else the opener and closer on lines of their
+    /// own. For Markdown, the lines, the last ending the line.
     pub(crate) fn finish(mut self) -> Doc {
+        if let Flavour::Markdown { .. } = self.flavour {
+            if let Some((index, text)) = self.last {
+                self.parts[index] = self.docs.line_comment(text, !text.starts_with('/'));
+            }
+            let mut all = Vec::with_capacity(self.parts.len() + 1);
+            if let Some(indent) = self.first {
+                all.push(self.frame(indent));
+            }
+            all.append(&mut self.parts);
+            return self.docs.concat(all);
+        }
         let docs = &mut *self.docs;
         let open = docs.text("/**");
         let close = docs.text(" */");

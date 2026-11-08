@@ -74,7 +74,8 @@ the differences readers notice first:
   Jolt keeps every token and the content of `<pre>`, keeps line-structured text
   as written, and leaves a comment that shares its line with code as written.
   google-java-format wraps a long Markdown doc comment line (`///`) into an
-  ordinary `//` comment line; Jolt prints `///` comments as written.
+  ordinary `//` comment line, which javadoc doesn't read; Jolt fills the
+  paragraphs of a Markdown doc comment and keeps every line a `///` line.
 - **Lambdas.** Jolt removes the parentheses around a single untyped lambda
   parameter (`x -> x`). For a lambda with a block body or an anonymous class as
   the last argument, google-java-format puts every argument on a new line when
@@ -889,11 +890,11 @@ class Example {
 :::
 
 - **Comment text.** Trailing whitespace is removed. Jolt doesn't rewrap or
-  otherwise change the text of a comment, except a Javadoc comment that starts
-  its line (see [Doc comments](#doc-comments)). A block comment whose lines
-  start with `*` is realigned so the `*`s line up under the opening `/*`, and
-  each line keeps its text after the `*`. Other multi-line block comments move
-  as a unit, keeping their lines' relative indentation.
+  otherwise change the text of a comment, except a doc comment that starts its
+  line (see [Doc comments](#doc-comments)). A block comment whose lines start
+  with `*` is realigned so the `*`s line up under the opening `/*`, and each
+  line keeps its text after the `*`. Other multi-line block comments move as a
+  unit, keeping their lines' relative indentation.
 
 ```java
 int run() {
@@ -910,7 +911,8 @@ int run() {
 Jolt lays out the text of each Javadoc comment (`/** … */`) that starts its own
 line: it fills paragraphs to the line width and puts lists, block tags and code
 in one fixed style. What javadoc renders stays the same, and every word is kept.
-Markdown doc comments (`///`) are printed as written.
+It fills the paragraphs of a Markdown doc comment (`///`) too, and keeps its
+other lines as written (see [Markdown doc comments](#markdown-doc-comments)).
 
 - **Paragraphs** are filled: each line takes as many words as fit in the line
   width, counting the comment's indentation and the `" * "` before the text. A
@@ -1042,6 +1044,96 @@ class Interceptor {
   void intercept();
 }
 ```
+
+### Markdown doc comments
+
+A run of `///` lines is a Markdown doc comment (JEP 467) when it is the last doc
+comment before a declaration that javadoc documents: a class, interface, enum,
+record, annotation interface, field, method, constructor, enum constant,
+annotation element, module, or the package of a `package-info.java`. A run is a
+group of `///` lines one after the other, with no blank line between them; a
+line of four or more slashes is not part of one. Jolt reads the position after
+formatting: a run that Jolt moves to just before a declaration counts. Other
+`///` lines are ordinary line comments, which Jolt prints as written.
+
+- **The frame** is `///` and the indentation that every line of the run shares,
+  usually one space. A run written without a space, such as `///CLOVER:OFF`,
+  keeps having none.
+- **Paragraphs** are filled as in a Javadoc comment: the description's, and the
+  text of block tags. The line width counts the comment's indentation and the
+  frame.
+- **Kept as written.** Every other block keeps its lines exactly: lists,
+  headings, fenced and indented code, block quotes, tables, HTML blocks, link
+  reference definitions and thematic breaks. A paragraph is kept too when the
+  line after it makes it a heading (`===` or `---`) or the header of a table (a
+  row such as `|---|---|`), when it starts with a link reference definition, or
+  when it has a `{@snippet …}`.
+- **Blank lines** are kept as written. Jolt adds one only before the first block
+  tag. It adds no others: a blank line inside a list item makes the list loose,
+  which changes the page.
+- **Block tags** start a line each, with single spaces after the tag and its
+  name. Their wrapped lines start at the frame, not indented: an indented line
+  can become a code block or the text of a list item.
+- **Words stay whole.** Jolt doesn't break a line inside a code span
+  (`` `a b` ``), a link (`[text](url)`, `[text][ref]`,
+  `[Map#put(Object, Object)]`), an autolink or HTML tag (`<…>`), or between an
+  inline tag and its reference. A code span, link or HTML tag that spans lines
+  in the source keeps those line breaks.
+- **No new structure.** Besides the words listed for Javadoc comments, a wrapped
+  line never starts with a word that could start a Markdown block: one that
+  starts with `#`, `>`, `|`, three or more `` ` `` or `~`, or `<` and a letter,
+  `/`, `!` or `?`, or a word made only of `*`, `-`, `_`, `=`, `+` and `:`. A
+  source line that starts with such a word keeps its line break. When that line
+  is indented by four or more columns, its first word joins the line before
+  instead, because at the frame it would start the block. A word that ends in
+  `\` never ends a wrapped line, since a line break after it is a hard break.
+- **Hard breaks.** Inside a paragraph, a line that ends in two spaces breaks the
+  line in the page. Jolt writes such a break as a `\` at the end of the line,
+  because it removes trailing whitespace. At the end of a paragraph, two spaces
+  break nothing, and Jolt removes them. A line that ends in `\` keeps its line
+  break.
+
+::: code-group
+
+````java [Input]
+class Splitter {
+  /// Splits the text at each comma and trims each part. Empty parts are dropped - except the last one, which is kept.
+  /// - `limit` is the maximum number of parts, or zero for no limit.
+  ///
+  /// ```java
+  ///   split("a, b,", 0); // ["a", "b", ""]
+  /// ```
+  /// @param text the text to split, which may be empty or contain only commas and spaces
+  /// @return the parts,
+  ///     in order
+  String[] split(String text, int limit);
+
+  ///CLOVER:OFF
+  void generated() {}
+}
+````
+
+````java [Output]
+class Splitter {
+  /// Splits the text at each comma and trims each part. Empty parts are
+  /// dropped - except the last one, which is kept.
+  /// - `limit` is the maximum number of parts, or zero for no limit.
+  ///
+  /// ```java
+  ///   split("a, b,", 0); // ["a", "b", ""]
+  /// ```
+  ///
+  /// @param text the text to split, which may be empty or contain only commas
+  /// and spaces
+  /// @return the parts, in order
+  String[] split(String text, int limit);
+
+  ///CLOVER:OFF
+  void generated() {}
+}
+````
+
+:::
 
 ## Formatter-ignore
 

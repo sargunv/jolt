@@ -8,10 +8,13 @@ pub(crate) struct Line<'a> {
     pub(crate) text: &'a str,
     /// The byte offset of `text` in the comment.
     pub(crate) offset: usize,
-    /// The line from its frame on (the first `*`), without trailing
-    /// whitespace, for printing it as written. Empty for a line without a
-    /// `*`: a blank line, or the comment's first line.
+    /// The line from its frame on (the first `*`, or `///`), without
+    /// trailing whitespace, for printing it as written. Empty for a `/**`
+    /// line without a `*`: a blank line, or the comment's first line.
     pub(crate) raw: &'a str,
+    /// The source line ends in two or more spaces: in a Markdown paragraph,
+    /// a hard line break. Always false for `/**`.
+    pub(crate) hard_break: bool,
 }
 
 /// The content lines of a `/**` comment, or `None` when the comment is laid
@@ -43,6 +46,7 @@ pub(crate) fn javadoc(text: &str) -> Option<Vec<Line<'_>>> {
             text: content,
             offset: offset_of(content),
             raw: "",
+            hard_break: false,
         });
         return Some(lines);
     };
@@ -67,9 +71,52 @@ pub(crate) fn javadoc(text: &str) -> Option<Vec<Line<'_>>> {
             text: content,
             offset: offset_of(content),
             raw,
+            hard_break: false,
         });
     }
     Some(lines)
+}
+
+/// The content lines of a run of `///` lines (each with its `///` and
+/// without its line break), and the run's frame: `///` and the indentation
+/// that every line with text shares, which JEP 467 strips (` ` for most
+/// runs, nothing for `///CLOVER:OFF`). Each line's text is what follows the
+/// frame, without trailing whitespace. Offsets count from the run's first
+/// line, as if its lines were joined by one line break.
+pub(crate) fn markdown<'a>(run: &[&'a str]) -> (Vec<Line<'a>>, &'a str) {
+    const OPENER: usize = "///".len();
+    let indentation = |line: &str| {
+        let body = &line[OPENER..];
+        body.len() - body.trim_start_matches([' ', '\t']).len()
+    };
+    let mut shared: Option<(usize, &'a str)> = None;
+    for &line in run {
+        if line[OPENER..].trim_end().is_empty() {
+            continue;
+        }
+        let indent = indentation(line);
+        if shared.is_none_or(|(least, _)| indent < least) {
+            shared = Some((indent, &line[..OPENER + indent]));
+        }
+    }
+    let (shared, frame) = shared.unwrap_or((0, &run[0][..OPENER]));
+    let mut offset = 0;
+    let lines = run
+        .iter()
+        .map(|&line| {
+            let raw = line.trim_end();
+            let text = raw.get(OPENER + shared..).unwrap_or("");
+            let start = offset + raw.len() - text.len();
+            offset += line.len() + 1;
+            Line {
+                text,
+                offset: start,
+                raw,
+                hard_break: line[raw.len()..].ends_with("  "),
+            }
+        })
+        .collect();
+    (lines, frame)
 }
 
 /// Splits on `\r\n`, `\r` and `\n`.

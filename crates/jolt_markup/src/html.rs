@@ -9,7 +9,7 @@
 
 use crate::frame::Line;
 use crate::layout::{Join, Layout};
-use crate::tags::{self, InlineTags, is_space};
+use crate::tags::{self, Arg, InlineTags, is_space};
 
 /// The block-level elements, matched without regard to case.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -160,48 +160,6 @@ enum Gap {
     Blank,
 }
 
-/// The tag argument a word may be: what glues it to the word before.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Arg {
-    None,
-    /// The next word is a block tag's name.
-    Name,
-    /// The next word is glued: a tag's reference or name.
-    First,
-    /// Inside the parentheses of a reference (`#m(int, long)`), glued.
-    Parens(i32),
-    /// Inside `{@code}` or `{@literal}`: every word is glued.
-    Atom,
-}
-
-impl Arg {
-    /// Whether the word `piece` is glued to the word before, and the state
-    /// after it.
-    fn glue(&mut self, piece: &str) -> bool {
-        let parens = |depth: i32| {
-            let depth = piece.bytes().fold(depth, |depth, byte| match byte {
-                b'(' => depth + 1,
-                b')' => depth - 1,
-                _ => depth,
-            });
-            if depth > 0 {
-                Self::Parens(depth)
-            } else {
-                Self::None
-            }
-        };
-        let (glue, next) = match *self {
-            Self::None => (false, Self::None),
-            Self::Name => (false, Self::First),
-            Self::First => (true, parens(0)),
-            Self::Parens(depth) => (true, parens(depth)),
-            Self::Atom => (true, Self::Atom),
-        };
-        *self = next;
-        glue
-    }
-}
-
 /// An open block that indents the lines inside it.
 #[derive(Clone, Copy, Debug)]
 enum Frame {
@@ -349,7 +307,7 @@ impl<'a> Parser<'_, '_, 'a> {
             if next.mid_line
                 && sep != Sep::Line
                 && !self.layout.at_start()
-                && tags::starts_structure(text)
+                && tags::starts_structure(text, false)
             {
                 self.layout.word(text, Join::Space);
             } else {
@@ -506,11 +464,7 @@ impl<'a> Parser<'_, '_, 'a> {
                     return self.region(index, pos, Closer::Offset(end), sep);
                 }
                 self.tag_end = end;
-                self.inline_arg = if name == "code" || name == "literal" {
-                    Arg::Atom
-                } else {
-                    Arg::First
-                };
+                self.inline_arg = Arg::inline(name);
                 let piece_end = (pos..bytes.len())
                     .find(|&at| is_space(bytes[at]))
                     .unwrap_or(bytes.len())

@@ -1,0 +1,72 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class DocCommentMarkdownHardCases {
+  ///CLOVER:OFF CLOVER:ON
+  void cloverOnADeclaration() {}
+
+  ///*Emphasis* starts a run written without a space after its slashes, which
+  ///keeps none, and a path that wraps to the start of a line gets one:
+  /// /usr/local/share/java/lib, so that the line doesn't start with four
+  ///slashes.
+  void noSpaceAfterTheSlashes() {}
+
+  void cloverInABody() {
+    ///CLOVER:OFF
+    int unused = 1;
+    /// Not documentation: a local variable is not a declaration that javadoc reads, so this line is kept.
+    int other = 2;
+  }
+
+  //////////////
+  /// Property Methods, a banner between lines of four or more slashes, which are not part of a run
+  //////////////
+
+  /// A hard break after this line\
+  /// and a hard break written with a backslash\
+  /// and the end of the paragraph, whose trailing spaces are dropped.
+  ///
+  /// A word that ends in a backslash\ never ends a wrapped line, so it stays
+  /// with the next.
+  void hardBreaks() {}
+
+  /// Example:
+  /// ```
+  /// @Override
+  /// public String toString() {}
+  /// ```
+  ///
+  ///     @Deprecated
+  ///     void old() {}
+  ///
+  /// @return a line-leading `@` in a fence or in indented code starts no block
+  /// tag
+  String lineLeadingAt();
+
+  /// Never starts a list or a heading by wrapping: it costs 2 dollars + 3
+  /// dollars - 1 dollar and 2. the number then # signs and > quotes, |
+  /// pipes, *** stars, === rules and <b>tags</b> and 1) items.
+  void listMarkerWords() {}
+
+  /// A line that starts with a marker the source puts there keeps its line
+  /// break:
+  /// 2) is not a list item, since an ordered list that interrupts a paragraph
+  /// starts at 1
+  /// #hashtag is not a heading # but a marker indented as code joins the line
+  /// before
+  void keptLineBreaks() {}
+
+  /// A code span `that  keeps   its spaces` and one that spans `lines
+  /// of the source` stay whole, and so do <a href="https://example.com">HTML
+  /// tags</a> and <https://example.com/an/autolink>.
+  void atoms() {}
+
+  /// Text before {@link java.util.Map#put(Object, Object) the label of the
+  /// link, which is filled like other words} and {@code a code tag}.
+  void inlineTags() {}
+}
+
+diagnostics:
+(none)

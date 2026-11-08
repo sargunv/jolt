@@ -85,8 +85,34 @@ pub(crate) fn is_list_marker(word: &str) -> bool {
 /// Whether `word` would start new structure at the start of a line: a block
 /// tag (`@`), or a plain-text list item. Such a word is never put at the
 /// start of a line by a wrap; it is glued to the word before it.
-pub(crate) fn starts_structure(word: &str) -> bool {
-    word.starts_with('@') || is_list_marker(word)
+///
+/// In Markdown (`markdown`) also every word that may start a block: `#`
+/// (a heading), `>` (a block quote), three or more `` ` `` or `~` (a
+/// fence), `|` (a table row), `<` and a letter, `/`, `!` or `?` (an HTML
+/// block), and a word made only of `*`, `-`, `_`, `=`, `+` and `:` (a
+/// thematic break, a setext underline, a table delimiter row).
+pub(crate) fn starts_structure(word: &str, markdown: bool) -> bool {
+    if word.starts_with('@') || is_list_marker(word) {
+        return true;
+    }
+    if !markdown {
+        return false;
+    }
+    let bytes = word.as_bytes();
+    let Some(&first) = bytes.first() else {
+        return false;
+    };
+    match first {
+        b'#' | b'>' | b'|' => true,
+        fence @ (b'`' | b'~') => bytes.len() >= 3 && bytes[..3].iter().all(|&byte| byte == fence),
+        b'<' => bytes
+            .get(1)
+            .is_some_and(|&next| next.is_ascii_alphabetic() || matches!(next, b'/' | b'!' | b'?')),
+        _ => {
+            bytes.iter().all(|byte| b"*-_=+:".contains(byte))
+                && bytes.iter().any(|&byte| byte != b':')
+        }
+    }
 }
 
 /// Whether `text` is a ruler: three or more of `-=_*+~#|.:/\`, possibly
@@ -108,4 +134,57 @@ pub(crate) fn is_ruler(text: &str) -> bool {
 /// Whether `byte` separates words.
 pub(crate) const fn is_space(byte: u8) -> bool {
     matches!(byte, b' ' | b'\t' | b'\x0c')
+}
+
+/// What glues a word to the word before it, in a block tag's arguments and
+/// inside an inline tag: the reference after `{@link` or `@see`, and the
+/// name after `@param`, stay with the tag's name.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Arg {
+    None,
+    /// The next word is a block tag's name.
+    Name,
+    /// The next word is glued: a tag's reference or name.
+    First,
+    /// Inside the parentheses of a reference (`#m(int, long)`), glued.
+    Parens(i32),
+    /// Inside `{@code}` or `{@literal}`: every word is glued.
+    Atom,
+}
+
+impl Arg {
+    /// The state at the start of an inline tag named `name`.
+    pub(crate) fn inline(name: &str) -> Self {
+        if name == "code" || name == "literal" {
+            Self::Atom
+        } else {
+            Self::First
+        }
+    }
+
+    /// Whether the word `piece` is glued to the word before, and the state
+    /// after it.
+    pub(crate) fn glue(&mut self, piece: &str) -> bool {
+        let parens = |depth: i32| {
+            let depth = piece.bytes().fold(depth, |depth, byte| match byte {
+                b'(' => depth + 1,
+                b')' => depth - 1,
+                _ => depth,
+            });
+            if depth > 0 {
+                Self::Parens(depth)
+            } else {
+                Self::None
+            }
+        };
+        let (glue, next) = match *self {
+            Self::None => (false, Self::None),
+            Self::Name => (false, Self::First),
+            Self::First => (true, parens(0)),
+            Self::Parens(depth) => (true, parens(depth)),
+            Self::Atom => (true, Self::Atom),
+        };
+        *self = next;
+        glue
+    }
 }

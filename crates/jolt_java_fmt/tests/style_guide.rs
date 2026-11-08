@@ -51,12 +51,17 @@ fn style_guide_examples_are_formatted() {
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
-/// The ` ```java ` fences, with the title in `[…]` after the language.
+/// The ` ```java ` fences (or longer ones, ` ````java `, around an example
+/// with a fence inside), with the title in `[…]` after the language.
 fn java_blocks(markdown: &str) -> Vec<Block> {
     let mut blocks = Vec::new();
     let mut lines = markdown.lines().enumerate();
     while let Some((index, line)) = lines.next() {
-        let Some(info) = line.strip_prefix("```java") else {
+        let fence = &line[..line.len() - line.trim_start_matches('`').len()];
+        let Some(info) = line[fence.len()..]
+            .strip_prefix("java")
+            .filter(|_| fence.len() >= 3)
+        else {
             continue;
         };
         let title = info
@@ -66,7 +71,7 @@ fn java_blocks(markdown: &str) -> Vec<Block> {
             .map(str::to_owned);
         let mut text = String::new();
         for (_, line) in lines.by_ref() {
-            if line == "```" {
+            if line == fence {
                 break;
             }
             text.push_str(line);

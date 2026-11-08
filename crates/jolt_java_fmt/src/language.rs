@@ -34,14 +34,20 @@ impl FormatLanguage for JavaFormat {
 
     const DOC_LINE_COMMENT: Option<&'static str> = Some("///");
 
-    /// A Javadoc comment is laid out by `jolt_markup`, except a file header
-    /// (see `is_file_header`). Markdown doc comments (`///`) print as
-    /// written.
+    /// A Javadoc comment (`/**`) is laid out by `jolt_markup`, except a file
+    /// header (see `is_file_header`). A Markdown doc comment (a `///` run) is
+    /// laid out only where JEP 467 makes it documentation: when it prints
+    /// right before a declaration that javadoc documents (see `documents`).
     fn doc_comment<'a>(docs: &mut DocBuilder<'a>, comment: &DocComment<'a, '_>) -> Option<Doc> {
         match comment.source {
             DocCommentSource::Block(text) if !is_file_header(comment.target) => {
                 jolt_markup::javadoc(docs, text)
             }
+            DocCommentSource::Lines {
+                lines,
+                before,
+                after: Some(after),
+            } if documents(before, after) => Some(jolt_markup::markdown(docs, lines)),
             DocCommentSource::Block(_) | DocCommentSource::Lines { .. } => None,
         }
     }
@@ -174,6 +180,45 @@ fn is_file_header(target: SyntaxElement<'_>) -> bool {
         }),
         _ => false,
     }
+}
+
+/// Whether a doc comment printed between the tokens `before` and `after`
+/// documents a declaration: `after` is the first token printed of a
+/// declaration that javadoc documents (a module, a package in a file without
+/// types, a type that is not local, or a member), so that `before` is
+/// outside it. The innermost declaration around `after` is the one: a token
+/// inside a method body belongs to the method, which has printed tokens
+/// before it.
+fn documents(before: Option<SyntaxToken<'_>>, after: SyntaxToken<'_>) -> bool {
+    let mut node = Some(after.parent());
+    while let Some(declaration) = node {
+        match node_kind(declaration) {
+            K::ModuleDeclaration
+            | K::PackageDeclaration
+            | K::ClassDeclaration
+            | K::InterfaceDeclaration
+            | K::EnumDeclaration
+            | K::RecordDeclaration
+            | K::AnnotationInterfaceDeclaration
+            | K::FieldDeclaration
+            | K::MethodDeclaration
+            | K::ConstructorDeclaration
+            | K::CompactConstructorDeclaration
+            | K::EnumConstant
+            | K::AnnotationElementDeclaration => {
+                let local = declaration
+                    .parent()
+                    .is_some_and(|parent| node_kind(parent) == K::LocalClassOrInterfaceDeclaration);
+                let range = declaration.text_range();
+                return !local
+                    && !is_file_header(SyntaxElement::Node(declaration))
+                    && before.is_none_or(|before| before.text_range().start() < range.start());
+            }
+            K::LocalClassOrInterfaceDeclaration => return false,
+            _ => node = declaration.parent(),
+        }
+    }
+    false
 }
 
 /// The element after `element` among its parent's children.
