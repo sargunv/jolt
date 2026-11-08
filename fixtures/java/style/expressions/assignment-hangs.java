@@ -27,4 +27,12 @@ class AssignmentHangs {
       default -> 0;
     };
   }
+
+  String wrappedLabels(Object shape) {
+    switch (shape) {
+      case Point(int xCoordinateValue, int yCoordinateValue) when xCoordinateValue > 0 -> describePoint(xCoordinateValue, yCoordinateValue, "first quadrant", moreArguments);
+      default -> {}
+    }
+    arrayWithLongName[firstIndexExpression + secondIndexExpression + thirdIndexExpression] = arrayWithLongName[firstIndexExpression + secondIndexExpression];
+  }
 }

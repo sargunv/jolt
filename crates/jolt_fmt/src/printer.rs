@@ -67,6 +67,9 @@ struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     column: u32,
     /// Leading whitespace of the current output line.
     line_ws: String,
+    /// The indent of the last line the printer started (a verbatim line's
+    /// whitespace is the source's, not an indent).
+    line_indent: u32,
     /// The base indentation of the verbatim node being printed.
     verbatim_base: String,
     pending: Pending,
@@ -95,6 +98,7 @@ pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
         out: String::new(),
         column: 0,
         line_ws: String::new(),
+        line_indent: 0,
         verbatim_base: String::new(),
         pending: Pending::None,
         line: Line::FileStart,
@@ -316,6 +320,7 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     }
                 }
                 self.out.push_str(&self.line_ws);
+                self.line_indent = indent;
                 self.column = self.indent_width(indent);
                 self.last = None;
             }
@@ -463,14 +468,20 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
         let mut width = i64::from(self.options.line_width) - i64::from(start);
         let mut suffix_pending = !self.suffixes.is_empty();
         let mut hung = match probe {
-            Probe::Hung(base) => {
+            Probe::Hung(indent) => {
                 // The hang's line prints a space, or nothing.
                 let line = i64::from(stack.last().is_some_and(|line| line.doc == Doc::LINE));
+                // The line the value starts on may be a continuation line,
+                // indented deeper than the hang.
+                let line_indent = match self.pending {
+                    Pending::Newlines { indent, .. } => indent,
+                    Pending::None | Pending::Space => self.line_indent,
+                };
                 Some(Hung {
-                    base,
+                    base: line_indent.max(indent),
                     value_start: width - line,
                     next_width: i64::from(self.options.line_width)
-                        - i64::from(self.indent_width(base + 1)),
+                        - i64::from(self.indent_width(indent + 1)),
                     parts: 0,
                     last: 0,
                     fallback: false,
@@ -677,10 +688,10 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                             }
                             hung.parts += 1;
                             hung.last = hung.parts;
-                            hung.fallback = true;
+                            hung.fallback = entry.indent + 1 > hung.base;
                             // A value that cannot be flat breaks there.
                             if self.docs.breaks(hung_value) {
-                                return true;
+                                return hung.fallback;
                             }
                             (entry.indent, Mode::Flat, hung.parts)
                         }
@@ -716,7 +727,8 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
 /// line break, or at the first line break of the last breakable part before
 /// the line is too long, and that part would break on the next line too.
 struct Hung {
-    /// The indent of the hang.
+    /// The indent the value's line breaks must be deeper than: the hang's,
+    /// or that of the line the value starts on, if deeper.
     base: u32,
     /// The width left on the line where the value starts.
     value_start: i64,
@@ -727,7 +739,7 @@ struct Hung {
     /// The breakable part whose first line break was passed last, or 0.
     last: u32,
     /// Whether the line can break at that line break: it is indented deeper
-    /// than the hang.
+    /// than `base`.
     fallback: bool,
     /// Whether the breakable part entered last contains a forced break, so
     /// that its first line break is required.
@@ -771,7 +783,7 @@ enum Probe {
     /// The entries from the start of a new line at their indent.
     NextLine,
     /// The entries from the current position, up to their first line break
-    /// that is indented deeper than the given indent.
+    /// that is indented deeper than the given indent and the current line.
     Hung(u32),
 }
 
