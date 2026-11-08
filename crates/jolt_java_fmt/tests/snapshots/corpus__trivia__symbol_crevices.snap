@@ -41,10 +41,10 @@ class SymbolCrevices
     int[] array = new int /* JOLT-TRIVIA:new-array-type-before-dim */ [
       /* JOLT-TRIVIA:new-array-open-bracket */ /* JOLT-TRIVIA:new-array-before-close */
     ]
-    /* JOLT-TRIVIA:new-array-before-init */ {
-      1 /* JOLT-TRIVIA:initializer-before-comma */,
-      2 /* JOLT-TRIVIA:initializer-before-close */,
-    } /* JOLT-TRIVIA:array-before-semi */;
+      /* JOLT-TRIVIA:new-array-before-init */ {
+        1 /* JOLT-TRIVIA:initializer-before-comma */,
+        2 /* JOLT-TRIVIA:initializer-before-close */,
+      } /* JOLT-TRIVIA:array-before-semi */;
   }
 
   void helper(String name, int... numbers) {}

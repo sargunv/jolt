@@ -477,24 +477,44 @@ switch (value) {
   group one more. Each `case …:` label is on its own line. A group whose only
   statement is a block keeps the block on the label line (`case 1: {`).
 - A rule's expression body (`case X -> value;`) that doesn't fit is laid out as
-  an [assignment's value](#assignment) is. After a label that wraps, the body
-  starts on the next line:
+  an [assignment's value](#assignment) is.
+- A label with a single item keeps it after `case`. A pattern that doesn't fit
+  breaks by its own rule: its `)` returns to the label's indentation, and the
+  guard, `->` and the body follow it.
+- A label with several items (`case null, default`) is one line if it fits.
+  Otherwise `case` stands alone on its line and each item goes on its own line
+  one level deeper, as the types of an `implements` clause do.
+- A guard (`when …`) stays on the label line. A condition that doesn't fit
+  breaks by its own rule, as a `return` value does. Redundant parentheses around
+  a guard are removed, unless a comment is on or inside them.
+- After a label that ends on a continuation line (its items or its guard wrap),
+  the body starts on the next line.
 
 ```java
 switch (shape) {
   case Point(
-      int xCoordinateValue,
-      int yCoordinateValue,
-      int zCoordinateValue
-    ) when xCoordinateValue > 0 ->
-    describePoint(xCoordinateValue, yCoordinateValue, "first quadrant");
+    int xCoordinateValue,
+    int yCoordinateValue,
+    int zCoordinateValue
+  ) when xCoordinateValue > 0 -> describePoint(
+    xCoordinateValue,
+    yCoordinateValue,
+    "first quadrant",
+    moreArguments
+  );
+  case Point(int x, int y) when x > 0
+    && someVeryLongConditionName(x, y)
+    && another(y) -> 1;
+  case
+    FirstVeryLongTypeName,
+    SecondVeryLongTypeName,
+    ThirdVeryLongTypeName,
+    FourthType ->
+    handleTheseFourTypes(shape, firstOptionValue, secondOptionValue, third);
   default -> {}
 }
 ```
 
-- Label lists (`case null, default`) and guards (`when …`) stay on the label
-  line. Redundant parentheses around a guard are removed, unless a comment is on
-  or inside them.
 - A switch expression formats the same way.
 
 ### Try
@@ -756,6 +776,17 @@ section, which keep a comment next to the code it describes.
 - **Before a header clause.** A block comment that ends the line before
   `extends`, `implements`, `permits` or `throws` goes with the clause, onto the
   clause's line.
+- **Before a part that continues a line.** A comment that starts its line before
+  an array initializer's `{`, a guard's `when`, a type parameter's `extends` or
+  an annotation element's `default` puts that part one level deeper, as a
+  continuation line of the line before it:
+
+```java
+int[] values = new int[]
+  // the first primes
+  { 2, 3, 5, 7 };
+```
+
 - **Between a header and its body.** A comment between a declaration or control
   statement header and its body moves to the first line inside the body, unless
   it is inline (`class X /* c */ {` stays as written).

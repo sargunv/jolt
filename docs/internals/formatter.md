@@ -1074,6 +1074,14 @@ Comment-driven layout rules owned by one module:
   does after a keyword: with a block comment, which is not a line suffix, the
   hang could keep the value on the comment's line, and the next pass would read
   the comment as an inline one.
+- **A node after a space (helpers).** `spaced_node` prints `space node`. When a
+  leading comment of the node breaks the line (an array initializer's `{`, a
+  guard, a bound or a `default` value after a comment that starts its line), it
+  prints `space indent(node)`, so the comment and the node continue the line
+  before one indent deeper instead of starting a line at the enclosing indent,
+  where they would read as the next statement or member. A `finally` clause is
+  not a continuation, so `try` uses `spaced`, and the clause starts its line at
+  the statement's indent like `}` / `// c` / `finally {`.
 - **Promoted empty bodies (statements).** A non-block body that is an
   `EmptyStatement` (`if (a);`) promotes to an empty block: the `;` is elided
   through `removed`, exactly as an `EmptyStatement` inside a block is, so the

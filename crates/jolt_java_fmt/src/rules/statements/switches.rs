@@ -14,7 +14,7 @@ use crate::JavaFormatter;
 use crate::helpers::assignment::operator_value;
 use crate::helpers::bodies::{braced_body, statement_separator};
 use crate::helpers::lists::parenthesized;
-use crate::helpers::{after_token, spaced_node};
+use crate::helpers::{after_token, spaced, spaced_node};
 
 pub(crate) fn switch_statement<'a>(f: &mut JavaFormatter<'a>, node: SwitchStatement<'a>) -> Doc {
     switch(
@@ -181,11 +181,13 @@ pub(crate) fn switch_rule<'a>(f: &mut JavaFormatter<'a>, node: SwitchRule<'a>) -
     cat![f; label, f.space(), body]
 }
 
-/// `case a, b when guard` or `default`. Items that do not fit break one per
-/// line, one indent deeper.
+/// `case a, b when guard` or `default`. A single item follows `case` and
+/// breaks by its own rule. Several items that do not fit put `case` alone on
+/// its line and each item on its own line one indent deeper.
 pub(crate) fn switch_label<'a>(f: &mut JavaFormatter<'a>, node: SwitchLabel<'a>) -> Doc {
     let keyword = f.token_opt(node.keyword());
     let mut items = Vec::new();
+    let mut several = false;
     for element in node
         .items()
         .into_iter()
@@ -194,17 +196,19 @@ pub(crate) fn switch_label<'a>(f: &mut JavaFormatter<'a>, node: SwitchLabel<'a>)
         match element {
             ListElement::Item(item) => items.push(f.element(item.element())),
             ListElement::Bogus(bogus) => items.push(f.node(bogus)),
-            ListElement::Separator(comma) => items.extend([f.token(comma), f.line()]),
+            ListElement::Separator(comma) => {
+                items.extend([f.token(comma), f.line()]);
+                several = true;
+            }
             ListElement::Missing => {}
         }
     }
-    let items = if items.is_empty() {
-        Doc::NIL
+    let items = f.concat(items);
+    let items = if several {
+        let items = indent![f; f.line(), items];
+        f.group(items)
     } else {
-        let items = f.concat(items);
-        let items = f.indent(items);
-        let items = f.group(items);
-        cat![f; f.space(), items]
+        spaced(f, items)
     };
     let guard = spaced_node(f, node.guard());
     cat![f; keyword, items, guard]

@@ -35,12 +35,13 @@ class Example {
 
   int classify(Object value) {
     return switch (value) {
-      case null, // null arm
+      case
+        null, // null arm
         default -> 0;
       case Pair(
-          int left, // left
-          _
-        ) -> left;
+        int left, // left
+        _
+      ) -> left;
     };
   }
 }

@@ -26,9 +26,9 @@ class Patterns {
       case Point(int x, int y) when x == y -> "diagonal";
       case Line(Point(var x1, var y1), Point(var x2, var y2)) -> "line";
       case Line(
-          Point(var firstStartCoordinate, var secondStartCoordinate),
-          Point endPoint
-        ) -> "long";
+        Point(var firstStartCoordinate, var secondStartCoordinate),
+        Point endPoint
+      ) -> "long";
       case String _ -> "string";
       default -> "other";
     };
