@@ -6,8 +6,8 @@ use std::ops::ControlFlow;
 
 use crate::comments::is_doc_line;
 use crate::doc::{
-    CommentLine, Kind, LINE_COMMENT, MULTILINE, RUN_END, Reindent, STICKY, Text, VERBATIM_START,
-    comment_lines, display_width, lines,
+    CommentLine, GLUED, Kind, LINE_COMMENT, MULTILINE, RUN_END, Reindent, STICKY, Text,
+    VERBATIM_START, comment_lines, display_width, lines,
 };
 use crate::{Doc, DocBuilder, FormatOptions, Sink};
 
@@ -290,7 +290,7 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
         self.run_ended = text.flags & RUN_END != 0 && self.is_doc_line(self.line_first);
         self.flush_pending();
         let bytes = text.text.as_bytes();
-        if let Some(last) = self.last {
+        if let Some(last) = self.last.filter(|_| text.flags & GLUED == 0) {
             // Texts start with an ASCII byte in all but rare cases.
             let first = match bytes.first() {
                 Some(&byte) if byte.is_ascii() => Some(char::from(byte)),

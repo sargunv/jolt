@@ -362,7 +362,8 @@ formatted.
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `text(&'a str)`                 | Literal text. A text containing a line break (a text block literal) is written raw (line breaks as `\n`) and cannot be flat.                                                                                                                                                                                                                                                                                                                                                                           |
 | `sticky(&'a str)`               | A synthesized separator (`,` `;`) that is printed before a pending line suffix instead of flushing it (see printer).                                                                                                                                                                                                                                                                                                                                                                                   |
-| `line_comment(&'a str)`         | The last text of a run of doc line comments, for a `doc_comment` layout: the line ends after it, and a doc line comment that starts the next line gets a blank line first (see printer).                                                                                                                                                                                                                                                                                                               |
+| `line_comment(&'a str, bool)`   | The last text of a run of doc line comments, for a `doc_comment` layout: the line ends after it, and a doc line comment that starts the next line gets a blank line first (see printer). The flag glues it as `glued` does.                                                                                                                                                                                                                                                                            |
+| `glued(&'a str)`                | Comment text written right after the text before it, without the space `joins` would add: the `\` of a Markdown hard break after a word, or a word after a `///` frame (`///**`).                                                                                                                                                                                                                                                                                                                      |
 | `reindented(&'a str, Reindent)` | Inside `jolt_fmt` only (comment printing and verbatim output). A multi-line source slice (a block comment, or verbatim source) whose continuation lines the printer rewrites while writing them: `Reindent::Comment` lays out a block comment's lines (see Printing); `Reindent::Strip(prefix)` removes `prefix` from a line that starts with it. Each continuation line is then written after the indentation of the output line the text started on; blank lines get no indentation. Cannot be flat. |
 | `space()`                       | One space; dropped at line start and before a newline; consecutive spaces collapse into one.                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `line()`                        | Space when flat, newline when broken.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -409,9 +410,10 @@ fit check. So every group has a line break of its own, which the
 Text side-table flags: `sticky`, `line_comment` (set by the comment printer for
 line comments; see the printer's "line comments end their line"), `run_end` (the
 last text of a run of doc line comments, set with `line_comment` by
-`DocBuilder::line_comment`; see the printer's "doc line runs stay apart"), the
-multi-line mode (`raw` for `text`, the `Reindent` mode for `reindented`), and
-`verbatim_start` on the first text of a verbatim node (see
+`DocBuilder::line_comment`; see the printer's "doc line runs stay apart"),
+`glued` (no `joins` check before the text), the multi-line mode (`raw` for
+`text`, the `Reindent` mode for `reindented`), and `verbatim_start` on the first
+text of a verbatim node (see
 [Verbatim edges](#item-lists-blank-lines-formatter-ignore)). Display width is
 the sum of `unicode-width` widths of the characters, with a tab inside a text
 counting 1 and an ASCII fast path. The width of a multi-line text for fitting is
@@ -819,11 +821,11 @@ A doc comment that starts its output line is laid out by the language's
 `FormatLanguage::doc_comment` hook when it returns a doc; `None` prints the
 comment as in the list above. A doc comment is a doc block comment
 (`DocCommentSource::Block`, `/** … */`) or a doc line run
-(`DocCommentSource::Lines`, one text per `///` line, trailing whitespace kept),
-with its placement target. The chokepoints call the hook only for a comment that
-starts its output line, since only there no group's fit check measures past the
-line break before it into the comment, so its layout can't change the code
-around it:
+(`DocCommentSource::Lines`, one text per `///` line, trailing whitespace kept,
+with the source tokens printed around the run), with its placement target. The
+chokepoints call the hook only for a comment that starts its output line, since
+only there no group's fit check measures past the line break before it into the
+comment, so its layout can't change the code around it:
 
 - a comment printed `OwnLine` (leading, trailing or dangling);
 - the first dangling comment of a node (the owning rule puts a line break before

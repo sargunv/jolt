@@ -66,7 +66,22 @@ pub struct Formatter<'a, L: FormatLanguage> {
     regions: Vec<TextRange>,
     emitted: Vec<u8>,
     by_verbatim: Vec<bool>,
+    /// The source token emitted last.
+    last_token: Option<SyntaxToken<'a>>,
+    /// A run of doc line comments whose layout waits for the token after it.
+    pending: Option<PendingRun<'a>>,
     language: PhantomData<L>,
+}
+
+/// A run of doc line comments that starts its output line: its slot is
+/// filled when the next source token or doc comment is emitted (see
+/// [`DocCommentSource::Lines`]).
+#[derive(Clone, Copy, Debug)]
+struct PendingRun<'a> {
+    slot: Doc,
+    head: usize,
+    end: usize,
+    before: Option<SyntaxToken<'a>>,
 }
 
 impl<'a, L: FormatLanguage> Deref for Formatter<'a, L> {
@@ -95,11 +110,14 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             regions,
             emitted: vec![0; count],
             by_verbatim: vec![false; count],
+            last_token: None,
+            pending: None,
             language: PhantomData,
         }
     }
 
-    pub(crate) fn into_builder(self) -> DocBuilder<'a> {
+    pub(crate) fn into_builder(mut self) -> DocBuilder<'a> {
+        self.settle(None);
         self.builder
     }
 
@@ -132,12 +150,27 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// [`FormatLanguage::format_node`]. For a node without comments this
     /// costs one flag read and one bitset probe beyond the rule itself.
     pub fn node(&mut self, node: SyntaxNode<'a>) -> Doc {
-        let body = if node.is_malformed() {
-            self.verbatim(node)
-        } else {
-            L::format_node(self, node)
-        };
-        self.with_comments(SyntaxElement::Node(node), body)
+        if node.is_malformed() {
+            let body = self.verbatim(node);
+            return self.with_comments(SyntaxElement::Node(node), body);
+        }
+        if self.comments.has(SyntaxElement::Node(node)) {
+            return self.node_with_comments(node);
+        }
+        L::format_node(self, node)
+    }
+
+    /// [`node`](Self::node) for a well-formed node with comments: leading
+    /// comments are emitted before the node's tokens, in the order they
+    /// print (see [`settle`](Self::settle)). Apart from `node`, whose frame
+    /// is on the stack for every level of nesting.
+    #[inline(never)]
+    fn node_with_comments(&mut self, node: SyntaxNode<'a>) -> Doc {
+        let element = SyntaxElement::Node(node);
+        let leading = self.comments_on(element, Side::Leading);
+        let body = L::format_node(self, node);
+        let trailing = self.comments_on(element, Side::Trailing);
+        cat![self; leading, body, trailing]
     }
 
     /// [`node`](Self::node) for a typed node.
@@ -153,8 +186,50 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// Leading comments, the token text, trailing comments. The text is
     /// never sticky: only synthesized separators are.
     pub fn token(&mut self, token: SyntaxToken<'a>) -> Doc {
+        let element = SyntaxElement::Token(token);
+        if !self.comments.has(element) {
+            self.emit_token(token);
+            return self.builder.text(token.text());
+        }
+        let leading = self.comments_on(element, Side::Leading);
+        self.emit_token(token);
         let text = self.builder.text(token.text());
-        self.with_comments(SyntaxElement::Token(token), text)
+        let trailing = self.comments_on(element, Side::Trailing);
+        cat![self; leading, text, trailing]
+    }
+
+    /// Records `token` as emitted, after a run of doc line comments waiting
+    /// for it.
+    fn emit_token(&mut self, token: SyntaxToken<'a>) {
+        if self.pending.is_some() {
+            self.settle(Some(token));
+        }
+        self.last_token = Some(token);
+    }
+
+    /// Fills the slot of the waiting run of doc line comments, now that the
+    /// source token after it (or another doc comment, or the end, for
+    /// `None`) is emitted. Rules emit tokens and comments in output order,
+    /// so these are the run's neighbours in the output.
+    fn settle(&mut self, after: Option<SyntaxToken<'a>>) {
+        let Some(run) = self.pending.take() else {
+            return;
+        };
+        let lines: Vec<&'a str> = self.comments.list[run.head..=run.end]
+            .iter()
+            .map(|placed| placed.comment.text)
+            .collect();
+        let comment = DocComment {
+            source: DocCommentSource::Lines {
+                lines: &lines,
+                before: run.before,
+                after,
+            },
+            target: self.comments.list[run.head].target,
+        };
+        let doc = L::doc_comment(&mut self.builder, &comment)
+            .unwrap_or_else(|| self.written_run(run.head, run.end));
+        self.builder.fill(run.slot, doc);
     }
 
     /// [`token`](Self::token), or NIL for `None`.
@@ -277,6 +352,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         if node.last_token().is_none() || range.is_empty() {
             return Doc::NIL;
         }
+        if let Some(first) = node.first_token() {
+            self.emit_token(first);
+        }
+        self.last_token = node.last_token();
         let inside = self.comments.within(range);
         for index in inside.clone() {
             self.emitted[index] += 1;
@@ -688,6 +767,14 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         self.emitted[index] += 1;
         let placed = self.comments.list[index];
         let comment = placed.comment;
+        let doc_line = comment.kind == CommentKind::Line
+            && L::DOC_LINE_COMMENT
+                .is_some_and(|opener| comments::is_doc_line(comment.text, opener));
+        if doc_line || comment.kind == CommentKind::Doc {
+            // A run waiting for the token after it is no longer the last doc
+            // comment before that token.
+            self.settle(None);
+        }
         if let Run::Head(end) = placed.run {
             return self.doc_line_run(index, end as usize, starts_line);
         }
@@ -695,8 +782,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             // A doc line comment that is in no run (it ends a line of code in
             // the source) may still start its output line, as one that S1's
             // neighbour forces onto its own line does; it ends a run there.
-            let doc_line = L::DOC_LINE_COMMENT
-                .is_some_and(|opener| comments::is_doc_line(comment.text, opener));
             let flags = if doc_line {
                 LINE_COMMENT | RUN_END
             } else {
@@ -729,37 +814,43 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         self.builder.comment_text(comment.text, 0)
     }
 
-    /// The run of doc line comments from `head` to `end`: the language's
-    /// layout when it starts its line, or else each line as written, one per
-    /// line. Its last text ends the run (see [`DocBuilder::line_comment`]).
+    /// The run of doc line comments from `head` to `end`. When it leads its
+    /// target, starts its line and may be laid out (see
+    /// [`formats_doc`](Self::formats_doc)), a slot that the language's layout
+    /// or the run as written fills once the token after it is emitted (see
+    /// [`settle`](Self::settle)); else the run as written. Only a leading
+    /// run waits: its chokepoint emits it right before its target, so the
+    /// token emitted after it is the one printed after it. A rule may emit a
+    /// node's dangling comments after its closing token.
     fn doc_line_run(&mut self, head: usize, end: usize, starts_line: bool) -> Doc {
-        let texts: Vec<&'a str> = self.comments.list[head..=end]
-            .iter()
-            .map(|placed| placed.comment.text)
-            .collect();
         let placed = self.comments.list[head];
-        if starts_line
-            && self.formats_doc(placed)
-            && let Some(doc) = L::doc_comment(
-                &mut self.builder,
-                &DocComment {
-                    source: DocCommentSource::Lines(&texts),
-                    target: placed.target,
-                },
-            )
-        {
-            return doc;
+        if starts_line && placed.side == Side::Leading && self.formats_doc(placed) {
+            let slot = self.builder.slot();
+            self.pending = Some(PendingRun {
+                slot,
+                head,
+                end,
+                before: self.last_token,
+            });
+            return slot;
         }
-        let mut docs = Vec::with_capacity(texts.len() * 2);
-        for (position, text) in texts.iter().enumerate() {
-            if position > 0 {
+        self.written_run(head, end)
+    }
+
+    /// The run of doc line comments from `head` to `end` as written, one line
+    /// each. Its last text ends the run (see [`DocBuilder::line_comment`]).
+    fn written_run(&mut self, head: usize, end: usize) -> Doc {
+        let mut docs = Vec::with_capacity((end - head + 1) * 2);
+        for index in head..=end {
+            if index > head {
                 docs.push(Doc::HARD_LINE);
             }
-            let flags = if position + 1 == texts.len() {
+            let flags = if index == end {
                 LINE_COMMENT | RUN_END
             } else {
                 LINE_COMMENT
             };
+            let text = self.comments.list[index].comment.text;
             docs.push(self.builder.comment_text(text.trim_end(), flags));
         }
         self.builder.concat(docs)

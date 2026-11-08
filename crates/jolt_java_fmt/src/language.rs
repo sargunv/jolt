@@ -42,7 +42,7 @@ impl FormatLanguage for JavaFormat {
             DocCommentSource::Block(text) if !is_file_header(comment.target) => {
                 jolt_markup::javadoc(docs, text)
             }
-            DocCommentSource::Block(_) | DocCommentSource::Lines(_) => None,
+            DocCommentSource::Block(_) | DocCommentSource::Lines { .. } => None,
         }
     }
 

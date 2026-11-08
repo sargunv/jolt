@@ -70,8 +70,19 @@ pub enum DocCommentSource<'a, 'r> {
     /// A doc block comment (`/** … */`), delimiters included.
     Block(&'a str),
     /// A run of doc line comments (`///` lines), one text per line, each
-    /// with its opener and without its line break.
-    Lines(&'r [&'a str]),
+    /// with its opener and without its line break, and the source tokens
+    /// printed around it. Placement and normalizations move comments, so
+    /// these are the run's neighbours in the output, where its meaning to a
+    /// documentation tool is read again.
+    Lines {
+        lines: &'r [&'a str],
+        /// The token printed last before the run.
+        before: Option<SyntaxToken<'a>>,
+        /// The token printed first after the run, unless another doc comment
+        /// is printed before it (javadoc reads only the last doc comment
+        /// before a declaration).
+        after: Option<SyntaxToken<'a>>,
+    },
 }
 
 /// Where a comment is attached. The layout is the one the comment prints
