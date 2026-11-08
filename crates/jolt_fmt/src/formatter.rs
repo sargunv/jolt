@@ -378,9 +378,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                     _ => Doc::EMPTY_LINE,
                 }
             });
-            // Dangling comments always print on their own lines, but one
-            // that shares the line of the code before it starts no line.
-            let starts_line = self.comments.list[index].comment.lines_before != 0;
+            // Dangling comments always print on their own lines: the owning
+            // rule puts a line break before the first, and a later one that
+            // shares the line of the comment before it starts no line.
+            let starts_line = position == 0 || self.comments.list[index].comment.lines_before != 0;
             docs.push(self.comment_doc(index, starts_line));
         }
         self.builder.concat(docs)
