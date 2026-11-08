@@ -13,10 +13,10 @@ class Example {
   }
 }
 
-class RemovedSemicolonCommentGap {
+class KeptSemicolonCommentGap {
   void run() {
     int before = 1;
-    // comment salvaged from the removed semicolon
+    // a comment that keeps the semicolon
 
     ;
     int after = 2;

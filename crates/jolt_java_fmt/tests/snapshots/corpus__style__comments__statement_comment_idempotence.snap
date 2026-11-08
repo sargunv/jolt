@@ -17,11 +17,11 @@ class StatementCommentIdempotence {
     switch (k) {
       case 1:
         run();
-        /* the comment of a removed semicolon */
+        /* the comment of a kept semicolon */
         ;
       case 2:
         run();
-        // the last group's removed semicolon
+        // the last group's kept semicolon
         ;
     }
   }

@@ -1,0 +1,44 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+package p;
+
+import z.Zeta;
+
+// A comment on a redundant separator keeps the separator, which then splits
+// the imports. The import after it carries recovery and cannot prove it is
+// sortable, so it stays in place.
+;
+
+import a.;
+
+// Same, with the separator and the import already adjacent.
+;
+import b.;
+
+class ImportAfterCommentedSeparator {}
+
+formatted:
+package p;
+
+import z.Zeta;
+
+// A comment on a redundant separator keeps the separator, which then splits
+// the imports. The import after it carries recovery and cannot prove it is
+// sortable, so it stays in place.
+;
+
+import a .;
+
+// Same, with the separator and the import already adjacent.
+;
+
+import b .;
+
+class ImportAfterCommentedSeparator {}
+
+diagnostics:
+code=java.parse.unexpected_syntax range=227..228 message=unexpected token in import declaration
+code=java.parse.unexpected_syntax range=302..303 message=unexpected token in import declaration

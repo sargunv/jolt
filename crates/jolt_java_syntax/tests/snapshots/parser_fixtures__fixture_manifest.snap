@@ -278,7 +278,7 @@ syntax/recovery/expressions.java
 syntax/recovery/formatter-ignore-constructor-missing-open-paren.java
 syntax/recovery/formatter-ignore-module-missing-open.java
 syntax/recovery/header-clauses.java
-syntax/recovery/import-after-removed-separator-comments.java
+syntax/recovery/import-after-commented-separator.java
 syntax/recovery/import-and-module-directives.java
 syntax/recovery/import-trailing-tokens.java
 syntax/recovery/incomplete-module-directive.java

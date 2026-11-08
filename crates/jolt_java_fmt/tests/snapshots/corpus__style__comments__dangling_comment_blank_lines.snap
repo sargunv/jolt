@@ -127,10 +127,10 @@ class StatementsBeforeCloseBrace {
   }
 }
 
-class RemovedSemicolonComments {
-  // a comment salvaged from a removed semicolon
+class KeptSemicolonComments {
+  // a comment on the second semicolon
 
-  // a second salvaged comment
+  // a second comment on it
   ;
 }
 
