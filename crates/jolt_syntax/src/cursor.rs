@@ -436,15 +436,14 @@ impl<'a, T> ListElement<'a, T> {
 }
 
 impl<'a, T: AstNode<'a>> ListElement<'a, T> {
-    /// An item or a bogus node in its place as a node, a separator as a
-    /// token, nothing when missing.
+    /// The node of an item, or the bogus node in its place; `None` for a
+    /// separator or a missing element.
     #[must_use]
-    pub fn syntax(self) -> Option<SyntaxElement<'a>> {
+    pub fn node(self) -> Option<SyntaxNode<'a>> {
         match self {
-            Self::Item(item) => Some(SyntaxElement::Node(item.syntax())),
-            Self::Bogus(bogus) => Some(SyntaxElement::Node(bogus)),
-            Self::Separator(token) => Some(SyntaxElement::Token(token)),
-            Self::Missing => None,
+            Self::Item(item) => Some(item.syntax()),
+            Self::Bogus(bogus) => Some(bogus),
+            Self::Separator(_) | Self::Missing => None,
         }
     }
 }

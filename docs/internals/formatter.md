@@ -274,9 +274,9 @@ pub enum ListElement<'a, T> {
 }
 
 impl<'a, T: AstNode<'a>> ListElement<'a, T> {
-    /// An item or a bogus node in its place as a node, a separator as a
-    /// token, nothing when missing.
-    pub fn syntax(self) -> Option<SyntaxElement<'a>>;
+    /// The node of an item, or the bogus node in its place; `None` for a
+    /// separator or a missing element.
+    pub fn node(self) -> Option<SyntaxNode<'a>>;
 }
 ```
 
@@ -1293,8 +1293,8 @@ formats it as a unit with `f.fmt`; those are exactly the lists in the
 `AnnotationList`). Every other list kind is laid out by its parent's rule. The
 dispatch's fallback arm sends it to `helpers::lists::unexpected_list`, which
 `debug_assert!`s and formats the children separated by spaces; the arm asserts
-`is_list()`, so a new list kind needs no dispatch edit and only a token kind
-panics there (`dispatch.rs`).
+`is_list()`, so a new list kind needs no dispatch edit. A token, or a node kind
+that has no rule, panics there (`dispatch.rs`).
 
 ### Java comment hooks
 
