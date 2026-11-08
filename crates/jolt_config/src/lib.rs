@@ -27,7 +27,15 @@ pub struct FormatConfig {
     pub indent_width: Option<NonZeroU8>,
 
     /// Indent with tabs instead of spaces.
-    #[cfg_attr(feature = "clap", arg(long))]
+    #[cfg_attr(
+        feature = "clap",
+        arg(
+            long,
+            num_args = 0..=1,
+            require_equals = true,
+            default_missing_value = "true"
+        )
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_tabs: Option<bool>,
 }

@@ -111,36 +111,27 @@ then:
 
 ### hk
 
-[hk](https://github.com/jdx/hk) can define separate check and fix commands.
+[hk](https://github.com/jdx/hk) runs a step's `check` or `fix` command on the
+files that match its glob. `{{ files }}` passes them by name, and Jolt still
+skips files that the `files.exclude` globs match.
 
 ::: code-group
 
 ```text [hk.pkl]
-amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.pkl"
+amends "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Config.pkl"
 
-local lintSteps = new Mapping<String, Step> {
+steps {
   ["jolt"] {
-    glob = List("**/*.java", "jolt.toml")
-    check = "jolt fmt --check ."
-    fix = "jolt fmt ."
-  }
-}
-
-hooks {
-  ["pre-commit"] {
-    fix = true
-    stash = "git"
-    steps = lintSteps
-  }
-  ["check"] {
-    steps = lintSteps
+    glob = "**/*.java"
+    check = "jolt fmt --check {{ files }}"
+    fix = "jolt fmt {{ files }}"
   }
 }
 ```
 
 :::
 
-Install the hook once:
+Install the pre-commit hook once:
 
 ```sh
 hk install
@@ -149,8 +140,8 @@ hk install
 Then use hk directly when you want the same behavior without committing:
 
 ```sh
-hk fix
-hk check
+hk fix --all
+hk check --all
 ```
 
 ### pre-commit

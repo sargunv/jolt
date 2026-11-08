@@ -1,0 +1,16 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--use-tabs\", \"A.java\"], \"\")"
+---
+$ jolt fmt --use-tabs A.java
+status: 0
+--- stderr
+Reformatted 1 of 1 file in $TIME
+--- wrote A.java
+class A {
+	void f() {
+		if (ready) {
+			go();
+		}
+	}
+}

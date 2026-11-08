@@ -3,7 +3,7 @@ source: crates/jolt_cli/tests/cli.rs
 expression: "project.run(&[\"fmt\", \"-\"], NESTED)"
 ---
 $ jolt fmt -
-status: 1
+status: 2
 --- stderr
 $TEMP/jolt.toml: TOML parse error at line 2, column 1
   |
