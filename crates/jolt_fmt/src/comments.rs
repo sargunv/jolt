@@ -37,8 +37,9 @@ pub struct Comment<'a> {
     pub lines_before: u8,
     /// Newlines until the next comment or token, capped at 2.
     pub lines_after: u8,
-    /// The layout the source gives the comment.
-    pub layout: CommentLayout,
+    /// The layout the source gives the comment. Placement decides the
+    /// layout the comment prints with.
+    pub source_layout: CommentLayout,
     /// A block comment printed exactly as written, because its delimiters
     /// aren't the literal `/*` and `*/` that comment layout rewrites around:
     /// one that runs to the end of the file without `*/`, or one whose
@@ -266,13 +267,6 @@ pub(crate) fn first_in_gap(comments: &[PlacedComment<'_>], index: usize) -> bool
     index == 0 || comments[index - 1].next != comments[index].next
 }
 
-/// Whether no comment of the same gap follows comment `index`.
-fn last_in_gap(comments: &[PlacedComment<'_>], index: usize) -> bool {
-    comments
-        .get(index + 1)
-        .is_none_or(|after| after.next != comments[index].next)
-}
-
 /// Every comment of a tree with its attachment.
 pub(crate) struct Comments<'a> {
     /// In source order.
@@ -348,8 +342,46 @@ pub(crate) const fn is_comment(kind: TriviaKind) -> bool {
     )
 }
 
+/// A comment found in the trivia, with the tokens around its gap.
+#[derive(Clone, Copy)]
+struct Found<'a> {
+    piece: jolt_syntax::TriviaPiece<'a>,
+    lines_before: u8,
+    lines_after: u8,
+    prev: Option<SyntaxToken<'a>>,
+    next: SyntaxToken<'a>,
+}
+
+impl<'a> Found<'a> {
+    fn comment(self, source_layout: CommentLayout) -> Comment<'a> {
+        let piece = self.piece;
+        Comment {
+            text: piece.text,
+            range: piece.range,
+            kind: match piece.kind {
+                TriviaKind::LineComment => CommentKind::Line,
+                TriviaKind::DocComment => CommentKind::Doc,
+                _ => CommentKind::Block,
+            },
+            lines_before: self.lines_before,
+            lines_after: self.lines_after,
+            source_layout,
+            raw: piece.kind == TriviaKind::UnterminatedBlockComment
+                || (piece.kind != TriviaKind::LineComment
+                    && !(piece.text.starts_with("/*") && piece.text.ends_with("*/"))),
+        }
+    }
+}
+
+/// Whether no comment of the same gap follows comment `index`.
+fn last_in_gap(found: &[Found<'_>], index: usize) -> bool {
+    found
+        .get(index + 1)
+        .is_none_or(|after| after.next != found[index].next)
+}
+
 struct Collector<'a> {
-    list: Vec<PlacedComment<'a>>,
+    list: Vec<Found<'a>>,
     newlines: u32,
     /// The comment whose gap to what follows is still being counted.
     open: Option<usize>,
@@ -372,42 +404,26 @@ impl<'a> Collector<'a> {
         let lines_before = cap(self.newlines);
         self.close();
         self.open = Some(self.list.len());
-        let comment = Comment {
-            text: piece.text,
-            range: piece.range,
-            kind: match piece.kind {
-                TriviaKind::LineComment => CommentKind::Line,
-                TriviaKind::DocComment => CommentKind::Doc,
-                _ => CommentKind::Block,
-            },
+        self.list.push(Found {
+            piece,
             lines_before,
             lines_after: 0,
-            layout: CommentLayout::Inline,
-            raw: piece.kind == TriviaKind::UnterminatedBlockComment
-                || (piece.kind != TriviaKind::LineComment
-                    && !(piece.text.starts_with("/*") && piece.text.ends_with("*/"))),
-        };
-        self.list.push(PlacedComment {
-            comment,
             prev,
             next,
-            side: Side::Leading,
-            layout: CommentLayout::Inline,
         });
     }
 
     /// Ends the gap after the open comment (at a token or the next comment).
     fn close(&mut self) {
         if let Some(index) = self.open.take() {
-            self.list[index].comment.lines_after = cap(self.newlines);
+            self.list[index].lines_after = cap(self.newlines);
         }
         self.newlines = 0;
     }
 }
 
 /// Every comment under `root` with the tokens around it, in source order.
-/// Their sides and effective layouts are left for placement to set.
-fn collect(root: SyntaxNode<'_>) -> Vec<PlacedComment<'_>> {
+fn collect(root: SyntaxNode<'_>) -> Vec<Found<'_>> {
     let mut collector = Collector {
         list: Vec::new(),
         newlines: 0,
@@ -431,22 +447,19 @@ fn collect(root: SyntaxNode<'_>) -> Vec<PlacedComment<'_>> {
 
 /// Classifies and places every comment under `root`.
 pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a> {
-    let mut list = collect(root);
-    classify_layouts::<L::Syntax>(&mut list);
+    let found = collect(root);
+    let source_layouts = source_layouts::<L::Syntax>(&found);
 
-    let mut attachments = Vec::with_capacity(list.len());
+    let mut list: Vec<PlacedComment<'a>> = Vec::with_capacity(found.len());
+    let mut attachments = Vec::with_capacity(found.len());
     let tree = root.tree();
     let mut previous: Option<Placement<'a>> = None;
     let mut nodes = BitSet::new(tree.node_count());
     let mut tokens = BitSet::new(tree.token_count());
     let unclosed = unclosed_openers::<L>(root);
-    for index in 0..list.len() {
-        let PlacedComment {
-            comment,
-            prev,
-            next,
-            ..
-        } = list[index];
+    for (index, (&found_comment, &source_layout)) in found.iter().zip(&source_layouts).enumerate() {
+        let Found { prev, next, .. } = found_comment;
+        let comment = found_comment.comment(source_layout);
         let context = CommentContext {
             comment,
             prev,
@@ -454,14 +467,14 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
             root,
             unclosed: &unclosed,
         };
-        let first_in_gap = first_in_gap(&list, index);
-        let last_in_gap = last_in_gap(&list, index);
+        let first_in_gap = index == 0 || found[index - 1].next != next;
+        let last_in_gap = last_in_gap(&found, index);
         let mut placement = match L::place_comment(&context) {
             Some(placement) => {
                 debug_assert_hook_placement(&context, placement);
                 placement
             }
-            None => generic_placement::<L>(&context, first_in_gap, last_in_gap),
+            None => generic_placement::<L>(&context, source_layout, first_in_gap, last_in_gap),
         };
         // The placement of the comment before this one in its gap.
         let earlier = previous.filter(|_| !first_in_gap);
@@ -469,37 +482,40 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
         // one leads the next element (or dangles), the rest follow it.
         if let (Placement::Trailing(..), Some(earlier)) = (placement, earlier) {
             placement = match earlier {
-                Placement::Leading(element, _) => Placement::Leading(element, comment.layout),
+                Placement::Leading(element, _) => Placement::Leading(element, source_layout),
                 Placement::Dangling(node) => Placement::Dangling(node),
                 Placement::Trailing(..) => placement,
             };
         }
         // Nothing can follow a trailing line comment on its line (S1 can put
         // a comment after it), so the next trailing comment of the same
-        // element leads what follows instead, where the next pass puts it.
+        // element is placed as if it were on its own line: it leads what
+        // follows, where the next pass puts it.
         if let (Placement::Trailing(element, _), Some(Placement::Trailing(earlier, _))) =
             (placement, previous)
             && earlier == element
             && list[index - 1].comment.kind == CommentKind::Line
         {
-            let mut own_line = context;
-            own_line.comment.layout = CommentLayout::OwnLine;
-            placement = generic_placement::<L>(&own_line, first_in_gap, last_in_gap);
+            placement =
+                generic_placement::<L>(&context, CommentLayout::OwnLine, first_in_gap, last_in_gap);
         }
         previous = Some(placement);
         let (element, side, layout) = match placement {
             Placement::Leading(element, layout) => (element, Side::Leading, layout),
             Placement::Trailing(element, layout) => (element, Side::Trailing, layout),
-            Placement::Dangling(node) => {
-                (SyntaxElement::Node(node), Side::Dangling, comment.layout)
-            }
+            Placement::Dangling(node) => (SyntaxElement::Node(node), Side::Dangling, source_layout),
         };
         match element {
             SyntaxElement::Node(node) => nodes.insert(node.id().index()),
             SyntaxElement::Token(token) => tokens.insert(token.id().index()),
         }
-        list[index].side = side;
-        list[index].layout = layout;
+        list.push(PlacedComment {
+            comment,
+            prev,
+            next,
+            side,
+            layout,
+        });
         attachments.push(Attachment {
             key: key(element),
             side,
@@ -515,40 +531,46 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
     }
 }
 
-/// Decides each comment's layout from the line breaks around it. A comment
-/// with code before it on its line that is followed only by other comments
-/// up to the line's end ends its line too: `/* a */` in `x; /* a */ // b`
-/// trails `x;` like `// b`.
-fn classify_layouts<L: Language>(list: &mut [PlacedComment<'_>]) {
+/// The layout the source gives each comment, from the line breaks around it.
+/// A comment with code before it on its line that is followed only by other
+/// comments up to the line's end ends its line too: `/* a */` in
+/// `x; /* a */ // b` trails `x;` like `// b`.
+fn source_layouts<L: Language>(found: &[Found<'_>]) -> Vec<CommentLayout> {
     let eof = L::to_raw(L::EOF);
-    // Whether the line ends after the comment, past any comments after it.
-    let mut line_ends = vec![false; list.len()];
-    for index in (0..list.len()).rev() {
-        line_ends[index] = list[index].comment.lines_after > 0
-            || if last_in_gap(list, index) {
-                list[index].next.kind() == eof
+    let mut layouts = Vec::with_capacity(found.len());
+    // Whether the line ends after the next comment of the gap, past any
+    // comments after that one.
+    let mut next_line_ends = false;
+    for (index, comment) in found.iter().enumerate().rev() {
+        let last_in_gap = last_in_gap(found, index);
+        let ends_file = last_in_gap && comment.next.kind() == eof;
+        // Whether the line ends after this comment, past any comments after it.
+        let line_ends = comment.lines_after > 0
+            || if last_in_gap {
+                ends_file
             } else {
-                line_ends[index + 1]
+                next_line_ends
             };
-    }
-    for index in 0..list.len() {
-        let ends_file = last_in_gap(list, index) && list[index].next.kind() == eof;
-        let PlacedComment { comment, prev, .. } = &mut list[index];
         // The file start counts as a line break before the first comment.
-        let newline_before = (index == 0 && prev.is_none()) || comment.lines_before > 0;
-        let newline_after =
-            comment.lines_after > 0 || ends_file || (!newline_before && line_ends[index]);
-        comment.layout = match (newline_before, newline_after) {
+        let newline_before = (index == 0 && comment.prev.is_none()) || comment.lines_before > 0;
+        let newline_after = comment.lines_after > 0 || ends_file || (!newline_before && line_ends);
+        layouts.push(match (newline_before, newline_after) {
             (true, true) => CommentLayout::OwnLine,
             (true, false) => CommentLayout::StartOfLine,
             (false, true) => CommentLayout::EndOfLine,
             (false, false) => CommentLayout::Inline,
-        };
+        });
+        next_line_ends = line_ends;
     }
+    layouts.reverse();
+    layouts
 }
 
+/// The generic placement of the comment in `context`, as if the source gave
+/// it `layout`.
 fn generic_placement<'a, L: FormatLanguage>(
     context: &CommentContext<'a, '_>,
+    layout: CommentLayout,
     first_in_gap: bool,
     last_in_gap: bool,
 ) -> Placement<'a> {
@@ -558,7 +580,6 @@ fn generic_placement<'a, L: FormatLanguage>(
         next,
         ..
     } = *context;
-    let layout = comment.layout;
     let syntax_lead = |token| leading_target::<L::Syntax>(token);
     let syntax_trail = |token| trailing_target::<L::Syntax>(token);
     // `prev` opens a region whose closer is present. After an unclosed

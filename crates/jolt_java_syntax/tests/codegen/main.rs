@@ -295,10 +295,6 @@ fn render(schema: &Schema, w: &mut String) -> fmt::Result {
                 if list.separator.is_some() {
                     writeln!(
                         w,
-                        "/// Present items; `Bogus` items are skipped unless the item type holds them.\npub fn items(self) -> impl Iterator<Item = {item}> + 'a {{ self.0.slots().step_by(2).flatten().filter_map({cast}) }}"
-                    )?;
-                    writeln!(
-                        w,
                         "/// Items, separators, and missing elements in order.\npub fn elements(self) -> impl Iterator<Item = ListElement<'a, {item}>> + 'a {{ self.0.slots().enumerate().map(|(index, element)| if index % 2 == 0 {{ ListElement::item(element, {cast}) }} else {{ ListElement::separator(element) }}) }}"
                     )?;
                 } else if matches!(ty, Ty::Category(_) | Ty::Role(_)) {

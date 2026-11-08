@@ -272,6 +272,12 @@ pub enum ListElement<'a, T> {
     /// A `Bogus` node at an item position whose type cannot hold it.
     Bogus(SyntaxNode<'a>),
 }
+
+impl<'a, T: AstNode<'a>> ListElement<'a, T> {
+    /// An item or a bogus node in its place as a node, a separator as a
+    /// token, nothing when missing.
+    pub fn syntax(self) -> Option<SyntaxElement<'a>>;
+}
 ```
 
 Trivia attachment: a token's trailing trivia is the horizontal whitespace, line
@@ -513,10 +519,10 @@ pub enum ModifierElement<'a> {
     Token(SyntaxToken<'a>),
 }
 
-/// Separated lists expose items and elements (`jolt_syntax::ListElement`).
-/// A plain list whose item type holds `Bogus` (a category or choice) exposes
-/// items; one whose item type cannot (a single node kind or tokens) exposes
-/// only elements, so no rule can skip a bogus item by accident.
+/// A list exposes items only when its item type holds `Bogus` (a plain list
+/// of a category or choice). Every other list, and every separated list,
+/// exposes only elements (`jolt_syntax::ListElement`), which keep bogus items
+/// and separators, so no rule can skip a bogus item by accident.
 impl<'a> ClassBodyMemberList<'a> {
     pub fn items(self) -> impl Iterator<Item = ClassBodyMember<'a>> + 'a;
 }
@@ -524,7 +530,6 @@ impl<'a> BlockStatementList<'a> {
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, BlockStatement<'a>>> + 'a;
 }
 impl<'a> ExpressionList<'a> {
-    pub fn items(self) -> impl Iterator<Item = Expression<'a>> + 'a;
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Expression<'a>>> + 'a;
 }
 
@@ -806,11 +811,11 @@ The placement pass walks every token's trivia once and records each comment:
 pub struct Comment<'a> {
     pub text: &'a str,
     pub range: TextRange,
-    pub kind: CommentKind,         // Line | Block | Doc (unterminated: Block)
-    pub lines_before: u8,          // newlines since previous token/comment, capped at 2
-    pub lines_after: u8,           // newlines until next comment/token, capped at 2
-    pub layout: CommentLayout,     // from the source; the effective layout is the placement's
-    pub(crate) unterminated: bool, // from the trivia kind: a block comment without `*/`
+    pub kind: CommentKind, // Line | Block | Doc (unterminated: Block)
+    pub lines_before: u8,  // newlines since previous token/comment, max 2
+    pub lines_after: u8,   // newlines until next comment/token, max 2
+    pub source_layout: CommentLayout, // placement decides the printed layout
+    pub(crate) raw: bool,  // no `*/`, or delimiters written as escapes
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CommentLayout {
@@ -825,15 +830,15 @@ pub enum CommentLayout {
 `Eof` token). The **enclosing node** is the deepest node containing both,
 computed on demand (hooks, debug assertions and formatter-ignore scopes use it).
 
-The layout is decided from line breaks alone: "newline before" means a line
-break between the end of `prev` (or of the previous comment) and the comment's
-start, or no `prev`; "newline after" means a line break between the comment's
-end and the start of `next` (or of the next comment), or `next` is `Eof`. A
-comment with code before it on its line that is followed only by other comments
-up to the line's end ends its line too: `/* a */` in `x; /* a */ // b` is
-`EndOfLine` like `// b`. A multi-line block comment is classified by its start
-and end lines the same way. `lines_before` and `lines_after` count line breaks
-in the same gaps.
+The source layout is decided from line breaks alone: "newline before" means a
+line break between the end of `prev` (or of the previous comment) and the
+comment's start, or no `prev`; "newline after" means a line break between the
+comment's end and the start of `next` (or of the next comment), or `next` is
+`Eof`. A comment with code before it on its line that is followed only by other
+comments up to the line's end ends its line too: `/* a */` in `x; /* a */ // b`
+is `EndOfLine` like `// b`. A multi-line block comment is classified by its
+start and end lines the same way. `lines_before` and `lines_after` count line
+breaks in the same gaps.
 
 #### Placement
 
@@ -935,8 +940,9 @@ chose:
   `/* a */ /* b */` alone on a line before code keeps both on that line).
 - **After a trailing line comment.** S1 can put a comment after a trailing line
   comment of the same element (`f // a` `;` `/* b */`). Nothing can follow a
-  line comment on its line, so such a second trailing comment is placed as if it
-  were `OwnLine`, where the next pass finds it.
+  line comment on its line, so the generic rules place such a second trailing
+  comment with the layout `OwnLine` instead of its source layout, where the next
+  pass finds it.
 
 Hook constraints (checked by debug assertions in the pass): a hook may only
 target elements inside the enclosing node; `Leading` layouts are `OwnLine`,
@@ -1293,9 +1299,11 @@ directly. A list kind therefore has a rule function only when some other rule
 formats it as a unit with `f.fmt`; those are exactly the lists in the
 [layout contracts](#layout-contracts-between-modules) (`ModifierList`,
 `ParameterModifierList`, `VariableDeclaratorList`, `ArrayDimensions`,
-`AnnotationList`). Every other list kind is laid out by its parent's rule and
-dispatches to `helpers::lists::unexpected_list`, which `debug_assert!`s and
-formats the children separated by spaces (`dispatch.rs`).
+`AnnotationList`). Every other list kind is laid out by its parent's rule. The
+dispatch's fallback arm sends it to `helpers::lists::unexpected_list`, which
+`debug_assert!`s and formats the children separated by spaces; the arm asserts
+`is_list()`, so a new list kind needs no dispatch edit and only a token kind
+panics there (`dispatch.rs`).
 
 ### Java comment hooks
 

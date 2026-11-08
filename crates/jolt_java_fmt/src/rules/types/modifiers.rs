@@ -7,7 +7,7 @@ use jolt_java_syntax::{
     AnnotationList, JavaSyntaxKind as K, ModifierElement, ModifierList, ModifierPartition,
     NonSealedModifier, ParameterModifierList, is_contextual,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement};
+use jolt_syntax::{AstNode, SyntaxElement};
 
 use crate::JavaFormatter;
 
@@ -193,10 +193,7 @@ pub(crate) fn annotation_lines<'a>(
 fn annotations<'a>(f: &mut JavaFormatter<'a>, node: Option<AnnotationList<'a>>) -> Vec<Doc> {
     node.into_iter()
         .flat_map(AnnotationList::elements)
-        .filter_map(|element| match element {
-            ListElement::Item(annotation) => Some(f.fmt(annotation)),
-            ListElement::Bogus(bogus) => Some(f.node(bogus)),
-            ListElement::Separator(_) | ListElement::Missing => None,
-        })
+        .filter_map(|element| element.syntax().and_then(SyntaxElement::as_node))
+        .map(|annotation| f.node(annotation))
         .collect()
 }
