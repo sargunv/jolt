@@ -92,7 +92,7 @@ impl Project {
         text.lines()
             .map(|line| match line.rsplit_once(" in ") {
                 Some((summary, _))
-                    if summary.starts_with("Formatted ") || summary.starts_with("Checked ") =>
+                    if summary.starts_with("Reformatted ") || summary.starts_with("Checked ") =>
                 {
                     format!("{summary} in $TIME\n")
                 }
@@ -151,6 +151,15 @@ fn check_mode() {
 }
 
 #[test]
+fn check_mode_exits_1_for_unformatted_files_and_2_for_errors() {
+    let project = Project::new(&[("A.java", NESTED), ("B.java", FORMATTED)]);
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "B.java"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "--check"], ""));
+    project.write("Bad.java", "class {\n");
+    insta::assert_snapshot!(project.run(&["fmt", "--check"], ""));
+}
+
+#[test]
 fn syntax_errors() {
     let project = Project::new(&[("A.java", "class {\n"), ("B.java", NESTED)]);
     insta::assert_snapshot!(project.run(&["fmt", "--threads", "2", "."], ""));
@@ -183,7 +192,7 @@ fn path_errors() {
 fn format_flags_override_config() {
     let project = Project::new(&[("jolt.toml", "[format]\nindent-width = 4\nuse-tabs = true\n")]);
     insta::assert_snapshot!(project.run(&["fmt", "-"], NESTED));
-    insta::assert_snapshot!(project.run(&["fmt", "--use-tabs", "false", "-"], NESTED));
+    insta::assert_snapshot!(project.run(&["fmt", "--use-tabs=false", "-"], NESTED));
     insta::assert_snapshot!(project.run(
         &[
             "fmt",
@@ -191,12 +200,17 @@ fn format_flags_override_config() {
             "20",
             "--indent-width",
             "3",
-            "--use-tabs",
-            "false",
+            "--use-tabs=false",
             "-"
         ],
         NESTED
     ));
+}
+
+#[test]
+fn bare_use_tabs_means_true() {
+    let project = Project::new(&[("A.java", NESTED)]);
+    insta::assert_snapshot!(project.run(&["fmt", "--use-tabs", "A.java"], ""));
 }
 
 #[test]
@@ -256,6 +270,10 @@ fn explicit_and_disabled_config() {
     insta::assert_snapshot!(project.run(&["fmt", "--no-config", "-"], NESTED));
     insta::assert_snapshot!(project.run(&["fmt", "--config", "conf/explicit.toml", "."], ""));
     insta::assert_snapshot!(project.run(&["fmt", "--config", "missing.toml", "-"], NESTED));
+    insta::assert_snapshot!(project.run(
+        &["fmt", "--config", "conf/explicit.toml", "--no-config", "-"],
+        NESTED
+    ));
 }
 
 #[test]
@@ -289,6 +307,32 @@ fn file_selection() {
     insta::assert_snapshot!(project.run(&["fmt", "--include", "other/*.java", "--check"], ""));
 }
 
+/// Hooks pass changed files by name: the exclude globs still apply to them,
+/// and the include globs don't.
+#[test]
+fn explicit_files_respect_excludes_but_not_includes() {
+    let project = Project::new(&[
+        (
+            "jolt.toml",
+            "[files]\ninclude = [\"src/**/*.java\"]\nexclude = [\"src/gen/**\"]\n",
+        ),
+        ("src/A.java", NESTED),
+        ("src/gen/G.java", NESTED),
+        ("other/O.java", NESTED),
+    ]);
+    insta::assert_snapshot!(project.run(
+        &[
+            "fmt",
+            "--check",
+            "src/A.java",
+            "src/gen/G.java",
+            "other/O.java"
+        ],
+        ""
+    ));
+    insta::assert_snapshot!(project.run(&["fmt", "--exclude", "other/**", "other/O.java"], ""));
+}
+
 #[test]
 fn config_init() {
     let project = Project::new(&[]);
@@ -312,4 +356,11 @@ fn config_list_and_resolve() {
     insta::assert_snapshot!(project.run(&["config", "list", "src/nested/A.java"], ""));
     insta::assert_snapshot!(project.run(&["config", "resolve", "src/nested/Internal.java"], ""));
     insta::assert_snapshot!(project.run_in("src", &["config", "resolve"], ""));
+}
+
+#[test]
+fn config_schemas() {
+    let project = Project::new(&[]);
+    insta::assert_snapshot!(project.run(&["config", "schema"], ""));
+    insta::assert_snapshot!(project.run(&["config", "schema", "--dprint"], ""));
 }

@@ -1,0 +1,13 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--check\"], \"\")"
+---
+$ jolt fmt --check
+status: 2
+--- stdout
+A.java
+--- stderr
+Bad.java:1:7: java.parse.expected_syntax: expected type name
+Bad.java:2:1: java.parse.expected_syntax: expected `}` after type body
+Checked 3 files in $TIME
+1 file needs formatting, 1 file could not be formatted

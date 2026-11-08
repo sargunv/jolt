@@ -1,6 +1,7 @@
 use std::{
     env, fs, io,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use clap::{CommandFactory as _, Parser, Subcommand};
@@ -9,9 +10,9 @@ use jolt_config::FormatConfig;
 use jolt_formatter::Language;
 
 use crate::{
-    Result,
-    config::{CONFIG_FILES, ConfigFile, Resolver, Settings, absolute},
-    format::{self, ConfigArgs, FormatArgs},
+    Exit, Result,
+    config::{CONFIG_FILES, ConfigArgs, ConfigFile, Resolver, Settings, absolute},
+    format::{self, FormatArgs},
     schema,
 };
 
@@ -32,7 +33,11 @@ pub(crate) struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     /// Format source files.
-    #[command(visible_alias = "fmt")]
+    #[command(
+        visible_alias = "fmt",
+        after_help = "Exit status: 0 on success, 1 when --check finds files that need formatting, \
+                      2 on errors (syntax errors, invalid config, unreadable or missing paths)."
+    )]
     Format(FormatArgs),
 
     /// Inspect Jolt configuration.
@@ -73,40 +78,40 @@ enum ConfigCommand {
     },
 }
 
-pub(crate) fn run(cli: Cli) -> Result<()> {
+pub(crate) fn run(cli: Cli) -> Result<Exit> {
     match cli.command {
         Command::Format(args) => format::run(&args),
-        Command::Config { command } => match command {
-            ConfigCommand::Init => init(),
-            ConfigCommand::List { path } => {
-                for source in settings_for(path.as_deref())?.0.sources {
-                    println!("{}", source.display());
-                }
-                Ok(())
-            }
-            ConfigCommand::Resolve { path } => {
-                let (settings, file) = settings_for(path.as_deref())?;
-                print!("{}", to_toml(&settings.to_file())?);
-                if let Some(file) = file {
-                    let status = if settings.selects(&file) {
-                        "selected"
-                    } else {
-                        "not selected"
-                    };
-                    println!("\n# target {} is {status}", file.display());
-                }
-                Ok(())
-            }
-            ConfigCommand::Schema { dprint } => {
-                println!("{}", schema::render(dprint));
-                Ok(())
-            }
-        },
+        Command::Config { command } => config(command).map(|()| Exit::Success),
         Command::Completions { shell } => {
             clap_complete::generate(shell, &mut Cli::command(), "jolt", &mut io::stdout());
-            Ok(())
+            Ok(Exit::Success)
         }
     }
+}
+
+fn config(command: ConfigCommand) -> Result<()> {
+    match command {
+        ConfigCommand::Init => init()?,
+        ConfigCommand::List { path } => {
+            for source in &settings_for(path.as_deref())?.0.sources {
+                println!("{}", source.display());
+            }
+        }
+        ConfigCommand::Resolve { path } => {
+            let (settings, file) = settings_for(path.as_deref())?;
+            print!("{}", settings.render()?);
+            if let Some(file) = file {
+                let status = if settings.selects(&file) {
+                    "selected"
+                } else {
+                    "not selected"
+                };
+                println!("\n# target {} is {status}", file.display());
+            }
+        }
+        ConfigCommand::Schema { dprint } => println!("{}", schema::render(dprint)),
+    }
+    Ok(())
 }
 
 fn init() -> Result<()> {
@@ -134,7 +139,7 @@ fn init() -> Result<()> {
 }
 
 /// The settings for a directory, or for a file (existing or not) and the file.
-fn settings_for(path: Option<&Path>) -> Result<(Settings, Option<PathBuf>)> {
+fn settings_for(path: Option<&Path>) -> Result<(Arc<Settings>, Option<PathBuf>)> {
     let cwd = current_dir()?;
     let path = path.map_or_else(|| cwd.clone(), |path| absolute(&cwd, path));
     let (dir, file) = if path.is_file() || Language::from_path(&path).is_some() {
@@ -142,9 +147,8 @@ fn settings_for(path: Option<&Path>) -> Result<(Settings, Option<PathBuf>)> {
     } else {
         (path, None)
     };
-    let none = ConfigArgs::none();
-    let settings =
-        Resolver::new(&none.sources(&cwd, FormatConfig::default()), &dir)?.settings(&dir)?;
+    let settings = Resolver::new(&cwd, &ConfigArgs::default(), FormatConfig::default())?
+        .settings(&dir, &dir)?;
     Ok((settings, file))
 }
 

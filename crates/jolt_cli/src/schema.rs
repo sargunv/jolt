@@ -1,7 +1,7 @@
 //! JSON schemas for `jolt.toml` and the dprint plugin config, both derived from
 //! the config types.
 
-use jolt_config::FormatConfig;
+use jolt_config::{FormatConfig, dprint_key};
 use schemars::schema_for;
 use serde_json::{Value, json};
 
@@ -27,7 +27,7 @@ fn dprint_schema() -> Value {
     if let Some(Value::Object(properties)) = object.get_mut("properties") {
         *properties = std::mem::take(properties)
             .into_iter()
-            .map(|(name, schema)| (camel_case(&name), schema))
+            .map(|(name, schema)| (dprint_key(&name), schema))
             .collect();
         // Keys dprint itself reads from every plugin's object.
         properties.insert(
@@ -54,15 +54,4 @@ fn dprint_schema() -> Value {
         "type": "object",
         "properties": { "jolt": options },
     })
-}
-
-fn camel_case(kebab: &str) -> String {
-    let mut words = kebab.split('-');
-    let mut camel = words.next().unwrap_or_default().to_owned();
-    for word in words {
-        let mut chars = word.chars();
-        camel.extend(chars.next().map(|first| first.to_ascii_uppercase()));
-        camel.push_str(chars.as_str());
-    }
-    camel
 }
