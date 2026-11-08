@@ -15,6 +15,7 @@ import datetime
 import json
 import os
 import platform
+import shlex
 import subprocess
 import tempfile
 from pathlib import Path
@@ -51,25 +52,27 @@ def main() -> None:
         )
         (work / "empty").write_text("")
         commands = {
-            "jolt": f"{JOLT} format --no-config {copy}",
-            "jolt, 1 thread": f"{JOLT} format --no-config --threads 1 {copy}",
-            "jolt (dprint)": f"cd {copy} && dprint fmt --config {work / 'dprint.json'} --plugins {PLUGIN} "
-            "--incremental=false --skip-stable-format '**/*.java'",
+            "jolt": f"{sh(JOLT)} format --no-config {sh(copy)}",
+            "jolt, 1 thread": f"{sh(JOLT)} format --no-config --threads 1 {sh(copy)}",
+            "jolt (dprint)": f"cd {sh(copy)} && dprint fmt --config {sh(work / 'dprint.json')} "
+            f"--plugins {sh(PLUGIN)} --incremental=false --skip-stable-format '**/*.java'",
         }
         if args.compare:
+            file_list = sh(f"@{work / 'files.txt'}")
             commands["google-java-format"] = (
-                f"google-java-format --replace @{work / 'files.txt'}"
+                f"google-java-format --replace {file_list}"
             )
             commands["prettier-java"] = (
-                f"cd {ROOT} && pnpm exec prettier --write --plugin prettier-plugin-java "
-                f"--ignore-path {work / 'empty'} --log-level silent '{copy}/**/*.java'"
+                f"cd {sh(ROOT)} && pnpm exec prettier --write --plugin prettier-plugin-java "
+                f"--ignore-path {sh(work / 'empty')} --log-level silent "
+                f"{sh(f'{copy}/**/*.java')}"
             )
         hyperfine = [
             "hyperfine",
             "--shell=default",
             "--warmup=1",
             f"--runs={args.runs}",
-            f"--prepare=rm -rf {copy} && cp -R {CORPUS} {copy}",
+            f"--prepare=rm -rf {sh(copy)} && cp -R {sh(CORPUS)} {sh(copy)}",
             f"--export-json={work / 'results.json'}",
         ]
         for name, command in commands.items():
@@ -102,6 +105,11 @@ def main() -> None:
         + "\n"
     )
     print(f"Wrote {OUTPUT.relative_to(ROOT)}")
+
+
+def sh(path: object) -> str:
+    """`path` quoted for the shell hyperfine runs commands in."""
+    return shlex.quote(str(path))
 
 
 def machine() -> str:

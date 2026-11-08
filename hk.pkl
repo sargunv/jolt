@@ -2,17 +2,13 @@ amends "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Config.
 import "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Builtins.pkl"
 
 steps {
-    ["cargo-check"] {
-        glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
-        check = "cargo check --workspace"
-    }
     ["cargo-check-wasm"] {
         glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
         check = "cargo check --target wasm32-unknown-unknown --package jolt_syntax --package jolt_java_syntax --package jolt_fmt --package jolt_java_fmt --package jolt_formatter --package jolt_config --package jolt_fmt_dprint"
     }
     ["cargo-clippy"] {
         glob = List("**/*.rs")
-        check = "cargo clippy --workspace --all-targets -- -D warnings"
+        check = "cargo clippy --workspace --all-targets --all-features -- -D warnings"
     }
     ["cargo-machete"] {
         glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")

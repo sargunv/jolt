@@ -1,3 +1,6 @@
+# cargo-dist inlines these steps into release.yml (`dist generate`). The
+# release build runs tools/pgo.py; keep the version equal to core:python in
+# mise.toml.
 - name: Install pinned Python
   uses: actions/setup-python@v6
   with:

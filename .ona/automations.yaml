@@ -16,8 +16,7 @@ services:
         until [ "$(cat "$dependencies_ready" 2>/dev/null || true)" = "$container_id" ]; do
           sleep 1
         done
-        mise run docs:dev -- --host 0.0.0.0 \
-          --allowedHosts .gitpod.dev --allowedHosts .gitpod.dev &
+        mise run docs:dev -- --host 0.0.0.0 --allowedHosts .gitpod.dev &
         server_pid=$!
         trap 'kill "$server_pid" 2>/dev/null || true' EXIT INT TERM
         gitpod environment port open 5173 --dont-wait --admission creator_only --name docs --protocol http
