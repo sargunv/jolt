@@ -11,7 +11,11 @@ indent-width = 2
 use-tabs = true
 
 [files]
-include = ["**/*.java"]
-exclude = ["generated/**", "**/Internal.java"]
+# Globs are relative to the directory of the config that sets them.
+include = ["**/*.java"] # default
+exclude = [
+  "generated/**", # $TEMP/jolt.toml
+  "**/Internal.java", # $TEMP/src/jolt.toml
+]
 
 # target $TEMP/src/nested/Internal.java is not selected

@@ -1,7 +1,7 @@
 //! The dprint Wasm plugin. Natively it builds only for its tests.
 #![cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 
-use std::{fmt::Write as _, path::Path};
+use std::path::Path;
 
 use dprint_core::{
     configuration::{ConfigKeyMap, ConfigurationDiagnostic, GlobalConfiguration},
@@ -11,9 +11,9 @@ use dprint_core::{
         SyncPluginHandler,
     },
 };
-use jolt_config::FormatConfig;
-use jolt_formatter::{FormatOptions, Language, LineIndex, OnSyntaxError};
-use serde_json::Value;
+use jolt_config::{FormatConfig, option_name};
+use jolt_formatter::{FormatOptions, Language, OnSyntaxError, Outcome};
+use serde_json::{Value, json};
 
 #[derive(Default)]
 struct JoltPlugin;
@@ -71,11 +71,14 @@ fn resolve_config(
     global_config: &GlobalConfiguration,
 ) -> PluginResolveConfigurationResult<FormatOptions> {
     let mut diagnostics = Vec::new();
-    let Ok(Value::Object(globals)) = serde_json::to_value(global_config) else {
-        unreachable!("dprint's global configuration serializes to an object");
-    };
-    // Jolt always writes `\n`.
-    let globals = globals.into_iter().filter(|(key, _)| key != "newLineKind");
+    // The global options Jolt reads, by their dprint keys. Jolt ignores
+    // `newLineKind`: it always writes `\n`.
+    let globals = [
+        ("lineWidth", json!(global_config.line_width)),
+        ("indentWidth", json!(global_config.indent_width)),
+        ("useTabs", json!(global_config.use_tabs)),
+    ]
+    .map(|(key, value)| (key.to_owned(), value));
     let plugin = config.into_iter().map(|(key, value)| {
         let value = serde_json::to_value(value).expect("a config value serializes");
         (key, value)
@@ -91,8 +94,9 @@ fn resolve_config(
     }
 }
 
-/// Parses options one key at a time, so each invalid key gets its own
-/// diagnostic and the valid ones still apply. `null` leaves a key unset.
+/// Parses options by their dprint keys one at a time, so each invalid key
+/// gets its own diagnostic and the valid ones still apply. `null` leaves a
+/// key unset.
 fn parse(
     entries: impl IntoIterator<Item = (String, Value)>,
     diagnostics: &mut Vec<ConfigurationDiagnostic>,
@@ -102,12 +106,16 @@ fn parse(
         if value.is_null() {
             continue;
         }
-        let entry = Value::Object([(key.clone(), value)].into_iter().collect());
-        match serde_json::from_value::<FormatConfig>(entry) {
+        let parsed = match option_name(&key) {
+            Some(name) => serde_json::from_value::<FormatConfig>(json!({ name: value }))
+                .map_err(|error| error.to_string()),
+            None => Err("unknown property".to_owned()),
+        };
+        match parsed {
             Ok(parsed) => config = parsed.or(config),
-            Err(error) => diagnostics.push(ConfigurationDiagnostic {
+            Err(message) => diagnostics.push(ConfigurationDiagnostic {
                 property_name: key,
-                message: error.to_string(),
+                message,
             }),
         }
     }
@@ -115,7 +123,7 @@ fn parse(
 }
 
 /// Formats a file, failing on syntax errors with one `line:column: code:
-/// message` line per diagnostic.
+/// message` line per error.
 fn format_file(path: &Path, bytes: &[u8], options: FormatOptions) -> FormatResult {
     let source = std::str::from_utf8(bytes)
         .map_err(|error| FormatError::from(format!("Jolt requires UTF-8 input: {error}")))?;
@@ -129,24 +137,10 @@ fn format_file(path: &Path, bytes: &[u8], options: FormatOptions) -> FormatResul
         OnSyntaxError::Refuse,
         &mut output,
     ) {
-        jolt_formatter::FormatResult::Formatted { .. } => {
-            Ok((output != source).then(|| output.into_bytes()))
-        }
-        jolt_formatter::FormatResult::Refused(diagnostics) => {
-            let lines = LineIndex::new(source);
-            let mut message = String::new();
-            for diagnostic in diagnostics {
-                let at = lines.line_col(diagnostic.range.start());
-                let _ = writeln!(
-                    message,
-                    "{}:{}: {}: {}",
-                    at.line + 1,
-                    at.col + 1,
-                    diagnostic.code,
-                    diagnostic.message
-                );
-            }
-            Err(FormatError::from(message.trim_end().to_owned()))
+        Outcome::Formatted { .. } => Ok((output != source).then(|| output.into_bytes())),
+        Outcome::Refused(errors) => {
+            let lines: Vec<String> = errors.iter().map(ToString::to_string).collect();
+            Err(FormatError::from(lines.join("\n")))
         }
     }
 }
@@ -189,6 +183,7 @@ mod tests {
             ("lineWidth".to_owned(), ConfigKeyValue::from_i32(0)),
             ("useTabs".to_owned(), ConfigKeyValue::from_i32(1)),
             ("surprise".to_owned(), ConfigKeyValue::from_bool(true)),
+            ("indent-width".to_owned(), ConfigKeyValue::from_i32(3)),
         ]);
         let result = resolve_config(config, &global());
         let properties: Vec<_> = result
@@ -196,7 +191,11 @@ mod tests {
             .iter()
             .map(|diagnostic| diagnostic.property_name.as_str())
             .collect();
-        assert_eq!(properties, ["lineWidth", "useTabs", "surprise"]);
+        assert_eq!(
+            properties,
+            ["lineWidth", "useTabs", "surprise", "indent-width"]
+        );
         assert_eq!(result.config.line_width, 100);
+        assert_eq!(result.config.indent_width, 4);
     }
 }

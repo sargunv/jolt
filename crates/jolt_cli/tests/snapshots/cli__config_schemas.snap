@@ -1,0 +1,101 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"config\", \"schema\"], \"\")"
+---
+$ jolt config schema
+status: 0
+--- stdout
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Jolt configuration",
+  "description": "The `jolt.toml` file format.",
+  "type": "object",
+  "properties": {
+    "files": {
+      "description": "File selection options.",
+      "default": {},
+      "allOf": [
+        {
+          "$ref": "#/definitions/Files"
+        }
+      ]
+    },
+    "format": {
+      "description": "Formatting options.",
+      "default": {},
+      "allOf": [
+        {
+          "$ref": "#/definitions/FormatConfig"
+        }
+      ]
+    },
+    "root": {
+      "description": "Marks this config as the project root when set to true.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "Files": {
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "description": "Source file globs to exclude, relative to this config's directory.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "include": {
+          "description": "Source file globs to include, relative to this config's directory.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "FormatConfig": {
+      "description": "Jolt formatting options. An unset option falls through to a less specific layer, and finally to its default.",
+      "type": "object",
+      "properties": {
+        "indent-width": {
+          "description": "Spaces per indentation level when not using tabs.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "minimum": 1.0
+        },
+        "line-width": {
+          "description": "Preferred maximum line width.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "minimum": 1.0
+        },
+        "use-tabs": {
+          "description": "Indent with tabs instead of spaces.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

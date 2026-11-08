@@ -77,3 +77,7 @@ Check formatting without writing changes:
 ```sh
 jolt fmt --check .
 ```
+
+`jolt fmt` exits with status 0 on success, 1 when `--check` finds files that
+need formatting, and 2 on errors: syntax errors, an invalid config, or a path
+that is missing or can't be read or written.

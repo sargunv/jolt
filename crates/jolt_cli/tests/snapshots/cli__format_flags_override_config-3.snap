@@ -1,8 +1,8 @@
 ---
 source: crates/jolt_cli/tests/cli.rs
-expression: "project.run(&[\"fmt\", \"--line-width\", \"20\", \"--indent-width\", \"3\",\n\"--use-tabs\", \"false\", \"-\"], NESTED)"
+expression: "project.run(&[\"fmt\", \"--line-width\", \"20\", \"--indent-width\", \"3\",\n\"--use-tabs=false\", \"-\"], NESTED)"
 ---
-$ jolt fmt --line-width 20 --indent-width 3 --use-tabs false -
+$ jolt fmt --line-width 20 --indent-width 3 --use-tabs=false -
 status: 0
 --- stdout
 class A {
