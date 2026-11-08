@@ -132,11 +132,14 @@ fn top_level_separator<'a>(
         };
     }
     // A carrier is separated from what precedes it like the item after it
-    // would be, and from that item as in the source.
+    // would be, and from that item as in the source. Two fields of a compact
+    // source file keep the source's choice, as in a class body.
+    let is_field = |node: SyntaxNode<'_>| K::from_raw(node.kind()) == K::FieldDeclaration;
     match (prev, next) {
         (Some(Role::Carrier { .. }), _) | (_, Some(Role::Carrier { last: true })) => {
             line_or_blank(f, blank)
         }
+        _ if is_field(separator.prev) && is_field(separator.next) => line_or_blank(f, blank),
         _ => f.empty_line(),
     }
 }

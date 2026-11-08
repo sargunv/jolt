@@ -202,13 +202,14 @@ pub(super) fn header<'a>(
         .position(|doc| !doc.is_nil())
         .filter(|_| apart)
         .map_or(0, |i| i + 1);
-    let mut rest = head.split_off(first);
+    let rest = head.split_off(first);
     let first = f.concat(head);
     let (tail, clauses) = match end {
         HeaderEnd::Tail(tail) => (tail, Vec::new()),
         HeaderEnd::Clauses(clauses) => (None, clauses),
     };
     let mut after = f.token_opt(tail);
+    let mut docs = Vec::with_capacity(clauses.len());
     for (index, &clause) in clauses.iter().enumerate() {
         let clause = if index + 1 < clauses.len() || clause.is_malformed() {
             f.node(clause)
@@ -218,11 +219,13 @@ pub(super) fn header<'a>(
             after = f.trailing_comments(clause);
             cat![f; leading, body]
         };
-        rest.push(indent![f; f.line(), clause]);
+        docs.push(indent![f; f.line(), clause]);
     }
     let rest = f.concat(rest);
     let rest = f.group(rest);
-    cat![f; first, rest, after]
+    let clauses = f.concat(docs);
+    let clauses = f.group(clauses);
+    cat![f; first, rest, clauses, after]
 }
 
 /// The rule of a header clause, without the clause's own comments.
@@ -263,18 +266,12 @@ pub(crate) fn permits_clause<'a>(f: &mut JavaFormatter<'a>, node: PermitsClause<
     header_clause(f, node.permits_keyword(), elements)
 }
 
-/// `throws A, B`. Unlike the type clauses, the types break with the
-/// enclosing header, one indent further.
 pub(crate) fn throws_clause<'a>(f: &mut JavaFormatter<'a>, node: ThrowsClause<'a>) -> Doc {
-    let keyword = f.token_opt(node.throws_keyword());
-    let types = comma_items(
-        f,
-        node.exceptions()
-            .into_iter()
-            .flat_map(jolt_java_syntax::TypeList::elements),
-    );
-    let types = f.indent(types);
-    cat![f; keyword, f.space(), types]
+    let elements = node
+        .exceptions()
+        .into_iter()
+        .flat_map(jolt_java_syntax::TypeList::elements);
+    header_clause(f, node.throws_keyword(), elements)
 }
 
 /// `keyword A, B`: the names stay on the keyword's line if they fit,

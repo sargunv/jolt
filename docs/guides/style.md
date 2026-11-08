@@ -56,12 +56,11 @@ the differences readers notice first:
   name, Jolt keeps the first call on the receiver's line
   (`builder.withName(name)`). google-java-format starts every call on a new
   line.
-- **Javadoc.** google-java-format rewraps Javadoc text. Jolt keeps the text of
-  every comment as written and only realigns the `*` at the start of its lines.
-  It also expands a one-line Javadoc to three lines.
+- **Javadoc.** google-java-format rewraps Javadoc text, and expands a one-line
+  Javadoc that doesn't fit. Jolt keeps the text of every comment as written and
+  only realigns the `*` at the start of its lines.
 - **Lambdas.** Jolt removes the parentheses around a single untyped lambda
   parameter (`x -> x`).
-- **`try` resources.** Jolt always puts each resource on its own line.
 
 ## Whitespace
 
@@ -95,7 +94,7 @@ class A {}
 - A stray `;` between top-level declarations is removed. Comments on it stay
   where they were.
 - In a compact source file (`void main() { … }`), the top-level members format
-  like class members at column 0.
+  and are separated like class members, at column 0.
 
 ### Imports
 
@@ -225,6 +224,8 @@ interface Shape extends Drawable, Scalable permits Circle, Square {}
   Otherwise each `extends`, `implements` and `permits` clause goes on its own
   line one level deeper. A clause whose types don't fit puts its keyword alone
   on the line and each type on its own line one more level deeper.
+- When the type parameters break, the clauses follow the closing `>` if they fit
+  there (`> extends Base {`).
 - The opening brace ends the header's last line.
 - Type parameters that don't fit break like a list. Bounds that don't fit break
   before each `&`.
@@ -277,9 +278,9 @@ enum Color {
 ```
 
 - Constants go one per line. Without members, every constant is followed by a
-  comma, including the last; a `;` in the source after the last constant is kept
-  (`B;`). With members, the last constant is followed by `;`, then a blank line
-  and the members.
+  comma, including the last, and a `;` after the constants is removed. With
+  members, the last constant is followed by `;`, then a blank line and the
+  members.
 - A comment after the last constant stays on its line, after the comma or `;`:
 
 ::: code-group
@@ -343,18 +344,18 @@ class Service {
     Request request,
     ExecutionContext executionContext,
     RetryPolicy retryPolicy
-  )
-    throws IOException,
-      TimeoutException {}
+  ) throws IOException, TimeoutException {}
 
-  public void run() throws IOException, TimeoutException {}
+  public void run(Request request, ExecutionContext executionContext)
+    throws IOException, TimeoutException {}
 }
 ```
 
 - The signature is one line if it fits. Otherwise the parameters break like a
   list, with `)` at the declaration's indentation.
-- When the signature doesn't fit, a `throws` clause goes on its own line one
-  level deeper, with each exception type on its own line one more level deeper.
+- A `throws` clause follows the `)` if it fits there. Otherwise it goes on its
+  own line one level deeper, and if its types don't fit either, `throws` stands
+  alone and each type goes on its own line one more level deeper.
 - Type parameters that don't fit break like a list: `public <`, the parameters,
   then `> void run() {`.
 - Varargs (`String... values`), receiver parameters (`Foo this`) and array
@@ -460,19 +461,24 @@ switch (value) {
 ### Try
 
 ```java
-try (
-  var declared = open()
-) {
-  use(declared);
+try (var input = open()) {
+  use(input);
 } catch (java.io.IOException | RuntimeException ex) {
   return 1;
 } finally {
   cleanup();
 }
+try (
+  var input = openTheInputStreamWithALongName();
+  var output = createTheOutputStream()
+) {
+  copy(input, output);
+}
 ```
 
-- The resources always break, even a single short one: `try (`, one resource per
-  line, then `) {`. A `;` after the last resource is removed.
+- The resources stay on the `try` line if they fit. Otherwise they break like a
+  list: `try (`, one resource per line, then `) {`. A `;` after the last
+  resource is removed.
 - A `catch` parameter that doesn't fit breaks inside the parentheses, before
   each `|`.
 
@@ -627,6 +633,9 @@ section, which keep a comment next to the code it describes.
   and none before a closing bracket, `,` or `;`.
 - **After an opening bracket.** A comment that ends the line after `{`, `(`, `[`
   or `<` moves to the first line inside.
+- **Before a header clause.** A block comment that ends the line before
+  `extends`, `implements`, `permits` or `throws` goes with the clause, onto the
+  clause's line.
 - **Between a header and its body.** A comment between a declaration or control
   statement header and its body moves to the first line inside the body, unless
   it is inline (`class X /* c */ {` stays as written).
@@ -689,8 +698,8 @@ log(
   `*` is realigned so the `*`s line up under the opening `/*`, and each line
   keeps its text after the `*`, so code samples in `<pre>` keep their
   indentation. Other multi-line block comments move as a unit, keeping their
-  lines' relative indentation. A Javadoc comment on one line of its own expands
-  to three lines:
+  lines' relative indentation. A multi-line Javadoc comment starts its text on
+  the line after `/**`:
 
 ::: code-group
 
@@ -698,8 +707,7 @@ log(
 /** Gets the name. */
 String name();
 
-    /**
-       * Runs it:
+    /** Runs it:
        * <pre>
        *   if (ready) {
        *     run();
@@ -710,9 +718,7 @@ void run();
 ```
 
 ```java [Output]
-/**
- * Gets the name.
- */
+/** Gets the name. */
 String name();
 
 /**

@@ -39,9 +39,7 @@ class MissingOperandBeforeClose {
 
   void throwsDoc() {
     throw
-    /**
-     * the operand is missing
-     */
+    /** the operand is missing */
   }
 
   void returnsTokens() {

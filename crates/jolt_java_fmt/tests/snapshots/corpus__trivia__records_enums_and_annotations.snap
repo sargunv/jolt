@@ -3,9 +3,7 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-/**
- * JOLT-TRIVIA:record-doc
- */
+/** JOLT-TRIVIA:record-doc */
 record Box(
   /* JOLT-TRIVIA:record-open */ String name /* JOLT-TRIVIA:record-name */,
   int count /* JOLT-TRIVIA:record-count */
@@ -16,9 +14,7 @@ record Box(
 }
 
 enum Mode {
-  /**
-   * JOLT-TRIVIA:enum-a-doc
-   */
+  /** JOLT-TRIVIA:enum-a-doc */
   A /* JOLT-TRIVIA:enum-a-tail */,
   B(
     /* JOLT-TRIVIA:enum-b-open */ "b" /* JOLT-TRIVIA:enum-b-arg */

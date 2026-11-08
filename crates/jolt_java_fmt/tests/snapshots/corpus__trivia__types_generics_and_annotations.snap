@@ -20,7 +20,8 @@ class TypeTrivia<
   > values;
 
   <U /* JOLT-TRIVIA:method-type-param */> U convert(U value)
-    throws /* JOLT-TRIVIA:throws-leading */ java.io.IOException /* JOLT-TRIVIA:throws-trailing */ {
+    throws
+      /* JOLT-TRIVIA:throws-leading */ java.io.IOException /* JOLT-TRIVIA:throws-trailing */ {
     return value;
   }
 }

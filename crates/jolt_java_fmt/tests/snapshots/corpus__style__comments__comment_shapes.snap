@@ -49,9 +49,7 @@ class CommentShapes {
   }
 
   void singleStarDoc() {
-    /**
-     * **
-     */
+    /*****/
   }
 
   void singleLine() {

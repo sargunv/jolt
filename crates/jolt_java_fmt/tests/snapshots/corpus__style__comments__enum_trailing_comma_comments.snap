@@ -4,18 +4,16 @@ expression: snapshot
 ---
 formatted:
 enum EnumTrailingCommaBlockComment {
-  FIRST;
-
+  FIRST,
   /* JOLT-TRIVIA:enum-comma-block */
 }
 
 enum EnumTrailingCommaLineComment {
-  FIRST; // JOLT-TRIVIA:enum-comma-line
+  FIRST, // JOLT-TRIVIA:enum-comma-line
 }
 
 enum EnumBodyTrailingCommaComment {
-  FIRST {};
-
+  FIRST {},
   /* JOLT-TRIVIA:enum-body-comma */
 }
 

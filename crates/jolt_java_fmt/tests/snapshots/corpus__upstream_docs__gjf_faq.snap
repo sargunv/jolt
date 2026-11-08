@@ -86,8 +86,7 @@ class GoogleJavaFormatFaqSnippets {
       @Required EntityNamespaceSubtype externalEntitySubtype,
       Customer.ChangeEvent creationEvent,
       Customer.ChangeEvent lastModificationEvent
-    )
-      throws ApiException;
+    ) throws ApiException;
   }
 
   interface Block14DeclarationOutput {
@@ -98,8 +97,7 @@ class GoogleJavaFormatFaqSnippets {
       @Required EntityNamespaceSubtype externalEntitySubtype,
       Customer.ChangeEvent creationEvent,
       Customer.ChangeEvent lastModificationEvent
-    )
-      throws ApiException;
+    ) throws ApiException;
   }
 
   void block15() {
@@ -131,9 +129,7 @@ class GoogleJavaFormatFaqSnippets {
    */
   static class Block17JavadocInput {}
 
-  /**
-   * Tests for {@link Foo}.
-   */
+  /** Tests for {@link Foo}. */
   static class Block18JavadocOutput {}
 }
 

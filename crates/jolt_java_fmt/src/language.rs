@@ -261,18 +261,40 @@ fn control_body(prev: SyntaxToken<'_>) -> Option<SyntaxNode<'_>> {
     Some(body)
 }
 
+fn is_header_clause(node: SyntaxNode<'_>) -> bool {
+    matches!(
+        node_kind(node),
+        K::ExtendsClause | K::ImplementsClause | K::PermitsClause | K::ThrowsClause
+    )
+}
+
 /// H5: a block comment that ends the line after `(`, `[` or a type-argument
-/// `<` stays inline before the next token instead of
-/// moving to its own line by G2 (which still applies after `{`). After an
-/// assignment operator it leads the value inline too, which is where the next
-/// pass (reading it as inline) puts it, so a long declaration breaks the same
-/// way on both passes.
+/// `<` stays inline before the next token instead of moving to its own line
+/// by G2 (which still applies after `{`). After an assignment operator, and
+/// before the first clause of a declaration header (`extends`, `implements`,
+/// `permits`, `throws`), it leads the value or the clause inline too. That is
+/// where the next pass, reading it as inline, puts it, so the line breaks the
+/// same way on both passes. (Between two clauses, which break together, the
+/// generic rules are already stable.)
 fn block_comment_after_opener<'a>(
     context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let comment = context.comment;
     let next = context.next;
+    if comment.kind == CommentKind::Line || comment.layout != CommentLayout::EndOfLine {
+        return None;
+    }
+    let clause = next.parent();
+    let before_first_clause = is_header_clause(clause)
+        && clause.first_token() == Some(next)
+        && !std::iter::successors(Some(prev.parent()), |node| node.parent()).any(is_header_clause);
+    if before_first_clause {
+        return Some(Placement::Leading(
+            SyntaxElement::Node(clause),
+            CommentLayout::Inline,
+        ));
+    }
     let opener = match kind(prev) {
         K::LParen | K::LBracket => true,
         K::Lt => is_angle_list(prev),
@@ -288,12 +310,7 @@ fn block_comment_after_opener<'a>(
             .last_token()
             .is_some_and(|last| last.id() >= next.id()),
     };
-    if comment.kind == CommentKind::Line
-        || comment.layout != CommentLayout::EndOfLine
-        || !opener
-        || empty
-        || !inside()
-    {
+    if !opener || empty || !inside() {
         return None;
     }
     Some(Placement::Leading(

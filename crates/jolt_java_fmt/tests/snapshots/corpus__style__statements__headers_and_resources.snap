@@ -35,15 +35,10 @@ class HeadersAndResources {
   }
 
   void resources() throws Exception {
-    try (
-      existing
-    ) {
+    try (existing) {
       run();
     }
-    try (
-      this.existing;
-      var other = open()
-    ) {
+    try (this.existing; var other = open()) {
       run();
     }
     try (

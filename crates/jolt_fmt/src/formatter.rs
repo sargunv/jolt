@@ -207,7 +207,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             let doc = if Some(index) == last
                 && (side, layout) == (Side::Leading, CommentLayout::OwnLine)
             {
-                let text = self.comment_doc(index, true);
+                let text = self.comment_doc(index);
                 cat![self; self.builder.hard_line(), text]
             } else {
                 self.attached_comment(index, side, layout)
@@ -338,7 +338,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 });
             }
             // Dangling comments always print on their own lines.
-            docs.push(self.comment_doc(index, true));
+            docs.push(self.comment_doc(index));
         }
         self.builder.concat(docs)
     }
@@ -584,20 +584,20 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         match (side, layout) {
             (Side::Leading, CommentLayout::OwnLine) => {
                 let after = self.line_or_blank(comment.lines_after >= 2);
-                let text = self.comment_doc(index, true);
+                let text = self.comment_doc(index);
                 cat![self; self.builder.hard_line(), text, after]
             }
             // Spaced from what follows like an inline comment, which is what
             // the comment is when the line does not break before it.
             (Side::Leading, CommentLayout::StartOfLine) => {
                 let after = self.space_after(index);
-                let text = self.comment_doc(index, false);
+                let text = self.comment_doc(index);
                 cat![self; Doc::HARD_LINE, text, after]
             }
             (Side::Leading, CommentLayout::EndOfLine) => {
                 let before = self.space_before(index);
                 let after = self.line_or_blank(comment.lines_after >= 2);
-                let text = self.comment_doc(index, false);
+                let text = self.comment_doc(index);
                 cat![self; before, text, after]
             }
             // A block comment at the end of a line trails its code like an
@@ -606,14 +606,14 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 if comment.kind == CommentKind::Line =>
             {
                 let (space, break_parent) = (Doc::SPACE, Doc::BREAK_PARENT);
-                let text = self.comment_doc(index, false);
+                let text = self.comment_doc(index);
                 let suffix = cat![self; space, text];
                 let suffix = self.builder.line_suffix(suffix);
                 cat![self; suffix, break_parent]
             }
             (_, CommentLayout::OwnLine) => {
                 let (hard_line, after) = (Doc::HARD_LINE, Doc::HARD_LINE);
-                let text = self.comment_doc(index, true);
+                let text = self.comment_doc(index);
                 cat![self; hard_line, text, after]
             }
             // Code may follow on the line (after a block comment that ended
@@ -621,7 +621,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             (_, CommentLayout::Inline | CommentLayout::StartOfLine | CommentLayout::EndOfLine) => {
                 let before = self.space_before(index);
                 let after = self.space_after(index);
-                let text = self.comment_doc(index, false);
+                let text = self.comment_doc(index);
                 cat![self; before, text, after]
             }
         }
@@ -649,9 +649,8 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
     }
 
-    /// The comment's text, counted as emitted. `own_line` allows doc comment
-    /// expansion.
-    fn comment_doc(&mut self, index: usize, own_line: bool) -> Doc {
+    /// The comment's text, counted as emitted.
+    fn comment_doc(&mut self, index: usize) -> Doc {
         self.emitted[index] += 1;
         let comment = self.comments.list[index];
         if comment.kind == CommentKind::Line {
@@ -664,14 +663,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
         if has_line_break(comment.text) {
             return self.builder.reindented(comment.text, Reindent::Comment);
-        }
-        let body = comment
-            .text
-            .strip_prefix("/**")
-            .and_then(|text| text.strip_suffix("*/"))
-            .unwrap_or("");
-        if own_line && comment.kind == CommentKind::Doc && !body.trim().is_empty() {
-            return self.builder.reindented(comment.text, Reindent::ExpandedDoc);
         }
         self.builder.comment_text(comment.text, 0)
     }
