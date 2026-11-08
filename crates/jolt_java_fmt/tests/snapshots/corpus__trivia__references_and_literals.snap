@@ -5,10 +5,9 @@ expression: snapshot
 formatted:
 class ReferencesAndLiterals {
   void run() {
-    Class<?> type =
-      java
-        /* JOLT-TRIVIA:class-literal-fqn-1 */ .lang /* JOLT-TRIVIA:class-literal-fqn-2 */ .String
-      /* JOLT-TRIVIA:class-literal-before-dot */ .class /* JOLT-TRIVIA:class-literal-before-semi */;
+    Class<?> type = java
+      /* JOLT-TRIVIA:class-literal-fqn-1 */ .lang /* JOLT-TRIVIA:class-literal-fqn-2 */ .String
+    /* JOLT-TRIVIA:class-literal-before-dot */ .class /* JOLT-TRIVIA:class-literal-before-semi */;
     java.util.function.Supplier<ReferencesAndLiterals> constructor =
       ReferencesAndLiterals /* JOLT-TRIVIA:ctor-ref-before-colons */ ::/* JOLT-TRIVIA:ctor-ref-after-colons */ new;
     java.util.function.Function<String, Integer> method =

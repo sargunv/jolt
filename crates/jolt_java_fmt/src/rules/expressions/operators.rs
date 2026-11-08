@@ -1,6 +1,6 @@
 //! Assignments, conditionals, unary operators, casts and parentheses.
 
-use jolt_fmt::{Doc, cat, group, indent};
+use jolt_fmt::{Doc, cat, group};
 use jolt_java_syntax::{
     AssignmentExpression, CastExpression, ConditionalExpression, JavaSyntaxKind as K,
     ParenthesizedExpression, UnaryExpression,
@@ -16,8 +16,9 @@ pub(crate) fn assignment_expression<'a>(
     node: AssignmentExpression<'a>,
 ) -> Doc {
     let left = f.fmt_opt(node.left());
+    let value = node.right().map(AstNode::syntax);
     let right = f.fmt_opt(node.right());
-    assignment_like(f, left, node.operator(), right)
+    assignment_like(f, left, node.operator(), value, right)
 }
 
 /// Flat if it fits; otherwise `?` and `:` each start a line one indent deeper
@@ -57,15 +58,16 @@ pub(crate) fn unary_expression<'a>(f: &mut JavaFormatter<'a>, node: UnaryExpress
     cat![f; operator, operand]
 }
 
-/// `(Type) value`; when it does not fit, the value continues on the next
-/// line one indent deeper.
+/// `(Type) value`, the value hanging after the type (see
+/// `DocBuilder::hang`).
 pub(crate) fn cast_expression<'a>(f: &mut JavaFormatter<'a>, node: CastExpression<'a>) -> Doc {
     let ty = f.fmt_opt(node.r#type());
     let parens = (node.open_paren(), node.close_paren());
     let parenthesized = enclosed(f, node.syntax(), parens, ty, false);
     let expression = f.fmt_opt(node.expression());
-    let operand = indent![f; f.line(), expression];
-    group![f; parenthesized, operand]
+    let line = f.line();
+    let operand = f.hang(line, expression);
+    cat![f; parenthesized, operand]
 }
 
 /// `(`, the expression one indent deeper, `)`: breaks like a call.

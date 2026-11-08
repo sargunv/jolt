@@ -80,10 +80,9 @@ enum ValidTrailingSeparators {
 }
 
 class ValidTrailingSeparatorInArrayInitializer {
-  int[] values =
-    {
-      1,
-    };
+  int[] values = {
+    1,
+  };
 }
 
 class TrailingSeparatorAtEof {

@@ -38,14 +38,13 @@ class SymbolCrevices
       name /* JOLT-TRIVIA:call-arg-before-comma */,
       numbers /* JOLT-TRIVIA:call-arg-before-close */
     ) /* JOLT-TRIVIA:call-before-semi */;
-    int[] array =
-      new int /* JOLT-TRIVIA:new-array-type-before-dim */ [
-        /* JOLT-TRIVIA:new-array-open-bracket */ /* JOLT-TRIVIA:new-array-before-close */
-      ]
-      /* JOLT-TRIVIA:new-array-before-init */ {
-        1 /* JOLT-TRIVIA:initializer-before-comma */,
-        2 /* JOLT-TRIVIA:initializer-before-close */,
-      } /* JOLT-TRIVIA:array-before-semi */;
+    int[] array = new int /* JOLT-TRIVIA:new-array-type-before-dim */ [
+      /* JOLT-TRIVIA:new-array-open-bracket */ /* JOLT-TRIVIA:new-array-before-close */
+    ]
+    /* JOLT-TRIVIA:new-array-before-init */ {
+      1 /* JOLT-TRIVIA:initializer-before-comma */,
+      2 /* JOLT-TRIVIA:initializer-before-close */,
+    } /* JOLT-TRIVIA:array-before-semi */;
   }
 
   void helper(String name, int... numbers) {}

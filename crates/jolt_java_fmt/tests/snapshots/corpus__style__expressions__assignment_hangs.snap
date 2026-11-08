@@ -1,0 +1,75 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class AssignmentHangs {
+  void values() {
+    T factory = instantiateFactory(
+      implementationName,
+      factoryType,
+      argumentResolver,
+      failureHandler
+    );
+    Supplier<String> greeting =
+      () -> greetingService.greetingFor(currentUser.preferredLocale());
+    Runnable task = () -> {
+      run();
+    };
+    Object anonymous = new Object() {
+      int inner;
+    };
+    String[] labels =
+      { "a very long label that forces the initializer to break", "another" };
+    String text = """
+        a text block
+        """;
+    int size = switch (kind) {
+      case SMALL -> 1;
+      default -> 2;
+    };
+    List<String> names = people.stream()
+      .map(Person::name)
+      .filter(name -> !name.isEmpty())
+      .toList();
+    Comparator<Method> comparator =
+      new ConvertingComparator<Method, @Nullable Annotation>(
+        new InstanceComparator<>(Around.class, Before.class),
+        method -> method.getName()
+      );
+    BiFunction<Connection, String, Statement> statementFunction =
+      (connection, sql) -> {
+        return connection.createStatement(sql);
+      };
+    OrderSummary proxy = (OrderSummary)
+      Proxy.newProxyInstance(getClass().getClassLoader(), interfaces, handler);
+    RootBeanDefinition definition =
+      (RootBeanDefinition) this.beanFactory.getMergedBeanDefinition(beanName);
+    total += computeTheIncrementForThisRound(
+      previousTotal,
+      currentRound,
+      maximumRounds
+    );
+    boolean allowed =
+      user.isActive() && account.hasPermission("write") && flags.enabled();
+    int size =
+      someCondition
+        ? computeTheFirstAlternative(argument)
+        : computeTheOther(argument);
+    String commented = /* why */ computeTheValueThatNeedsAnExplanation(
+      firstArgumentValue,
+      secondArgumentValue
+    );
+  }
+
+  int rules(Kind kind) {
+    return switch (kind) {
+      case FIRST -> handler =
+        new HandlerForTheFirstKind(firstDependency, secondDependency, third);
+      default -> 0;
+    };
+  }
+}
+
+diagnostics:
+(none)

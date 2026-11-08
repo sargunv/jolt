@@ -63,21 +63,20 @@ class PalantirReadmeSnippets {
       String name,
       Configuration configuration
     ) {
-      String actual =
-        configuration.getIncoming()
-          .getResolutionResult()
-          .getAllComponents()
-          .stream()
-          .map(ResolvedComponentResult::getModuleVersion)
-          .map(
-            mvi -> String.format(
-              "\t- %s:%s:%s",
-              mvi.getGroup(),
-              mvi.getName(),
-              mvi.getVersion()
-            )
+      String actual = configuration.getIncoming()
+        .getResolutionResult()
+        .getAllComponents()
+        .stream()
+        .map(ResolvedComponentResult::getModuleVersion)
+        .map(
+          mvi -> String.format(
+            "\t- %s:%s:%s",
+            mvi.getGroup(),
+            mvi.getName(),
+            mvi.getVersion()
           )
-          .collect(Collectors.joining("\n"));
+        )
+        .collect(Collectors.joining("\n"));
       // ...
     }
   }
@@ -88,21 +87,20 @@ class PalantirReadmeSnippets {
       String name,
       Configuration configuration
     ) {
-      String actual =
-        configuration.getIncoming()
-          .getResolutionResult()
-          .getAllComponents()
-          .stream()
-          .map(ResolvedComponentResult::getModuleVersion)
-          .map(
-            mvi -> String.format(
-              "\t- %s:%s:%s",
-              mvi.getGroup(),
-              mvi.getName(),
-              mvi.getVersion()
-            )
+      String actual = configuration.getIncoming()
+        .getResolutionResult()
+        .getAllComponents()
+        .stream()
+        .map(ResolvedComponentResult::getModuleVersion)
+        .map(
+          mvi -> String.format(
+            "\t- %s:%s:%s",
+            mvi.getGroup(),
+            mvi.getName(),
+            mvi.getVersion()
           )
-          .collect(Collectors.joining("\n"));
+        )
+        .collect(Collectors.joining("\n"));
       // ...
     }
   }

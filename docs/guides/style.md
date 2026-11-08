@@ -52,6 +52,11 @@ the differences readers notice first:
 - **Imports.** Jolt puts static imports after the other imports;
   google-java-format puts them first. google-java-format removes unused imports.
   Jolt doesn't, since that needs knowing which names the code uses.
+- **Assignments.** When a value doesn't fit after `=`, google-java-format moves
+  it to the next line, even when it can't fit there either, such as a lambda
+  with a block body (`Runnable task =` / `() -> {`). Jolt moves a value to the
+  next line only if that makes it fit; otherwise the value starts after `=` and
+  breaks there (`Runnable task = () -> {`).
 - **Member chains.** After a simple receiver such as a local variable or a class
   name, Jolt keeps the first call on the receiver's line
   (`builder.withName(name)`). google-java-format starts every call on a new
@@ -387,8 +392,8 @@ int firstFieldVariable = 1,
   thirdFieldVariable = provider();
 ```
 
-- An initializer that doesn't fit moves to the next line, as an assignment's
-  value does.
+- An initializer that doesn't fit is laid out as an
+  [assignment's value](#assignment) is.
 - Several declarators stay on one line if they fit. Otherwise each declarator
   after the first goes on its own line, one level deeper.
 
@@ -465,8 +470,8 @@ switch (value) {
 - Labels are one level inside the switch, and the statements of a `case …:`
   group one more. Each `case …:` label is on its own line. A group whose only
   statement is a block keeps the block on the label line (`case 1: {`).
-- A rule (`case X ->`) whose body doesn't fit breaks after `->`, with the body
-  one level deeper.
+- A rule's expression body (`case X -> value;`) that doesn't fit is laid out as
+  an [assignment's value](#assignment) is.
 - Label lists (`case null, default`) and guards (`when …`) stay on the label
   line. Redundant parentheses around a guard are removed, unless a comment is on
   or inside them.
@@ -501,16 +506,38 @@ try (
 ### Assignment
 
 ```java
+T factory = instantiateFactory(
+  implementationName,
+  factoryType,
+  argumentResolver,
+  failureHandler
+);
+Supplier<String> greeting =
+  () -> greetingService.greetingFor(currentUser.preferredLocale());
+Runnable task = () -> {
+  run();
+};
 allowed =
   user.isActive()
     && account.hasPermission("write")
     && featureFlags.isEnabled("collaborative-editing");
 ```
 
-An assignment or initializer that doesn't fit breaks after the operator, and the
-value continues one level deeper, where it may break further by its own rule.
-This holds for every value, including lambdas, anonymous classes, array
-initializers and switch expressions.
+- A value that doesn't fit on the operator's line moves to the next line, one
+  level deeper, if it fits there.
+- Otherwise the value starts on the operator's line and breaks by its own rule,
+  as a `return` value does: a call breaks its arguments, a lambda or an
+  anonymous class opens its body, an array initializer opens its braces. The
+  value stays on the operator's line only if the line then fits, and only if
+  what breaks is the last part of the value on that line. When an earlier part
+  would have to break instead, such as the type arguments before a call's
+  arguments or a lambda's parameters before its body, the value moves to the
+  next line.
+- An operator chain (`a && b`, `a + b`, `a instanceof T`) or a conditional that
+  doesn't fit always moves to the next line, so that its operands line up one
+  level deeper.
+- These rules apply to `=`, to compound assignments such as `+=`, to variable
+  initializers, and to the expression after a switch rule's `->`.
 
 ### Binary operators
 
@@ -601,11 +628,10 @@ Supplier<String> name = User::name;
 ```java
 String[] pair = new String[] { "a", "b" };
 int[] empty = new int[] {};
-String[] labels =
-  {
-    "a very long label that forces the initializer to break across lines",
-    "another very long label that keeps each item on its own line",
-  };
+String[] labels = {
+  "a very long label that forces the initializer to break across lines",
+  "another very long label that keeps each item on its own line",
+};
 ```
 
 - Initializers have a space inside the braces when they fit on one line
@@ -615,7 +641,9 @@ String[] labels =
 
 ### Other expressions
 
-- Casts: `(String) value`, `(Runnable & AutoCloseable) value`.
+- Casts: `(String) value`, `(Runnable & AutoCloseable) value`. A cast whose
+  value doesn't fit lays out the value after the type as an
+  [assignment's value](#assignment) is.
 - Unary operators attach to their operand (`!ready`, `-x`, `i++`), with a space
   only where two operators would otherwise merge (`- -x`).
 - Parenthesized expressions that don't fit break like a call.

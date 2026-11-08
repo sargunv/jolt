@@ -52,30 +52,27 @@ class GoogleJavaFormatFaqSnippets {
   }
 
   void block10() {
-    Function<T1, T2> function =
-      new Function<>() {
-        T2 apply(T1 x) {
-          otherFunction(x); // Long comment.
-        }
-      };
+    Function<T1, T2> function = new Function<>() {
+      T2 apply(T1 x) {
+        otherFunction(x); // Long comment.
+      }
+    };
   }
 
   void block11() {
-    Function<T1, T2> function =
-      new Function<>() {
-        T2 apply(T1 x) {
-          otherFunction(x); // Long comment.
-        }
-      };
+    Function<T1, T2> function = new Function<>() {
+      T2 apply(T1 x) {
+        otherFunction(x); // Long comment.
+      }
+    };
   }
 
   void block12() {
-    Function<T1, T2> function =
-      new Function<>() {
-        T2 apply(T1 x) {
-          otherFunction(x); // Long comment.
-        }
-      };
+    Function<T1, T2> function = new Function<>() {
+      T2 apply(T1 x) {
+        otherFunction(x); // Long comment.
+      }
+    };
   }
 
   interface Block13DeclarationInput {
