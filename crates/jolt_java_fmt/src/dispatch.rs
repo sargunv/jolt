@@ -203,42 +203,15 @@ fn rule(kind: K) -> Rule {
         }
         K::AnnotationList => |f, node| types::annotation_list(f, cast(node)),
         K::ParameterModifierList => |f, node| types::parameter_modifier_list(f, cast(node)),
-        K::EnumConstantList
-        | K::RecordComponentList
-        | K::FormalParameterList
-        | K::StatementExpressionList
-        | K::ResourceList
-        | K::LambdaParameterList
-        | K::CompilationUnitItemList
-        | K::ModuleDirectiveList
-        | K::RequiresModifierList
-        | K::NameList
-        | K::ModuleNameList
-        | K::AnnotationElementArgumentList
-        | K::AnnotationInterfaceBodyMemberList
-        | K::AnnotationElementValueList
-        | K::TypeParameterSeparatedList
-        | K::TypeList
-        | K::ClassBodyMemberList
-        | K::RecordBodyMemberList
-        | K::InterfaceBodyMemberList
-        | K::ConstructorBodyEntryList
-        | K::BlockStatementList
-        | K::SwitchEntryList
-        | K::SwitchLabelColonList
-        | K::SwitchLabelItemList
-        | K::CatchClauseList
-        | K::ClassTypeSegmentList
-        | K::TypeAmpList
-        | K::TypeBarList
-        | K::TypeArgumentSeparatedList
-        | K::NameSegmentDotList
-        | K::DimExpressionList
-        | K::VariableInitializerList
-        | K::LambdaModifierList
-        | K::ExpressionList
-        | K::ComponentPatternList => unexpected_list,
         K::Bogus => |_, _| unreachable!("a bogus node is malformed and printed verbatim"),
-        _ => |_, node| unreachable!("{node:?} is a token, not a node"),
+        // Every list kind without a rule of its own. The check is in the rule
+        // rather than a guard arm, which keeps this match a table lookup.
+        _ => |f, node| {
+            assert!(
+                K::from_raw(node.kind()).is_list(),
+                "{node:?} is a token, not a node"
+            );
+            unexpected_list(f, node)
+        },
     }
 }

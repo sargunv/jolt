@@ -1298,9 +1298,11 @@ directly. A list kind therefore has a rule function only when some other rule
 formats it as a unit with `f.fmt`; those are exactly the lists in the
 [layout contracts](#layout-contracts-between-modules) (`ModifierList`,
 `ParameterModifierList`, `VariableDeclaratorList`, `ArrayDimensions`,
-`AnnotationList`). Every other list kind is laid out by its parent's rule and
-dispatches to `helpers::lists::unexpected_list`, which `debug_assert!`s and
-formats the children separated by spaces (`dispatch.rs`).
+`AnnotationList`). Every other list kind is laid out by its parent's rule. The
+dispatch's fallback arm sends it to `helpers::lists::unexpected_list`, which
+`debug_assert!`s and formats the children separated by spaces; the arm asserts
+`is_list()`, so a new list kind needs no dispatch edit and only a token kind
+panics there (`dispatch.rs`).
 
 ### Java comment hooks
 
