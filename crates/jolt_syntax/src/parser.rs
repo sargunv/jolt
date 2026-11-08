@@ -1,5 +1,6 @@
 //! Parser infrastructure: tokens, events, markers, and loop and depth guards.
 
+use std::num::NonZeroU32;
 use std::ops::Range;
 
 use crate::{Diagnostic, Language, RawSyntaxKind, TextRange, TextSize, TokenData, Trivia};
@@ -7,15 +8,19 @@ use crate::{Diagnostic, Language, RawSyntaxKind, TextRange, TextSize, TokenData,
 /// Active `nested` calls allowed at once. Calibrated for the 1 MiB WASM stack.
 pub const MAX_DEPTH: u32 = 128;
 
+/// One step of a parse, in source order. [`build_tree`](crate::build_tree)
+/// turns the events into a tree.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Event {
     /// Starts a node. `forward_parent` is the offset to a later start event
-    /// that wraps this node, or zero.
+    /// whose node wraps this one ([`Parser::precede`]).
     Start {
         kind: RawSyntaxKind,
-        forward_parent: u32,
+        forward_parent: Option<NonZeroU32>,
     },
+    /// Consumes the next token into the open node.
     Token,
+    /// Finishes the innermost open node.
     Finish,
     /// A reserved, abandoned, or already consumed start.
     Tombstone,
@@ -37,6 +42,7 @@ impl Drop for Marker {
     }
 }
 
+/// A completed node, which [`Parser::precede`] can wrap.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CompletedMarker {
     position: u32,
@@ -93,13 +99,18 @@ pub struct LexedToken<K> {
     pub trailing: Range<usize>,
 }
 
+/// A language's lexer. [`Parser::new`] calls `next_token` until it returns
+/// `L::EOF`, then `finish`.
 pub trait Lexer<'s, L: Language> {
     /// Lexes the next token, appending its leading and then its trailing
-    /// trivia to `trivia`. After the end of input, returns `L::EOF`.
+    /// trivia to `trivia`. At the end of input, returns `L::EOF` with the
+    /// remaining trivia as its leading trivia.
     fn next_token(&mut self, trivia: &mut Vec<Trivia>) -> LexedToken<L::Kind>;
+    /// The diagnostics of the lexed source.
     fn finish(self) -> Vec<Diagnostic>;
 }
 
+/// What a parse produced, for [`build_tree`](crate::build_tree).
 pub struct ParseOutput {
     pub events: Vec<Event>,
     pub tokens: Vec<TokenData>,
@@ -107,6 +118,9 @@ pub struct ParseOutput {
     pub diagnostics: Vec<Diagnostic>,
 }
 
+/// The language-agnostic parser: the lexed tokens, a cursor over them, and
+/// the events and diagnostics recorded so far. A language's grammar drives
+/// it through markers ([`Parser::start`]) and token consumption.
 pub struct Parser<'s, L: Language> {
     source: &'s str,
     /// Every lexed token, ending with `EOF`. Tokens before `pos` are dead.
@@ -218,6 +232,12 @@ impl<'s, L: Language> Parser<'s, L> {
         self.current() == kind
     }
 
+    /// Whether the current token is in `set`.
+    #[must_use]
+    pub fn at_any(&self, set: TokenSet) -> bool {
+        set.contains(L::to_raw(self.current()))
+    }
+
     /// Consumes the current token. A no-op at the end of input.
     pub fn bump(&mut self) {
         let Some(token) = self.input.get(self.pos) else {
@@ -278,7 +298,7 @@ impl<'s, L: Language> Parser<'s, L> {
         let kind = L::to_raw(kind);
         self.events[position as usize] = Event::Start {
             kind,
-            forward_parent: 0,
+            forward_parent: None,
         };
         self.events.push(Event::Finish);
         CompletedMarker { position, kind }
@@ -299,32 +319,29 @@ impl<'s, L: Language> Parser<'s, L> {
         else {
             unreachable!("a completed marker points at its start event");
         };
-        debug_assert_eq!(*forward_parent, 0, "a node can have one forward parent");
-        *forward_parent = marker.position - completed.position;
+        debug_assert!(
+            forward_parent.is_none(),
+            "a node can have one forward parent"
+        );
+        *forward_parent = NonZeroU32::new(marker.position - completed.position);
         marker
     }
 
     /// Replaces the current token by a one-byte `first` token followed by
     /// `rest` covering the remaining bytes. Leading trivia stays on `first`,
     /// trailing trivia moves to `rest`. Used only by consuming grammar (never
-    /// by lookahead) for Java's `>` family. Token indices after the current
-    /// one are unchanged.
+    /// by lookahead) for Java's `>` family, which always follows a consumed
+    /// token. The head takes that consumed token's slot, so token indices are
+    /// unchanged.
     pub fn split_current(&mut self, first: L::Kind, rest: L::Kind) {
+        debug_assert!(self.pos > 0, "a split token follows a consumed token");
         let mut remainder = self.input[self.pos];
         let head = remainder.split_off_first(1, L::to_raw(first), L::to_raw(rest));
-        if self.pos == 0 {
-            self.input.insert(0, head);
-            self.kinds.insert(0, first);
-            self.kinds[1] = rest;
-            self.input[1] = remainder;
-        } else {
-            // The slot before the cursor holds an already consumed token.
-            self.pos -= 1;
-            self.input[self.pos] = head;
-            self.kinds[self.pos] = first;
-            self.input[self.pos + 1] = remainder;
-            self.kinds[self.pos + 1] = rest;
-        }
+        self.pos -= 1;
+        self.input[self.pos] = head;
+        self.kinds[self.pos] = first;
+        self.input[self.pos + 1] = remainder;
+        self.kinds[self.pos + 1] = rest;
     }
 
     #[must_use]

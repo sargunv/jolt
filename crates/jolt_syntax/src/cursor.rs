@@ -3,16 +3,21 @@
 use std::fmt;
 use std::hash::{Hash, Hasher};
 
-use crate::tree::{HAS_RECOVERY, MALFORMED, NodeData, Slot, TokenData};
+use crate::tree::{HAS_RECOVERY, MALFORMED, NO_PARENT, NodeData, Slot, TokenData};
 use crate::{NodeId, RawSyntaxKind, SyntaxTree, TextRange, TextSize, TokenId, Trivia, TriviaKind};
 
-/// A tree reference whose equality is identity.
+/// A tree and its source. Equality and hashing are the tree's identity: the
+/// source is the tree's, and comparing or hashing it by content would cost a
+/// pass over the whole file.
 #[derive(Clone, Copy)]
-struct TreeRef<'a>(&'a SyntaxTree);
+struct TreeRef<'a> {
+    tree: &'a SyntaxTree,
+    source: &'a str,
+}
 
 impl PartialEq for TreeRef<'_> {
     fn eq(&self, other: &Self) -> bool {
-        std::ptr::eq(self.0, other.0)
+        std::ptr::eq(self.tree, other.tree)
     }
 }
 
@@ -20,56 +25,27 @@ impl Eq for TreeRef<'_> {}
 
 impl Hash for TreeRef<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        std::ptr::hash(self.0, state);
+        std::ptr::hash(self.tree, state);
     }
 }
 
-#[derive(Clone, Copy)]
+/// A node of a [`SyntaxTree`]: a copyable borrow of the tree and the node's
+/// id. Two nodes are equal when they are the same node of the same tree.
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SyntaxNode<'a> {
     tree: TreeRef<'a>,
-    source: &'a str,
     id: NodeId,
 }
 
-#[derive(Clone, Copy)]
+/// A token of a [`SyntaxTree`], with its text and trivia. Two tokens are
+/// equal when they are the same token of the same tree.
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SyntaxToken<'a> {
     tree: TreeRef<'a>,
-    source: &'a str,
     id: TokenId,
 }
 
-// Identity is the tree and the id: the source is the tree's, and comparing
-// or hashing it by content would cost a pass over the whole file.
-impl PartialEq for SyntaxNode<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.tree == other.tree && self.id == other.id
-    }
-}
-
-impl Eq for SyntaxNode<'_> {}
-
-impl Hash for SyntaxNode<'_> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.tree.hash(state);
-        self.id.hash(state);
-    }
-}
-
-impl PartialEq for SyntaxToken<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.tree == other.tree && self.id == other.id
-    }
-}
-
-impl Eq for SyntaxToken<'_> {}
-
-impl Hash for SyntaxToken<'_> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.tree.hash(state);
-        self.id.hash(state);
-    }
-}
-
+/// A node or a token: one child of a node.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SyntaxElement<'a> {
     Node(SyntaxNode<'a>),
@@ -131,14 +107,13 @@ impl<'a> SyntaxNode<'a> {
     #[must_use]
     pub fn root(tree: &'a SyntaxTree, source: &'a str) -> Self {
         Self {
-            tree: TreeRef(tree),
-            source,
+            tree: TreeRef { tree, source },
             id: tree.root,
         }
     }
 
     fn data(self) -> &'a NodeData {
-        self.tree.0.node(self.id)
+        self.tree.tree.node(self.id)
     }
 
     fn node(self, id: NodeId) -> Self {
@@ -148,7 +123,6 @@ impl<'a> SyntaxNode<'a> {
     fn token(self, id: TokenId) -> SyntaxToken<'a> {
         SyntaxToken {
             tree: self.tree,
-            source: self.source,
             id,
         }
     }
@@ -174,13 +148,13 @@ impl<'a> SyntaxNode<'a> {
     /// The tree this node belongs to.
     #[must_use]
     pub const fn tree(self) -> &'a SyntaxTree {
-        self.tree.0
+        self.tree.tree
     }
 
     #[must_use]
     pub fn parent(self) -> Option<Self> {
         let parent = self.data().parent;
-        (parent != u32::MAX).then(|| self.node(NodeId(parent)))
+        (parent != NO_PARENT).then(|| self.node(NodeId(parent)))
     }
 
     /// This node's slot index in its parent.
@@ -196,7 +170,7 @@ impl<'a> SyntaxNode<'a> {
         if self.is_malformed() {
             return None;
         }
-        self.element(self.tree.0.node_slots(self.id).get(index)?.unpack())
+        self.element(self.tree.tree.node_slots(self.id).get(index)?.unpack())
     }
 
     /// Every slot in order, `None` for empty ones. Empty for a malformed node.
@@ -205,15 +179,16 @@ impl<'a> SyntaxNode<'a> {
         let slots = if self.is_malformed() {
             &[]
         } else {
-            self.tree.0.node_slots(self.id)
+            self.tree.tree.node_slots(self.id)
         };
         slots.iter().map(move |slot| self.element(slot.unpack()))
     }
 
     /// Raw non-empty children in order, malformed or not.
-    pub fn children(self) -> impl Iterator<Item = SyntaxElement<'a>> + 'a {
+    #[must_use]
+    pub fn children(self) -> impl DoubleEndedIterator<Item = SyntaxElement<'a>> + 'a {
         self.tree
-            .0
+            .tree
             .node_slots(self.id)
             .iter()
             .filter_map(move |slot| self.element(slot.unpack()))
@@ -242,7 +217,7 @@ impl<'a> SyntaxNode<'a> {
     #[must_use]
     pub fn text_range(self) -> TextRange {
         let [start, end] = self.data().tokens;
-        let tokens = &self.tree.0.tokens;
+        let tokens = &self.tree.tree.tokens;
         if start == end {
             let offset = tokens.get(start as usize).map_or_else(
                 || {
@@ -272,7 +247,7 @@ impl<'a> SyntaxNode<'a> {
 
     #[must_use]
     pub const fn source(self) -> &'a str {
-        self.source
+        self.tree.source
     }
 
     /// Iterative preorder walk, including this node.
@@ -281,13 +256,7 @@ impl<'a> SyntaxNode<'a> {
         std::iter::from_fn(move || {
             let element = stack.pop()?;
             if let SyntaxElement::Node(node) = element {
-                let slots = node.tree.0.node_slots(node.id);
-                stack.extend(
-                    slots
-                        .iter()
-                        .rev()
-                        .filter_map(|slot| node.element(slot.unpack())),
-                );
+                stack.extend(node.children().rev());
             }
             Some(element)
         })
@@ -296,7 +265,7 @@ impl<'a> SyntaxNode<'a> {
 
 impl<'a> SyntaxToken<'a> {
     fn data(self) -> &'a TokenData {
-        self.tree.0.token(self.id)
+        self.tree.tree.token(self.id)
     }
 
     #[must_use]
@@ -313,7 +282,6 @@ impl<'a> SyntaxToken<'a> {
     pub fn parent(self) -> SyntaxNode<'a> {
         SyntaxNode {
             tree: self.tree,
-            source: self.source,
             id: NodeId(self.data().parent),
         }
     }
@@ -321,7 +289,7 @@ impl<'a> SyntaxToken<'a> {
     #[must_use]
     pub fn text(self) -> &'a str {
         let range = self.text_range();
-        &self.source[range.start().get()..range.end().get()]
+        &self.tree.source[range.start().get()..range.end().get()]
     }
 
     #[must_use]
@@ -332,8 +300,8 @@ impl<'a> SyntaxToken<'a> {
     pub fn leading(self) -> impl Iterator<Item = TriviaPiece<'a>> + 'a {
         let data = self.data();
         TriviaPieces {
-            trivia: &self.tree.0.trivia[data.leading()],
-            source: self.source,
+            trivia: &self.tree.tree.trivia[data.leading()],
+            source: self.tree.source,
             offset: data.full_start(),
         }
     }
@@ -341,8 +309,8 @@ impl<'a> SyntaxToken<'a> {
     pub fn trailing(self) -> impl Iterator<Item = TriviaPiece<'a>> + 'a {
         let data = self.data();
         TriviaPieces {
-            trivia: &self.tree.0.trivia[data.trailing()],
-            source: self.source,
+            trivia: &self.tree.tree.trivia[data.trailing()],
+            source: self.tree.source,
             offset: data.range().end(),
         }
     }
@@ -359,7 +327,7 @@ impl<'a> SyntaxToken<'a> {
     #[must_use]
     pub fn next(self) -> Option<Self> {
         let id = self.id.0 + 1;
-        ((id as usize) < self.tree.0.tokens.len()).then_some(Self {
+        ((id as usize) < self.tree.tree.tokens.len()).then_some(Self {
             id: TokenId(id),
             ..self
         })
@@ -371,7 +339,7 @@ impl fmt::Debug for SyntaxNode<'_> {
         write!(
             f,
             "{}@{}",
-            (self.tree.0.kind_name)(self.kind()),
+            (self.tree.tree.kind_name)(self.kind()),
             self.text_range()
         )
     }
@@ -382,12 +350,13 @@ impl fmt::Debug for SyntaxToken<'_> {
         write!(
             f,
             "{}@{}",
-            (self.tree.0.kind_name)(self.kind()),
+            (self.tree.tree.kind_name)(self.kind()),
             self.text_range()
         )
     }
 }
 
+/// One trivia piece of a token, with its text and range.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TriviaPiece<'a> {
     pub kind: TriviaKind,
@@ -424,7 +393,7 @@ pub trait AstNode<'a>: Copy {
     fn syntax(self) -> SyntaxNode<'a>;
 }
 
-/// One slot of a separated list.
+/// One slot of a list.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ListElement<'a, T> {
     Item(T),
@@ -436,21 +405,32 @@ pub enum ListElement<'a, T> {
 }
 
 impl<'a, T> ListElement<'a, T> {
-    /// Classifies slot `index` (items at even, separators at odd indices).
+    /// Classifies an item slot: an item `cast` accepts, a bogus node, or
+    /// missing.
     #[doc(hidden)]
-    pub fn new(
-        index: usize,
+    #[must_use]
+    pub fn item(
         element: Option<SyntaxElement<'a>>,
         cast: impl Fn(SyntaxElement<'a>) -> Option<T>,
     ) -> Self {
+        let Some(element) = element else {
+            return Self::Missing;
+        };
+        match (cast(element), element) {
+            (Some(item), _) => Self::Item(item),
+            (None, SyntaxElement::Node(node)) => Self::Bogus(node),
+            (None, SyntaxElement::Token(_)) => Self::Missing,
+        }
+    }
+
+    /// Classifies a separator slot of a separated list.
+    #[doc(hidden)]
+    #[must_use]
+    pub const fn separator(element: Option<SyntaxElement<'a>>) -> Self {
         match element {
+            Some(SyntaxElement::Token(token)) => Self::Separator(token),
+            Some(SyntaxElement::Node(node)) => Self::Bogus(node),
             None => Self::Missing,
-            Some(SyntaxElement::Token(token)) if index % 2 == 1 => Self::Separator(token),
-            Some(element) => match (cast(element), element) {
-                (Some(item), _) => Self::Item(item),
-                (None, SyntaxElement::Node(node)) => Self::Bogus(node),
-                (None, SyntaxElement::Token(_)) => Self::Missing,
-            },
         }
     }
 }

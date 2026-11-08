@@ -1,3 +1,5 @@
+//! The Java parser: the shared parser plus Java's lookahead state.
+
 use std::ops::{Deref, DerefMut};
 
 use jolt_syntax::{LoopGuard, ParseOutput};
@@ -6,34 +8,25 @@ use crate::lexer::JavaLexer;
 use crate::{JavaLanguage, JavaSyntaxKind};
 
 use super::codes;
-use super::grammar::ScanTables;
+use super::grammar::LookaheadTable;
 
 pub(super) use jolt_syntax::MAX_DEPTH;
 
-/// The Java parser: the shared parser plus the Java lookahead table and the
-/// generic nesting depth of the current speculative scan.
+/// The Java parser: the shared parser, the lookahead table over its tokens,
+/// and the number of type argument lists the consuming parser is inside.
 pub(super) struct Parser<'source> {
     pub(super) inner: jolt_syntax::Parser<'source, JavaLanguage>,
-    pub(super) lookahead_summary: LookaheadSummary,
-    pub(super) scan_tables: ScanTables,
+    pub(super) table: LookaheadTable,
     pub(super) generic_depth: usize,
-}
-
-#[derive(Default)]
-pub(super) struct LookaheadSummary {
-    pub(super) base: usize,
-    pub(super) boundaries: Option<Vec<usize>>,
-    /// Per token: one past the end of the modifier run starting there, or
-    /// zero when unknown. Allocated on the first modifier query.
-    pub(super) modifier_ends: Vec<usize>,
 }
 
 impl<'source> Parser<'source> {
     pub(super) fn new(source: &'source str) -> Self {
+        let inner = jolt_syntax::Parser::new(source, JavaLexer::new(source));
+        let table = LookaheadTable::new(&inner);
         Self {
-            inner: jolt_syntax::Parser::new(source, JavaLexer::new(source)),
-            lookahead_summary: LookaheadSummary::default(),
-            scan_tables: ScanTables::default(),
+            inner,
+            table,
             generic_depth: 0,
         }
     }

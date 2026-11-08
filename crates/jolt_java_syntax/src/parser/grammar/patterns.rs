@@ -1,3 +1,7 @@
+//! Patterns: type patterns and record patterns.
+
+use jolt_syntax::TokenSet;
+
 use super::{JavaSyntaxKind, PATTERN_STOPS, Parser};
 
 #[derive(Clone, Copy)]
@@ -7,27 +11,20 @@ pub(in crate::parser::grammar) enum PatternStart {
 }
 
 impl Parser<'_> {
-    pub(super) fn parse_pattern_until(&mut self, start: PatternStart, stops: &[JavaSyntaxKind]) {
+    pub(super) fn parse_pattern_until(&mut self, start: PatternStart, stops: TokenSet) {
         match start {
             PatternStart::Record => {
                 if self.nested(Self::parse_record_pattern).is_none() {
                     self.recover_too_deep(PATTERN_STOPS);
                 }
             }
-            PatternStart::Type => self.parse_type_pattern_until(stops, false),
+            PatternStart::Type => self.parse_type_pattern_until(stops, Self::parse_pattern_type),
         }
     }
 
-    pub(super) fn parse_type_pattern_until(
-        &mut self,
-        stops: &[JavaSyntaxKind],
-        allow_component_type: bool,
-    ) {
-        let pattern = self.start();
-        self.parse_variable_modifiers();
-        if allow_component_type {
-            self.parse_type();
-        } else if self.at_contextual("var") && self.nth(1) != JavaSyntaxKind::Dot {
+    /// The type of a type pattern outside a record pattern: a reference type.
+    fn parse_pattern_type(&mut self) {
+        if self.at_contextual("var") && self.nth(1) != JavaSyntaxKind::Dot {
             let bogus_type = self.start();
             self.error_expected("expected reference type");
             self.bump();
@@ -35,19 +32,26 @@ impl Parser<'_> {
         } else {
             self.parse_reference_type();
         }
-        self.expect_variable_identifier("expected pattern variable name", true);
+    }
+
+    /// A type pattern whose type `parse_type` parses.
+    fn parse_type_pattern_until(&mut self, stops: TokenSet, parse_type: impl FnOnce(&mut Self)) {
+        let pattern = self.start();
+        self.parse_variable_modifiers();
+        parse_type(self);
+        self.expect_variable_identifier("expected pattern variable name");
         self.parse_array_dimensions();
         let pattern = self.complete(pattern, JavaSyntaxKind::TypePattern);
 
         if !self.at_eof()
-            && !stops.contains(&self.current())
+            && !self.at_any(stops)
             && !self.at_contextual("when")
             && self.binary_operator().is_none()
         {
             let bogus = self.precede(pattern);
             self.error_unexpected("invalid type pattern declaration");
             while !self.at_eof()
-                && !stops.contains(&self.current())
+                && !self.at_any(stops)
                 && !self.at_contextual("when")
                 && self.binary_operator().is_none()
             {
@@ -83,9 +87,12 @@ impl Parser<'_> {
             self.bump();
             self.complete(match_all, JavaSyntaxKind::MatchAllPattern);
         } else if let Some(start @ PatternStart::Record) = self.pattern_start() {
-            self.parse_pattern_until(start, &[JavaSyntaxKind::Comma, JavaSyntaxKind::RParen]);
+            self.parse_pattern_until(start, token_set![Comma, RParen]);
         } else {
-            self.parse_type_pattern_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RParen], true);
+            // A record component's type may be primitive.
+            self.parse_type_pattern_until(token_set![Comma, RParen], |parser| {
+                parser.parse_type();
+            });
         }
         self.complete(component, JavaSyntaxKind::ComponentPattern);
     }

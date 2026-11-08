@@ -1,4 +1,7 @@
-mod token;
+//! The Java lexer. It lexes the source after Unicode escape translation
+//! (`unicode`), so the parser maps its ranges back to the raw source.
+
+mod diagnostics;
 mod unicode;
 
 use std::ops::Range;
@@ -10,40 +13,37 @@ use jolt_syntax::{
 };
 use unicode_general_category::{GeneralCategory, get_general_category};
 
-pub(crate) use token::{JavaLexDiagnosticCode, LexerDiagnostic};
+pub(crate) use diagnostics::JavaLexDiagnosticCode;
 pub(crate) use unicode::{NormalizedJavaSource, normalize_unicode_escapes};
 
 pub(crate) fn lexical_text_is(text: &str, expected: &str) -> bool {
     normalize_unicode_escapes(text).source() == expected
 }
 
-pub struct JavaLexer<'source> {
+/// The Java lexer: tokens with their leading and trailing trivia.
+pub(crate) struct JavaLexer<'source> {
     scanner: Scanner<'source>,
-    emitted_eof: bool,
 }
 
 impl<'source> JavaLexer<'source> {
-    #[must_use]
     pub(crate) fn new(source: &'source str) -> Self {
         Self {
             scanner: Scanner::new(source),
-            emitted_eof: false,
         }
     }
+}
 
-    /// Returns the next token, appending its trivia to the supplied buffer.
-    pub(crate) fn next_token_into(
-        &mut self,
-        trivia: &mut Vec<SyntaxTrivia>,
-    ) -> LexedToken<JavaSyntaxKind> {
-        if self.emitted_eof {
-            return self.eof_token_into(trivia.len()..trivia.len());
-        }
-
+impl<'source> Lexer<'source, JavaLanguage> for JavaLexer<'source> {
+    fn next_token(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken<JavaSyntaxKind> {
         let leading = self.scanner.leading_trivia_into(trivia);
         if self.scanner.at_end() {
-            self.emitted_eof = true;
-            return self.eof_token_into(leading);
+            let trivia_end = leading.end;
+            return LexedToken {
+                kind: JavaSyntaxKind::Eof,
+                range: TextRange::empty(TextSize::new(self.scanner.source.len())),
+                leading,
+                trailing: trivia_end..trivia_end,
+            };
         }
 
         let (kind, range) = self.scanner.token();
@@ -56,47 +56,15 @@ impl<'source> JavaLexer<'source> {
         }
     }
 
-    /// Drains the remaining source and returns all lexer diagnostics.
-    #[must_use]
-    pub(crate) fn finish(mut self) -> Vec<LexerDiagnostic> {
-        self.scanner.drain();
-        self.scanner.diagnostics
-    }
-
-    fn eof_token_into(&self, leading: Range<usize>) -> LexedToken<JavaSyntaxKind> {
-        let end = TextSize::new(self.scanner.source.len());
-        let trivia_end = leading.end;
-        LexedToken {
-            kind: JavaSyntaxKind::Eof,
-            range: TextRange::empty(end),
-            leading,
-            trailing: trivia_end..trivia_end,
-        }
-    }
-}
-
-impl<'source> Lexer<'source, JavaLanguage> for JavaLexer<'source> {
-    fn next_token(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken<JavaSyntaxKind> {
-        self.next_token_into(trivia)
-    }
-
     fn finish(self) -> Vec<Diagnostic> {
-        self.finish()
+        self.scanner.diagnostics
     }
 }
 
 struct Scanner<'source> {
     source: &'source str,
     pos: usize,
-    diagnostics: Vec<LexerDiagnostic>,
-}
-
-fn lexer_diagnostic(code: JavaLexDiagnosticCode, range: TextRange) -> Diagnostic {
-    Diagnostic {
-        code: code.id(),
-        message: code.message().to_owned(),
-        range,
-    }
+    diagnostics: Vec<Diagnostic>,
 }
 
 impl<'source> Scanner<'source> {
@@ -123,15 +91,6 @@ impl<'source> Scanner<'source> {
         };
         let end = TextSize::new(self.pos);
         (kind, TextRange::new(start, end))
-    }
-
-    fn drain(&mut self) {
-        while !self.at_end() {
-            while self.trivia_piece().is_some() {}
-            if !self.at_end() {
-                self.token();
-            }
-        }
     }
 
     fn leading_trivia_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> Range<usize> {
@@ -275,10 +234,10 @@ impl<'source> Scanner<'source> {
             self.bump();
         }
 
-        self.diagnostics.push(lexer_diagnostic(
-            JavaLexDiagnosticCode::UnterminatedBlockComment,
-            TextRange::new(start, self.raw_end_for_pos(start_pos)),
-        ));
+        self.diagnostics.push(
+            JavaLexDiagnosticCode::UnterminatedBlockComment
+                .at(TextRange::new(start, self.raw_end_for_pos(start_pos))),
+        );
         SyntaxTrivia::new(
             SyntaxTriviaKind::UnterminatedBlockComment,
             TextRange::new(start, TextSize::new(self.pos)).len(),
@@ -312,25 +271,21 @@ impl<'source> Scanner<'source> {
                         // Line-continuation escapes are valid only in text blocks;
                         // ordinary char literals still terminate at the line break.
                         let range = self.current_range().expect("line terminator exists");
-                        self.diagnostics.push(lexer_diagnostic(
-                            JavaLexDiagnosticCode::InvalidEscapeSequence,
-                            range,
-                        ));
+                        self.diagnostics
+                            .push(JavaLexDiagnosticCode::InvalidEscapeSequence.at(range));
                         break;
                     }
                     if self.at_end() {
-                        self.diagnostics.push(lexer_diagnostic(
-                            JavaLexDiagnosticCode::InvalidEscapeSequence,
-                            TextRange::empty(escape_start),
-                        ));
+                        self.diagnostics.push(
+                            JavaLexDiagnosticCode::InvalidEscapeSequence
+                                .at(TextRange::empty(escape_start)),
+                        );
                         break;
                     }
                     if !is_valid_escape_tail(self.current_char().expect("escape tail exists")) {
                         let range = self.current_range().expect("escape tail exists");
-                        self.diagnostics.push(lexer_diagnostic(
-                            JavaLexDiagnosticCode::InvalidEscapeSequence,
-                            range,
-                        ));
+                        self.diagnostics
+                            .push(JavaLexDiagnosticCode::InvalidEscapeSequence.at(range));
                     }
                     self.bump_escape_tail();
                     content_chars += 1;
@@ -343,15 +298,15 @@ impl<'source> Scanner<'source> {
         }
 
         if !terminated {
-            self.diagnostics.push(lexer_diagnostic(
-                JavaLexDiagnosticCode::UnterminatedCharacterLiteral,
-                TextRange::new(start, TextSize::new(self.pos)),
-            ));
+            self.diagnostics.push(
+                JavaLexDiagnosticCode::UnterminatedCharacterLiteral
+                    .at(TextRange::new(start, TextSize::new(self.pos))),
+            );
         } else if content_chars != 1 {
-            self.diagnostics.push(lexer_diagnostic(
-                JavaLexDiagnosticCode::InvalidCharacterLiteral,
-                TextRange::new(start, TextSize::new(self.pos)),
-            ));
+            self.diagnostics.push(
+                JavaLexDiagnosticCode::InvalidCharacterLiteral
+                    .at(TextRange::new(start, TextSize::new(self.pos))),
+            );
         }
 
         JavaSyntaxKind::CharacterLiteral
@@ -383,25 +338,21 @@ impl<'source> Scanner<'source> {
                         // Line-continuation escapes are valid only in text blocks;
                         // ordinary string literals still terminate at the line break.
                         let range = self.current_range().expect("line terminator exists");
-                        self.diagnostics.push(lexer_diagnostic(
-                            JavaLexDiagnosticCode::InvalidEscapeSequence,
-                            range,
-                        ));
+                        self.diagnostics
+                            .push(JavaLexDiagnosticCode::InvalidEscapeSequence.at(range));
                         break;
                     }
                     if self.at_end() {
-                        self.diagnostics.push(lexer_diagnostic(
-                            JavaLexDiagnosticCode::InvalidEscapeSequence,
-                            TextRange::empty(escape_start),
-                        ));
+                        self.diagnostics.push(
+                            JavaLexDiagnosticCode::InvalidEscapeSequence
+                                .at(TextRange::empty(escape_start)),
+                        );
                         break;
                     }
                     if !is_valid_escape_tail(self.current_char().expect("escape tail exists")) {
                         let range = self.current_range().expect("escape tail exists");
-                        self.diagnostics.push(lexer_diagnostic(
-                            JavaLexDiagnosticCode::InvalidEscapeSequence,
-                            range,
-                        ));
+                        self.diagnostics
+                            .push(JavaLexDiagnosticCode::InvalidEscapeSequence.at(range));
                     }
                     self.bump_escape_tail();
                 }
@@ -412,10 +363,10 @@ impl<'source> Scanner<'source> {
         }
 
         if !terminated {
-            self.diagnostics.push(lexer_diagnostic(
-                JavaLexDiagnosticCode::UnterminatedStringLiteral,
-                TextRange::new(start, TextSize::new(self.pos)),
-            ));
+            self.diagnostics.push(
+                JavaLexDiagnosticCode::UnterminatedStringLiteral
+                    .at(TextRange::new(start, TextSize::new(self.pos))),
+            );
         }
 
         JavaSyntaxKind::StringLiteral
@@ -437,10 +388,8 @@ impl<'source> Scanner<'source> {
         }
         if !self.current_char().is_some_and(is_line_terminator_start) {
             let range = TextRange::new(start, TextSize::new(self.pos));
-            self.diagnostics.push(lexer_diagnostic(
-                JavaLexDiagnosticCode::MissingTextBlockLineTerminator,
-                range,
-            ));
+            self.diagnostics
+                .push(JavaLexDiagnosticCode::MissingTextBlockLineTerminator.at(range));
         }
 
         let mut terminated = false;
@@ -469,16 +418,14 @@ impl<'source> Scanner<'source> {
                     self.bump_escape_tail();
                 } else if !self.at_end() {
                     let range = self.current_range().expect("escape tail exists");
-                    self.diagnostics.push(lexer_diagnostic(
-                        JavaLexDiagnosticCode::InvalidEscapeSequence,
-                        range,
-                    ));
+                    self.diagnostics
+                        .push(JavaLexDiagnosticCode::InvalidEscapeSequence.at(range));
                     self.bump();
                 } else {
-                    self.diagnostics.push(lexer_diagnostic(
-                        JavaLexDiagnosticCode::InvalidEscapeSequence,
-                        TextRange::empty(escape_start),
-                    ));
+                    self.diagnostics.push(
+                        JavaLexDiagnosticCode::InvalidEscapeSequence
+                            .at(TextRange::empty(escape_start)),
+                    );
                 }
             } else {
                 self.bump();
@@ -486,10 +433,10 @@ impl<'source> Scanner<'source> {
         }
 
         if !terminated {
-            self.diagnostics.push(lexer_diagnostic(
-                JavaLexDiagnosticCode::UnterminatedTextBlock,
-                TextRange::new(start, TextSize::new(self.pos)),
-            ));
+            self.diagnostics.push(
+                JavaLexDiagnosticCode::UnterminatedTextBlock
+                    .at(TextRange::new(start, TextSize::new(self.pos))),
+            );
         }
 
         JavaSyntaxKind::TextBlockLiteral
@@ -741,10 +688,10 @@ impl<'source> Scanner<'source> {
             '%' => self.one(JavaSyntaxKind::Percent),
             _ => {
                 self.bump();
-                self.diagnostics.push(lexer_diagnostic(
-                    JavaLexDiagnosticCode::UnknownCharacter,
-                    TextRange::new(start, TextSize::new(self.pos)),
-                ));
+                self.diagnostics.push(
+                    JavaLexDiagnosticCode::UnknownCharacter
+                        .at(TextRange::new(start, TextSize::new(self.pos))),
+                );
                 JavaSyntaxKind::Unknown
             }
         }
@@ -825,10 +772,10 @@ impl<'source> Scanner<'source> {
     }
 
     fn invalid_numeric_literal(&mut self, start: TextSize) {
-        self.diagnostics.push(lexer_diagnostic(
-            JavaLexDiagnosticCode::InvalidNumericLiteral,
-            TextRange::new(start, TextSize::new(self.pos)),
-        ));
+        self.diagnostics.push(
+            JavaLexDiagnosticCode::InvalidNumericLiteral
+                .at(TextRange::new(start, TextSize::new(self.pos))),
+        );
     }
 
     fn bump_escape_tail(&mut self) {

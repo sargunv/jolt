@@ -155,13 +155,9 @@ fn for_each_unclosed<'a, L: FormatLanguage>(
     if node.is_recovery_free() {
         return;
     }
-    let tokens: Vec<_> = node
-        .children()
-        .filter_map(SyntaxElement::as_token)
-        .collect();
     // Kinds seen after the current token; at most one entry per kind.
     let mut seen = Vec::new();
-    for token in tokens.into_iter().rev() {
+    for token in node.children().rev().filter_map(SyntaxElement::as_token) {
         if L::closer_for(token).is_some_and(|closer| !seen.contains(&closer)) {
             f(token);
         }

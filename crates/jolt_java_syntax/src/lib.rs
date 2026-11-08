@@ -10,7 +10,6 @@ use jolt_syntax::{Language, RawSyntaxKind};
 
 pub(crate) use generated::JavaSyntaxFactory;
 pub use generated::*;
-pub use lexer::JavaLexer;
 pub use parser::{JavaParse, parse};
 pub use semantics::{ModifierPartition, binary_precedence, is_assignment_operator, is_contextual};
 

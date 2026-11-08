@@ -4181,10 +4181,13 @@ impl<'a> EnumConstantList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, EnumConstant<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<EnumConstant<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<EnumConstant<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -4214,10 +4217,13 @@ impl<'a> RecordComponentList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, RecordComponent<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<RecordComponent<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<RecordComponent<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -4391,7 +4397,11 @@ impl<'a> FormalParameterList<'a> {
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, FormalParameterSyntax<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
-            ListElement::new(index, element, cast::<FormalParameterSyntax<'a>>)
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<FormalParameterSyntax<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
         })
     }
 }
@@ -4456,7 +4466,11 @@ impl<'a> VariableDeclaratorList<'a> {
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, VariableDeclarator<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
-            ListElement::new(index, element, cast::<VariableDeclarator<'a>>)
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<VariableDeclarator<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
         })
     }
 }
@@ -4829,10 +4843,13 @@ impl<'a> StatementExpressionList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Expression<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<Expression<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<Expression<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5021,10 +5038,13 @@ impl<'a> ResourceList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Resource<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<Resource<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<Resource<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5157,7 +5177,7 @@ impl<'a> ArrayDimensions<'a> {
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, ArrayDimension<'a>>> + 'a {
         self.0
             .slots()
-            .map(|element| ListElement::new(0, element, cast::<ArrayDimension<'a>>))
+            .map(|element| ListElement::item(element, cast::<ArrayDimension<'a>>))
     }
 }
 
@@ -5506,10 +5526,13 @@ impl<'a> LambdaParameterList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, LambdaParameter<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<LambdaParameter<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<LambdaParameter<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5688,7 +5711,7 @@ impl<'a> AnnotationList<'a> {
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Annotation<'a>>> + 'a {
         self.0
             .slots()
-            .map(|element| ListElement::new(0, element, cast::<Annotation<'a>>))
+            .map(|element| ListElement::item(element, cast::<Annotation<'a>>))
     }
 }
 
@@ -5707,7 +5730,7 @@ impl<'a> RequiresModifierList<'a> {
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, SyntaxToken<'a>>> + 'a {
         self.0
             .slots()
-            .map(|element| ListElement::new(0, element, SyntaxElement::as_token))
+            .map(|element| ListElement::item(element, SyntaxElement::as_token))
     }
 }
 
@@ -5722,10 +5745,13 @@ impl<'a> NameList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, NameSyntax<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<NameSyntax<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<NameSyntax<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5740,10 +5766,13 @@ impl<'a> ModuleNameList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, NameSyntax<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<NameSyntax<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<NameSyntax<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5761,7 +5790,11 @@ impl<'a> AnnotationElementArgumentList<'a> {
         self,
     ) -> impl Iterator<Item = ListElement<'a, AnnotationArgumentSyntax<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
-            ListElement::new(index, element, cast::<AnnotationArgumentSyntax<'a>>)
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<AnnotationArgumentSyntax<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
         })
     }
 }
@@ -5790,7 +5823,11 @@ impl<'a> AnnotationElementValueList<'a> {
         self,
     ) -> impl Iterator<Item = ListElement<'a, AnnotationElementValue<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
-            ListElement::new(index, element, cast::<AnnotationElementValue<'a>>)
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<AnnotationElementValue<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
         })
     }
 }
@@ -5806,10 +5843,13 @@ impl<'a> TypeParameterSeparatedList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, TypeParameter<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<TypeParameter<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<TypeParameter<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5824,10 +5864,13 @@ impl<'a> TypeList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Type<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<Type<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<Type<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5886,7 +5929,7 @@ impl<'a> BlockStatementList<'a> {
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, BlockStatement<'a>>> + 'a {
         self.0
             .slots()
-            .map(|element| ListElement::new(0, element, cast::<BlockStatement<'a>>))
+            .map(|element| ListElement::item(element, cast::<BlockStatement<'a>>))
     }
 }
 
@@ -5911,10 +5954,13 @@ impl<'a> SwitchLabelColonList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, SwitchLabel<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<SwitchLabel<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<SwitchLabel<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5929,10 +5975,13 @@ impl<'a> SwitchLabelItemList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, SwitchLabelItem<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, SwitchLabelItem::cast_element))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, SwitchLabelItem::cast_element)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5941,7 +5990,7 @@ impl<'a> CatchClauseList<'a> {
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, CatchClause<'a>>> + 'a {
         self.0
             .slots()
-            .map(|element| ListElement::new(0, element, cast::<CatchClause<'a>>))
+            .map(|element| ListElement::item(element, cast::<CatchClause<'a>>))
     }
 }
 
@@ -5957,7 +6006,11 @@ impl<'a> ClassTypeSegmentList<'a> {
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, ClassTypeSegmentNode<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
-            ListElement::new(index, element, cast::<ClassTypeSegmentNode<'a>>)
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<ClassTypeSegmentNode<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
         })
     }
 }
@@ -5973,10 +6026,13 @@ impl<'a> TypeAmpList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Type<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<Type<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<Type<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -5991,10 +6047,13 @@ impl<'a> TypeBarList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Type<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<Type<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<Type<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -6009,10 +6068,13 @@ impl<'a> TypeArgumentSeparatedList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, TypeArgument<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<TypeArgument<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<TypeArgument<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -6030,7 +6092,11 @@ impl<'a> NameSegmentDotList<'a> {
         self,
     ) -> impl Iterator<Item = ListElement<'a, QualifiedNameSegmentNode<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
-            ListElement::new(index, element, cast::<QualifiedNameSegmentNode<'a>>)
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<QualifiedNameSegmentNode<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
         })
     }
 }
@@ -6040,7 +6106,7 @@ impl<'a> DimExpressionList<'a> {
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, DimExpression<'a>>> + 'a {
         self.0
             .slots()
-            .map(|element| ListElement::new(0, element, cast::<DimExpression<'a>>))
+            .map(|element| ListElement::item(element, cast::<DimExpression<'a>>))
     }
 }
 
@@ -6058,7 +6124,11 @@ impl<'a> VariableInitializerList<'a> {
         self,
     ) -> impl Iterator<Item = ListElement<'a, VariableInitializerValue<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
-            ListElement::new(index, element, cast::<VariableInitializerValue<'a>>)
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<VariableInitializerValue<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
         })
     }
 }
@@ -6084,10 +6154,13 @@ impl<'a> ExpressionList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Expression<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<Expression<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<Expression<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -6102,10 +6175,13 @@ impl<'a> ComponentPatternList<'a> {
     }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, ComponentPattern<'a>>> + 'a {
-        self.0
-            .slots()
-            .enumerate()
-            .map(|(index, element)| ListElement::new(index, element, cast::<ComponentPattern<'a>>))
+        self.0.slots().enumerate().map(|(index, element)| {
+            if index % 2 == 0 {
+                ListElement::item(element, cast::<ComponentPattern<'a>>)
+            } else {
+                ListElement::separator(element)
+            }
+        })
     }
 }
 
@@ -8883,7 +8959,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::PackageDeclaration => {
@@ -8915,7 +8991,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ImportDeclaration => {
@@ -8971,7 +9047,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6, s7])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ModuleDeclaration => {
@@ -9021,7 +9097,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::RequiresDirective => {
@@ -9053,7 +9129,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ExportsDirective => {
@@ -9085,7 +9161,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::OpensDirective => {
@@ -9117,7 +9193,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::UsesDirective => {
@@ -9143,7 +9219,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ProvidesDirective => {
@@ -9175,7 +9251,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ModuleTargetClause => {
@@ -9195,7 +9271,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ModuleImplementationClause => {
@@ -9215,7 +9291,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ModifierList => sink.list(raw, i.len(), 1, |c| {
@@ -9265,7 +9341,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::AnnotationArgumentList => {
@@ -9291,7 +9367,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::AnnotationElementDeclaration => {
@@ -9347,7 +9423,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6, s7])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::AnnotationElementValue => {
@@ -9365,7 +9441,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::AnnotationElementValuePair => {
@@ -9391,7 +9467,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::AnnotationArrayInitializer => {
@@ -9417,7 +9493,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::DefaultValue => {
@@ -9437,7 +9513,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ClassDeclaration => {
@@ -9499,7 +9575,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6, s7, s8])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::RecordDeclaration => {
@@ -9567,7 +9643,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::EnumDeclaration => {
@@ -9611,7 +9687,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::InterfaceDeclaration => {
@@ -9667,7 +9743,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6, s7])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::AnnotationInterfaceDeclaration => {
@@ -9711,7 +9787,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::TypeParameterList => {
@@ -9737,7 +9813,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::TypeParameter => {
@@ -9763,7 +9839,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::TypeBoundList => {
@@ -9786,7 +9862,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ExtendsClause => {
@@ -9806,7 +9882,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ImplementsClause => {
@@ -9826,7 +9902,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::PermitsClause => {
@@ -9846,7 +9922,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ClassBody => {
@@ -9872,7 +9948,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::EmptyDeclaration => {
@@ -9886,7 +9962,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::RecordBody => {
@@ -9912,7 +9988,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::InterfaceBody => {
@@ -9938,7 +10014,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::AnnotationInterfaceBody => {
@@ -9964,7 +10040,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::EnumBody => {
@@ -10002,7 +10078,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::EnumConstantList => sink.separated_list(
@@ -10042,7 +10118,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::RecordComponentList => sink.separated_list(
@@ -10088,7 +10164,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::FieldDeclaration => {
@@ -10120,7 +10196,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::MethodDeclaration => {
@@ -10194,7 +10270,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ConstructorDeclaration => {
@@ -10250,7 +10326,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6, s7])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ConstructorBody => {
@@ -10276,7 +10352,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ConstructorInvocation => {
@@ -10322,7 +10398,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::CompactConstructorDeclaration => {
@@ -10348,7 +10424,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::StaticInitializer => {
@@ -10368,7 +10444,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::InstanceInitializer => {
@@ -10382,7 +10458,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::FormalParameterList => sink.separated_list(
@@ -10437,7 +10513,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ReceiverParameter => {
@@ -10475,7 +10551,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ThrowsClause => {
@@ -10495,7 +10571,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::VariableDeclaratorList => sink.separated_list(
@@ -10535,7 +10611,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::VariableInitializer => {
@@ -10549,7 +10625,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::Block => {
@@ -10575,7 +10651,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::BlockStatement => {
@@ -10595,7 +10671,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::LocalVariableDeclaration => {
@@ -10621,7 +10697,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::LocalClassOrInterfaceDeclaration => {
@@ -10645,7 +10721,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::EmptyStatement => {
@@ -10659,7 +10735,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::LabeledStatement => {
@@ -10685,7 +10761,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ExpressionStatement => {
@@ -10705,7 +10781,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::IfStatement => {
@@ -10755,7 +10831,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::AssertStatement => {
@@ -10793,7 +10869,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::SwitchStatement => {
@@ -10831,7 +10907,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::SwitchBlock => {
@@ -10857,7 +10933,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::SwitchBlockStatementGroup => {
@@ -10877,7 +10953,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::SwitchRule => {
@@ -10911,7 +10987,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::SwitchLabel => {
@@ -10937,7 +11013,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::CaseConstant => {
@@ -10951,7 +11027,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::CasePattern => {
@@ -10965,7 +11041,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::Guard => {
@@ -10997,7 +11073,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::WhileStatement => {
@@ -11035,7 +11111,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::DoStatement => {
@@ -11085,7 +11161,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ForStatement => {
@@ -11102,7 +11178,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::BasicForStatement => {
@@ -11164,7 +11240,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6, s7, s8])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::EnhancedForStatement => {
@@ -11214,7 +11290,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::EnhancedForVariable => {
@@ -11246,7 +11322,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ForInitializer => {
@@ -11262,7 +11338,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ForUpdate => {
@@ -11276,7 +11352,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::StatementExpressionList => sink.separated_list(
@@ -11310,7 +11386,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::YieldStatement => {
@@ -11336,7 +11412,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ContinueStatement => {
@@ -11362,7 +11438,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ReturnStatement => {
@@ -11388,7 +11464,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ThrowStatement => {
@@ -11414,7 +11490,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::SynchronizedStatement => {
@@ -11452,7 +11528,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::TryStatement => {
@@ -11484,7 +11560,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::TryWithResourcesStatement => {
@@ -11522,7 +11598,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::CatchClause => {
@@ -11560,7 +11636,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::CatchParameter => {
@@ -11592,7 +11668,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::CatchTypeList => {
@@ -11606,7 +11682,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::FinallyClause => {
@@ -11626,7 +11702,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ResourceSpecification => {
@@ -11658,7 +11734,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ResourceList => sink.separated_list(
@@ -11680,7 +11756,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ResourceVariableDeclaration => {
@@ -11724,7 +11800,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::VariableAccess => {
@@ -11741,7 +11817,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::PrimitiveType => {
@@ -11773,7 +11849,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::VoidType => {
@@ -11787,7 +11863,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ClassType => {
@@ -11801,7 +11877,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ArrayType => {
@@ -11821,7 +11897,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::IntersectionType => {
@@ -11847,7 +11923,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::UnionType => {
@@ -11873,7 +11949,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::TypeArgumentList => {
@@ -11899,7 +11975,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::TypeArgument => {
@@ -11919,7 +11995,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::WildcardType => {
@@ -11945,7 +12021,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ArrayDimensions => sink.list(raw, i.len(), 1, |c| {
@@ -11974,7 +12050,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::Name => {
@@ -11988,7 +12064,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::QualifiedName => {
@@ -12014,7 +12090,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::LiteralExpression => {
@@ -12039,7 +12115,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::NameExpression => {
@@ -12059,7 +12135,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ThisExpression => {
@@ -12085,7 +12161,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::SuperExpression => {
@@ -12111,7 +12187,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ParenthesizedExpression => {
@@ -12137,7 +12213,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ClassLiteralExpression => {
@@ -12169,7 +12245,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::FieldAccessExpression => {
@@ -12201,7 +12277,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ArrayAccessExpression => {
@@ -12233,7 +12309,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::MethodInvocationExpression => {
@@ -12247,7 +12323,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::MethodReferenceExpression => {
@@ -12285,7 +12361,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ObjectCreationExpression => {
@@ -12335,7 +12411,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5, s6])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ArrayCreationExpression => {
@@ -12373,7 +12449,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::DimExpression => {
@@ -12405,7 +12481,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ArrayInitializer => {
@@ -12431,7 +12507,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::AssignmentExpression => {
@@ -12473,7 +12549,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ConditionalExpression => {
@@ -12511,7 +12587,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::InstanceofExpression => {
@@ -12537,7 +12613,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::BinaryExpression => {
@@ -12586,7 +12662,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::UnaryExpression => {
@@ -12609,7 +12685,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::PostfixExpression => {
@@ -12629,7 +12705,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::CastExpression => {
@@ -12661,7 +12737,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::LambdaExpression => {
@@ -12699,7 +12775,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::LambdaParameterList => sink.separated_list(
@@ -12751,7 +12827,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4, s5])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::SwitchExpression => {
@@ -12789,7 +12865,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ArgumentList => {
@@ -12815,7 +12891,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::TypePattern => {
@@ -12850,7 +12926,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::RecordPattern => {
@@ -12882,7 +12958,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ComponentPattern => {
@@ -12896,7 +12972,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::MatchAllPattern => {
@@ -12910,7 +12986,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::NonSealedModifier => {
@@ -12936,7 +13012,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::ClassTypeSegmentNode => {
@@ -12962,7 +13038,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::QualifiedNameSegmentNode => {
@@ -12982,7 +13058,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::QualifiedMethodInvocation => {
@@ -13022,7 +13098,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2, s3, s4])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::UnqualifiedMethodInvocation => {
@@ -13050,7 +13126,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 if c == i.len() {
                     sink.fixed(raw, [s0, s1, s2])
                 } else {
-                    sink.raw(raw, true)
+                    sink.malformed(raw)
                 }
             }
             K::CompilationUnitItemList => sink.list(raw, i.len(), 0, |c| {
@@ -13244,7 +13320,7 @@ impl SyntaxFactory for JavaSyntaxFactory {
                 |c| node(i, c) == Some(K::ComponentPattern) || node(i, c) == Some(K::Bogus),
                 |c| token(i, c) == Some(K::Comma),
             ),
-            _ => sink.raw(raw, true),
+            _ => sink.malformed(raw),
         }
     }
 }

@@ -1,4 +1,5 @@
-// Drives the comma-separated list bodies shared by Java's delimited grammars.
+//! The comma-separated list bodies shared by Java's delimited grammars.
+
 use super::{JavaSyntaxKind, Parser};
 
 /// What parsing one element did to the separator that follows it.
@@ -32,7 +33,7 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_comma_separated<E>(
         &mut self,
         expected: &'static str,
-        at_close: impl Fn(&mut Self) -> bool,
+        at_close: impl Fn(&Self) -> bool,
         mut parse_element: impl FnMut(&mut Self) -> E,
     ) where
         E: Into<SeparatedElement>,
