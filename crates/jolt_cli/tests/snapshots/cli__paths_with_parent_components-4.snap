@@ -1,0 +1,12 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--check\", \"real/..\", \"real/A.java\"], \"\")"
+---
+$ jolt fmt --check real/.. real/A.java
+status: 1
+--- stdout
+real/../B.java
+real/../real/A.java
+--- stderr
+Checked 2 files in $TIME
+2 files need formatting

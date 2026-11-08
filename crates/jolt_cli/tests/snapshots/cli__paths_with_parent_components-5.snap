@@ -1,0 +1,16 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"real\", \"real/../real/A.java\"], \"\")"
+---
+$ jolt fmt real real/../real/A.java
+status: 0
+--- stderr
+Reformatted 1 of 1 file in $TIME
+--- wrote real/A.java
+class A {
+  void f() {
+    if (ready) {
+      go();
+    }
+  }
+}

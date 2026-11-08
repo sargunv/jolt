@@ -1,7 +1,7 @@
 //! `jolt format`.
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, hash_map::Entry},
     env,
     fmt::Write as _,
     fs,
@@ -156,6 +156,10 @@ fn run_stdin(cwd: &Path, args: &FormatArgs, resolver: &Resolver) -> Result<Exit>
 /// threads walk the directories and format each file as they find it. An error
 /// fails one file or one path, and the run goes on.
 ///
+/// Paths that name one file or directory in different ways, through `..` or a
+/// symlink, are the same path: it is walked once, under the spelling named
+/// first.
+///
 /// Returns a report for each file and each path that could not be read, in
 /// the order the paths are named, then by path.
 fn format_paths(cwd: &Path, args: &FormatArgs, resolver: &Resolver) -> Vec<Report> {
@@ -169,32 +173,70 @@ fn format_paths(cwd: &Path, args: &FormatArgs, resolver: &Resolver) -> Vec<Repor
         args,
         resolver,
         roots: HashMap::new(),
-        seen: None,
+        overlap: None,
         reports: Mutex::default(),
     };
-    let mut builder: Option<WalkBuilder> = None;
+    // Each named path that exists, once per spelling.
+    let mut named = Vec::new();
+    let mut spellings = HashSet::new();
     for (index, path) in paths.into_iter().enumerate() {
-        if walk.roots.contains_key(&path) {
+        if !spellings.insert(path.clone()) {
             continue;
         }
-        if path.is_file() || path.is_dir() {
-            match &mut builder {
-                Some(builder) => {
-                    builder.add(&path);
+        match fs::metadata(&path) {
+            Ok(metadata) if metadata.is_file() || metadata.is_dir() => {
+                named.push((index, path, metadata));
+            }
+            _ => {
+                let message = format!("{}: path does not exist\n", display_path(cwd, &path));
+                walk.report(index, path, Report::unreadable(message));
+            }
+        }
+    }
+    // A named directory can contain another named path, so the paths
+    // compare by location. Without one, only a file named twice can be found
+    // twice, and its identity is cheaper to compare.
+    let contained = named.len() > 1 && named.iter().any(|(_, _, metadata)| metadata.is_dir());
+    let mut locations = HashMap::new();
+    let mut files = HashSet::new();
+    let mut builder: Option<WalkBuilder> = None;
+    for (index, path, metadata) in named {
+        let first = if contained {
+            // A path that exists but doesn't resolve is its own location.
+            let location = fs::canonicalize(&path).unwrap_or_else(|_| path.clone());
+            match locations.entry(location) {
+                Entry::Occupied(_) => false,
+                Entry::Vacant(entry) => {
+                    entry.insert((index, path.clone()));
+                    true
                 }
-                None => builder = Some(WalkBuilder::new(&path)),
             }
         } else {
-            let message = format!("{}: path does not exist\n", display_path(cwd, &path));
-            walk.report(index, path.clone(), Report::unreadable(message));
+            files.insert(file_id(&path, &metadata))
+        };
+        if !first {
+            continue;
+        }
+        match &mut builder {
+            Some(builder) => {
+                builder.add(&path);
+            }
+            None => builder = Some(WalkBuilder::new(&path)),
         }
         walk.roots.insert(path, index);
     }
     // Sorted paths put each directory right before the paths under it.
-    let mut sorted: Vec<&Path> = walk.roots.keys().map(PathBuf::as_path).collect();
+    let mut sorted: Vec<&Path> = locations.keys().map(PathBuf::as_path).collect();
     sorted.sort_unstable();
     if sorted.windows(2).any(|pair| pair[1].starts_with(pair[0])) {
-        walk.seen = Some(Mutex::default());
+        walk.overlap = Some(Overlap {
+            locations: locations
+                .iter()
+                .map(|(location, (_, root))| (root.clone(), location.clone()))
+                .collect(),
+            roots: locations,
+            seen: Mutex::default(),
+        });
     }
     if let Some(mut builder) = builder {
         // `ignore` uses at most 12 threads unless told otherwise.
@@ -229,15 +271,38 @@ struct Walk<'a> {
     cwd: &'a Path,
     args: &'a FormatArgs,
     resolver: &'a Resolver,
-    /// Each path named on the command line, with the position where it is
-    /// first named.
+    /// Each path named on the command line that the walk reads, by its
+    /// absolute spelling, with the position where it is first named.
     roots: HashMap<PathBuf, usize>,
-    /// The files claimed for formatting and the paths reported unreadable so
-    /// far, when one root contains another and the walk can find a path under
+    /// Set when one root contains another, so the walk can find a path under
     /// both.
-    seen: Option<Mutex<HashSet<PathBuf>>>,
+    overlap: Option<Overlap>,
     /// The reports so far, each by the position of its root and its path.
     reports: Mutex<Vec<((usize, PathBuf), Report)>>,
+}
+
+/// The roots by location, when one root contains another. A location is an
+/// absolute path with `..` and symlinks resolved.
+struct Overlap {
+    /// Each root's position and spelling, by its location.
+    roots: HashMap<PathBuf, (usize, PathBuf)>,
+    /// Each root's location, by its spelling.
+    locations: HashMap<PathBuf, PathBuf>,
+    /// The locations of the files claimed for formatting and of the paths
+    /// reported unreadable so far.
+    seen: Mutex<HashSet<PathBuf>>,
+}
+
+/// A path the walk found, placed under the first root that contains it.
+struct Place<'w> {
+    /// The root's position.
+    index: usize,
+    /// The root's absolute spelling.
+    root: &'w Path,
+    /// The path, spelled under the root.
+    path: PathBuf,
+    /// The path's location when roots overlap, for [`Walk::claim`].
+    location: Option<PathBuf>,
 }
 
 impl Walk<'_> {
@@ -249,20 +314,28 @@ impl Walk<'_> {
         if !entry.file_type().is_some_and(|kind| kind.is_file()) {
             return;
         }
-        let named = entry.depth() == 0;
+        let depth = entry.depth();
+        let named = depth == 0;
         let path = entry.into_path();
-        let Some((index, root)) = self.root(&path) else {
+        let language = Language::from_path(&path);
+        if language.is_none() && !named {
+            return;
+        }
+        let Some(Place {
+            index,
+            root,
+            path,
+            location,
+        }) = self.place(path, Some(depth))
+        else {
             return;
         };
-        let Some(language) = Language::from_path(&path) else {
-            if named {
-                let message = format!(
-                    "{}: unsupported file extension\n",
-                    display_path(self.cwd, &path)
-                );
-                self.report(index, path, Report::failed(message));
-            }
-            return;
+        let Some(language) = language else {
+            let message = format!(
+                "{}: unsupported file extension\n",
+                display_path(self.cwd, &path)
+            );
+            return self.report(index, path, Report::failed(message));
         };
         // The settings come from the first root that contains the file, so
         // they don't depend on which root's walk finds it first.
@@ -271,7 +344,7 @@ impl Walk<'_> {
         let settings = match self.resolver.settings(dir, target) {
             Ok(settings) => settings,
             Err(error) => {
-                if self.claim(&path) {
+                if self.claim(location) {
                     self.report(index, path, Report::failed(format!("{error}\n")));
                 }
                 return;
@@ -282,39 +355,62 @@ impl Walk<'_> {
         } else {
             settings.selects(&path)
         };
-        if selected && self.claim(&path) {
+        if selected && self.claim(location) {
             let report = format_file(self.cwd, &path, language, settings.options(), self.args);
             self.report(index, path, report);
         }
     }
 
-    /// The first root named on the command line that contains `path`, and
-    /// its position.
-    fn root(&self, path: &Path) -> Option<(usize, &Path)> {
-        if self.roots.len() == 1 {
-            return self
-                .roots
-                .iter()
-                .next()
-                .map(|(root, &index)| (index, root.as_path()));
-        }
-        let mut containing = path
-            .ancestors()
-            .filter_map(|ancestor| self.roots.get_key_value(ancestor));
-        let first = if self.seen.is_none() {
-            // No root contains another, so the nearest is the only one.
-            containing.next()
+    /// Places `path`, which the walk found under a root, under the first root
+    /// named on the command line that contains it.
+    ///
+    /// `depth` is how far below its root the walk found `path`, if known.
+    /// Without it, the nearest root that contains `path` stands in for the
+    /// root whose walk found it.
+    fn place(&self, path: PathBuf, depth: Option<usize>) -> Option<Place<'_>> {
+        let (root, &walked) = if self.roots.len() == 1 {
+            self.roots.iter().next()?
+        } else if let Some(depth) = depth {
+            self.roots.get_key_value(path.ancestors().nth(depth)?)?
         } else {
-            containing.min_by_key(|(_, index)| **index)
+            path.ancestors()
+                .find_map(|ancestor| self.roots.get_key_value(ancestor))?
         };
-        first.map(|(root, &index)| (index, root.as_path()))
+        let Some(overlap) = &self.overlap else {
+            // No root contains another, so this one is the only one.
+            return Some(Place {
+                index: walked,
+                root,
+                path,
+                location: None,
+            });
+        };
+        // The walk doesn't follow symlinks below a root, so the rest of the
+        // path names the file or directory where it is.
+        let location = join(overlap.locations.get(root)?, path.strip_prefix(root).ok()?);
+        let (first, (index, root)) = location
+            .ancestors()
+            .filter_map(|ancestor| overlap.roots.get_key_value(ancestor))
+            .min_by_key(|(_, (index, _))| *index)?;
+        let path = if *index == walked {
+            path
+        } else {
+            join(root, location.strip_prefix(first).ok()?)
+        };
+        Some(Place {
+            index: *index,
+            root,
+            path,
+            location: Some(location),
+        })
     }
 
-    /// Whether this thread is the first to claim `path`.
-    fn claim(&self, path: &Path) -> bool {
-        self.seen
-            .as_ref()
-            .is_none_or(|seen| lock(seen).insert(path.to_path_buf()))
+    /// Whether this thread is the first to claim the path at `location`.
+    fn claim(&self, location: Option<PathBuf>) -> bool {
+        match (&self.overlap, location) {
+            (Some(overlap), Some(location)) => lock(&overlap.seen).insert(location),
+            _ => true,
+        }
     }
 
     fn unreadable(&self, error: &ignore::Error) {
@@ -323,17 +419,46 @@ impl Walk<'_> {
             let report = Report::unreadable(format!("{error}\n"));
             return self.report(usize::MAX, PathBuf::new(), report);
         };
-        // The walks of two overlapping roots can both fail to read a path.
-        if !self.claim(path) {
-            return;
-        }
-        let index = self.root(path).map_or(usize::MAX, |(index, _)| index);
-        let message = format!("{}: {cause}\n", display_path(self.cwd, path));
-        self.report(index, path.to_path_buf(), Report::unreadable(message));
+        let (index, path) = match self.place(path.to_path_buf(), None) {
+            Some(place) => {
+                // The walks of two overlapping roots can both fail to read a
+                // path.
+                if !self.claim(place.location) {
+                    return;
+                }
+                (place.index, place.path)
+            }
+            None => (usize::MAX, path.to_path_buf()),
+        };
+        let message = format!("{}: {cause}\n", display_path(self.cwd, &path));
+        self.report(index, path, Report::unreadable(message));
     }
 
     fn report(&self, root: usize, path: PathBuf, report: Report) {
         lock(&self.reports).push(((root, path), report));
+    }
+}
+
+/// What tells two named files apart: their device and inode.
+#[cfg(unix)]
+fn file_id(_path: &Path, metadata: &fs::Metadata) -> (u64, u64) {
+    use std::os::unix::fs::MetadataExt as _;
+    (metadata.dev(), metadata.ino())
+}
+
+/// What tells two named files apart: their location.
+#[cfg(not(unix))]
+fn file_id(path: &Path, _metadata: &fs::Metadata) -> PathBuf {
+    fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+}
+
+/// `base` joined with `rest`, without the trailing separator that joining an
+/// empty path adds.
+fn join(base: &Path, rest: &Path) -> PathBuf {
+    if rest.as_os_str().is_empty() {
+        base.to_path_buf()
+    } else {
+        base.join(rest)
     }
 }
 

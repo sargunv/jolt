@@ -262,6 +262,29 @@ fn overlapping_paths() {
     ));
 }
 
+/// Paths that name one file or directory through `..` are one path: each file
+/// is formatted once, under the spelling named first.
+#[test]
+fn paths_with_parent_components() {
+    let project = Project::new(&[("real/A.java", NESTED), ("B.java", NESTED), ("x/.keep", "")]);
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "real", "real/../real"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "real/../real", "real"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "B.java", "./x/../B.java"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "real/..", "real/A.java"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "real", "real/../real/A.java"], ""));
+}
+
+/// A path through a symlinked directory names the directory it links to.
+#[cfg(unix)]
+#[test]
+fn paths_through_symlinked_directories() {
+    let project = Project::new(&[("real/A.java", NESTED), ("real/b/B.java", NESTED)]);
+    std::os::unix::fs::symlink("real", project.dir.path().join("link")).unwrap();
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "link", "real"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "real/b", "link"], ""));
+    insta::assert_snapshot!(project.run(&["fmt", "--check", "real", "link/A.java"], ""));
+}
+
 #[test]
 fn format_flags_override_config() {
     let project = Project::new(&[("jolt.toml", "[format]\nindent-width = 4\nuse-tabs = true\n")]);
