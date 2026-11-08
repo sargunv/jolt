@@ -162,16 +162,14 @@ impl<'source> Scanner<'source> {
     }
 
     fn horizontal_whitespace(&mut self) -> SyntaxTrivia {
-        let start = self
-            .current_range()
-            .expect("whitespace starts before EOF")
-            .start();
-        while self.current_char().is_some_and(is_horizontal_whitespace) {
-            self.bump();
-        }
+        let start = self.pos;
+        self.pos += self.source.as_bytes()[start..]
+            .iter()
+            .take_while(|&&byte| matches!(byte, b' ' | b'\t' | b'\x0c'))
+            .count();
         SyntaxTrivia::new(
             SyntaxTriviaKind::Whitespace,
-            TextRange::new(start, TextSize::new(self.pos)).len(),
+            TextSize::new(self.pos - start),
         )
     }
 
@@ -190,57 +188,40 @@ impl<'source> Scanner<'source> {
     }
 
     fn line_comment(&mut self) -> SyntaxTrivia {
-        let start = self
-            .current_range()
-            .expect("comment starts before EOF")
-            .start();
-        self.bump();
-        self.bump();
-        while self
-            .current_char()
-            .is_some_and(|ch| ch != '\r' && ch != '\n')
-        {
-            self.bump();
-        }
+        let start = self.pos;
+        // Line terminators are ASCII, so they never occur inside a multi-byte
+        // character.
+        self.pos = self.source.as_bytes()[start + 2..]
+            .iter()
+            .position(|&byte| matches!(byte, b'\r' | b'\n'))
+            .map_or(self.source.len(), |end| start + 2 + end);
         SyntaxTrivia::new(
             SyntaxTriviaKind::LineComment,
-            TextRange::new(start, TextSize::new(self.pos)).len(),
+            TextSize::new(self.pos - start),
         )
     }
 
     fn block_comment(&mut self) -> SyntaxTrivia {
-        let start_pos = self.pos;
-        let start = self
-            .current_range()
-            .expect("comment starts before EOF")
-            .start();
+        let start = self.pos;
         let kind = if self.peek_char(2) == Some('*') && self.peek_char(3) != Some('/') {
             SyntaxTriviaKind::DocComment
         } else {
             SyntaxTriviaKind::BlockComment
         };
-
-        self.bump();
-        self.bump();
-        while !self.at_end() {
-            if self.current_char() == Some('*') && self.peek_char(1) == Some('/') {
-                self.bump();
-                self.bump();
-                return SyntaxTrivia::new(
-                    kind,
-                    TextRange::new(start, TextSize::new(self.pos)).len(),
-                );
-            }
-            self.bump();
+        if let Some(end) = find_block_comment_end(self.source, start) {
+            self.pos = end;
+            return SyntaxTrivia::new(kind, TextSize::new(end - start));
         }
-
+        self.pos = self.source.len();
         self.diagnostics.push(
-            JavaLexDiagnosticCode::UnterminatedBlockComment
-                .at(TextRange::new(start, self.raw_end_for_pos(start_pos))),
+            JavaLexDiagnosticCode::UnterminatedBlockComment.at(TextRange::new(
+                TextSize::new(start),
+                self.raw_end_for_pos(start),
+            )),
         );
         SyntaxTrivia::new(
             SyntaxTriviaKind::UnterminatedBlockComment,
-            TextRange::new(start, TextSize::new(self.pos)).len(),
+            TextSize::new(self.pos - start),
         )
     }
 
@@ -546,8 +527,15 @@ impl<'source> Scanner<'source> {
     fn identifier_or_keyword(&mut self) -> JavaSyntaxKind {
         let start = self.pos;
         self.bump();
-        while self.current_char().is_some_and(is_java_identifier_part) {
-            self.bump();
+        loop {
+            self.pos += self.source.as_bytes()[self.pos..]
+                .iter()
+                .take_while(|&&byte| is_ascii_identifier_part(byte))
+                .count();
+            match self.current_char() {
+                Some(ch) if !ch.is_ascii() && is_java_identifier_part(ch) => self.bump(),
+                _ => break,
+            }
         }
 
         let text = &self.source[start..self.pos];
@@ -885,23 +873,15 @@ fn utf8_char_width(byte: u8) -> usize {
     }
 }
 
+/// The end of the block comment that starts at `start`, after its `*/`.
 fn find_block_comment_end(source: &str, start: usize) -> Option<usize> {
-    let mut pos = start + 2;
-    while pos + 1 < source.len() {
-        if source.as_bytes()[pos] == b'*' && source.as_bytes()[pos + 1] == b'/' {
-            return Some(pos + 2);
-        }
-        pos += source[pos..]
-            .chars()
-            .next()
-            .expect("valid char boundary")
-            .len_utf8();
-    }
-    None
+    source[start + 2..]
+        .find("*/")
+        .map(|end| start + 2 + end + 2)
 }
 
 fn contains_line_terminator(text: &str) -> bool {
-    text.chars().any(|ch| matches!(ch, '\r' | '\n'))
+    text.bytes().any(|byte| matches!(byte, b'\r' | b'\n'))
 }
 
 const BYTE_ORDER_MARK: char = '\u{feff}';
@@ -915,6 +895,9 @@ fn is_line_terminator_start(ch: char) -> bool {
 }
 
 fn is_java_identifier_start(ch: char) -> bool {
+    if ch.is_ascii() {
+        return matches!(ch, 'A'..='Z' | 'a'..='z' | '$' | '_');
+    }
     matches!(
         get_general_category(ch),
         GeneralCategory::UppercaseLetter
@@ -929,6 +912,11 @@ fn is_java_identifier_start(ch: char) -> bool {
 }
 
 fn is_java_identifier_part(ch: char) -> bool {
+    if let Ok(byte) = u8::try_from(ch)
+        && byte.is_ascii()
+    {
+        return is_ascii_identifier_part(byte);
+    }
     is_java_identifier_start(ch)
         || matches!(
             get_general_category(ch),
@@ -938,6 +926,16 @@ fn is_java_identifier_part(ch: char) -> bool {
                 | GeneralCategory::EnclosingMark
         )
         || is_identifier_ignorable(ch)
+}
+
+/// [`is_java_identifier_part`] for an ASCII byte. In ASCII, the identifier
+/// categories hold only the letters, the digits, `$` and `_`; the other part
+/// bytes are ignorable controls.
+fn is_ascii_identifier_part(byte: u8) -> bool {
+    matches!(
+        byte,
+        b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'$' | b'_' | 0x00..=0x08 | 0x0e..=0x1b | 0x7f
+    )
 }
 
 fn is_identifier_ignorable(ch: char) -> bool {
