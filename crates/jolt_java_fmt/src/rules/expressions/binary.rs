@@ -61,8 +61,11 @@ fn operator_kind(node: BinaryExpression<'_>) -> Option<K> {
 
 /// Whether a left operand with operator `child` joins the chain of `parent`:
 /// same precedence, except that shifts and mixed or `%` multiplicative
-/// operators do not flatten.
-fn flattens(parent: K, child: K) -> bool {
+/// operators do not flatten. A missing operator joins nothing.
+fn flattens(parent: Option<K>, child: Option<K>) -> bool {
+    let (Some(parent), Some(child)) = (parent, child) else {
+        return false;
+    };
     let shift = |kind| matches!(kind, K::LShift | K::RShift | K::UnsignedRShift);
     let multiplicative = |kind| matches!(kind, K::Star | K::Slash | K::Percent);
     if binary_precedence(parent).is_none() || binary_precedence(parent) != binary_precedence(child)
@@ -108,13 +111,13 @@ fn transparent_left<'a>(
     let Some(Expression::BinaryExpression(inner)) = parenthesized.expression() else {
         return None;
     };
-    flattens(operator_kind(parent)?, operator_kind(inner)?).then_some((inner, parenthesized))
+    flattens(operator_kind(parent), operator_kind(inner)).then_some((inner, parenthesized))
 }
 
 /// A chain under construction: the first operand and `operator operand`
 /// pairs of one flattened precedence level.
 struct Run {
-    kind: K,
+    kind: Option<K>,
     first: Doc,
     rest: Vec<Doc>,
 }
@@ -166,27 +169,29 @@ fn chain<'a>(f: &mut JavaFormatter<'a>, outer: Operation<'a>) -> Doc {
     for (depth, &(operation, _)) in spine.iter().enumerate().rev() {
         match operation {
             Operation::Binary(node) => {
-                // A missing operator joins nothing.
-                let kind = operator_kind(node).unwrap_or(K::Eof);
-                let joins = run.as_ref().is_some_and(|run| flattens(kind, run.kind));
+                let kind = operator_kind(node);
                 let readability = needs_readability_parentheses(node);
-                if joins {
-                    run.as_mut().expect("a run joins").rest.push(trailing);
-                } else {
-                    if let Some(run) = run.take() {
-                        formatted = finish(f, run);
+                let mut current = match run.take() {
+                    Some(mut run) if flattens(kind, run.kind) => {
+                        run.rest.push(trailing);
+                        run
                     }
-                    let first = if readability && formatted_is_binary {
-                        parenthesized(f, formatted)
-                    } else {
-                        formatted
-                    };
-                    run = Some(Run {
-                        kind,
-                        first: cat![f; first, trailing],
-                        rest: Vec::new(),
-                    });
-                }
+                    finished => {
+                        if let Some(finished) = finished {
+                            formatted = finish(f, finished);
+                        }
+                        let first = if readability && formatted_is_binary {
+                            readability_parentheses(f, formatted)
+                        } else {
+                            formatted
+                        };
+                        Run {
+                            kind,
+                            first: cat![f; first, trailing],
+                            rest: Vec::new(),
+                        }
+                    }
+                };
                 let operator = f.token_opt(node.operator());
                 let operand = match node.right() {
                     Some(Expression::BinaryExpression(right))
@@ -194,19 +199,21 @@ fn chain<'a>(f: &mut JavaFormatter<'a>, outer: Operation<'a>) -> Doc {
                     {
                         let leading = f.leading_comments(right.syntax());
                         let body = chain(f, Operation::Binary(right));
-                        let body = parenthesized(f, body);
+                        let body = readability_parentheses(f, body);
                         let trailing = f.trailing_comments(right.syntax());
                         cat![f; leading, body, trailing]
                     }
                     Some(Expression::BinaryExpression(right)) if readability => {
                         let body = f.fmt(right);
-                        parenthesized(f, body)
+                        readability_parentheses(f, body)
                     }
                     right => f.fmt_opt(right),
                 };
-                let run = run.as_mut().expect("a run was started");
-                run.kind = kind;
-                run.rest.extend([f.line(), operator, f.space(), operand]);
+                current.kind = kind;
+                current
+                    .rest
+                    .extend([f.line(), operator, f.space(), operand]);
+                run = Some(current);
                 formatted = Doc::NIL;
                 formatted_is_binary = true;
             }
@@ -235,7 +242,7 @@ fn chain<'a>(f: &mut JavaFormatter<'a>, outer: Operation<'a>) -> Doc {
 
 /// Synthesized readability parentheses (N7), which break like a
 /// parenthesized expression.
-fn parenthesized(f: &mut JavaFormatter<'_>, doc: Doc) -> Doc {
+fn readability_parentheses(f: &mut JavaFormatter<'_>, doc: Doc) -> Doc {
     let inner = indent![f; f.soft_line(), doc];
     let (open, close) = (f.text("("), f.text(")"));
     group![f; open, inner, f.soft_line(), close]

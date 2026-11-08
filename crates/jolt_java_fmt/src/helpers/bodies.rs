@@ -1,8 +1,8 @@
 //! Braced bodies and their item separators.
 
 use jolt_fmt::{Doc, ListItem, Separator, cat};
-use jolt_java_syntax::JavaSyntaxKind as K;
-use jolt_syntax::{SyntaxNode, SyntaxToken};
+use jolt_java_syntax::{BlockItem, BlockStatement, JavaSyntaxKind as K};
+use jolt_syntax::{AstNode, SyntaxNode, SyntaxToken};
 
 use crate::JavaFormatter;
 
@@ -53,34 +53,46 @@ fn kind(node: SyntaxNode<'_>) -> K {
     K::from_raw(node.kind())
 }
 
-/// A removed `;` whose comments stand in its place.
-fn is_carrier(node: SyntaxNode<'_>) -> bool {
-    matches!(kind(node), K::EmptyDeclaration | K::EmptyStatement)
-        || (kind(node) == K::BlockStatement
-            && node
-                .children()
-                .next()
-                .and_then(jolt_syntax::SyntaxElement::as_node)
-                .is_some_and(|child| kind(child) == K::EmptyStatement))
+/// A stray `;`: an empty declaration or empty statement.
+fn is_stray_semicolon(node: SyntaxNode<'_>) -> bool {
+    match kind(node) {
+        K::EmptyDeclaration | K::EmptyStatement => true,
+        K::BlockStatement => BlockStatement::cast(node)
+            .and_then(BlockStatement::item)
+            .is_some_and(|item| matches!(item, BlockItem::EmptyStatement(_))),
+        _ => false,
+    }
 }
 
-fn line_or_blank(f: &JavaFormatter<'_>, blank: bool) -> Doc {
-    if blank { f.empty_line() } else { f.hard_line() }
+/// The items of a body as item-list items, each stray `;` elided (N5) when
+/// `owner` is recovery-free.
+pub(crate) fn body_items<'a>(
+    owner: SyntaxNode<'a>,
+    items: impl IntoIterator<Item = SyntaxNode<'a>>,
+) -> Vec<ListItem<'a>> {
+    let normalize = owner.is_recovery_free();
+    items
+        .into_iter()
+        .map(|item| {
+            if normalize && is_stray_semicolon(item) {
+                ListItem::Elide(item)
+            } else {
+                ListItem::Format(item)
+            }
+        })
+        .collect()
 }
 
 /// Members: a blank line between two members, except between two fields,
 /// which keep the source's choice. The comments of a removed `;` keep the
 /// source's choice too.
 pub(crate) fn member_separator<'a>(f: &mut JavaFormatter<'a>, separator: Separator<'a>) -> Doc {
-    if is_carrier(separator.prev) {
-        return line_or_blank(f, separator.blank_line_in_source);
-    }
     let fields =
         kind(separator.prev) == K::FieldDeclaration && kind(separator.next) == K::FieldDeclaration;
-    line_or_blank(f, !fields || separator.blank_line_in_source)
+    f.line_break(separator.blank_line_in_source || !(fields || is_stray_semicolon(separator.prev)))
 }
 
 /// Statements: a blank line iff the source had one.
 pub(crate) fn statement_separator<'a>(f: &mut JavaFormatter<'a>, separator: Separator<'a>) -> Doc {
-    line_or_blank(f, separator.blank_line_in_source)
+    f.line_break(separator.blank_line_in_source)
 }

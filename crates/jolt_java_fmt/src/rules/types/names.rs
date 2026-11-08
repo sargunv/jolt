@@ -1,8 +1,10 @@
 //! Simple and qualified names: the dotted name on one line.
 
 use jolt_fmt::{Doc, cat};
-use jolt_java_syntax::{Name, QualifiedName, QualifiedNameSegmentNode};
-use jolt_syntax::ListElement;
+use jolt_java_syntax::{
+    Name, NameSegmentDotList, NameSyntax, QualifiedName, QualifiedNameSegmentNode,
+};
+use jolt_syntax::{AstNode, ListElement, SyntaxToken};
 
 use crate::JavaFormatter;
 
@@ -19,7 +21,7 @@ pub(crate) fn qualified_name<'a>(f: &mut JavaFormatter<'a>, node: QualifiedName<
     for element in node
         .remaining_segments()
         .into_iter()
-        .flat_map(jolt_java_syntax::NameSegmentDotList::elements)
+        .flat_map(NameSegmentDotList::elements)
     {
         let segment = match element {
             ListElement::Item(segment) => f.fmt(segment),
@@ -55,4 +57,9 @@ pub(crate) fn qualified_name_segment_node<'a>(
     let annotations = f.fmt_opt(node.annotations());
     let identifier = f.token_opt(node.identifier());
     cat![f; annotations, identifier]
+}
+
+/// The dotted name without whitespace or comments, a sort key.
+pub(crate) fn name_key(name: NameSyntax<'_>) -> String {
+    name.syntax().tokens().map(SyntaxToken::text).collect()
 }

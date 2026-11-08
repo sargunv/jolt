@@ -1,12 +1,14 @@
 //! The Java `FormatLanguage`: separator and delimiter tables, the
-//! formatter-ignore scopes, and comment hooks H1–H5.
+//! formatter-ignore scopes, and comment hooks H1, H2, H4 and H5.
 
 use jolt_fmt::{
     CommentContext, CommentKind, CommentLayout, Doc, FormatLanguage, Formatter, Placement,
     leading_target,
 };
-use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind as K, is_assignment_operator};
-use jolt_syntax::{RawSyntaxKind, SyntaxElement, SyntaxNode, SyntaxToken};
+use jolt_java_syntax::{
+    IfStatement, JavaLanguage, JavaSyntaxKind as K, Statement, is_assignment_operator,
+};
+use jolt_syntax::{AstNode, RawSyntaxKind, SyntaxElement, SyntaxNode, SyntaxToken};
 
 /// The Java formatter language.
 pub struct JavaFormat;
@@ -88,7 +90,7 @@ impl FormatLanguage for JavaFormat {
     fn place_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>> {
         let prev = context.prev?;
         body_comment(context, prev)
-            .or_else(|| crate::rules::statements::promoted_body_comment(context))
+            .or_else(|| promoted_body_comment(context, prev))
             .or_else(|| block_comment_after_opener(context, prev))
     }
 
@@ -127,53 +129,46 @@ fn next_sibling<'a>(
     children.next()
 }
 
-/// H1: a comment between a header and its body moves into the body. Before
-/// a body's `{` (of a declaration, control statement, lambda, switch rule or
-/// initializer) that is every comment but an inline one; before the
-/// non-block body of a control statement, an end-of-line comment or an
-/// own-line line comment.
+/// H1: a comment between a header and its body moves into the body: every
+/// comment but an inline one before a body's `{` (of a declaration, control
+/// statement, lambda, switch rule or initializer), and an end-of-line comment
+/// or an own-line line comment before the non-block body of a control
+/// statement.
 fn body_comment<'a>(
     context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let comment = context.comment;
-    let mut next = context.next;
+    let next = context.next;
     // S1 would move an end-of-line line comment past a separator that the
     // `{` follows (a trailing separator, recovery), so it goes in as well.
-    if comment.kind == CommentKind::Line
+    let open = if comment.kind == CommentKind::Line
         && comment.layout == CommentLayout::EndOfLine
         && JavaFormat::is_separator(next)
         && !JavaFormat::is_separator(prev)
-        && let Some(open) = next.next().filter(|&open| kind(open) == K::LBrace)
     {
-        next = open;
-    }
-    let body = if kind(next) == K::LBrace {
-        if comment.layout == CommentLayout::Inline {
-            return None;
-        }
-        braced_body(context, prev, next)?
+        next.next().filter(|&open| kind(open) == K::LBrace)
     } else {
-        let applies = match comment.layout {
-            CommentLayout::EndOfLine => true,
-            CommentLayout::OwnLine | CommentLayout::StartOfLine => {
-                comment.kind == CommentKind::Line
-            }
-            CommentLayout::Inline => false,
-        };
-        if !applies {
-            return None;
-        }
-        let body = control_body(prev)?;
-        if body.first_token() != Some(next) || node_kind(body).is_list() {
-            return None;
-        }
-        return Some(Placement::Leading(
-            SyntaxElement::Node(body),
-            CommentLayout::OwnLine,
-        ));
+        Some(next).filter(|&next| kind(next) == K::LBrace)
     };
-    let inner = next
+    match open {
+        Some(open) => braced_body_comment(context, prev, open),
+        None => unbraced_body_comment(context, prev),
+    }
+}
+
+/// H1 before the `{` of a body: the comment leads what follows the `{`, or
+/// dangles in an empty body.
+fn braced_body_comment<'a>(
+    context: &CommentContext<'a, '_>,
+    prev: SyntaxToken<'a>,
+    open: SyntaxToken<'a>,
+) -> Option<Placement<'a>> {
+    if context.comment.layout == CommentLayout::Inline {
+        return None;
+    }
+    let body = braced_body(context, prev, open)?;
+    let inner = open
         .next()
         .filter(|&inner| !(inner.parent() == body && JavaFormat::is_closer(inner)));
     Some(match inner {
@@ -183,6 +178,31 @@ fn body_comment<'a>(
         ),
         None => Placement::Dangling(body),
     })
+}
+
+/// H1 before a control statement's non-block body: the comment leads the
+/// body on its own line.
+fn unbraced_body_comment<'a>(
+    context: &CommentContext<'a, '_>,
+    prev: SyntaxToken<'a>,
+) -> Option<Placement<'a>> {
+    let comment = context.comment;
+    let applies = match comment.layout {
+        CommentLayout::EndOfLine => true,
+        CommentLayout::OwnLine | CommentLayout::StartOfLine => comment.kind == CommentKind::Line,
+        CommentLayout::Inline => false,
+    };
+    if !applies {
+        return None;
+    }
+    let body = control_body(prev)?;
+    if body.first_token() != Some(context.next) || node_kind(body).is_list() {
+        return None;
+    }
+    Some(Placement::Leading(
+        SyntaxElement::Node(body),
+        CommentLayout::OwnLine,
+    ))
 }
 
 /// The body that `open` begins, when it follows a header in the same parent.
@@ -259,6 +279,41 @@ fn control_body(prev: SyntaxToken<'_>) -> Option<SyntaxNode<'_>> {
         return None;
     }
     Some(body)
+}
+
+/// H4, tried after H1: an end-of-line comment after the last token of a
+/// control statement's final non-block body (`if (a) return; // c`) would
+/// trail the whole statement by the generic rules, so it would print after
+/// the synthesized `}` of brace promotion. It trails the body instead and
+/// stays inside the block.
+fn promoted_body_comment<'a>(
+    context: &CommentContext<'a, '_>,
+    prev: SyntaxToken<'a>,
+) -> Option<Placement<'a>> {
+    if context.comment.layout != CommentLayout::EndOfLine {
+        return None;
+    }
+    let mut node = prev.parent();
+    while node.last_token() == Some(prev) {
+        let parent = node.parent()?;
+        let kind = node_kind(node);
+        let body = match node_kind(parent) {
+            K::IfStatement => IfStatement::cast(parent).is_some_and(|statement| {
+                let is_else = statement.else_branch().map(AstNode::syntax) == Some(node);
+                !(is_else && kind == K::IfStatement)
+            }),
+            K::WhileStatement | K::BasicForStatement | K::EnhancedForStatement => true,
+            _ => false,
+        };
+        if body && kind != K::Block && Statement::can_cast(node.kind()) {
+            return Some(Placement::Trailing(
+                SyntaxElement::Node(node),
+                CommentLayout::EndOfLine,
+            ));
+        }
+        node = parent;
+    }
+    None
 }
 
 fn is_header_clause(node: SyntaxNode<'_>) -> bool {

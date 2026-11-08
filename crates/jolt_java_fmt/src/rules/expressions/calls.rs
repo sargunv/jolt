@@ -9,18 +9,14 @@ use jolt_java_syntax::{
 use jolt_syntax::AstNode;
 
 use crate::JavaFormatter;
-use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
+use crate::helpers::lists::{ListLayout, delimited};
 
 pub(crate) fn unqualified_method_invocation<'a>(
     f: &mut JavaFormatter<'a>,
     node: UnqualifiedMethodInvocation<'a>,
 ) -> Doc {
     let type_arguments = f.fmt_opt(node.type_arguments());
-    let name = match node.name() {
-        Some(UnqualifiedInvocationName::Token(token)) => f.token(token),
-        Some(UnqualifiedInvocationName::NameExpression(name)) => f.fmt(name),
-        None => Doc::NIL,
-    };
+    let name = f.element_opt(node.name().map(UnqualifiedInvocationName::element));
     let arguments = f.fmt_opt(node.arguments());
     cat![f; type_arguments, name, arguments]
 }
@@ -32,11 +28,7 @@ pub(super) fn qualified_invocation_segment<'a>(
 ) -> Doc {
     let dot = f.token_opt(node.dot());
     let type_arguments = f.fmt_opt(node.type_arguments());
-    let name = match node.name() {
-        Some(QualifiedInvocationName::Token(token)) => f.token(token),
-        Some(QualifiedInvocationName::NameExpression(name)) => f.fmt(name),
-        None => Doc::NIL,
-    };
+    let name = f.element_opt(node.name().map(QualifiedInvocationName::element));
     let arguments = f.fmt_opt(node.arguments());
     cat![f; dot, type_arguments, name, arguments]
 }
@@ -61,9 +53,6 @@ pub(crate) fn argument_list<'a>(f: &mut JavaFormatter<'a>, node: ArgumentList<'a
             .into_iter()
             .flat_map(ExpressionList::elements),
         node.close_paren(),
-        ListLayout {
-            padded: false,
-            trailing_comma: TrailingComma::Never,
-        },
+        ListLayout::Plain,
     )
 }

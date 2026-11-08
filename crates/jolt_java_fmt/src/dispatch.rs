@@ -72,7 +72,7 @@ fn rule(kind: K) -> Rule {
         }
         K::EnumBody => |f, node| declarations::enum_body(f, cast(node)),
         K::EnumConstant => |f, node| declarations::enum_constant(f, cast(node)),
-        K::RecordComponent => |f, node| declarations::record_component(f, cast(node)),
+        K::RecordComponent => |f, node| types::record_component(f, cast(node)),
         K::FieldDeclaration => |f, node| declarations::field_declaration(f, cast(node)),
         K::MethodDeclaration => |f, node| declarations::method_declaration(f, cast(node)),
         K::ConstructorDeclaration => |f, node| declarations::constructor_declaration(f, cast(node)),

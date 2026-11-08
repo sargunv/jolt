@@ -2,30 +2,60 @@
 
 use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
-    FormalParameter, ReceiverParameter, VariableDeclarator, VariableDeclaratorList,
-    VariableInitializer,
+    AnnotationList, FormalParameter, ParameterModifierList, ReceiverParameter, RecordComponent,
+    Type, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
 };
-use jolt_syntax::ListElement;
+use jolt_syntax::{ListElement, SyntaxToken};
 
 use super::modifiers::inline_modifiers;
 use crate::JavaFormatter;
 use crate::helpers::assignment::assignment_like;
+use crate::helpers::lists::list_item;
+use crate::helpers::spaced;
 
 pub(crate) fn formal_parameter<'a>(f: &mut JavaFormatter<'a>, node: FormalParameter<'a>) -> Doc {
-    let modifiers = match node.modifiers() {
-        Some(modifiers) => inline_modifiers(f, modifiers),
-        None => Doc::NIL,
-    };
-    let ty = f.fmt_opt(node.r#type());
-    let varargs_annotations = f.fmt_opt(node.varargs_annotations());
-    let varargs_annotations = if varargs_annotations.is_nil() {
-        Doc::NIL
-    } else {
-        cat![f; f.space(), varargs_annotations]
-    };
-    let ellipsis = f.token_opt(node.ellipsis());
-    let name = f.token_opt(node.name());
     let dimensions = f.fmt_opt(node.dimensions());
+    parameter(
+        f,
+        node.modifiers(),
+        node.r#type(),
+        node.varargs_annotations(),
+        node.ellipsis(),
+        node.name(),
+        dimensions,
+    )
+}
+
+/// One component, laid out like a formal parameter.
+pub(crate) fn record_component<'a>(f: &mut JavaFormatter<'a>, node: RecordComponent<'a>) -> Doc {
+    parameter(
+        f,
+        node.modifiers(),
+        node.r#type(),
+        node.varargs_annotations(),
+        node.ellipsis(),
+        node.name(),
+        Doc::NIL,
+    )
+}
+
+/// `modifiers Type @A... name dimensions`, modifiers inline. The annotations
+/// before `...` print with a space before them.
+fn parameter<'a>(
+    f: &mut JavaFormatter<'a>,
+    modifiers: Option<ParameterModifierList<'a>>,
+    ty: Option<Type<'a>>,
+    varargs_annotations: Option<AnnotationList<'a>>,
+    ellipsis: Option<SyntaxToken<'a>>,
+    name: Option<SyntaxToken<'a>>,
+    dimensions: Doc,
+) -> Doc {
+    let modifiers = inline_modifiers(f, modifiers);
+    let ty = f.fmt_opt(ty);
+    let varargs_annotations = f.fmt_opt(varargs_annotations);
+    let varargs_annotations = spaced(f, varargs_annotations);
+    let ellipsis = f.token_opt(ellipsis);
+    let name = f.token_opt(name);
     cat![f; modifiers, ty, varargs_annotations, ellipsis, f.space(), name, dimensions]
 }
 
@@ -50,32 +80,24 @@ pub(crate) fn variable_declarator_list<'a>(
     f: &mut JavaFormatter<'a>,
     node: VariableDeclaratorList<'a>,
 ) -> Doc {
-    let mut first = Doc::NIL;
-    let mut rest = Vec::new();
-    let mut seen_item = false;
-    for element in node.elements() {
-        let doc = match element {
-            ListElement::Item(declarator) => f.fmt(declarator),
-            ListElement::Bogus(bogus) => f.node(bogus),
-            ListElement::Separator(comma) => {
-                let comma = f.token(comma);
-                rest.extend([comma, f.line()]);
-                continue;
-            }
-            ListElement::Missing => continue,
-        };
-        if seen_item {
-            rest.push(doc);
+    let mut docs = Vec::new();
+    // Something besides one declarator: a second one, or a comma.
+    let mut several = false;
+    for element in node
+        .elements()
+        .filter(|element| !matches!(element, ListElement::Missing))
+    {
+        several |= !docs.is_empty() || matches!(element, ListElement::Separator(_));
+        if let ListElement::Separator(comma) = element {
+            docs.extend([f.token(comma), f.line()]);
         } else {
-            first = doc;
-            seen_item = true;
+            docs.push(list_item(f, element));
         }
     }
-    if rest.is_empty() {
-        return first;
+    let list = f.concat(docs);
+    if !several {
+        return list;
     }
-    let rest = f.concat(rest);
-    let list = cat![f; first, rest];
     let list = f.indent(list);
     f.group(list)
 }

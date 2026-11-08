@@ -3,13 +3,14 @@
 use jolt_fmt::{Doc, cat, indent};
 use jolt_java_syntax::{
     AnnotationInterfaceDeclaration, ClassDeclaration, EnumDeclaration, ExtendsClause,
-    ImplementsClause, InterfaceDeclaration, JavaSyntaxKind as K, PermitsClause, RecordDeclaration,
-    ThrowsClause,
+    ImplementsClause, InterfaceDeclaration, JavaSyntaxKind as K, NameList, PermitsClause,
+    RecordComponentList, RecordDeclaration, ThrowsClause, TypeList,
 };
 use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
 use crate::JavaFormatter;
-use crate::helpers::lists::{ListLayout, TrailingComma, delimited, joined};
+use crate::helpers::lists::{ListLayout, delimited, joined};
+use crate::helpers::spaced_node;
 
 pub(crate) fn class_declaration<'a>(f: &mut JavaFormatter<'a>, node: ClassDeclaration<'a>) -> Doc {
     let modifiers = f.fmt_opt(node.modifiers());
@@ -31,7 +32,7 @@ pub(crate) fn class_declaration<'a>(f: &mut JavaFormatter<'a>, node: ClassDeclar
         f,
         modifiers,
         header,
-        node.body().map(AstNode::syntax),
+        node.body(),
         node.missing_body_semicolon(),
     )
 }
@@ -58,7 +59,7 @@ pub(crate) fn interface_declaration<'a>(
         f,
         modifiers,
         header,
-        node.body().map(AstNode::syntax),
+        node.body(),
         node.missing_body_semicolon(),
     )
 }
@@ -77,22 +78,16 @@ pub(crate) fn record_declaration<'a>(
         f.fmt_opt(node.type_parameters()),
     ];
     let implements = node.implements().map(AstNode::syntax);
-    let (close, tail) = match implements {
-        Some(_) => (node.close_paren(), None),
-        None => (None, node.close_paren()),
-    };
+    let (close, tail) = split_close(node.close_paren(), implements.is_none());
     head.push(delimited(
         f,
         node.syntax(),
         node.open_paren(),
         node.components()
             .into_iter()
-            .flat_map(jolt_java_syntax::RecordComponentList::elements),
+            .flat_map(RecordComponentList::elements),
         close,
-        ListLayout {
-            padded: false,
-            trailing_comma: TrailingComma::Never,
-        },
+        ListLayout::Plain,
     ));
     let lead = node.record_keyword().map(SyntaxElement::Token);
     let end = implements.map_or(HeaderEnd::Tail(tail), |clause| {
@@ -103,7 +98,7 @@ pub(crate) fn record_declaration<'a>(
         f,
         modifiers,
         header,
-        node.body().map(AstNode::syntax),
+        node.body(),
         node.missing_body_semicolon(),
     )
 }
@@ -123,7 +118,7 @@ pub(crate) fn enum_declaration<'a>(f: &mut JavaFormatter<'a>, node: EnumDeclarat
         f,
         modifiers,
         header,
-        node.body().map(AstNode::syntax),
+        node.body(),
         node.missing_body_semicolon(),
     )
 }
@@ -146,7 +141,7 @@ pub(crate) fn annotation_interface_declaration<'a>(
         f,
         modifiers,
         header,
-        node.body().map(AstNode::syntax),
+        node.body(),
         node.missing_body_semicolon(),
     )
 }
@@ -156,18 +151,25 @@ fn with_body<'a>(
     f: &mut JavaFormatter<'a>,
     modifiers: Doc,
     header: Doc,
-    body: Option<SyntaxNode<'a>>,
+    body: Option<impl AstNode<'a>>,
     missing_body_semicolon: Option<SyntaxToken<'a>>,
 ) -> Doc {
-    let body = match body {
-        Some(body) => {
-            let body = f.node(body);
-            cat![f; f.space(), body]
-        }
-        None => Doc::NIL,
-    };
+    let body = spaced_node(f, body);
     let semicolon = f.token_opt(missing_body_semicolon);
     cat![f; modifiers, header, body, semicolon]
+}
+
+/// The `)` of a header: inside the parameter list, or, when it ends the
+/// head, the header's tail (see `header`).
+pub(super) fn split_close(
+    close: Option<SyntaxToken<'_>>,
+    ends_head: bool,
+) -> (Option<SyntaxToken<'_>>, Option<SyntaxToken<'_>>) {
+    if ends_head {
+        (None, close)
+    } else {
+        (close, None)
+    }
 }
 
 /// What ends a declaration header: a closer that ends the head (the `)` of
@@ -243,34 +245,22 @@ fn clause_body<'a>(f: &mut JavaFormatter<'a>, clause: SyntaxNode<'a>) -> Doc {
 }
 
 pub(crate) fn extends_clause<'a>(f: &mut JavaFormatter<'a>, node: ExtendsClause<'a>) -> Doc {
-    let elements = node
-        .types()
-        .into_iter()
-        .flat_map(jolt_java_syntax::TypeList::elements);
+    let elements = node.types().into_iter().flat_map(TypeList::elements);
     header_clause(f, node.extends_keyword(), elements)
 }
 
 pub(crate) fn implements_clause<'a>(f: &mut JavaFormatter<'a>, node: ImplementsClause<'a>) -> Doc {
-    let elements = node
-        .types()
-        .into_iter()
-        .flat_map(jolt_java_syntax::TypeList::elements);
+    let elements = node.types().into_iter().flat_map(TypeList::elements);
     header_clause(f, node.implements_keyword(), elements)
 }
 
 pub(crate) fn permits_clause<'a>(f: &mut JavaFormatter<'a>, node: PermitsClause<'a>) -> Doc {
-    let elements = node
-        .names()
-        .into_iter()
-        .flat_map(jolt_java_syntax::NameList::elements);
+    let elements = node.names().into_iter().flat_map(NameList::elements);
     header_clause(f, node.permits_keyword(), elements)
 }
 
 pub(crate) fn throws_clause<'a>(f: &mut JavaFormatter<'a>, node: ThrowsClause<'a>) -> Doc {
-    let elements = node
-        .exceptions()
-        .into_iter()
-        .flat_map(jolt_java_syntax::TypeList::elements);
+    let elements = node.exceptions().into_iter().flat_map(TypeList::elements);
     header_clause(f, node.throws_keyword(), elements)
 }
 
@@ -282,17 +272,10 @@ pub(super) fn header_clause<'a, T: AstNode<'a>>(
     elements: impl Iterator<Item = ListElement<'a, T>>,
 ) -> Doc {
     let keyword = f.token_opt(keyword);
-    let items = comma_items(f, elements);
-    let items = cat![f; f.line(), items];
+    let line = f.line();
+    let items = joined(f, elements, line);
+    let items = cat![f; line, items];
     let items = f.group(items);
     let items = f.indent(items);
     cat![f; keyword, items]
-}
-
-/// The elements of a comma list with a `line` after each comma.
-fn comma_items<'a, T: AstNode<'a>>(
-    f: &mut JavaFormatter<'a>,
-    elements: impl Iterator<Item = ListElement<'a, T>>,
-) -> Doc {
-    joined(f, elements, |f| f.line())
 }

@@ -161,33 +161,32 @@ impl<'a> Link<'a> {
         matches!(self, Self::Call(..) | Self::Field(_))
     }
 
-    /// The `.` of a member link.
+    /// The `.` directly after the receiver, if the link has one.
     fn dot(self) -> Option<SyntaxToken<'a>> {
         match self {
             Self::Call(_, form) => form.dot(),
             Self::Field(node) => node.dot(),
-            _ => None,
+            Self::ClassLiteral(node) if node.dimensions().is_none() => node.dot(),
+            Self::New(node) => node.dot(),
+            Self::This(node) => node.dot(),
+            Self::Super(node) => node.dot(),
+            Self::ClassLiteral(_)
+            | Self::Form(_)
+            | Self::Index(_)
+            | Self::Postfix(_)
+            | Self::Reference(_) => None,
         }
     }
-}
 
-/// Whether the link's `.` directly after its receiver would lex into an
-/// integer literal before it.
-fn merges_with_dot(link: Link<'_>) -> bool {
-    let dot = match link {
-        Link::Call(_, form) => form.dot(),
-        Link::Field(node) => node.dot(),
-        Link::ClassLiteral(node) if node.dimensions().is_none() => node.dot(),
-        Link::New(node) => node.dot(),
-        Link::This(node) => node.dot(),
-        Link::Super(node) => node.dot(),
-        _ => None,
-    };
-    dot.is_some()
-        && link
-            .receiver()
-            .and_then(SyntaxNode::last_token)
-            .is_some_and(|last| K::from_raw(last.kind()) == K::IntegerLiteral)
+    /// Whether the link's `.` directly after its receiver would lex into an
+    /// integer literal before it.
+    fn merges_with_dot(self) -> bool {
+        self.dot().is_some()
+            && self
+                .receiver()
+                .and_then(SyntaxNode::last_token)
+                .is_some_and(|last| K::from_raw(last.kind()) == K::IntegerLiteral)
+    }
 }
 
 /// What the link adds after its receiver.
@@ -282,7 +281,7 @@ fn spine<'a>(f: &mut JavaFormatter<'a>, outer: SyntaxNode<'a>) -> Doc {
     for (index, &link) in links.iter().enumerate().rev() {
         let segment = segment(f, link);
         // `1 .class` (recovery only): `1.` would lex as a float literal.
-        let separator = if merges_with_dot(link) {
+        let separator = if link.merges_with_dot() {
             f.space()
         } else {
             Doc::NIL

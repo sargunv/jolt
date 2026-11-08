@@ -8,9 +8,9 @@ use jolt_java_syntax::{
 };
 use jolt_syntax::{AstNode, SyntaxElement};
 
-use super::parenthesized;
 use crate::JavaFormatter;
-use crate::helpers::lists::{joined, list_item};
+use crate::helpers::lists::{joined, list_item, parenthesized};
+use crate::helpers::spaced_node;
 use crate::rules::types::inline_modifiers;
 
 /// `try {` … `} catch (…) {` … `} finally {` … `}`.
@@ -44,9 +44,7 @@ fn clauses<'a>(
     for clause in catches.into_iter().flat_map(CatchClauseList::elements) {
         docs.extend([f.space(), list_item(f, clause)]);
     }
-    if let Some(finally) = finally {
-        docs.extend([f.space(), f.fmt(finally)]);
-    }
+    docs.push(spaced_node(f, finally));
     f.concat(docs)
 }
 
@@ -66,9 +64,7 @@ pub(crate) fn catch_clause<'a>(f: &mut JavaFormatter<'a>, node: CatchClause<'a>)
 
 /// `final @A Type | Other name`, modifiers inline.
 pub(crate) fn catch_parameter<'a>(f: &mut JavaFormatter<'a>, node: CatchParameter<'a>) -> Doc {
-    let modifiers = node
-        .modifiers()
-        .map_or(Doc::NIL, |modifiers| inline_modifiers(f, modifiers));
+    let modifiers = inline_modifiers(f, node.modifiers());
     let types = f.fmt_opt(node.types());
     let name = f.token_opt(node.name());
     let dimensions = f.fmt_opt(node.dimensions());
@@ -96,7 +92,8 @@ pub(crate) fn resource_specification<'a>(
         .resources()
         .into_iter()
         .flat_map(ResourceList::elements);
-    let mut docs = vec![joined(f, resources, |f| f.line())];
+    let line = f.line();
+    let mut docs = vec![joined(f, resources, line)];
     if let Some(semicolon) = node.trailing_semicolon() {
         if node.syntax().is_recovery_free() {
             let removed = f.removed(SyntaxElement::Token(semicolon));
@@ -127,14 +124,8 @@ pub(crate) fn resource_variable_declaration<'a>(
     f: &mut JavaFormatter<'a>,
     node: ResourceVariableDeclaration<'a>,
 ) -> Doc {
-    let modifiers = node
-        .modifiers()
-        .map_or(Doc::NIL, |modifiers| inline_modifiers(f, modifiers));
-    let ty = match node.r#type() {
-        Some(ResourceVariableType::Type(ty)) => f.fmt(ty),
-        Some(ResourceVariableType::Token(token)) => f.token(token),
-        None => Doc::NIL,
-    };
+    let modifiers = inline_modifiers(f, node.modifiers());
+    let ty = f.element_opt(node.r#type().map(ResourceVariableType::element));
     let name = f.token_opt(node.name());
     let dimensions = f.fmt_opt(node.dimensions());
     let assign = f.token_opt(node.assign());

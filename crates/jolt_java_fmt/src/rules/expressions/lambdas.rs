@@ -2,12 +2,13 @@
 
 use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
-    LambdaExpression, LambdaModifier, LambdaModifierList, LambdaParameter, LambdaParameterList,
+    LambdaExpression, LambdaModifierList, LambdaParameter, LambdaParameterList,
 };
 use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxToken};
 
 use crate::JavaFormatter;
-use crate::helpers::lists::{ListLayout, TrailingComma, delimited, joined};
+use crate::helpers::lists::{ListLayout, delimited, joined};
+use crate::helpers::spaced;
 
 /// `parameters -> body`. Parameters that do not fit break as a list.
 pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpression<'a>) -> Doc {
@@ -24,7 +25,7 @@ pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpre
                 .parameters()
                 .into_iter()
                 .flat_map(LambdaParameterList::elements);
-            joined(f, parameters, |_| Doc::NIL)
+            joined(f, parameters, Doc::NIL)
         }
         None => delimited(
             f,
@@ -34,10 +35,7 @@ pub(crate) fn lambda_expression<'a>(f: &mut JavaFormatter<'a>, node: LambdaExpre
                 .into_iter()
                 .flat_map(LambdaParameterList::elements),
             node.close_paren(),
-            ListLayout {
-                padded: false,
-                trailing_comma: TrailingComma::Never,
-            },
+            ListLayout::Plain,
         ),
     };
     let arrow = f.token_opt(node.arrow());
@@ -71,10 +69,9 @@ fn single_untyped_parameter<'a>(
         && parameter.ellipsis().is_none()
         && parameter.dimensions().is_none();
     let quiet = !f.has_comments_within(parameter.syntax())
-        && [open, close].into_iter().all(|token| {
-            let token = SyntaxElement::Token(token);
-            !f.has_leading_comments(token) && !f.has_trailing_comments(token)
-        });
+        && [open, close]
+            .into_iter()
+            .all(|token| !f.has_comments(SyntaxElement::Token(token)));
     (untyped && quiet).then_some(parameter)
 }
 
@@ -86,21 +83,12 @@ pub(crate) fn lambda_parameter<'a>(f: &mut JavaFormatter<'a>, node: LambdaParame
         .into_iter()
         .flat_map(LambdaModifierList::items)
     {
-        docs.push(match modifier {
-            LambdaModifier::Annotation(annotation) => f.fmt(annotation),
-            LambdaModifier::Bogus(bogus) => f.fmt(bogus),
-            LambdaModifier::Token(token) => f.token(token),
-        });
-        docs.push(f.space());
+        docs.extend([f.element(modifier.element()), f.space()]);
     }
     let ty = node.r#type();
     docs.push(f.fmt_opt(ty));
-    if let Some(annotations) = node.varargs_annotations()
-        && annotations.elements().next().is_some()
-    {
-        docs.push(f.space());
-        docs.push(f.fmt(annotations));
-    }
+    let annotations = f.fmt_opt(node.varargs_annotations());
+    docs.push(spaced(f, annotations));
     let ellipsis = node.ellipsis();
     docs.push(f.token_opt(ellipsis));
     if ty.is_some() || ellipsis.is_some() {
