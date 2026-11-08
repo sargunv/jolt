@@ -1303,12 +1303,16 @@ only in `mise run hunt`, because it is too slow for the normal suite.
 
 - `mise run hunt` (`examples/jhunt.rs`): the sweep over the repository fixtures
   and `tools/import/.imports` with the oracle at widths 40, 80 and 120 and the
-  four comment probe shapes (`PROBE_SHAPES`): every boundary at every width for
-  the fixtures and the gjf, palantir and prettier inputs up to 4 KiB, sampled
-  boundaries at width 80 for larger files and Spring. It also deletes each token
-  of those small files in turn (the oracle's token check catches code loss),
-  which stresses parser recovery and the formatting of recovered trees. Reports
-  land in `target/hunt/`. `KNOWN_OPEN` must be empty.
+  comment probe shapes (`PROBE_SHAPES`): an inline block comment, an end-of-line
+  and an own-line line comment, an own-line block comment, an own-line
+  `/** … */` with about 100 characters of words (so a layout that fills doc
+  comments wraps it at every position and width), and an own-line `///` line.
+  Every boundary at every width for the fixtures, the gjf, palantir and prettier
+  inputs up to 4 KiB and the CommonMark examples; sampled boundaries at width 80
+  for larger files, Spring and the OpenJDK slice. It also deletes each token of
+  those small files in turn (the oracle's token check catches code loss), which
+  stresses parser recovery and the formatting of recovered trees. Reports land
+  in `target/hunt/`. `KNOWN_OPEN` must be empty.
 - `examples/jcheck.rs`: replays one file or one variant (`File.java:ownline12`,
   `File.java:comment3@40`, `File.java:delete7`).
 - `examples/jref.rs`: `jref <dir>` checks `format(F) == F` for every `.java`

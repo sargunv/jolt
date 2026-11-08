@@ -46,6 +46,19 @@ pub const PROBE_SHAPES: &[ProbeShape] = &[
         insert: "\n//hunt\n",
         seed: 374_761_393,
     },
+    // About 100 characters of words, so that a doc comment layout that fills
+    // to the width wraps it at every position and width.
+    ProbeShape {
+        name: "ownlinedoc",
+        insert: "\n/** Hunt probe: a doc comment with enough words in it to wrap at each \
+                 probe position and width. */\n",
+        seed: 668_265_263,
+    },
+    ProbeShape {
+        name: "ownlinemarkdown",
+        insert: "\n/// Hunt probe: a `///` doc comment line.\n",
+        seed: 3_266_489_917,
+    },
 ];
 
 /// Boundary count up to which a sampled suite probes every boundary.
