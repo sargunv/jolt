@@ -4,7 +4,7 @@
 use super::model::*;
 
 #[allow(clippy::too_many_lines)]
-pub fn java() -> Schema {
+pub(crate) fn java() -> Schema {
     Schema {
         tokens: vec![
             "Eof",
