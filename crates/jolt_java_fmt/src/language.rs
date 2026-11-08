@@ -2,8 +2,8 @@
 //! formatter-ignore scopes, and comment hooks H1 to H5.
 
 use jolt_fmt::{
-    CommentContext, CommentKind, CommentLayout, Doc, DocBuilder, DocComment, FormatLanguage,
-    Formatter, Placement, leading_target, trailing_target,
+    CommentContext, CommentKind, CommentLayout, Doc, DocBuilder, DocComment, DocCommentSource,
+    FormatLanguage, Formatter, Placement, leading_target, trailing_target,
 };
 use jolt_java_syntax::{
     IfStatement, JavaLanguage, JavaSyntaxKind as K, Statement, is_assignment_operator,
@@ -34,9 +34,16 @@ impl FormatLanguage for JavaFormat {
 
     const DOC_LINE_COMMENT: Option<&'static str> = Some("///");
 
-    /// Doc comments print as written (normalization N9).
-    fn doc_comment<'a>(_docs: &mut DocBuilder<'a>, _comment: &DocComment<'a, '_>) -> Option<Doc> {
-        None
+    /// A Javadoc comment is laid out by `jolt_markup`, except a file header
+    /// (see `is_file_header`). Markdown doc comments (`///`) print as
+    /// written.
+    fn doc_comment<'a>(docs: &mut DocBuilder<'a>, comment: &DocComment<'a, '_>) -> Option<Doc> {
+        match comment.source {
+            DocCommentSource::Block(text) if !is_file_header(comment.target) => {
+                jolt_markup::javadoc(docs, text)
+            }
+            DocCommentSource::Block(_) | DocCommentSource::Lines(_) => None,
+        }
     }
 
     fn format_node<'a>(f: &mut Formatter<'a, Self>, node: SyntaxNode<'a>) -> Doc {
@@ -135,6 +142,37 @@ impl FormatLanguage for JavaFormat {
             | K::ModuleDirectiveList => enclosing.parent().and_then(Self::ignore_scope),
             _ => None,
         }
+    }
+}
+
+/// Whether a doc comment attached to `target` is a file header: it leads an
+/// import, or the package declaration of a file that declares a type or a
+/// module. javac doesn't read it as documentation, and it is usually a
+/// licence, which a header check compares as written. (In `package-info.java`
+/// the comment before `package` documents the package.)
+fn is_file_header(target: SyntaxElement<'_>) -> bool {
+    let node = match target {
+        SyntaxElement::Node(node) => node,
+        SyntaxElement::Token(token) => token.parent(),
+    };
+    match node_kind(node) {
+        K::ImportDeclaration => true,
+        K::PackageDeclaration => node.parent().is_some_and(|items| {
+            items.children().any(|item| {
+                item.as_node().is_some_and(|item| {
+                    matches!(
+                        node_kind(item),
+                        K::ClassDeclaration
+                            | K::InterfaceDeclaration
+                            | K::EnumDeclaration
+                            | K::RecordDeclaration
+                            | K::AnnotationInterfaceDeclaration
+                            | K::ModuleDeclaration
+                    )
+                })
+            })
+        }),
+        _ => false,
     }
 }
 

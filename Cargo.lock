@@ -395,6 +395,7 @@ dependencies = [
  "insta",
  "jolt_fmt",
  "jolt_java_syntax",
+ "jolt_markup",
  "jolt_syntax",
  "jolt_test_support",
 ]
@@ -407,6 +408,13 @@ dependencies = [
  "jolt_syntax",
  "jolt_test_support",
  "unicode-general-category",
+]
+
+[[package]]
+name = "jolt_markup"
+version = "0.0.0"
+dependencies = [
+ "jolt_fmt",
 ]
 
 [[package]]

@@ -1,0 +1,74 @@
+class DocCommentHtmlBlocks {
+  /**
+   * First paragraph.
+   * <p>
+   * A paragraph whose {@code <p>} is alone on its line.
+   * <p>A paragraph glued to its tag.
+   * </p>
+   *
+   * A blank line without a tag adds no paragraph break and is kept.
+   * <h3>A heading</h3>
+   * Text after the heading.
+   */
+  void paragraphs() {}
+
+  /**
+   * Matches paths. <p>For example: <ul>
+   * <li>{@code com/t?st.jsp} &mdash; matches {@code com/test.jsp} but also
+   * {@code com/tast.jsp} or {@code com/txst.jsp}</li> <li>{@code com/*.jsp} &mdash; matches all
+   * {@code .jsp} files in the {@code com} directory</li> </ul>
+   * Text after the list.
+   */
+  void midLineBlocks() {}
+
+  /**
+   * Lists:
+   * <ul>
+   * <li>first item, which is long enough that it does not fit on one line of the comment</li>
+   * <li>second item, with a nested list:
+   * <ol>
+   * <li>nested one
+   * <li>nested two, unclosed, which is also long enough that it wraps onto the next line
+   * </ol>
+   * </li>
+   * <li>third item, unclosed
+   *
+   * <li>fourth item after a blank line
+   *
+   *
+   * <li>fifth item after two blank lines<p>with a paragraph inside
+   * </ul>
+   * <dl>
+   * <dt>Term</dt>
+   * <dd>The definition, which is long enough that it does not fit on one line.</dd>
+   * </dl>
+   * @param mode one of:
+   * <ul><li>{@code A}, the first mode</li><li>{@code B}, the second mode</li></ul>
+   * after the list in the tag.
+   */
+  void lists(int mode) {}
+
+  /**
+   * Line breaks:<br>
+   * <code>text/html</code> for HTML,<br/>
+   * <code>application/json</code>   for   JSON,<br />and more.
+   */
+  void lineBreaks() {}
+
+  /**
+   * A table:
+   * <table>
+   *   <tr><th>Key</th>   <th>Value</th></tr>
+   *   <tr><td>a</td>     <td>1</td></tr>
+   * </table>
+   * <blockquote>
+   *   A quotation,   kept as   written.
+   * </blockquote>
+   * Text with an <!-- inline comment --> in it, and a comment on lines of its own:
+   * <!--
+   *   hidden   text
+   * -->
+   * The end.
+   */
+  void keptBlocks() {}
+}

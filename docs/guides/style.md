@@ -64,9 +64,17 @@ the differences readers notice first:
   stays on the line of that call's `)` when moving it doesn't make it fit
   (`assertThat(` / … / `).isEqualTo(3);`), where google-java-format moves it to
   a line of its own (`)` / `.isEqualTo(3);`).
-- **Javadoc.** google-java-format rewraps Javadoc text, and expands a one-line
-  Javadoc that doesn't fit. Jolt keeps the text of every comment as written and
-  only realigns the `*` at the start of its lines.
+- **Javadoc.** Both fill Javadoc text and lay out its blocks in much the same
+  style (see [Doc comments](#doc-comments)). google-java-format removes `</li>`
+  and a `<p>` that starts the comment, adds `<p>` after a blank line (which
+  changes the rendered page), joins a plain-text list into one paragraph,
+  removes the indentation that the lines of `<pre>{@code` share, removes a tab
+  after `*` in `<pre>`, breaks a line between `{@link` and its reference, and
+  moves a Javadoc comment between code (`foo(/** c */ 1)`) to a line of its own.
+  Jolt keeps every token and the content of `<pre>`, keeps line-structured text
+  as written, and leaves a comment that shares its line with code as written.
+  google-java-format wraps a long Markdown doc comment line (`///`) into an
+  ordinary `//` comment line; Jolt prints `///` comments as written.
 - **Lambdas.** Jolt removes the parentheses around a single untyped lambda
   parameter (`x -> x`). For a lambda with a block body or an anonymous class as
   the last argument, google-java-format puts every argument on a new line when
@@ -879,47 +887,159 @@ class Example {
 :::
 
 - **Comment text.** Trailing whitespace is removed. Jolt doesn't rewrap or
-  otherwise change the text of a comment. A block comment whose lines start with
-  `*` is realigned so the `*`s line up under the opening `/*`, and each line
-  keeps its text after the `*`, so code samples in `<pre>` keep their
-  indentation. Other multi-line block comments move as a unit, keeping their
-  lines' relative indentation. A multi-line Javadoc comment starts its text on
-  the line after `/**`. A Javadoc comment with a line that doesn't start with
-  `*` is kept as written and moves with the code: Javadoc keeps the indentation
-  of such a line, so realigning it could change a code sample.
+  otherwise change the text of a comment, except a Javadoc comment that starts
+  its line (see [Doc comments](#doc-comments)). A block comment whose lines
+  start with `*` is realigned so the `*`s line up under the opening `/*`, and
+  each line keeps its text after the `*`. Other multi-line block comments move
+  as a unit, keeping their lines' relative indentation.
+
+```java
+int run() {
+  /*
+   * Starts the run.
+   */
+  start();
+  return total;
+}
+```
+
+## Doc comments
+
+Jolt lays out the text of each Javadoc comment (`/** … */`) that starts its own
+line: it fills paragraphs to the line width and puts lists, block tags and code
+in one fixed style. What javadoc renders stays the same, and every word is kept.
+Markdown doc comments (`///`) are printed as written.
+
+- **Paragraphs** are filled: each line takes as many words as fit in the line
+  width, counting the comment's indentation and the `" * "` before the text. A
+  word that is wider than its line, such as a long link, goes on a line of its
+  own and overflows. The text starts on the line after `/**`, and `*/` gets a
+  line of its own.
+- **One line.** A comment that is one paragraph with no block tags prints as
+  `/** Text. */` when that fits, else on separate lines. An empty comment prints
+  as `/** */`.
+- **Words stay whole.** Jolt doesn't break a line inside an HTML tag
+  (`<a href="…">`), between an inline tag and its reference (`{@link Map#get}`),
+  inside the parentheses of a reference (`{@link #put(Object, Object)}`), or
+  inside `{@code …}` and `{@literal …}`. The label of a link is filled like
+  other words.
+- **No new structure.** A wrapped line never starts with a word that javadoc or
+  Jolt would read as new structure: a word that starts with `@` (a block tag),
+  or a plain-text list marker (`-`, `*`, `+`, `•`, or a number and `.` or `)`).
+  Such a word stays on the line of the word before it, and the line breaks
+  before the pair when they don't fit.
+- **Block tags** (`@param`, `@return`, …) start a line each, with single spaces
+  after the tag and its name. Their wrapped lines are indented by 4. A blank
+  line goes before the first block tag, and none between block tags.
+- **Blank lines.** One blank line goes before `<p>`, a list, `<pre>`, `<table>`,
+  a heading and `<blockquote>`, and after a list, a heading, `<pre>`, `<table>`
+  or `<blockquote>` when text follows. A blank line of the source between two
+  paragraphs is kept, without adding a `<p>`. Inside a list and in block tag
+  text, Jolt adds no blank lines and keeps at most one.
+- **`<p>`** is joined to the text after it, and `</p>` to the text before it.
+- **Lists.** `<ul>`, `<ol>` and `<dl>` and their closing tags start a line. Each
+  item (`<li>`, `<dt>`, `<dd>`) starts a line indented by 2, and its wrapped
+  lines are indented 4 more. `</li>` is joined to the text before it. A block
+  inside an item, such as a nested list, starts a line at the item's wrapped
+  line indentation. Block tag text holds lists the same way, inside its indent.
+- **Line breaks.** A line break follows `<br>`. The source's line break stays
+  before a line that starts with a list marker, and around a line made only of
+  punctuation, such as `-------`. Each such line is filled on its own.
+- **Kept as written.** `<pre>`, `<table>`, `<blockquote>`, `{@snippet …}` and an
+  HTML comment that spans lines keep their lines exactly: each line is printed
+  from its `*` on, so tabs and spaces after the `*` stay. A paragraph whose
+  lines are indented differently, by two or more columns, as ASCII art, a
+  grammar or aligned text is, keeps its lines too. Only the comment's
+  indentation changes.
+- **Not laid out.** Jolt keeps these Javadoc comments as written, realigning
+  only their `*`s: a comment that shares its line with code; a comment that
+  starts with `/***` or has a line of only `*`s, which is a banner (these keep
+  their lines' relative indentation instead); a comment with a line that doesn't
+  start with `*` (Javadoc keeps the indentation of such a line); a comment
+  before `package` or an import in a file that declares a type, which is a file
+  header such as a licence; and the Javadoc of a member that formatting is
+  turned off for (see [Formatter-ignore](#formatter-ignore)).
 
 ::: code-group
 
 ```java [Input]
-/** Gets the name. */
-String name();
+class Resolver {
+  /**
+   * Resolve the given placeholder using the properties of this resolver, which may be long.
+   * <p>
+   * Delegates to the helper, see {@link PropertyPlaceholderHelper#replacePlaceholders}
+   * for the syntax of nested placeholders.
+   * <ul>
+   * <li>first</li>
+   * <li>second item, which is long enough that it does not fit on one line of the comment</li>
+   * </ul>
+   * <pre class="code">
+   *     resolver.resolve("${a}");
+   * </pre>
+   * @param placeholder    the placeholder to resolve, which may contain
+   *        nested placeholders
+   * @return the value
+   */
+  String resolve(String placeholder);
 
-    /** Runs it:
-       * <pre>
-       *   if (ready) {
-       *     run();
-       *   }
-       * </pre>
-       */
-void run();
+  /**
+   * Returns the name.
+   */
+  String name();
+}
 ```
 
 ```java [Output]
-/** Gets the name. */
-String name();
+class Resolver {
+  /**
+   * Resolve the given placeholder using the properties of this resolver, which
+   * may be long.
+   *
+   * <p>Delegates to the helper, see
+   * {@link PropertyPlaceholderHelper#replacePlaceholders} for the syntax of
+   * nested placeholders.
+   *
+   * <ul>
+   *   <li>first</li>
+   *   <li>second item, which is long enough that it does not fit on one line of
+   *       the comment</li>
+   * </ul>
+   *
+   * <pre class="code">
+   *     resolver.resolve("${a}");
+   * </pre>
+   *
+   * @param placeholder the placeholder to resolve, which may contain nested
+   *     placeholders
+   * @return the value
+   */
+  String resolve(String placeholder);
 
-/**
- * Runs it:
- * <pre>
- *   if (ready) {
- *     run();
- *   }
- * </pre>
- */
-void run();
+  /** Returns the name. */
+  String name();
+}
 ```
 
 :::
+
+Lines that the source lays out as structure keep it:
+
+```java
+class Interceptor {
+  /**
+   * Callbacks, in order:
+   * 1) before, when the task is submitted, which is long enough that it wraps
+   * onto a line of its own
+   * 2) after, once the task completes
+   *
+   * <p>The states:
+   *      new
+   *     /   \
+   *   done  failed
+   */
+  void intercept();
+}
+```
 
 ## Formatter-ignore
 
@@ -939,7 +1059,8 @@ int y = 3;
   module directives whose first token is between the markers. Each prints
   exactly as written, shifted to the current indentation. Text blocks are never
   shifted. The markers, the comments between items, and the blank lines between
-  them are formatted as usual.
+  them are formatted as usual, except that a Javadoc comment between the markers
+  keeps its text as written (see [Doc comments](#doc-comments)).
 - Markers work only between the items of one body or at the top level. An `off`
   whose `on` is in a different body has no effect, and neither has that `on`. A
   marker inside an item, such as in an argument list, has no effect.
