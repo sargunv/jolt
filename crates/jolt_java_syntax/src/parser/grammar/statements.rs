@@ -1,26 +1,23 @@
+//! Statements and blocks.
+
+use jolt_syntax::{CompletedMarker, TokenSet};
+
+use super::declarations::Unnamed;
 use super::{BODY_STOPS, JavaSyntaxKind, Parser};
 use crate::parser::codes;
 
-const STATEMENT_BOUNDARIES: &[JavaSyntaxKind] = &[
-    JavaSyntaxKind::ElseKw,
-    JavaSyntaxKind::CaseKw,
-    JavaSyntaxKind::DefaultKw,
-    JavaSyntaxKind::RBrace,
-];
-const DO_BODY_BOUNDARIES: &[JavaSyntaxKind] = &[
-    JavaSyntaxKind::WhileKw,
-    JavaSyntaxKind::ElseKw,
-    JavaSyntaxKind::CaseKw,
-    JavaSyntaxKind::DefaultKw,
-    JavaSyntaxKind::RBrace,
-];
+/// Tokens that end the statement before them, where a control statement's
+/// body is missing.
+const STATEMENT_BOUNDARIES: TokenSet = token_set![ElseKw, CaseKw, DefaultKw, RBrace];
+/// [`STATEMENT_BOUNDARIES`] and the `while` that ends a `do` body.
+const DO_BODY_BOUNDARIES: TokenSet = STATEMENT_BOUNDARIES.with(JavaSyntaxKind::WhileKw.to_raw());
 
 impl Parser<'_> {
     /// The body of a control or labeled statement. A block body takes no
     /// nesting level of its own (its statement already took one), so brace
     /// promotion never makes the formatted output nest deeper than the input.
-    fn parse_required_statement(&mut self, stops: &[JavaSyntaxKind]) {
-        if self.at_eof() || stops.contains(&self.current()) {
+    fn parse_required_statement(&mut self, stops: TokenSet) {
+        if self.at_eof() || self.at_any(stops) {
             self.error_expected("expected statement");
         } else {
             self.parse_body_statement();
@@ -82,18 +79,18 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_local_variable_declaration_statement(&mut self) {
-        self.parse_local_variable_declaration_until(&[JavaSyntaxKind::Semicolon]);
+        self.parse_local_variable_declaration_until(token_set![Semicolon]);
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after local variable declaration",
         );
     }
 
-    pub(super) fn parse_local_variable_declaration_until(&mut self, stops: &[JavaSyntaxKind]) {
+    pub(super) fn parse_local_variable_declaration_until(&mut self, stops: TokenSet) {
         let declaration = self.start();
         self.parse_variable_modifiers();
         self.parse_local_variable_type();
-        self.parse_variable_declarator_list_until(stops);
+        self.parse_variable_declarator_list_until(stops, Unnamed::Allowed);
         self.complete(declaration, JavaSyntaxKind::LocalVariableDeclaration);
     }
 
@@ -141,7 +138,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_labeled_statement(&mut self) {
         let statement = self.start();
-        self.expect_variable_identifier("expected statement label", false);
+        self.expect_named_identifier("expected statement label");
         self.expect(JavaSyntaxKind::Colon, "expected `:` after label");
         self.parse_required_statement(STATEMENT_BOUNDARIES);
         self.complete(statement, JavaSyntaxKind::LabeledStatement);
@@ -149,7 +146,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_expression_statement(&mut self) {
         let statement = self.start();
-        self.consume_statement_expression_until(&[JavaSyntaxKind::Semicolon]);
+        self.consume_statement_expression_until(token_set![Semicolon]);
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after expression statement",
@@ -183,7 +180,7 @@ impl Parser<'_> {
             if self.at(JavaSyntaxKind::IfKw) {
                 continue;
             }
-            if self.at_eof() || STATEMENT_BOUNDARIES.contains(&self.current()) {
+            if self.at_eof() || self.at_any(STATEMENT_BOUNDARIES) {
                 // The else branch is optional in the schema, so an absent
                 // one is represented by an empty bogus statement.
                 let missing = self.start();
@@ -202,9 +199,9 @@ impl Parser<'_> {
     pub(super) fn parse_assert_statement(&mut self) {
         let statement = self.start();
         self.expect(JavaSyntaxKind::AssertKw, "expected `assert`");
-        self.parse_expression_until(&[JavaSyntaxKind::Colon, JavaSyntaxKind::Semicolon]);
+        self.parse_expression_until(token_set![Colon, Semicolon]);
         if self.eat(JavaSyntaxKind::Colon) {
-            self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
+            self.parse_expression_until(token_set![Semicolon]);
         }
         self.expect(
             JavaSyntaxKind::Semicolon,
@@ -243,12 +240,12 @@ impl Parser<'_> {
             let enhanced = self.start();
             self.expect(JavaSyntaxKind::ForKw, "expected `for`");
             self.expect(JavaSyntaxKind::LParen, "expected `(` after `for`");
-            self.parse_enhanced_for_variable_declaration_until(&[JavaSyntaxKind::Colon]);
+            self.parse_enhanced_for_variable_declaration_until(token_set![Colon]);
             self.expect(
                 JavaSyntaxKind::Colon,
                 "expected `:` in enhanced for statement",
             );
-            self.parse_expression_until(&[JavaSyntaxKind::RParen]);
+            self.parse_expression_until(token_set![RParen]);
             self.expect(
                 JavaSyntaxKind::RParen,
                 "expected `)` after enhanced for header",
@@ -262,7 +259,7 @@ impl Parser<'_> {
             if !self.at(JavaSyntaxKind::Semicolon) {
                 let initializer = self.start();
                 if self.starts_local_variable_declaration() {
-                    self.parse_local_variable_declaration_until(&[JavaSyntaxKind::Semicolon]);
+                    self.parse_local_variable_declaration_until(token_set![Semicolon]);
                 } else {
                     self.parse_statement_expression_list(JavaSyntaxKind::Semicolon);
                 }
@@ -270,7 +267,7 @@ impl Parser<'_> {
             }
             self.expect(JavaSyntaxKind::Semicolon, "expected `;` in for header");
             if !self.at(JavaSyntaxKind::Semicolon) {
-                self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
+                self.parse_expression_until(token_set![Semicolon]);
             }
             self.expect(JavaSyntaxKind::Semicolon, "expected `;` in for header");
             if !self.at(JavaSyntaxKind::RParen) {
@@ -285,14 +282,11 @@ impl Parser<'_> {
         self.complete(statement, JavaSyntaxKind::ForStatement);
     }
 
-    pub(super) fn parse_enhanced_for_variable_declaration_until(
-        &mut self,
-        stops: &[JavaSyntaxKind],
-    ) {
+    pub(super) fn parse_enhanced_for_variable_declaration_until(&mut self, stops: TokenSet) {
         let variable = self.start();
         self.parse_variable_modifiers();
         self.parse_local_variable_type();
-        self.parse_variable_declarator_id(true);
+        self.parse_variable_declarator_id(Unnamed::Allowed);
         let mut valid = true;
         if self.eat(JavaSyntaxKind::Assign) {
             self.error_expected("enhanced for variable must not have an initializer");
@@ -304,10 +298,10 @@ impl Parser<'_> {
             self.error_unexpected("enhanced for statement must declare a single variable");
             valid = false;
             self.bump();
-            if stops.contains(&self.current()) {
+            if self.at_any(stops) {
                 break;
             }
-            self.parse_variable_declarator_until(stops, true);
+            self.parse_variable_declarator_until(stops, Unnamed::Allowed);
         }
 
         if valid {
@@ -323,7 +317,7 @@ impl Parser<'_> {
             "expected statement expression",
             move |parser| parser.at(stop),
             move |parser| {
-                parser.consume_statement_expression_until(&[JavaSyntaxKind::Comma, stop]);
+                parser.consume_statement_expression_until(token_set![Comma].with(stop.to_raw()));
             },
         );
         self.complete(list, JavaSyntaxKind::StatementExpressionList);
@@ -356,7 +350,7 @@ impl Parser<'_> {
     ) {
         let statement = self.start();
         self.expect(keyword, keyword_message);
-        if self.at_name_segment() {
+        if self.lookahead().at_name_segment() {
             self.bump();
         }
         self.expect(JavaSyntaxKind::Semicolon, semicolon_message);
@@ -366,7 +360,7 @@ impl Parser<'_> {
     pub(super) fn parse_yield_statement(&mut self) {
         let statement = self.start();
         self.expect_contextual("yield", "expected `yield`");
-        self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
+        self.parse_expression_until(token_set![Semicolon]);
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after yield statement",
@@ -378,7 +372,7 @@ impl Parser<'_> {
         let statement = self.start();
         self.expect(JavaSyntaxKind::ReturnKw, "expected `return`");
         if !self.at(JavaSyntaxKind::Semicolon) {
-            self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
+            self.parse_expression_until(token_set![Semicolon]);
         }
         self.expect(
             JavaSyntaxKind::Semicolon,
@@ -390,7 +384,7 @@ impl Parser<'_> {
     pub(super) fn parse_throw_statement(&mut self) {
         let statement = self.start();
         self.expect(JavaSyntaxKind::ThrowKw, "expected `throw`");
-        self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
+        self.parse_expression_until(token_set![Semicolon]);
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after throw statement",
@@ -487,24 +481,18 @@ impl Parser<'_> {
     pub(super) fn parse_resource(&mut self) {
         let resource = self.start();
         if self.starts_local_variable_declaration() {
-            self.parse_resource_variable_declaration_until(&[
-                JavaSyntaxKind::Semicolon,
-                JavaSyntaxKind::RParen,
-            ]);
+            self.parse_resource_variable_declaration_until(token_set![Semicolon, RParen]);
         } else {
-            self.parse_resource_variable_access_until(&[
-                JavaSyntaxKind::Semicolon,
-                JavaSyntaxKind::RParen,
-            ]);
+            self.parse_resource_variable_access_until(token_set![Semicolon, RParen]);
         }
         self.complete(resource, JavaSyntaxKind::Resource);
     }
 
-    pub(super) fn parse_resource_variable_declaration_until(&mut self, stops: &[JavaSyntaxKind]) {
+    pub(super) fn parse_resource_variable_declaration_until(&mut self, stops: TokenSet) {
         let declaration = self.start();
         self.parse_variable_modifiers();
         self.parse_local_variable_type();
-        self.parse_variable_declarator_id(true);
+        self.parse_variable_declarator_id(Unnamed::Allowed);
         let mut valid = true;
         if self.eat(JavaSyntaxKind::Assign) {
             self.parse_variable_initializer_until(stops);
@@ -517,10 +505,10 @@ impl Parser<'_> {
             self.error_unexpected("resource declaration must declare a single variable");
             valid = false;
             self.bump();
-            if stops.contains(&self.current()) {
+            if self.at_any(stops) {
                 break;
             }
-            self.parse_variable_declarator_until(stops, true);
+            self.parse_variable_declarator_until(stops, Unnamed::Allowed);
         }
 
         if valid {
@@ -530,8 +518,8 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn parse_resource_variable_access_until(&mut self, stops: &[JavaSyntaxKind]) {
-        if self.at_eof() || stops.contains(&self.current()) {
+    pub(super) fn parse_resource_variable_access_until(&mut self, stops: TokenSet) {
+        if self.at_eof() || self.at_any(stops) {
             let access = self.start();
             self.error(
                 codes::INVALID_RESOURCE_VARIABLE_ACCESS,
@@ -548,7 +536,7 @@ impl Parser<'_> {
             JavaSyntaxKind::NameExpression | JavaSyntaxKind::FieldAccessExpression
         );
 
-        if valid && (self.at_eof() || stops.contains(&self.current())) {
+        if valid && (self.at_eof() || self.at_any(stops)) {
             let access = self.precede(expression);
             self.complete(access, JavaSyntaxKind::VariableAccess);
         } else {
@@ -561,7 +549,7 @@ impl Parser<'_> {
                     "expected resource variable declaration or variable access"
                 },
             );
-            while !self.at_eof() && !stops.contains(&self.current()) {
+            while !self.at_eof() && !self.at_any(stops) {
                 self.bump();
             }
             self.complete(access, JavaSyntaxKind::Bogus);
@@ -577,7 +565,7 @@ impl Parser<'_> {
         let types = self.start();
         self.parse_class_union_type();
         self.complete(types, JavaSyntaxKind::CatchTypeList);
-        self.expect_variable_identifier("expected catch parameter name", true);
+        self.expect_variable_identifier("expected catch parameter name");
         self.parse_array_dimensions();
         self.complete(parameter, JavaSyntaxKind::CatchParameter);
         self.expect(JavaSyntaxKind::RParen, "expected `)` after catch parameter");
@@ -607,7 +595,7 @@ impl Parser<'_> {
         self.complete(statement, JavaSyntaxKind::SwitchStatement);
     }
 
-    pub(super) fn parse_switch_expression_fragment(&mut self) -> jolt_syntax::CompletedMarker {
+    pub(super) fn parse_switch_expression_fragment(&mut self) -> CompletedMarker {
         let expression = self.start();
         self.expect(JavaSyntaxKind::SwitchKw, "expected `switch`");
         self.parse_parenthesized_expression(
@@ -655,7 +643,7 @@ impl Parser<'_> {
         } else if self.at(JavaSyntaxKind::ThrowKw) {
             self.parse_throw_statement();
         } else {
-            self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
+            self.parse_expression_until(token_set![Semicolon]);
             self.expect(JavaSyntaxKind::Semicolon, "expected `;` after switch rule");
         }
         self.complete(rule, JavaSyntaxKind::SwitchRule);
@@ -723,14 +711,7 @@ impl Parser<'_> {
                 break;
             } else if let Some(pattern_start) = self.pattern_start() {
                 let case_pattern = self.start();
-                self.parse_pattern_until(
-                    pattern_start,
-                    &[
-                        JavaSyntaxKind::Comma,
-                        JavaSyntaxKind::Colon,
-                        JavaSyntaxKind::Arrow,
-                    ],
-                );
+                self.parse_pattern_until(pattern_start, token_set![Comma, Colon, Arrow]);
                 self.complete(case_pattern, JavaSyntaxKind::CasePattern);
                 saw_case_item = true;
                 previous_was_pattern = true;
@@ -802,10 +783,10 @@ impl Parser<'_> {
                 "expected `)` after switch guard",
             );
         } else {
-            self.parse_expression_until_without_leading_lambda(&[
-                JavaSyntaxKind::Colon,
-                JavaSyntaxKind::Arrow,
-            ]);
+            self.parse_until(
+                token_set![Colon, Arrow],
+                Self::parse_assignment_expression_without_leading_lambda,
+            );
         }
         self.complete(guard, JavaSyntaxKind::Guard);
     }
@@ -816,7 +797,7 @@ impl Parser<'_> {
         close_message: &'static str,
     ) {
         self.expect(JavaSyntaxKind::LParen, open_message);
-        self.parse_expression_until(&[JavaSyntaxKind::RParen]);
+        self.parse_expression_until(token_set![RParen]);
         self.expect(JavaSyntaxKind::RParen, close_message);
     }
 }

@@ -1,3 +1,5 @@
+//! Compilation units, package and import declarations, and modules.
+
 use super::{JavaSyntaxKind, Parser};
 use jolt_syntax::ParseOutput;
 
@@ -47,7 +49,7 @@ impl Parser<'_> {
         let import = self.start();
         self.expect(JavaSyntaxKind::ImportKw, "expected `import`");
 
-        if self.at_contextual("module") && self.nth_is_name_segment(1) {
+        if self.at_contextual("module") && self.nth(1) == JavaSyntaxKind::Identifier {
             self.bump();
             self.consume_qualified_name_required();
             self.expect(
@@ -89,10 +91,7 @@ impl Parser<'_> {
         self.parse_annotations();
         self.eat_contextual("open");
         self.expect_contextual("module", "expected `module`");
-        self.consume_qualified_name_required_until(&[
-            JavaSyntaxKind::LBrace,
-            JavaSyntaxKind::RBrace,
-        ]);
+        self.consume_qualified_name_required_until(token_set![LBrace, RBrace]);
 
         let has_open_brace = self.eat(JavaSyntaxKind::LBrace);
         if !has_open_brace {
@@ -131,10 +130,7 @@ impl Parser<'_> {
             }
             "exports" => {
                 self.bump();
-                self.consume_qualified_name_required_until(&[
-                    JavaSyntaxKind::Semicolon,
-                    JavaSyntaxKind::RBrace,
-                ]);
+                self.consume_qualified_name_required_until(token_set![Semicolon, RBrace]);
                 self.parse_optional_module_target_clause();
                 self.expect(
                     JavaSyntaxKind::Semicolon,
@@ -144,10 +140,7 @@ impl Parser<'_> {
             }
             "opens" => {
                 self.bump();
-                self.consume_qualified_name_required_until(&[
-                    JavaSyntaxKind::Semicolon,
-                    JavaSyntaxKind::RBrace,
-                ]);
+                self.consume_qualified_name_required_until(token_set![Semicolon, RBrace]);
                 self.parse_optional_module_target_clause();
                 self.expect(
                     JavaSyntaxKind::Semicolon,
@@ -157,10 +150,7 @@ impl Parser<'_> {
             }
             "uses" => {
                 self.bump();
-                self.consume_qualified_name_required_until(&[
-                    JavaSyntaxKind::Semicolon,
-                    JavaSyntaxKind::RBrace,
-                ]);
+                self.consume_qualified_name_required_until(token_set![Semicolon, RBrace]);
                 self.expect(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after uses directive",
@@ -190,10 +180,7 @@ impl Parser<'_> {
             self.bump();
         }
         self.complete(modifiers, JavaSyntaxKind::RequiresModifierList);
-        self.consume_qualified_name_required_until(&[
-            JavaSyntaxKind::Semicolon,
-            JavaSyntaxKind::RBrace,
-        ]);
+        self.consume_qualified_name_required_until(token_set![Semicolon, RBrace]);
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after requires directive",
@@ -202,10 +189,7 @@ impl Parser<'_> {
 
     fn parse_provides_directive_rest(&mut self) {
         self.bump();
-        self.consume_qualified_name_required_until(&[
-            JavaSyntaxKind::Semicolon,
-            JavaSyntaxKind::RBrace,
-        ]);
+        self.consume_qualified_name_required_until(token_set![Semicolon, RBrace]);
         self.parse_module_implementation_clause();
         self.expect(
             JavaSyntaxKind::Semicolon,
@@ -226,15 +210,11 @@ impl Parser<'_> {
     }
 
     fn parse_module_name_list_item(&mut self) {
-        self.consume_qualified_name_required_until(&[
-            JavaSyntaxKind::Comma,
-            JavaSyntaxKind::Semicolon,
-            JavaSyntaxKind::RBrace,
-        ]);
+        self.consume_qualified_name_required_until(token_set![Comma, Semicolon, RBrace]);
     }
 
     fn parse_optional_module_target_clause(&mut self) {
-        if !self.at_contextual("to") && !self.nth_is_name_segment(0) {
+        if !self.at_contextual("to") && !self.lookahead().at_name_segment() {
             return;
         }
 

@@ -1,9 +1,12 @@
 //! Guard behavior that a correct grammar never triggers, checked with a toy
 //! language whose "grammar" is deliberately broken.
 
+use std::num::NonZeroU32;
+
 use jolt_syntax::{
-    Diagnostic, Event, Language, LexedToken, Lexer, NodeId, NodeSink, ParseOutput, ParsedChildren,
-    Parser, RawSyntaxKind, SyntaxFactory, SyntaxNode, TextRange, TextSize, Trivia, build_tree,
+    Diagnostic, Event, FactorySlot, Language, LexedToken, Lexer, NodeId, NodeSink, ParseOutput,
+    ParsedChildren, Parser, RawSyntaxKind, SyntaxFactory, SyntaxNode, TextRange, TextSize, Trivia,
+    build_tree,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -72,13 +75,28 @@ impl Lexer<'_, Toy> for ToyLexer {
     }
 }
 
+/// A valid node with one slot per child.
+fn fixed(kind: RawSyntaxKind, children: ParsedChildren<'_>, sink: &mut NodeSink<'_>) -> NodeId {
+    sink.fixed(kind, (0..children.len()).map(FactorySlot::Child))
+}
+
+/// Every node is valid except `Bogus`.
 struct ToyFactory;
 
 impl SyntaxFactory for ToyFactory {
     type Language = Toy;
 
-    fn make(&self, kind: RawSyntaxKind, _: ParsedChildren<'_>, sink: &mut NodeSink<'_>) -> NodeId {
-        sink.raw(kind, kind == Toy::to_raw(Kind::Bogus))
+    fn make(
+        &self,
+        kind: RawSyntaxKind,
+        children: ParsedChildren<'_>,
+        sink: &mut NodeSink<'_>,
+    ) -> NodeId {
+        if kind == Toy::to_raw(Kind::Bogus) {
+            sink.malformed(kind)
+        } else {
+            fixed(kind, children, sink)
+        }
     }
 }
 
@@ -150,7 +168,7 @@ fn deep_forward_parent_chains_build_iteratively() {
     let mut events: Vec<Event> = (0..DEPTH)
         .map(|index| Event::Start {
             kind: Toy::to_raw(Kind::Root),
-            forward_parent: u32::from(index + 1 < DEPTH),
+            forward_parent: NonZeroU32::new(u32::from(index + 1 < DEPTH)),
         })
         .collect();
     events.push(Event::Token);
@@ -195,7 +213,7 @@ fn separated_lists_fill_missing_items_and_separators() {
                     |c| text(c) == ",",
                 )
             } else {
-                sink.raw(kind, false)
+                fixed(kind, input, sink)
             }
         }
     }
@@ -218,7 +236,7 @@ fn separated_lists_fill_missing_items_and_separators() {
         0,
         Event::Start {
             kind: Toy::to_raw(Kind::Word),
-            forward_parent: 0,
+            forward_parent: None,
         },
     );
     events.push(Event::Finish);
@@ -234,4 +252,71 @@ fn separated_lists_fill_missing_items_and_separators() {
     assert_eq!(shape, [true, true, false, true, true, true, false]);
     assert!(!list.is_recovery_free());
     assert!(!list.is_malformed());
+}
+
+#[test]
+fn factory_mismatches_report_once_where_no_diagnostic_overlaps() {
+    /// `Word` nodes never fit, so each one is a mismatch.
+    struct MalformedWords;
+    impl SyntaxFactory for MalformedWords {
+        type Language = Toy;
+        fn make(
+            &self,
+            kind: RawSyntaxKind,
+            children: ParsedChildren<'_>,
+            sink: &mut NodeSink<'_>,
+        ) -> NodeId {
+            if kind == Toy::to_raw(Kind::Word) {
+                sink.malformed(kind)
+            } else {
+                fixed(kind, children, sink)
+            }
+        }
+    }
+    fn word(p: &mut Parser<'_, Toy>, tokens: usize) {
+        let word = p.start();
+        for _ in 0..tokens {
+            p.bump();
+        }
+        p.complete(word, Kind::Word);
+    }
+    let source = "abcdefg";
+    let mut p = parser(source);
+    let root = p.start();
+    p.bump();
+    p.error("toy.parse", "parser diagnostic");
+    // `b`: the parser diagnostic covers it.
+    word(&mut p, 1);
+    p.bump();
+    // `de` holding `e`: the outer mismatch covers the inner one.
+    let outer = p.start();
+    p.bump();
+    word(&mut p, 1);
+    p.complete(outer, Kind::Word);
+    p.bump();
+    // `g`: reported.
+    word(&mut p, 1);
+    p.bump();
+    p.complete(root, Kind::Root);
+    let (_, diagnostics) = build_tree(source, p.finish(), &MalformedWords);
+    let reported: Vec<_> = diagnostics
+        .iter()
+        .map(|d| (d.code, d.message.as_str(), d.range.to_string()))
+        .collect();
+    assert_eq!(
+        reported,
+        [
+            ("toy.parse", "parser diagnostic", "1..2".to_owned()),
+            (
+                Toy::UNEXPECTED_CODE,
+                "unexpected syntax in Word",
+                "3..5".to_owned()
+            ),
+            (
+                Toy::UNEXPECTED_CODE,
+                "unexpected syntax in Word",
+                "6..7".to_owned()
+            ),
+        ]
+    );
 }

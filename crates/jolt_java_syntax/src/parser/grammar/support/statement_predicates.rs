@@ -1,21 +1,12 @@
-// Answers statement-level grammar questions before the parser commits to a branch.
-use super::{JavaSyntaxKind, Parser, gt_rest, is_assignment_operator, is_gt_family};
+//! Statement-level grammar questions, answered before the parser commits to
+//! a branch.
 
-/// The number of leading `>` characters of a `>`-family token.
-pub(in crate::parser::grammar) fn gt_count(mut kind: JavaSyntaxKind) -> usize {
-    let mut count = 0;
-    while is_gt_family(kind) {
-        count += 1;
-        match gt_rest(kind) {
-            Some(rest) => kind = rest,
-            None => break,
-        }
-    }
-    count
-}
+use jolt_syntax::TokenSet;
+
+use super::{JavaSyntaxKind, Parser, gt_count, is_assignment_operator};
 
 impl Parser<'_> {
-    pub(in crate::parser::grammar) fn starts_local_variable_declaration(&mut self) -> bool {
+    pub(in crate::parser::grammar) fn starts_local_variable_declaration(&self) -> bool {
         let mut lookahead = self.lookahead();
         lookahead.skip_variable_modifiers();
 
@@ -41,11 +32,11 @@ impl Parser<'_> {
         lookahead.at_variable_identifier() && !matches!(lookahead.nth(1), JavaSyntaxKind::LParen)
     }
 
-    pub(in crate::parser::grammar) fn starts_labeled_statement(&mut self) -> bool {
+    pub(in crate::parser::grammar) fn starts_labeled_statement(&self) -> bool {
         self.current() == JavaSyntaxKind::Identifier && self.nth(1) == JavaSyntaxKind::Colon
     }
 
-    pub(in crate::parser::grammar) fn starts_yield_statement(&mut self) -> bool {
+    pub(in crate::parser::grammar) fn starts_yield_statement(&self) -> bool {
         let position = self.position();
         self.at_contextual("yield")
             && !is_assignment_operator(self.nth(1))
@@ -60,84 +51,71 @@ impl Parser<'_> {
             && (self.nth(1) != JavaSyntaxKind::LParen || !self.tokens_touch(position))
     }
 
-    pub(in crate::parser::grammar) fn for_header_has_top_level_colon(&mut self) -> bool {
-        let mut index = self.position();
-        while self.kind_at(index) != JavaSyntaxKind::Eof
-            && self.kind_at(index) != JavaSyntaxKind::LParen
-        {
-            index += 1;
-        }
-
-        if self.kind_at(index) != JavaSyntaxKind::LParen {
+    /// Whether the statement at the current token is an explicit constructor
+    /// invocation: a `this(` or `super(` before its `;`.
+    pub(in crate::parser::grammar) fn starts_constructor_invocation_statement(&self) -> bool {
+        if matches!(
+            self.current(),
+            JavaSyntaxKind::LBrace | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket
+        ) {
             return false;
         }
-
-        index += 1;
-        let mut conditional_depth = 0usize;
-        let mut angle_depth = 0usize;
-        while self.kind_at(index) != JavaSyntaxKind::Eof {
-            if let Some(next) = self.skip_balanced_delimiter_at(index) {
-                index = next;
-                continue;
-            }
-
-            match self.kind_at(index) {
-                JavaSyntaxKind::Lt => angle_depth += 1,
-                kind if is_gt_family(kind) && angle_depth > 0 => {
-                    angle_depth = angle_depth.saturating_sub(gt_count(kind));
-                }
-                JavaSyntaxKind::Question if angle_depth == 0 => conditional_depth += 1,
-                JavaSyntaxKind::Colon if angle_depth == 0 && conditional_depth > 0 => {
-                    conditional_depth -= 1;
-                }
-                JavaSyntaxKind::Colon if angle_depth == 0 => return true,
-                JavaSyntaxKind::Semicolon | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket => {
-                    return false;
-                }
-                _ => {}
-            }
-            index += 1;
-        }
-
-        false
+        let (end, saw_invocation) = self.table.statement_end(self.position());
+        saw_invocation && self.kind_at(end) == JavaSyntaxKind::Semicolon
     }
 
-    pub(in crate::parser::grammar) fn starts_switch_label(&mut self) -> bool {
+    /// Whether the `for` header at the current token has a `:` outside its
+    /// brackets, type arguments, and conditional expressions.
+    pub(in crate::parser::grammar) fn for_header_has_top_level_colon(&self) -> bool {
+        let mut index = self.position();
+        while !matches!(
+            self.kind_at(index),
+            JavaSyntaxKind::Eof | JavaSyntaxKind::LParen
+        ) {
+            index += 1;
+        }
+        self.kind_at(index) == JavaSyntaxKind::LParen
+            && self.first_top_level_colon_or(index + 1, token_set![Semicolon, RParen, RBracket])
+                == JavaSyntaxKind::Colon
+    }
+
+    pub(in crate::parser::grammar) fn starts_switch_label(&self) -> bool {
         matches!(
             self.current(),
             JavaSyntaxKind::CaseKw | JavaSyntaxKind::DefaultKw
         )
     }
 
-    pub(in crate::parser::grammar) fn switch_label_is_rule(&mut self) -> bool {
-        let mut index = self.position();
-        let mut conditional_depth = 0usize;
-        let mut angle_depth = 0usize;
-        while self.kind_at(index) != JavaSyntaxKind::Eof {
-            if let Some(next) = self.skip_balanced_delimiter_at(index) {
-                index = next;
-                continue;
-            }
+    /// Whether the switch label at the current token ends with `->` rather
+    /// than `:`.
+    pub(in crate::parser::grammar) fn switch_label_is_rule(&self) -> bool {
+        self.first_top_level_colon_or(self.position(), token_set![Arrow, RBrace, RParen, RBracket])
+            == JavaSyntaxKind::Arrow
+    }
 
-            match self.kind_at(index) {
-                JavaSyntaxKind::Arrow => return true,
-                JavaSyntaxKind::Lt => angle_depth += 1,
-                kind if is_gt_family(kind) && angle_depth > 0 => {
-                    angle_depth = angle_depth.saturating_sub(gt_count(kind));
+    /// The first token from `index` on, outside brackets and type arguments,
+    /// that is in `ends` or is a `:` that closes no conditional `?`; EOF if
+    /// there is none. Bracketed groups are skipped through the lookahead
+    /// table, so a scan is linear in the tokens outside them.
+    fn first_top_level_colon_or(&self, mut index: usize, ends: TokenSet) -> JavaSyntaxKind {
+        let (mut conditionals, mut angles) = (0usize, 0usize);
+        loop {
+            let kind = self.kind_at(index);
+            match kind {
+                JavaSyntaxKind::Eof => return kind,
+                JavaSyntaxKind::LParen | JavaSyntaxKind::LBracket => {
+                    index = self.table.bracket_end(index);
+                    continue;
                 }
-                JavaSyntaxKind::Question if angle_depth == 0 => conditional_depth += 1,
-                JavaSyntaxKind::Colon if angle_depth == 0 && conditional_depth > 0 => {
-                    conditional_depth -= 1;
-                }
-                JavaSyntaxKind::Colon if angle_depth == 0 => return false,
-                JavaSyntaxKind::RBrace | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket => {
-                    return false;
-                }
+                _ if ends.contains(kind.to_raw()) => return kind,
+                JavaSyntaxKind::Lt => angles += 1,
+                _ if angles > 0 => angles = angles.saturating_sub(gt_count(kind)),
+                JavaSyntaxKind::Question => conditionals += 1,
+                JavaSyntaxKind::Colon if conditionals > 0 => conditionals -= 1,
+                JavaSyntaxKind::Colon => return kind,
                 _ => {}
             }
             index += 1;
         }
-
-        false
     }
 }
