@@ -6,18 +6,14 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_fmt::FormatOptions;
-use jolt_test_support::{Depth, Variant, catching, sweep_source, sweep_variant};
+use jolt_test_support::{Depth, Variant, catching, sweep_source, sweep_variant, workspace_root};
 
 #[path = "../tests/common/mod.rs"]
 mod common;
 
 /// The depth of the sweep suite holding `path` (sampled outside every suite).
 fn depth_of(path: &Path) -> Depth {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(2)
-        .expect("repository root above the crate directory");
+    let root = workspace_root(env!("CARGO_MANIFEST_DIR"));
     let path = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
     common::SWEEP_SUITES
         .iter()
@@ -40,10 +36,7 @@ fn main() {
                 continue;
             };
             println!("=== variant source ({}):\n{varied}", variant.label());
-            let options = FormatOptions {
-                line_width: variant.width(),
-                ..FormatOptions::default()
-            };
+            let options = variant.options();
             catching(&path, || {
                 sweep_variant(&common::JavaCorpus, &varied, &options, &variant.label())
             })

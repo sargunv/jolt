@@ -9,37 +9,111 @@
 //!
 //! Prints totals and writes each mismatch's actual output plus a summary to
 //! `--out` (default `target/jref`). Inputs with syntax errors are skipped and
-//! counted.
+//! counted, and so are inputs without an expected output. Exits 1 when an
+//! output differs or is missing, and 2 on a usage error.
 
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::process::ExitCode;
 
 use jolt_fmt::FormatOptions;
+use jolt_test_support::{files_with_extensions, par_fold, read_to_string, workspace_root};
 
 #[path = "../tests/common/mod.rs"]
 mod common;
 
+const USAGE: &str =
+    "usage: jref <dir> | jref --input <in> --expected <out> [--line-width N] [--out DIR]";
+
+struct Args {
+    cases: Cases,
+    width: u16,
+    out: PathBuf,
+}
+
+enum Cases {
+    /// Every file under the directory should format to itself.
+    Stable(PathBuf),
+    /// Every file under `input` should format to its counterpart under
+    /// `expected`.
+    Expected { input: PathBuf, expected: PathBuf },
+}
+
+impl Args {
+    fn parse() -> Result<Self, String> {
+        let mut args = std::env::args().skip(1);
+        let (mut dir, mut input, mut expected) = (None, None, None);
+        let mut width = 80;
+        let mut out = workspace_root(env!("CARGO_MANIFEST_DIR")).join("target/jref");
+        while let Some(arg) = args.next() {
+            let mut value = || args.next().ok_or_else(|| format!("{arg} needs a value"));
+            match arg.as_str() {
+                "--input" => input = Some(PathBuf::from(value()?)),
+                "--expected" => expected = Some(PathBuf::from(value()?)),
+                "--line-width" => {
+                    width = value()?
+                        .parse()
+                        .map_err(|error| format!("--line-width: {error}"))?;
+                }
+                "--out" => out = PathBuf::from(value()?),
+                flag if flag.starts_with('-') => return Err(format!("unknown flag {flag}")),
+                _ if dir.is_some() => return Err(format!("unexpected argument {arg}")),
+                _ => dir = Some(PathBuf::from(arg)),
+            }
+        }
+        let cases = match (dir, input, expected) {
+            (Some(dir), None, None) => Cases::Stable(dir),
+            (None, Some(input), Some(expected)) => Cases::Expected { input, expected },
+            _ => return Err("give a directory, or both --input and --expected".to_owned()),
+        };
+        Ok(Self { cases, width, out })
+    }
+}
+
 struct Case {
     relative: PathBuf,
     input: String,
-    expected: String,
+    /// `None` when the expected output is missing.
+    expected: Option<String>,
 }
 
-fn collect(dir: &Path, files: &mut Vec<PathBuf>) {
-    let entries =
-        fs::read_dir(dir).unwrap_or_else(|error| panic!("read {}: {error}", dir.display()));
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect(&path, files);
-        } else if matches!(
-            path.extension().and_then(|e| e.to_str()),
-            Some("java" | "snap")
-        ) {
-            files.push(path);
+impl Cases {
+    fn collect(&self) -> Vec<Case> {
+        let relative = |root: &Path, path: &Path| {
+            path.strip_prefix(root)
+                .expect("a collected file is under its root")
+                .to_path_buf()
+        };
+        match self {
+            Self::Stable(dir) => files_with_extensions(dir, &["java", "snap"])
+                .into_iter()
+                .filter_map(|path| {
+                    let text = read_to_string(&path);
+                    let text = if path.extension().is_some_and(|e| e == "snap") {
+                        snapshot_output(&text)?
+                    } else {
+                        text
+                    };
+                    Some(Case {
+                        relative: relative(dir, &path),
+                        expected: Some(text.clone()),
+                        input: text,
+                    })
+                })
+                .collect(),
+            Self::Expected { input, expected } => files_with_extensions(input, &["java"])
+                .into_iter()
+                .map(|path| {
+                    let relative = relative(input, &path);
+                    let expected = expected.join(&relative);
+                    Case {
+                        input: read_to_string(&path),
+                        expected: expected.is_file().then(|| read_to_string(&expected)),
+                        relative,
+                    }
+                })
+                .collect(),
         }
     }
 }
@@ -52,137 +126,101 @@ fn snapshot_output(text: &str) -> Option<String> {
     Some(rest[..end].to_owned())
 }
 
-#[allow(clippy::too_many_lines)]
-fn main() {
-    let mut args = std::env::args().skip(1);
-    let mut dir = None;
-    let mut input = None;
-    let mut expected = None;
-    let mut width = 80;
-    let mut out = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../../target/jref"));
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--input" => input = args.next().map(PathBuf::from),
-            "--expected" => expected = args.next().map(PathBuf::from),
-            "--line-width" => width = args.next().and_then(|w| w.parse().ok()).expect("width"),
-            "--out" => out = args.next().map(PathBuf::from).expect("out dir"),
-            _ => dir = Some(PathBuf::from(arg)),
-        }
+#[derive(Default)]
+struct Tally {
+    matched: usize,
+    skipped: usize,
+    missing: Vec<PathBuf>,
+    /// Each mismatch with the line of its first difference.
+    mismatches: Vec<(PathBuf, usize)>,
+}
+
+impl Tally {
+    fn merge(&mut self, other: Self) {
+        self.matched += other.matched;
+        self.skipped += other.skipped;
+        self.missing.extend(other.missing);
+        self.mismatches.extend(other.mismatches);
     }
-    let cases = match (dir, input, expected) {
-        (Some(dir), None, None) => {
-            let mut files = Vec::new();
-            collect(&dir, &mut files);
-            files.sort();
-            files
-                .into_iter()
-                .filter_map(|path| {
-                    let text = fs::read_to_string(&path).ok()?;
-                    let text = if path.extension().is_some_and(|e| e == "snap") {
-                        snapshot_output(&text)?
-                    } else {
-                        text
-                    };
-                    Some(Case {
-                        relative: path.strip_prefix(&dir).unwrap_or(&path).to_path_buf(),
-                        input: text.clone(),
-                        expected: text,
-                    })
-                })
-                .collect::<Vec<_>>()
-        }
-        (None, Some(input), Some(expected)) => {
-            let mut files = Vec::new();
-            collect(&input, &mut files);
-            files.sort();
-            files
-                .into_iter()
-                .filter(|path| path.extension().is_some_and(|e| e == "java"))
-                .filter_map(|path| {
-                    let relative = path.strip_prefix(&input).ok()?.to_path_buf();
-                    Some(Case {
-                        input: fs::read_to_string(&path).ok()?,
-                        expected: fs::read_to_string(expected.join(&relative)).ok()?,
-                        relative,
-                    })
-                })
-                .collect()
-        }
-        _ => {
-            eprintln!(
-                "usage: jref <dir> | jref --input <in> --expected <out> [--line-width N] [--out DIR]"
-            );
-            std::process::exit(2);
+}
+
+fn main() -> ExitCode {
+    let args = match Args::parse() {
+        Ok(args) => args,
+        Err(error) => {
+            eprintln!("{error}\n{USAGE}");
+            return ExitCode::from(2);
         }
     };
-
-    let _ = fs::remove_dir_all(&out);
-    fs::create_dir_all(&out).expect("create output directory");
+    let cases = args.cases.collect();
+    let out = &args.out;
+    let _ = fs::remove_dir_all(out);
+    fs::create_dir_all(out).expect("create output directory");
     let options = FormatOptions {
-        line_width: width,
+        line_width: args.width,
         ..FormatOptions::default()
     };
-    let next = AtomicUsize::new(0);
-    let skipped = AtomicUsize::new(0);
-    let matched = AtomicUsize::new(0);
-    let mismatches = Mutex::new(Vec::new());
-    let threads = std::thread::available_parallelism().map_or(4, usize::from);
-    std::thread::scope(|scope| {
-        for _ in 0..threads {
-            scope.spawn(|| {
-                while let Some(case) = cases.get(next.fetch_add(1, Ordering::Relaxed)) {
-                    if !jolt_java_syntax::parse(&case.input)
-                        .diagnostics()
-                        .is_empty()
-                    {
-                        skipped.fetch_add(1, Ordering::Relaxed);
-                        continue;
-                    }
-                    let actual = common::format(&case.input, options);
-                    if actual == case.expected {
-                        matched.fetch_add(1, Ordering::Relaxed);
-                        continue;
-                    }
-                    let line = actual
-                        .lines()
-                        .zip(case.expected.lines())
-                        .position(|(a, e)| a != e)
-                        .unwrap_or_else(|| {
-                            actual.lines().count().min(case.expected.lines().count())
-                        })
-                        + 1;
-                    let path = out.join(&case.relative).with_extension("actual.java");
-                    if let Some(parent) = path.parent() {
-                        let _ = fs::create_dir_all(parent);
-                    }
-                    let _ = fs::write(&path, &actual);
-                    mismatches
-                        .lock()
-                        .expect("mismatch list")
-                        .push((case.relative.clone(), line));
-                }
-            });
-        }
-    });
-    let mut mismatches = mismatches.into_inner().expect("mismatch list");
-    mismatches.sort();
+
+    let tally = par_fold(
+        &cases,
+        |tally: &mut Tally, case| {
+            let Some(expected) = &case.expected else {
+                tally.missing.push(case.relative.clone());
+                return;
+            };
+            if !jolt_java_syntax::parse(&case.input)
+                .diagnostics()
+                .is_empty()
+            {
+                tally.skipped += 1;
+                return;
+            }
+            let actual = common::format(&case.input, options);
+            if actual == *expected {
+                tally.matched += 1;
+                return;
+            }
+            let line = actual
+                .lines()
+                .zip(expected.lines())
+                .position(|(a, e)| a != e)
+                .unwrap_or_else(|| actual.lines().count().min(expected.lines().count()))
+                + 1;
+            let path = out.join(&case.relative).with_extension("actual.java");
+            fs::create_dir_all(path.parent().expect("an output file has a parent"))
+                .expect("create output directory");
+            fs::write(&path, &actual).expect("write actual output");
+            tally.mismatches.push((case.relative.clone(), line));
+        },
+        Tally::merge,
+    );
+
     let mut summary = String::new();
-    for (path, line) in &mismatches {
+    for (path, line) in &tally.mismatches {
         let _ = writeln!(
             summary,
             "{}: first difference at line {line}",
             path.display()
         );
     }
+    for path in &tally.missing {
+        let _ = writeln!(summary, "{}: no expected output", path.display());
+    }
     let totals = format!(
-        "files {}, matched {}, mismatched {}, skipped (syntax errors) {}",
+        "files {}, matched {}, mismatched {}, missing expected {}, skipped (syntax errors) {}",
         cases.len(),
-        matched.load(Ordering::Relaxed),
-        mismatches.len(),
-        skipped.load(Ordering::Relaxed)
+        tally.matched,
+        tally.mismatches.len(),
+        tally.missing.len(),
+        tally.skipped
     );
     let _ = writeln!(summary, "\n{totals}");
     fs::write(out.join("summary.txt"), &summary).expect("write summary");
     println!("{totals}");
     println!("summary: {}", out.join("summary.txt").display());
+    if tally.mismatches.is_empty() && tally.missing.is_empty() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::FAILURE
+    }
 }

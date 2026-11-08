@@ -2,7 +2,6 @@
 """Import pinned upstream files."""
 
 import contextlib
-import hashlib
 import json
 import os
 import shutil
@@ -18,6 +17,7 @@ else:
 
 ROOT = Path(__file__).resolve().parents[2]
 IMPORTS = ROOT / "tools/import/.imports"
+# Records what was imported; mise reruns the import when it is missing.
 MANIFEST = IMPORTS / "manifest.json"
 LOCK = IMPORTS / ".locks/import.lock"
 LOCK_TIMEOUT_SECONDS = 300
@@ -137,9 +137,7 @@ def materialize(imports: list[dict]) -> list[dict]:
         source_dir = repo_dir(item) / item["path"]
         paths = source_paths(source_dir, item["globs"])
         target_dir = IMPORTS / item["name"]
-        written = 0
         seen: set[Path] = set()
-        files = []
 
         for path in paths:
             relative = path.relative_to(source_dir)
@@ -150,11 +148,8 @@ def materialize(imports: list[dict]) -> list[dict]:
             seen.add(destination)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, destination)
-            digest = sha256_file(destination)
-            files.append({"path": output.as_posix(), "sha256": digest})
-            written += 1
 
-        log(f"imported {written} {item['name']} file(s)")
+        log(f"imported {len(seen)} {item['name']} file(s)")
         manifest.append(
             {
                 "name": item["name"],
@@ -163,9 +158,7 @@ def materialize(imports: list[dict]) -> list[dict]:
                 "commit": item["commit"],
                 "source_path": item["path"],
                 "globs": item["globs"],
-                "file_count": written,
-                "files_sha256": files_sha256(files),
-                "files": files,
+                "file_count": len(seen),
             }
         )
     return manifest
@@ -184,24 +177,6 @@ def write_manifest(manifest: list[dict]) -> None:
         + "\n"
     )
     log(f"wrote {MANIFEST.relative_to(ROOT)}")
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as file:
-        while chunk := file.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def files_sha256(files: list[dict]) -> str:
-    digest = hashlib.sha256()
-    for file in files:
-        digest.update(file["path"].encode())
-        digest.update(b"\0")
-        digest.update(file["sha256"].encode())
-        digest.update(b"\0")
-    return digest.hexdigest()
 
 
 def source_paths(source_dir: Path, globs: list[str]) -> list[Path]:
