@@ -872,11 +872,6 @@ fn is_java_identifier_start(ch: char) -> bool {
 }
 
 fn is_java_identifier_part(ch: char) -> bool {
-    if let Ok(byte) = u8::try_from(ch)
-        && byte.is_ascii()
-    {
-        return is_ascii_identifier_part(byte);
-    }
     is_java_identifier_start(ch)
         || matches!(
             get_general_category(ch),
