@@ -1,6 +1,6 @@
 //! The schema vocabulary and its builder functions.
 
-pub struct Schema {
+pub(crate) struct Schema {
     /// Token kinds, in kind order. `Eof` comes first.
     pub tokens: Vec<&'static str>,
     pub categories: Vec<Category>,
@@ -10,22 +10,22 @@ pub struct Schema {
 
 /// A set of node kinds accepted at one slot. Every category also accepts
 /// `Bogus`.
-pub struct Category {
+pub(crate) struct Category {
     pub name: &'static str,
     pub members: Vec<&'static str>,
 }
 
-pub struct Node {
+pub(crate) struct Node {
     pub name: &'static str,
     pub shape: Shape,
 }
 
-pub enum Shape {
+pub(crate) enum Shape {
     Fixed(Vec<Field>),
     List(List),
 }
 
-pub struct Field {
+pub(crate) struct Field {
     pub name: &'static str,
     pub required: bool,
     pub matcher: Matcher,
@@ -33,7 +33,7 @@ pub struct Field {
     pub role: Option<&'static str>,
 }
 
-pub struct List {
+pub(crate) struct List {
     pub minimum: usize,
     pub item: Matcher,
     pub role: Option<&'static str>,
@@ -41,14 +41,14 @@ pub struct List {
 }
 
 #[derive(Clone, Copy)]
-pub enum Trailing {
+pub(crate) enum Trailing {
     Forbidden,
     Optional,
     Required,
 }
 
 #[derive(Clone)]
-pub enum Matcher {
+pub(crate) enum Matcher {
     Token(&'static str),
     Tokens(Vec<&'static str>),
     /// An identifier token with this text.
@@ -61,21 +61,21 @@ pub enum Matcher {
     Choice(Vec<Matcher>),
 }
 
-pub fn category(name: &'static str, members: &[&'static str]) -> Category {
+pub(crate) fn category(name: &'static str, members: &[&'static str]) -> Category {
     Category {
         name,
         members: members.to_vec(),
     }
 }
 
-pub fn node(name: &'static str, fields: Vec<Field>) -> Node {
+pub(crate) fn node(name: &'static str, fields: Vec<Field>) -> Node {
     Node {
         name,
         shape: Shape::Fixed(fields),
     }
 }
 
-pub fn list(name: &'static str, minimum: usize, item: Matcher) -> Node {
+pub(crate) fn list(name: &'static str, minimum: usize, item: Matcher) -> Node {
     Node {
         name,
         shape: Shape::List(List {
@@ -88,7 +88,7 @@ pub fn list(name: &'static str, minimum: usize, item: Matcher) -> Node {
 }
 
 impl Node {
-    pub fn role(mut self, role: &'static str) -> Self {
+    pub(crate) fn role(mut self, role: &'static str) -> Self {
         let Shape::List(list) = &mut self.shape else {
             panic!("only list nodes take a role here");
         };
@@ -96,7 +96,7 @@ impl Node {
         self
     }
 
-    pub fn separated(mut self, separator: &'static str, trailing: Trailing) -> Self {
+    pub(crate) fn separated(mut self, separator: &'static str, trailing: Trailing) -> Self {
         let Shape::List(list) = &mut self.shape else {
             panic!("only list nodes are separated");
         };
@@ -106,13 +106,13 @@ impl Node {
 }
 
 impl Field {
-    pub fn role(mut self, role: &'static str) -> Self {
+    pub(crate) fn role(mut self, role: &'static str) -> Self {
         self.role = Some(role);
         self
     }
 }
 
-pub fn req(name: &'static str, matcher: Matcher) -> Field {
+pub(crate) fn req(name: &'static str, matcher: Matcher) -> Field {
     Field {
         name,
         required: true,
@@ -121,7 +121,7 @@ pub fn req(name: &'static str, matcher: Matcher) -> Field {
     }
 }
 
-pub fn opt(name: &'static str, matcher: Matcher) -> Field {
+pub(crate) fn opt(name: &'static str, matcher: Matcher) -> Field {
     Field {
         name,
         required: false,
@@ -130,34 +130,34 @@ pub fn opt(name: &'static str, matcher: Matcher) -> Field {
     }
 }
 
-pub fn t(kind: &'static str) -> Matcher {
+pub(crate) fn t(kind: &'static str) -> Matcher {
     Matcher::Token(kind)
 }
 
-pub fn tokens(kinds: &[&'static str]) -> Matcher {
+pub(crate) fn tokens(kinds: &[&'static str]) -> Matcher {
     Matcher::Tokens(kinds.to_vec())
 }
 
-pub fn kw(text: &'static str) -> Matcher {
+pub(crate) fn kw(text: &'static str) -> Matcher {
     Matcher::Contextual(text)
 }
 
-pub fn n(kind: &'static str) -> Matcher {
+pub(crate) fn n(kind: &'static str) -> Matcher {
     Matcher::Node(kind)
 }
 
-pub fn nodes(kinds: &[&'static str]) -> Matcher {
+pub(crate) fn nodes(kinds: &[&'static str]) -> Matcher {
     Matcher::Nodes(kinds.to_vec())
 }
 
-pub fn elements(kinds: &[&'static str]) -> Matcher {
+pub(crate) fn elements(kinds: &[&'static str]) -> Matcher {
     Matcher::Elements(kinds.to_vec())
 }
 
-pub fn cat(name: &'static str) -> Matcher {
+pub(crate) fn cat(name: &'static str) -> Matcher {
     Matcher::Category(name)
 }
 
-pub fn choice(alternatives: Vec<Matcher>) -> Matcher {
+pub(crate) fn choice(alternatives: Vec<Matcher>) -> Matcher {
     Matcher::Choice(alternatives)
 }

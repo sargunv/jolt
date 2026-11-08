@@ -9,7 +9,7 @@ use jolt_test_support::{CorpusLanguage, Depth, StructurePolicy, Suite};
 /// The sweep's suites (`mise run hunt`, replayed by `jcheck`): the repository
 /// fixtures and the small upstream fixture suites exhaustively, Spring
 /// sampled.
-pub const SWEEP_SUITES: &[Suite<'_>] = &[
+pub(crate) const SWEEP_SUITES: &[Suite<'_>] = &[
     Suite {
         dir: "fixtures/java",
         depth: Depth::Exhaustive,
@@ -36,7 +36,7 @@ pub const SWEEP_SUITES: &[Suite<'_>] = &[
 /// directive, `requires` modifier and declaration modifier reordering, brace
 /// promotion, removal of redundant `;` and parentheses, and separator, brace
 /// and parenthesis punctuation.
-pub const STRUCTURE_POLICY: StructurePolicy<K> = StructurePolicy {
+pub(crate) const STRUCTURE_POLICY: StructurePolicy<K> = StructurePolicy {
     normalizable_punctuation: &[
         K::Comma,
         K::Semicolon,
@@ -66,7 +66,7 @@ pub const STRUCTURE_POLICY: StructurePolicy<K> = StructurePolicy {
     splittable_tokens: &[K::Gt, K::RShift, K::UnsignedRShift],
 };
 
-pub struct JavaCorpus;
+pub(crate) struct JavaCorpus;
 
 impl CorpusLanguage for JavaCorpus {
     type Syntax = JavaLanguage;
@@ -106,7 +106,7 @@ impl CorpusLanguage for JavaCorpus {
     }
 }
 
-pub fn format(source: &str, options: FormatOptions) -> String {
+pub(crate) fn format(source: &str, options: FormatOptions) -> String {
     let parse = jolt_java_syntax::parse(source);
     let mut output = String::new();
     let _ = jolt_java_fmt::format(&parse, &options, &mut output);
