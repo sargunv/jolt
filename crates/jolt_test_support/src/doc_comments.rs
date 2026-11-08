@@ -8,7 +8,7 @@
 
 use std::fmt::Write as _;
 
-use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
+use pulldown_cmark::{CodeBlockKind, CowStr, Event, Options, Parser, Tag, TagEnd};
 
 /// HTML elements that start or end a block. Javadoc's HTML collapses the
 /// whitespace around them, so the canonical form splits them off as words
@@ -324,6 +324,7 @@ fn markdown_events(markdown: &str) -> String {
         }
     };
     for event in Parser::new_ext(markdown, Options::ENABLE_TABLES) {
+        let event = borrowed(&event);
         match event {
             Event::Text(value) if literal > 0 => {
                 flush(&mut out, &mut text);
@@ -344,6 +345,45 @@ fn markdown_events(markdown: &str) -> String {
     }
     flush(&mut out, &mut text);
     out
+}
+
+/// `event` with its strings borrowed, so that its debug form does not show
+/// how pulldown-cmark stored them (`Borrowed`, `Boxed` or `Inlined`), which
+/// depends on where the text was split into lines.
+fn borrowed<'e>(event: &'e Event<'_>) -> Event<'e> {
+    let text = |value: &'e CowStr<'_>| CowStr::Borrowed(value);
+    match event {
+        Event::Text(value) => Event::Text(text(value)),
+        Event::Code(value) => Event::Code(text(value)),
+        Event::Html(value) => Event::Html(text(value)),
+        Event::InlineHtml(value) => Event::InlineHtml(text(value)),
+        Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(info))) => {
+            Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(text(info))))
+        }
+        Event::Start(Tag::Link {
+            link_type,
+            dest_url,
+            title,
+            id,
+        }) => Event::Start(Tag::Link {
+            link_type: *link_type,
+            dest_url: text(dest_url),
+            title: text(title),
+            id: text(id),
+        }),
+        Event::Start(Tag::Image {
+            link_type,
+            dest_url,
+            title,
+            id,
+        }) => Event::Start(Tag::Image {
+            link_type: *link_type,
+            dest_url: text(dest_url),
+            title: text(title),
+            id: text(id),
+        }),
+        event => event.clone(),
+    }
 }
 
 /// `text` with each run of whitespace made one space.
