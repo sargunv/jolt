@@ -28,16 +28,30 @@ fetch() {
     }
     url=$(lock "$1" url)
     checksum=$(lock "$1" checksum)
-    mkdir -p "$(dirname "$dir")"
+    [ -n "$url" ] && [ -n "$checksum" ] || {
+      echo "no linux-x64 url and checksum for $1 in mise.lock" >&2
+      exit 1
+    }
+    # Extract next to the final directory and rename it into place, so an
+    # interrupted download or extract never leaves a partial directory.
+    partial=$dir.partial
+    rm -rf "$partial" "$dir.archive"
+    mkdir -p "$partial"
     curl --proto '=https' --tlsv1.2 -LsSf "$url" -o "$dir.archive"
     printf '%s  %s\n' "${checksum#sha256:}" "$dir.archive" | sha256sum -c - >&2
-    mkdir "$dir"
     case $url in
-      *.zip) unzip -q "$dir.archive" -d "$dir" ;;
-      *) tar -xzf "$dir.archive" -C "$dir" ;;
+      *.zip) unzip -q "$dir.archive" -d "$partial" ;;
+      *) tar -xzf "$dir.archive" -C "$partial" ;;
     esac
+    rm "$dir.archive"
+    mv "$partial" "$dir"
   fi
-  find "$dir" -name "$2" -type f | head -n 1
+  binary=$(find "$dir" -name "$2" -type f | head -n 1)
+  [ -n "$binary" ] || {
+    echo "no $2 in $dir; delete it and rerun" >&2
+    exit 1
+  }
+  printf '%s\n' "$binary"
 }
 
 wasm_opt=$(fetch aqua:WebAssembly/binaryen wasm-opt)

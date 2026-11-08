@@ -5,9 +5,7 @@
 //! deleted, checked with the oracle. Run with `mise run hunt` (release mode).
 //! `jcheck` replays one file or variant.
 
-use std::path::Path;
-
-use jolt_test_support::{CorpusSweep, run_corpus_sweep};
+use jolt_test_support::{CorpusSweep, run_corpus_sweep, workspace_root};
 
 #[path = "../tests/common/mod.rs"]
 mod common;
@@ -17,17 +15,11 @@ mod common;
 const KNOWN_OPEN: &[&str] = &[];
 
 fn main() {
-    let repo_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(2)
-        .expect("repository root above the crate directory");
     let code = run_corpus_sweep(
         &common::JavaCorpus,
-        repo_root,
+        &workspace_root(env!("CARGO_MANIFEST_DIR")),
         &CorpusSweep {
             suites: common::SWEEP_SUITES,
-            extensions: &["java"],
-            out_dir: "java",
             known_open: KNOWN_OPEN,
         },
     );

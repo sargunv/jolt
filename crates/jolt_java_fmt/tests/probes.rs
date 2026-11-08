@@ -2,13 +2,10 @@
 //! trivia fixtures and of a list of small constructs, checked with the
 //! oracle. The sweep (`mise run hunt`) covers the imported corpora.
 
-use std::sync::Mutex;
-use std::sync::atomic::{AtomicUsize, Ordering};
-
 use jolt_fmt::FormatOptions;
 use jolt_test_support::{
-    CorpusLanguage, PROBE_SHAPES, ProbeShape, collect_java_files, java_fixture_root, parse_facts,
-    probed_source, read_to_string, sweep_variant,
+    CorpusLanguage, PROBE_SHAPES, ProbeShape, collect_java_files, java_fixture_root, par_fold,
+    parse_facts, probed_source, read_to_string, sweep_variant,
 };
 
 mod common;
@@ -80,26 +77,21 @@ fn comment_probes_pass_the_oracle() {
             .iter()
             .map(|source| ((*source).to_owned(), (*source).to_owned())),
     );
-    let next = AtomicUsize::new(0);
-    let failures = Mutex::new(Vec::new());
-    let threads = std::thread::available_parallelism().map_or(4, usize::from);
-    std::thread::scope(|scope| {
-        for _ in 0..threads {
-            scope.spawn(|| {
-                loop {
-                    let index = next.fetch_add(1, Ordering::Relaxed);
-                    let Some((label, source)) = cases.get(index / PROBE_SHAPES.len()) else {
-                        break;
-                    };
-                    let shape = &PROBE_SHAPES[index % PROBE_SHAPES.len()];
-                    let mut found = Vec::new();
-                    probe_all(&common::JavaCorpus, source, label, shape, &mut found);
-                    failures.lock().expect("failure list").extend(found);
-                }
-            });
-        }
-    });
-    let failures = failures.into_inner().expect("failure list");
+    let probes: Vec<(&str, &str, &ProbeShape)> = cases
+        .iter()
+        .flat_map(|(label, source)| {
+            PROBE_SHAPES
+                .iter()
+                .map(move |shape| (label.as_str(), source.as_str(), shape))
+        })
+        .collect();
+    let failures = par_fold(
+        &probes,
+        |failures: &mut Vec<String>, &(label, source, shape)| {
+            probe_all(&common::JavaCorpus, source, label, shape, failures);
+        },
+        Vec::extend,
+    );
     assert!(
         failures.is_empty(),
         "{} probe failures:\n{}",

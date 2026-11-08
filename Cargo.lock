@@ -420,6 +420,7 @@ version = "0.0.0"
 dependencies = [
  "jolt_fmt",
  "jolt_syntax",
+ "rayon",
 ]
 
 [[package]]

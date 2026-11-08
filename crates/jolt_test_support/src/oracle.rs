@@ -10,8 +10,11 @@ use jolt_syntax::{Diagnostic, Language, SyntaxElement, SyntaxNode, TriviaKind};
 /// What a language provides to the oracle, the corpus tests and the sweep.
 pub trait CorpusLanguage: Sync {
     type Syntax: Language;
-    /// Human-readable language name for assertion messages.
+    /// Human-readable language name for assertion messages. Lowercased, it
+    /// names the sweep's report directory.
     fn name(&self) -> &'static str;
+    /// The extension of the source files the sweep checks.
+    fn extension(&self) -> &'static str;
     /// Parses `source` and hands the root and diagnostics to `visit`.
     fn with_parse<R>(
         &self,
@@ -98,7 +101,7 @@ fn token_inventory<L: Language>(
 
 /// Diagnostic codes with their counts.
 #[must_use]
-pub fn diagnostic_codes(diagnostics: &[Diagnostic]) -> BTreeMap<&'static str, usize> {
+fn diagnostic_codes(diagnostics: &[Diagnostic]) -> BTreeMap<&'static str, usize> {
     let mut codes = BTreeMap::new();
     for diagnostic in diagnostics {
         *codes.entry(diagnostic.code).or_default() += 1;
@@ -108,7 +111,7 @@ pub fn diagnostic_codes(diagnostics: &[Diagnostic]) -> BTreeMap<&'static str, us
 
 /// Every comment by kind and canonical text.
 #[must_use]
-pub fn comment_inventory(root: SyntaxNode<'_>) -> BTreeMap<String, usize> {
+fn comment_inventory(root: SyntaxNode<'_>) -> BTreeMap<String, usize> {
     let mut comments = BTreeMap::new();
     for token in root.tokens() {
         for piece in token.leading().chain(token.trailing()) {
@@ -131,7 +134,7 @@ pub fn comment_inventory(root: SyntaxNode<'_>) -> BTreeMap<String, usize> {
 /// it: after the `*` (and one space) of a star line, and relative to the
 /// other continuation lines when no line starts with `*`.
 #[must_use]
-pub fn canonical_comment_text<'t>(text: &'t str) -> String {
+fn canonical_comment_text<'t>(text: &'t str) -> String {
     let doc = text.starts_with("/**");
     let body = text
         .strip_prefix("//")
@@ -219,7 +222,7 @@ pub struct StructurePolicy<K: 'static> {
 
 /// Reports where two fingerprints first diverge.
 #[must_use]
-pub fn describe_divergence(expected: &str, actual: &str) -> String {
+fn describe_divergence(expected: &str, actual: &str) -> String {
     const WINDOW: usize = 160;
     let prefix = expected
         .bytes()
@@ -300,7 +303,7 @@ enum Step<'a, K> {
 /// stack (deep left-nested spines are fine); only reordering or collapsing
 /// nodes recurse, and those nest no deeper than the parser's depth limit.
 #[must_use]
-pub fn structure_fingerprint<L: Language>(
+fn structure_fingerprint<L: Language>(
     root: SyntaxNode<'_>,
     policy: &StructurePolicy<L::Kind>,
 ) -> String {
