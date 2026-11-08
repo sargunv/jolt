@@ -18,16 +18,10 @@ pub(crate) fn spaced(f: &mut JavaFormatter<'_>, doc: Doc) -> Doc {
     }
 }
 
-/// A space, then `node`; NIL when `node` is missing. (A node without tokens,
-/// which recovery can produce, keeps the space.)
+/// A space, then `node`; NIL when `node` is missing or formats to nothing.
 pub(crate) fn spaced_node<'a, N: AstNode<'a>>(f: &mut JavaFormatter<'a>, node: Option<N>) -> Doc {
-    match node {
-        Some(node) => {
-            let doc = f.fmt(node);
-            cat![f; f.space(), doc]
-        }
-        None => Doc::NIL,
-    }
+    let doc = f.fmt_opt(node);
+    spaced(f, doc)
 }
 
 /// `token value tail`, for the value after a keyword, `->`, `&` or `|`. When
