@@ -216,7 +216,7 @@ pub(crate) fn case_pattern<'a>(f: &mut JavaFormatter<'a>, node: CasePattern<'a>)
 }
 
 /// `when condition`. Parentheses around the condition are removed (N6)
-/// unless a comment is inside them.
+/// unless a comment is on or inside them.
 pub(crate) fn guard<'a>(f: &mut JavaFormatter<'a>, node: Guard<'a>) -> Doc {
     let when = f.token_opt(node.when_keyword());
     let condition = f.fmt_opt(node.condition());

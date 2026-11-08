@@ -472,8 +472,8 @@ switch (value) {
 - A rule (`case X ->`) whose body doesn't fit breaks after `->`, with the body
   one level deeper.
 - Label lists (`case null, default`) and guards (`when …`) stay on the label
-  line. Redundant parentheses around a guard are removed, unless a comment is
-  inside them.
+  line. Redundant parentheses around a guard are removed, unless a comment is on
+  or inside them.
 - A switch expression formats the same way.
 
 ### Try

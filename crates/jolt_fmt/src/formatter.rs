@@ -404,6 +404,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 let body = self.verbatim(node);
                 self.with_comments(SyntaxElement::Node(node), body)
             } else if elide {
+                debug_assert!(
+                    !self.has_comments_within(node),
+                    "elided item with comments: {node:?}"
+                );
                 continue;
             } else {
                 self.node(node)
