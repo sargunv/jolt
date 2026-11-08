@@ -277,6 +277,8 @@ fn spine<'a>(f: &mut JavaFormatter<'a>, outer: SyntaxNode<'a>) -> Doc {
     let mut root_quiet = quiet(f, head);
     let mut chain = Vec::new();
     let mut joins = Joins::default();
+    // Whether no comment trails the chain's last member so far.
+    let mut member_quiet = true;
     for (index, &link) in links.iter().enumerate().rev() {
         let segment = segment(f, link);
         // `1 .class` (recovery only): `1.` would lex as a float literal.
@@ -303,8 +305,9 @@ fn spine<'a>(f: &mut JavaFormatter<'a>, outer: SyntaxNode<'a>) -> Doc {
                     quiet: root_quiet && dot_quiet,
                 };
             } else {
-                joins.quiet &= dot_quiet;
+                joins.quiet &= member_quiet && dot_quiet;
             }
+            member_quiet = quiet(f, Some(node)) && form.is_none_or(|form| quiet(f, Some(form)));
             chain.push(Member {
                 doc,
                 call: matches!(link, Link::Call(..)),
@@ -328,18 +331,17 @@ struct Joins {
     /// The first segment joins the root's line: the root is simple (a name,
     /// `this`, `super`, a class literal) and `quiet` holds.
     first: bool,
-    /// Nothing forces a line after the root: it has no trailing comment, and
-    /// no comment leads a `.` of the chain.
+    /// Nothing forces a line after the root: no comment trails the root or a
+    /// member before the last, and no comment leads a `.` of the chain.
     quiet: bool,
 }
 
 /// `root` followed by the member links: flat if it fits; otherwise every
 /// call after the root starts its own line one indent deeper. Consecutive
 /// field accesses stay together. With `joins.first`, the first segment joins
-/// the root's line. A chain whose only call is its last segment and does not
-/// join the root's line hangs that call after the root (see
-/// `DocBuilder::hang`), when `joins.quiet`: the call moves to the next line
-/// only if that makes it fit.
+/// the root's line. When a single call is left after that, it hangs after
+/// the root and the first segment (see `DocBuilder::hang`), if
+/// `joins.quiet`: the call moves to the next line only if that makes it fit.
 fn member_chain(
     f: &mut JavaFormatter<'_>,
     root: Doc,
@@ -349,7 +351,6 @@ fn member_chain(
     if chain.is_empty() {
         return root;
     }
-    let calls = chain.iter().filter(|member| member.call).count();
     let last_call = chain.last().is_some_and(|member| member.call);
     let mut segments = Vec::with_capacity(chain.len());
     let mut field_run = Vec::new();
@@ -373,7 +374,7 @@ fn member_chain(
     } else {
         root
     };
-    if joins.quiet && calls == 1 && last_call && segments.len() == 1 {
+    if joins.quiet && last_call && segments.len() == 1 {
         let call = segments.next().unwrap_or(Doc::NIL);
         let line = f.soft_line();
         let call = f.hang(line, call);

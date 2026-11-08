@@ -34,5 +34,7 @@ class AssignmentHangs {
       default -> {}
     }
     arrayWithLongName[firstIndexExpression + secondIndexExpression + thirdIndexExpression] = arrayWithLongName[firstIndexExpression + secondIndexExpression];
+    String city = parser.parseExpression("placeOfBirth?.city") // why
+      .getValue(context, tesla, String.class);
   }
 }

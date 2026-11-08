@@ -686,6 +686,11 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                             if hung.deciding {
                                 return false;
                             }
+                            // The pending comment ends the line, and the hang
+                            // breaks its line (see `hang`).
+                            if suffix_pending {
+                                return hung.line_ends(entry.indent + 1, false);
+                            }
                             hung.parts += 1;
                             hung.last = hung.parts;
                             hung.fallback = entry.indent + 1 > hung.base;

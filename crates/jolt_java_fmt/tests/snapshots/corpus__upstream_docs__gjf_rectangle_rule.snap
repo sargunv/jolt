@@ -24,13 +24,12 @@ class GoogleJavaFormatRectangleRuleSnippets {
   void block05() {
     PCollection<List<Integer>> recomputedMean =
       p.apply(
-        Create.of(Arrays.asList(assigned))
-          .withCoder(
-            KvCoder.of(
-              ListCoder.of(BigEndianIntegerCoder.of()),
-              ListCoder.of(BigEndianIntegerCoder.of())
-            )
+        Create.of(Arrays.asList(assigned)).withCoder(
+          KvCoder.of(
+            ListCoder.of(BigEndianIntegerCoder.of()),
+            ListCoder.of(BigEndianIntegerCoder.of())
           )
+        )
       )
         .apply(
           Combine.<List<Integer>, List<Integer>, List<Integer>>perKey(
@@ -48,13 +47,12 @@ class GoogleJavaFormatRectangleRuleSnippets {
   void block06() {
     PCollection<List<Integer>> recomputedMean =
       p.apply(
-        Create.of(Arrays.asList(assigned))
-          .withCoder(
-            KvCoder.of(
-              ListCoder.of(BigEndianIntegerCoder.of()),
-              ListCoder.of(BigEndianIntegerCoder.of())
-            )
+        Create.of(Arrays.asList(assigned)).withCoder(
+          KvCoder.of(
+            ListCoder.of(BigEndianIntegerCoder.of()),
+            ListCoder.of(BigEndianIntegerCoder.of())
           )
+        )
       )
         .apply(
           Combine.<List<Integer>, List<Integer>, List<Integer>>perKey(
