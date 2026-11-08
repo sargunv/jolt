@@ -40,10 +40,11 @@ source ──lex──▶ tokens+trivia ──parse──▶ events ──build�
 ```
 
 Every phase is a single linear pass, except two explicitly bounded searches: the
-printer's fit checks (at most `FIT_BUDGET` commands each, one per group and at
-most three per [hang](#hang)) and the parser's speculative lookahead (each scan
-capped by `MAX_DEPTH` nesting, balanced brackets answered by a table built once
-in linear time; see [Parser rules](#parser-rules)).
+printer's fit checks (at most `FIT_BUDGET` commands each: one per group or
+[hug](#hang-and-hug), at most three per [hang](#hang-and-hug)) and the parser's
+speculative lookahead (each scan capped by `MAX_DEPTH` nesting, balanced
+brackets answered by a table built once in linear time; see
+[Parser rules](#parser-rules)).
 
 ## Crates
 
@@ -706,7 +707,8 @@ formatted.
 | `line_break(blank)`             | `empty_line()` when `blank`, else `hard_line()`: a separator that keeps or adds a blank line.                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `concat([Doc])`                 | Sequence.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `group(Doc)`                    | Flat if the contents fit, else broken. Contents without a line of their own are returned unchanged (see below).                                                                                                                                                                                                                                                                                                                                                                                        |
-| `hang(line, value)`             | `line` (a `line` or `soft_line`), then `value`: flat if it fits; else `value` on the next line one indent deeper if it fits there flat; else `value` broken on this line if its first line fits; else the next line (see [Hang](#hang)).                                                                                                                                                                                                                                                               |
+| `hang(line, value)`             | `line` (a `line` or `soft_line`), then `value`: flat if it fits; else `value` on the next line one indent deeper if it fits there flat; else `value` broken on this line if its first line fits; else the next line (see [Hang](#hang-and-hug)).                                                                                                                                                                                                                                                       |
+| `hug(hugged, broken)`           | `hugged` (a list's items with spaces for its lines, printed broken) if its first line fits up to a required line break outside its groups; else `broken`, which has a forced break (see [Hang](#hang-and-hug)).                                                                                                                                                                                                                                                                                        |
 | `indent(Doc)`                   | One more indentation level for newlines inside.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `if_break(broken, flat)`        | Chooses by the mode of the enclosing group.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `line_suffix(Doc)`              | Deferred until the next newline (or a non-sticky text; see printer).                                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -725,8 +727,8 @@ in `O(1)` per constructed node. A second bit, `lines`, records whether the node
 has a `line`, `soft_line`, `if_break` or `hang` outside every group inside it:
 whether its layout depends on the mode of a group around it. `group` returns
 contents without that bit unchanged, since a group around them would only add a
-fit check. So every group has a line break of its own, which the [hang](#hang)'s
-probe relies on.
+fit check. So every group has a line break of its own, which the
+[hang](#hang-and-hug)'s probe relies on.
 
 Text side-table flags: `sticky`, `line_comment` (set by the comment printer for
 line comments; see the printer's "line comments end their line"), the multi-line
@@ -807,7 +809,7 @@ starts with text, so it is measured on the line the comment pushes it to.
 Indentation is `indent_width` spaces per level, or one tab per level with
 `use_tabs` (a tab counts `indent_width` columns for fitting).
 
-#### Hang
+#### Hang and hug
 
 `hang(line, value)` is the one layout choice besides flat or broken. It lays out
 the value after an operator (`x = value`, `case X -> value;`, `(Type) value`)
@@ -859,6 +861,22 @@ when that fits, so the measured line is never shorter than the printed one. The
 hung probe measures a broken hang outside every breakable part as a breakable
 part of its own whose first line break comes before its value. So measuring a
 hang costs the same as measuring its children, and no fit check starts another.
+
+**Hug.** `hug(hugged, broken)` lays out an argument list whose last argument has
+a body that always breaks: `broken` is the list broken as usual (it has a forced
+break), and `hugged` is `open a, b, last close` with a space for each of the
+list's lines, so that the body breaks at the call's indentation. The printer
+prints `hugged`, broken, if the hung probe above fits for `hugged` measured flat
+from the current position (its groups flat, except those with a forced break):
+the line must fit up to its first required line break, which must be indented
+deeper than the hug and must not be inside a group of `hugged`. A block, class
+body, switch body or text block is not inside a group, so it qualifies; a forced
+break in the last argument's parameters or arguments, or in a call it is nested
+in, does not, and the list breaks. The list builder offers a hug only when the
+last argument is a lambda with a block body, an anonymous class, a switch
+expression or a text block, and no argument before it has a forced break, so two
+lambda bodies keep the broken list. A fit check measures a hug as `broken`,
+which is always available. One fit check per hug.
 
 Cost: the printer reaches each hang once and makes at most three fit checks
 there, each bounded like a group's: it visits at most `FIT_BUDGET` commands and
@@ -1437,9 +1455,15 @@ the generic rules; a new hook requires a fixture and an entry here.
 ```rust
 // helpers/lists.rs
 pub(crate) enum ListLayout {
-    /// Argument, parameter, type-argument and pattern lists: `(a, b)` when
-    /// flat, and no trailing comma (Java forbids one there).
+    /// Parameter, type-argument and pattern lists: `(a, b)` when flat, and
+    /// no trailing comma (Java forbids one there).
     Plain,
+    /// Argument lists: `Plain`; when the last argument is a lambda with a
+    /// block body, an anonymous class, a switch expression or a text block,
+    /// has a forced break, and the arguments before it have none, the list
+    /// is a `hug` of `open a, b, last close` (spaces for the list's lines)
+    /// and the broken list.
+    Arguments,
     /// Array and annotation-array initializers: `{ a, b }` when flat; when
     /// broken, a synthesized `,` (sticky, so it goes before the last
     /// element's trailing line comment: `last, // c`). A trailing `,` in the

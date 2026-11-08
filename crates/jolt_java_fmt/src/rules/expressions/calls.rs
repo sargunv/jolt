@@ -53,6 +53,6 @@ pub(crate) fn argument_list<'a>(f: &mut JavaFormatter<'a>, node: ArgumentList<'a
             .into_iter()
             .flat_map(ExpressionList::elements),
         node.close_paren(),
-        ListLayout::Plain,
+        ListLayout::Arguments,
     )
 }

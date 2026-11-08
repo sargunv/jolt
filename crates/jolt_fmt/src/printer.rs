@@ -171,6 +171,16 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     mode,
                     doc: child,
                 }),
+                Kind::Hug(hugged, broken) => {
+                    let hugged = Fit::new(hugged, indent, Mode::Flat);
+                    let doc = if mode == Mode::Break && self.measure(&[hugged], Probe::Hung(indent))
+                    {
+                        hugged.doc
+                    } else {
+                        broken
+                    };
+                    self.stack.push(Command { indent, mode, doc });
+                }
                 Kind::Hang(line, value) => {
                     let layout = if mode == Mode::Flat {
                         Hang::Flat
@@ -586,6 +596,9 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 }
                 Kind::Line | Kind::SoftLine | Kind::HardLine | Kind::EmptyLine => {
                     return match &hung {
+                        // A forced break inside a group of a hug's flat
+                        // contents: a list item breaks before its body.
+                        Some(_) if entry.inner && !in_rest => false,
                         Some(hung) => hung.line_ends(entry.indent, in_rest),
                         None => in_rest,
                     };
@@ -609,7 +622,7 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     let (mode, group, inner) = match value {
                         // The value's outermost groups are its breakable
                         // parts; the groups inside them are flat.
-                        Some(hung) if mode == Mode::Break && entry.group == 0 => {
+                        Some(hung) if mode == Mode::Break && entry.group == 0 && !entry.inner => {
                             hung.parts += 1;
                             hung.forced = forced;
                             (Mode::Break, hung.parts, false)
@@ -642,6 +655,11 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                         ..entry
                     });
                 }
+                // Measured as its broken layout, which is always available.
+                Kind::Hug(_, broken) => stack.push(Fit {
+                    doc: broken,
+                    ..entry
+                }),
                 Kind::Hang(line, hung_value) => {
                     let (indent, mode, group) = match (mode, value) {
                         (Mode::Flat, _) => (entry.indent, Mode::Flat, entry.group),
@@ -649,6 +667,9 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                         (Mode::Break, Some(_)) if entry.group != 0 => {
                             (entry.indent, Mode::Flat, entry.group)
                         }
+                        // In a group with a forced break inside a hug's flat
+                        // contents: a line break in a group, as below.
+                        (Mode::Break, Some(_)) if entry.inner => return false,
                         // A breakable part whose line break comes first.
                         (Mode::Break, Some(hung)) => {
                             if hung.deciding {

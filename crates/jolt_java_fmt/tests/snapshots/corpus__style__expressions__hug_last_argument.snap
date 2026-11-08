@@ -1,0 +1,74 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class HugLastArgument {
+  void calls() {
+    project.allprojects(subproject -> {
+      Path rootPath = project.getRootDir().toPath();
+      configure(rootPath);
+    });
+    tasks.register(taskName(sourceSet), ArchitectureCheck.class, task -> {
+      task.setClasses(sourceSet.getOutput().getClassesDirs());
+    });
+    executor.submit(new Runnable() {
+      public void run() {
+        go();
+      }
+    });
+    assertThat(response.getBodyAsString().block()).isEqualTo("""
+        {"status":404}
+        """);
+    int size = compute(switch (kind) {
+      case SMALL -> 1;
+      default -> 2;
+    });
+    list.forEach(
+      item -> process(
+        item,
+        someOtherArgumentThatMakesTheLineLong,
+        andAnotherOne
+      )
+    );
+    template.execute(
+      first -> {
+        first.run();
+      },
+      second -> {
+        second.run();
+      }
+    );
+    map.computeIfAbsent(
+      someVeryLongKeyExpressionThatTakesUpMostOfTheLine,
+      (k, v) -> {
+        return v;
+      }
+    );
+    handler.handle(
+      (String someLongParameterName, Integer anotherLongParameterName) -> {
+        use(someLongParameterName);
+      }
+    );
+    callback.on(
+      event, // why
+      e -> {
+        handle(e);
+      }
+    );
+    callback.on(
+      e -> {
+        handle(e);
+      }, // why
+      done
+    );
+    outer(
+      inner(value -> {
+        consume(value);
+      })
+    );
+  }
+}
+
+diagnostics:
+(none)

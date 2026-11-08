@@ -66,7 +66,10 @@ the differences readers notice first:
   Javadoc that doesn't fit. Jolt keeps the text of every comment as written and
   only realigns the `*` at the start of its lines.
 - **Lambdas.** Jolt removes the parentheses around a single untyped lambda
-  parameter (`x -> x`).
+  parameter (`x -> x`). For a lambda with a block body or an anonymous class as
+  the last argument, google-java-format puts every argument on a new line when
+  they don't all fit (`run(` / `() -> {`); Jolt keeps the call open on its line
+  (`run(() -> {`) when the arguments before the body fit there.
 
 ## Whitespace
 
@@ -581,10 +584,28 @@ return create(
   account.permissions().primaryRole(),
   settings.region().identifier()
 );
+tasks.register(taskName(sourceSet), ArchitectureCheck.class, task -> {
+  task.setClasses(sourceSet.getOutput().getClassesDirs());
+});
+template.execute(
+  first -> {
+    first.run();
+  },
+  second -> {
+    second.run();
+  }
+);
 ```
 
-- Arguments break like a list. A lambda or anonymous class as the last argument
-  gets no special treatment.
+- Arguments break like a list.
+- When the last argument has a body that always breaks (a lambda with a block
+  body, an anonymous class, a switch expression) or is a text block, and the
+  arguments before it have none, the call stays open on its line: the body
+  breaks at the call's indentation and `)` follows the body's last line (`});`).
+  This applies when the line fits up to the body's opening line and the last
+  argument doesn't break before its body (its parameters stay on one line).
+  Otherwise the arguments break like a list, as they do when two arguments have
+  bodies.
 - Explicit type arguments print without spaces: `this.<String>convert(x)`.
 - `new` expressions, including `outer.new Inner(…)`, format like calls.
 
@@ -637,6 +658,8 @@ Supplier<String> name = User::name;
   break.
 - An expression body stays on the arrow's line when it fits, and a block body
   opens there.
+- A lambda as the last argument of a call keeps a block body at the call's
+  indentation (see [Calls](#calls)).
 - Method references have no spaces: `String::length`, `int[]::new`.
 
 ### Arrays

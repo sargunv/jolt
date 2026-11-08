@@ -55,6 +55,8 @@ pub(crate) enum Kind {
     LineSuffix(Doc),
     /// `line` (a `line` or `soft_line`), then the value.
     Hang(Doc, Doc),
+    /// The hugged and the broken layout of a list.
+    Hug(Doc, Doc),
 }
 
 const _: () = assert!(size_of::<Kind>() == 12);
@@ -319,6 +321,18 @@ impl<'a> DocBuilder<'a> {
         );
         let flags = self.flags(value) & BREAKS | LINES;
         self.push(Kind::Hang(line, value), flags)
+    }
+
+    /// `hugged` if its first line fits up to its first required line break,
+    /// and that break is indented deeper than here and outside every group
+    /// in `hugged`; else `broken`. `hugged` has no line break of its own and
+    /// prints broken, so each of its groups breaks only if it does not fit.
+    /// `broken` contains a forced break. One fit check, like a hang's (see
+    /// the printer).
+    pub fn hug(&mut self, hugged: Doc, broken: Doc) -> Doc {
+        debug_assert!(self.breaks(broken), "a hug whose broken layout can be flat");
+        let flags = self.flags(broken) & BREAKS;
+        self.push(Kind::Hug(hugged, broken), flags)
     }
 
     /// `broken` or `flat` by the mode of the enclosing group.
