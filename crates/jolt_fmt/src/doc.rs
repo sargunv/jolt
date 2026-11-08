@@ -32,7 +32,9 @@ impl Doc {
 pub(crate) enum Reindent<'a> {
     /// A multi-line block comment: star blocks are re-aligned under the
     /// opening delimiter, other lines are trimmed (see [`comment_lines`]).
-    Comment,
+    /// The indentation of the source line the comment starts on, which a
+    /// doc comment with a line without `*` re-indents against.
+    Comment(&'a str),
     /// Verbatim source: `prefix` is removed from each continuation line that
     /// starts with it.
     Strip(&'a str),
@@ -191,8 +193,8 @@ impl<'a> DocBuilder<'a> {
     ) -> Doc {
         let (width, multiline) = match reindent {
             None | Some(Reindent::Strip(_)) => measure(text),
-            Some(Reindent::Comment) => {
-                let width = comment_lines(text).next().map_or(0, |parts| {
+            Some(Reindent::Comment(indentation)) => {
+                let width = comment_lines(text, indentation).next().map_or(0, |parts| {
                     parts.iter().map(|part| display_width(part)).sum()
                 });
                 (width, has_line_break(text))
@@ -458,23 +460,46 @@ pub(crate) fn display_width(text: &str) -> u32 {
 /// One output line of a block comment, as parts to concatenate.
 pub(crate) type CommentLine<'t> = [&'t str; 3];
 
-/// The output lines of a block comment: a multi-line doc comment (`/**`) is
-/// a star block whose opener text moves to its own line; a multi-line block
-/// comment whose continuation starts with `*` is a star block that keeps its
-/// opener text; any other comment keeps its continuation lines' indentation
-/// relative to each other. A star line keeps its text after the `*` and one
-/// space, so `<pre>` code stays indented.
-pub(crate) fn comment_lines(text: &str) -> impl Iterator<Item = CommentLine<'_>> {
+/// The output lines of a block comment: a multi-line doc comment (`/**`)
+/// whose content lines all start with `*` is a star block whose opener text
+/// moves to its own line; a multi-line block comment whose continuation
+/// starts with `*` is a star block that keeps its opener text. A star line
+/// keeps its text after the `*` and one space, so `<pre>` code stays
+/// indented.
+///
+/// Javadoc keeps the indentation of a doc comment line without a `*`, so a
+/// doc comment with such a line keeps its lines as written: each loses
+/// `indentation`, the indentation of the source line the comment starts on,
+/// when it starts with it. Any other comment keeps its continuation lines'
+/// indentation relative to each other.
+pub(crate) fn comment_lines<'t>(
+    text: &'t str,
+    indentation: &'t str,
+) -> impl Iterator<Item = CommentLine<'t>> {
     let doc = text.starts_with("/**") && !text.starts_with("/**/");
     let content = strip_delimiters(text);
     let multiline = has_line_break(content);
-    let star_block = (doc && multiline) || is_star_block(content);
-    // Exactly one of the two layouts is `Some`.
+    let star_block = if doc {
+        multiline && !has_star_less_line(content)
+    } else {
+        is_star_block(content)
+    };
     let plain = (!star_block).then(|| {
         let mut lines = lines(text.trim());
         let first = lines.next().unwrap_or("").trim();
-        let shared = shared_indentation(lines.clone());
-        let rest = lines.map(move |line| [line.trim_end().get(shared..).unwrap_or(""), "", ""]);
+        let shared = if doc {
+            None
+        } else {
+            Some(shared_indentation(lines.clone()))
+        };
+        let rest = lines.map(move |line| {
+            let line = line.trim_end();
+            let line = match shared {
+                Some(shared) => line.get(shared..).unwrap_or(""),
+                None => line.strip_prefix(indentation).unwrap_or(line),
+            };
+            [line, "", ""]
+        });
         std::iter::once([first, "", ""]).chain(rest)
     });
     let star = star_block.then(|| {
@@ -540,6 +565,13 @@ fn strip_delimiters(text: &str) -> &str {
     body.strip_prefix("/**")
         .or_else(|| body.strip_prefix("/*"))
         .unwrap_or(body)
+}
+
+/// Whether a continuation line of `content` has text but no leading `*`.
+fn has_star_less_line(content: &str) -> bool {
+    lines(content)
+        .skip(1)
+        .any(|line| !line.trim().is_empty() && !line.trim_start().starts_with('*'))
 }
 
 fn is_star_block(content: &str) -> bool {

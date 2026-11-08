@@ -857,7 +857,9 @@ log(
   keeps its text after the `*`, so code samples in `<pre>` keep their
   indentation. Other multi-line block comments move as a unit, keeping their
   lines' relative indentation. A multi-line Javadoc comment starts its text on
-  the line after `/**`:
+  the line after `/**`. A Javadoc comment with a line that doesn't start with
+  `*` is kept as written and moves with the code: Javadoc keeps the indentation
+  of such a line, so realigning it could change a code sample.
 
 ::: code-group
 

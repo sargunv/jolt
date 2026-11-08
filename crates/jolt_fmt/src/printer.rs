@@ -387,8 +387,8 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 }
                 self.verbatim_base = base;
             }
-            Some(Reindent::Comment) => {
-                for (index, parts) in comment_lines(text.text).enumerate() {
+            Some(Reindent::Comment(indentation)) => {
+                for (index, parts) in comment_lines(text.text, indentation).enumerate() {
                     if index > 0 {
                         self.out.push('\n');
                         self.column = 0;

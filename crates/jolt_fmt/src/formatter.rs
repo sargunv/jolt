@@ -60,6 +60,7 @@ pub struct Separator<'a> {
 /// every comment was emitted exactly once.
 pub struct Formatter<'a, L: FormatLanguage> {
     builder: DocBuilder<'a>,
+    source: &'a str,
     comments: Comments<'a>,
     /// The formatter-ignore regions, sorted and disjoint.
     regions: Vec<TextRange>,
@@ -89,6 +90,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         let count = comments.list.len();
         Self {
             builder: DocBuilder::with_capacity(root.tree().token_count()),
+            source: root.source(),
             comments,
             regions,
             emitted: vec![0; count],
@@ -293,7 +295,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             inside
                 .map(|index| self.comments.list[index].comment)
                 .filter(|comment| !comment.raw && lines_outside(comment.text, prefix))
-                .map(|comment| (comment.range, Some(Reindent::Comment))),
+                .map(|comment| {
+                    let indentation = line_indentation(source, comment.range.start());
+                    (comment.range, Some(Reindent::Comment(indentation)))
+                }),
         );
         apart.sort_unstable_by_key(|(range, _)| range.start());
         let mut docs = Vec::new();
@@ -663,7 +668,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             return self.builder.text(comment.text.trim_end());
         }
         if has_line_break(comment.text) {
-            return self.builder.reindented(comment.text, Reindent::Comment);
+            let indentation = line_indentation(self.source, comment.range.start());
+            return self
+                .builder
+                .reindented(comment.text, Reindent::Comment(indentation));
         }
         self.builder.comment_text(comment.text, 0)
     }
