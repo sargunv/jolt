@@ -9,7 +9,7 @@ mod tries;
 
 use jolt_fmt::ListItem;
 use jolt_java_syntax::BlockStatementList;
-use jolt_syntax::{AstNode, ListElement, SyntaxNode};
+use jolt_syntax::{SyntaxElement, SyntaxNode};
 
 use crate::helpers::bodies::body_items;
 
@@ -46,10 +46,6 @@ fn statement_items<'a>(
     let statements = list
         .into_iter()
         .flat_map(BlockStatementList::elements)
-        .filter_map(|element| match element {
-            ListElement::Item(statement) => Some(statement.syntax()),
-            ListElement::Bogus(bogus) => Some(bogus),
-            ListElement::Separator(_) | ListElement::Missing => None,
-        });
+        .filter_map(|element| element.syntax().and_then(SyntaxElement::as_node));
     body_items(owner, statements)
 }

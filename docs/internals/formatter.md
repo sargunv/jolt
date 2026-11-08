@@ -272,6 +272,12 @@ pub enum ListElement<'a, T> {
     /// A `Bogus` node at an item position whose type cannot hold it.
     Bogus(SyntaxNode<'a>),
 }
+
+impl<'a, T: AstNode<'a>> ListElement<'a, T> {
+    /// An item or a bogus node in its place as a node, a separator as a
+    /// token, nothing when missing.
+    pub fn syntax(self) -> Option<SyntaxElement<'a>>;
+}
 ```
 
 Trivia attachment: a token's trailing trivia is the horizontal whitespace, line
@@ -513,10 +519,10 @@ pub enum ModifierElement<'a> {
     Token(SyntaxToken<'a>),
 }
 
-/// Separated lists expose items and elements (`jolt_syntax::ListElement`).
-/// A plain list whose item type holds `Bogus` (a category or choice) exposes
-/// items; one whose item type cannot (a single node kind or tokens) exposes
-/// only elements, so no rule can skip a bogus item by accident.
+/// A list exposes items only when its item type holds `Bogus` (a plain list
+/// of a category or choice). Every other list, and every separated list,
+/// exposes only elements (`jolt_syntax::ListElement`), which keep bogus items
+/// and separators, so no rule can skip a bogus item by accident.
 impl<'a> ClassBodyMemberList<'a> {
     pub fn items(self) -> impl Iterator<Item = ClassBodyMember<'a>> + 'a;
 }
@@ -524,7 +530,6 @@ impl<'a> BlockStatementList<'a> {
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, BlockStatement<'a>>> + 'a;
 }
 impl<'a> ExpressionList<'a> {
-    pub fn items(self) -> impl Iterator<Item = Expression<'a>> + 'a;
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Expression<'a>>> + 'a;
 }
 

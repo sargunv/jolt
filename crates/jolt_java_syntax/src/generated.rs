@@ -4171,14 +4171,6 @@ impl<'a> EnumBody<'a> {
 }
 
 impl<'a> EnumConstantList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = EnumConstant<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<EnumConstant<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, EnumConstant<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -4207,14 +4199,6 @@ impl<'a> EnumConstant<'a> {
 }
 
 impl<'a> RecordComponentList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = RecordComponent<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<RecordComponent<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, RecordComponent<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -4386,14 +4370,6 @@ impl<'a> InstanceInitializer<'a> {
 }
 
 impl<'a> FormalParameterList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = FormalParameterSyntax<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<FormalParameterSyntax<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, FormalParameterSyntax<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -4455,14 +4431,6 @@ impl<'a> ThrowsClause<'a> {
 }
 
 impl<'a> VariableDeclaratorList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = VariableDeclarator<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<VariableDeclarator<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, VariableDeclarator<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -4833,14 +4801,6 @@ impl<'a> ForUpdate<'a> {
 }
 
 impl<'a> StatementExpressionList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = Expression<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<Expression<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Expression<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -5028,14 +4988,6 @@ impl<'a> ResourceSpecification<'a> {
 }
 
 impl<'a> ResourceList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = Resource<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<Resource<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Resource<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -5516,14 +5468,6 @@ impl<'a> LambdaExpression<'a> {
 }
 
 impl<'a> LambdaParameterList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = LambdaParameter<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<LambdaParameter<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, LambdaParameter<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -5735,14 +5679,6 @@ impl<'a> RequiresModifierList<'a> {
 }
 
 impl<'a> NameList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = NameSyntax<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<NameSyntax<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, NameSyntax<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -5756,14 +5692,6 @@ impl<'a> NameList<'a> {
 }
 
 impl<'a> ModuleNameList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = NameSyntax<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<NameSyntax<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, NameSyntax<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -5777,14 +5705,6 @@ impl<'a> ModuleNameList<'a> {
 }
 
 impl<'a> AnnotationElementArgumentList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = AnnotationArgumentSyntax<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<AnnotationArgumentSyntax<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(
         self,
@@ -5810,14 +5730,6 @@ impl<'a> AnnotationInterfaceBodyMemberList<'a> {
 }
 
 impl<'a> AnnotationElementValueList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = AnnotationElementValue<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<AnnotationElementValue<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(
         self,
@@ -5833,14 +5745,6 @@ impl<'a> AnnotationElementValueList<'a> {
 }
 
 impl<'a> TypeParameterSeparatedList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = TypeParameter<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<TypeParameter<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, TypeParameter<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -5854,14 +5758,6 @@ impl<'a> TypeParameterSeparatedList<'a> {
 }
 
 impl<'a> TypeList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = Type<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<Type<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Type<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -5944,14 +5840,6 @@ impl<'a> SwitchEntryList<'a> {
 }
 
 impl<'a> SwitchLabelColonList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = SwitchLabel<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<SwitchLabel<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, SwitchLabel<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -5965,14 +5853,6 @@ impl<'a> SwitchLabelColonList<'a> {
 }
 
 impl<'a> SwitchLabelItemList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = SwitchLabelItem<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(SwitchLabelItem::cast_element)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, SwitchLabelItem<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -5995,14 +5875,6 @@ impl<'a> CatchClauseList<'a> {
 }
 
 impl<'a> ClassTypeSegmentList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = ClassTypeSegmentNode<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<ClassTypeSegmentNode<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, ClassTypeSegmentNode<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -6016,14 +5888,6 @@ impl<'a> ClassTypeSegmentList<'a> {
 }
 
 impl<'a> TypeAmpList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = Type<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<Type<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Type<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -6037,14 +5901,6 @@ impl<'a> TypeAmpList<'a> {
 }
 
 impl<'a> TypeBarList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = Type<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<Type<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Type<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -6058,14 +5914,6 @@ impl<'a> TypeBarList<'a> {
 }
 
 impl<'a> TypeArgumentSeparatedList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = TypeArgument<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<TypeArgument<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, TypeArgument<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -6079,14 +5927,6 @@ impl<'a> TypeArgumentSeparatedList<'a> {
 }
 
 impl<'a> NameSegmentDotList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = QualifiedNameSegmentNode<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<QualifiedNameSegmentNode<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(
         self,
@@ -6111,14 +5951,6 @@ impl<'a> DimExpressionList<'a> {
 }
 
 impl<'a> VariableInitializerList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = VariableInitializerValue<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<VariableInitializerValue<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(
         self,
@@ -6144,14 +5976,6 @@ impl<'a> LambdaModifierList<'a> {
 }
 
 impl<'a> ExpressionList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = Expression<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<Expression<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, Expression<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
@@ -6165,14 +5989,6 @@ impl<'a> ExpressionList<'a> {
 }
 
 impl<'a> ComponentPatternList<'a> {
-    /// Present items; `Bogus` items are skipped unless the item type holds them.
-    pub fn items(self) -> impl Iterator<Item = ComponentPattern<'a>> + 'a {
-        self.0
-            .slots()
-            .step_by(2)
-            .flatten()
-            .filter_map(cast::<ComponentPattern<'a>>)
-    }
     /// Items, separators, and missing elements in order.
     pub fn elements(self) -> impl Iterator<Item = ListElement<'a, ComponentPattern<'a>>> + 'a {
         self.0.slots().enumerate().map(|(index, element)| {
