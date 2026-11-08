@@ -33,7 +33,31 @@ struct Command {
     doc: Doc,
 }
 
-#[allow(clippy::struct_excessive_bools)]
+/// What the current output line holds, for the text that comes next.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Line {
+    /// Nothing has been written yet: the newlines and spaces before the first
+    /// text are dropped.
+    FileStart,
+    /// A text.
+    Text,
+    /// A text that ends with a line comment: the next text starts a new line.
+    Commented,
+}
+
+/// Whitespace requested but not yet written. The next text writes it first.
+#[derive(Clone, Copy, Debug)]
+enum Pending {
+    None,
+    Space,
+    /// `count` newlines (2 make a blank line), then `indent` levels of
+    /// indentation: those of the most recent request.
+    Newlines {
+        count: u8,
+        indent: u32,
+    },
+}
+
 struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     docs: &'p DocBuilder<'a>,
     options: FormatOptions,
@@ -45,13 +69,8 @@ struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     line_ws: String,
     /// The base indentation of the verbatim node being printed.
     verbatim_base: String,
-    pending_newlines: u8,
-    pending_indent: u32,
-    pending_space: bool,
-    /// Only indentation has been written on the current line.
-    at_line_start: bool,
-    wrote_any: bool,
-    after_line_comment: bool,
+    pending: Pending,
+    line: Line,
     /// The last character written on the current line, if it is not a space.
     last: Option<char>,
     joins: J,
@@ -77,12 +96,8 @@ pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
         column: 0,
         line_ws: String::new(),
         verbatim_base: String::new(),
-        pending_newlines: 0,
-        pending_indent: 0,
-        pending_space: false,
-        at_line_start: true,
-        wrote_any: false,
-        after_line_comment: false,
+        pending: Pending::None,
+        line: Line::FileStart,
         last: None,
         joins,
         suffixes: Vec::new(),
@@ -114,8 +129,8 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
             match self.docs.kind(doc) {
                 Kind::Nil | Kind::BreakParent => {}
                 Kind::Text(index) => self.text(index, command)?,
-                Kind::Space => self.pending_space = true,
-                Kind::Line if mode == Mode::Flat => self.pending_space = true,
+                Kind::Space => self.space(),
+                Kind::Line if mode == Mode::Flat => self.space(),
                 Kind::SoftLine if mode == Mode::Flat => {}
                 Kind::Line | Kind::SoftLine | Kind::HardLine => self.newline(command, 1),
                 Kind::EmptyLine => self.newline(command, 2),
@@ -170,15 +185,27 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
         self.stack.extend(suffixes.into_iter().rev());
     }
 
+    /// A space is dropped before a pending newline.
+    fn space(&mut self) {
+        if matches!(self.pending, Pending::None) {
+            self.pending = Pending::Space;
+        }
+    }
+
     fn newline(&mut self, command: Command, count: u8) {
         if !self.suffixes.is_empty() {
             self.stack.push(command);
             self.flush_suffixes();
             return;
         }
-        self.pending_newlines = self.pending_newlines.max(count);
-        self.pending_indent = command.indent;
-        self.pending_space = false;
+        let count = match self.pending {
+            Pending::Newlines { count: pending, .. } => pending.max(count),
+            Pending::None | Pending::Space => count,
+        };
+        self.pending = Pending::Newlines {
+            count,
+            indent: command.indent,
+        };
     }
 
     fn text(&mut self, index: u32, command: Command) -> ControlFlow<()> {
@@ -194,9 +221,11 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
             self.flush_suffixes();
             return ControlFlow::Continue(());
         }
-        if self.after_line_comment && self.pending_newlines == 0 {
-            self.pending_newlines = 1;
-            self.pending_indent = command.indent;
+        if self.line == Line::Commented && !matches!(self.pending, Pending::Newlines { .. }) {
+            self.pending = Pending::Newlines {
+                count: 1,
+                indent: command.indent,
+            };
         }
         self.flush_pending();
         let bytes = text.text.as_bytes();
@@ -220,44 +249,44 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
             self.verbatim_base.clone_from(&self.line_ws);
         }
         self.write(&text);
-        self.wrote_any = true;
-        self.at_line_start = false;
-        self.after_line_comment = text.flags & LINE_COMMENT != 0;
+        self.line = if text.flags & LINE_COMMENT == 0 {
+            Line::Text
+        } else {
+            Line::Commented
+        };
         ControlFlow::Continue(())
     }
 
     fn flush_pending(&mut self) {
-        if self.pending_newlines > 0 {
-            if self.wrote_any {
-                for _ in 0..self.pending_newlines {
-                    self.out.push('\n');
+        match std::mem::replace(&mut self.pending, Pending::None) {
+            Pending::None => {}
+            Pending::Space => {
+                if self.line != Line::FileStart {
+                    self.out.push(' ');
+                    self.column += 1;
+                    self.last = None;
                 }
             }
-            self.line_ws.clear();
-            for _ in 0..self.pending_indent {
-                if self.options.use_tabs {
-                    self.line_ws.push('\t');
-                } else {
-                    for _ in 0..self.options.indent_width {
-                        self.line_ws.push(' ');
+            Pending::Newlines { count, indent } => {
+                if self.line != Line::FileStart {
+                    for _ in 0..count {
+                        self.out.push('\n');
                     }
                 }
-            }
-            self.out.push_str(&self.line_ws);
-            self.column = self.indent_width(self.pending_indent);
-            self.pending_newlines = 0;
-            self.pending_space = false;
-            self.at_line_start = true;
-            self.after_line_comment = false;
-            self.last = None;
-        }
-        if self.pending_space {
-            if !self.at_line_start {
-                self.out.push(' ');
-                self.column += 1;
+                self.line_ws.clear();
+                for _ in 0..indent {
+                    if self.options.use_tabs {
+                        self.line_ws.push('\t');
+                    } else {
+                        for _ in 0..self.options.indent_width {
+                            self.line_ws.push(' ');
+                        }
+                    }
+                }
+                self.out.push_str(&self.line_ws);
+                self.column = self.indent_width(indent);
                 self.last = None;
             }
-            self.pending_space = false;
         }
     }
 
@@ -352,13 +381,13 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
 
     #[allow(clippy::too_many_lines)]
     fn measure(&self, doc: Doc, indent: u32, stack: &mut Vec<Fit>) -> bool {
-        let (start, mut space) = if self.pending_newlines > 0 {
-            (self.indent_width(self.pending_indent), false)
-        } else {
-            (self.column, self.pending_space && !self.at_line_start)
-        };
         // Spaces at the start of a line are dropped, as when printing.
-        let mut line_start = self.pending_newlines > 0 || self.at_line_start;
+        let file_start = self.line == Line::FileStart;
+        let (start, mut space, mut line_start) = match self.pending {
+            Pending::Newlines { indent, .. } => (self.indent_width(indent), false, true),
+            Pending::Space => (self.column, !file_start, file_start),
+            Pending::None => (self.column, false, file_start),
+        };
         let mut width = i64::from(self.options.line_width) - i64::from(start);
         let mut suffix_pending = !self.suffixes.is_empty();
         // A flat line was measured inside the group, so breaking the group

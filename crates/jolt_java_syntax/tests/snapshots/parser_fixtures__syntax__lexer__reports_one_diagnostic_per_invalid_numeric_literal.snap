@@ -1,0 +1,29 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: snapshot
+---
+input:
+0x.p 0x. 0b2 0b_2 09_ 0xL 0bL
+
+syntax:
+CompilationUnit
+  CompilationUnitItemList
+    Bogus
+      FloatingPointLiteral "0x.p" @ 0..4 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x." @ 5..8 trailing=[Whitespace " "]
+      IntegerLiteral "0b2" @ 9..12 trailing=[Whitespace " "]
+      IntegerLiteral "0b_2" @ 13..17 trailing=[Whitespace " "]
+      IntegerLiteral "09_" @ 18..21 trailing=[Whitespace " "]
+      IntegerLiteral "0xL" @ 22..25 trailing=[Whitespace " "]
+      IntegerLiteral "0bL" @ 26..29
+  Eof "" @ 29..29
+
+diagnostics:
+code=java.lex.invalid_numeric_literal range=0..4 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=5..8 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=9..12 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=13..17 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=18..21 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=22..25 message=invalid numeric literal
+code=java.lex.invalid_numeric_literal range=26..29 message=invalid numeric literal
+code=java.parse.unexpected_syntax range=0..4 message=unexpected token at top level

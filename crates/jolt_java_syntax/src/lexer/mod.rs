@@ -162,16 +162,14 @@ impl<'source> Scanner<'source> {
     }
 
     fn horizontal_whitespace(&mut self) -> SyntaxTrivia {
-        let start = self
-            .current_range()
-            .expect("whitespace starts before EOF")
-            .start();
-        while self.current_char().is_some_and(is_horizontal_whitespace) {
-            self.bump();
-        }
+        let start = self.pos;
+        self.pos += self.source.as_bytes()[start..]
+            .iter()
+            .take_while(|&&byte| matches!(byte, b' ' | b'\t' | b'\x0c'))
+            .count();
         SyntaxTrivia::new(
             SyntaxTriviaKind::Whitespace,
-            TextRange::new(start, TextSize::new(self.pos)).len(),
+            TextSize::new(self.pos - start),
         )
     }
 
@@ -190,57 +188,40 @@ impl<'source> Scanner<'source> {
     }
 
     fn line_comment(&mut self) -> SyntaxTrivia {
-        let start = self
-            .current_range()
-            .expect("comment starts before EOF")
-            .start();
-        self.bump();
-        self.bump();
-        while self
-            .current_char()
-            .is_some_and(|ch| ch != '\r' && ch != '\n')
-        {
-            self.bump();
-        }
+        let start = self.pos;
+        // Line terminators are ASCII, so they never occur inside a multi-byte
+        // character.
+        self.pos = self.source.as_bytes()[start + 2..]
+            .iter()
+            .position(|&byte| matches!(byte, b'\r' | b'\n'))
+            .map_or(self.source.len(), |end| start + 2 + end);
         SyntaxTrivia::new(
             SyntaxTriviaKind::LineComment,
-            TextRange::new(start, TextSize::new(self.pos)).len(),
+            TextSize::new(self.pos - start),
         )
     }
 
     fn block_comment(&mut self) -> SyntaxTrivia {
-        let start_pos = self.pos;
-        let start = self
-            .current_range()
-            .expect("comment starts before EOF")
-            .start();
+        let start = self.pos;
         let kind = if self.peek_char(2) == Some('*') && self.peek_char(3) != Some('/') {
             SyntaxTriviaKind::DocComment
         } else {
             SyntaxTriviaKind::BlockComment
         };
-
-        self.bump();
-        self.bump();
-        while !self.at_end() {
-            if self.current_char() == Some('*') && self.peek_char(1) == Some('/') {
-                self.bump();
-                self.bump();
-                return SyntaxTrivia::new(
-                    kind,
-                    TextRange::new(start, TextSize::new(self.pos)).len(),
-                );
-            }
-            self.bump();
+        if let Some(end) = find_block_comment_end(self.source, start) {
+            self.pos = end;
+            return SyntaxTrivia::new(kind, TextSize::new(end - start));
         }
-
+        self.pos = self.source.len();
         self.diagnostics.push(
-            JavaLexDiagnosticCode::UnterminatedBlockComment
-                .at(TextRange::new(start, self.raw_end_for_pos(start_pos))),
+            JavaLexDiagnosticCode::UnterminatedBlockComment.at(TextRange::new(
+                TextSize::new(start),
+                self.raw_end_for_pos(start),
+            )),
         );
         SyntaxTrivia::new(
             SyntaxTriviaKind::UnterminatedBlockComment,
-            TextRange::new(start, TextSize::new(self.pos)).len(),
+            TextSize::new(self.pos - start),
         )
     }
 
@@ -443,17 +424,14 @@ impl<'source> Scanner<'source> {
     }
 
     fn number_literal(&mut self) -> JavaSyntaxKind {
-        let start_pos = self.pos;
-        let start = self
-            .current_range()
-            .expect("literal starts before EOF")
-            .start();
-        let kind = if self.current_char() == Some('.') {
+        let start = self.pos;
+        // Whether the literal is valid as far as its radix form is concerned.
+        let (kind, valid) = if self.current_char() == Some('.') {
             self.bump();
             self.consume_digits_for_radix(10);
             self.consume_decimal_exponent();
             self.consume_float_suffix();
-            JavaSyntaxKind::FloatingPointLiteral
+            (JavaSyntaxKind::FloatingPointLiteral, true)
         } else if self.current_char() == Some('0') && matches!(self.peek_char(1), Some('x' | 'X')) {
             self.bump();
             self.bump();
@@ -481,37 +459,27 @@ impl<'source> Scanner<'source> {
             }
             if floating {
                 self.consume_float_suffix();
-                if before_digits == self.pos {
-                    self.invalid_numeric_literal(start);
-                }
-                if !has_binary_exponent {
-                    self.invalid_numeric_literal(start);
-                }
-                if !has_whole_digits && !has_fraction_digits {
-                    self.invalid_numeric_literal(start);
-                }
-                JavaSyntaxKind::FloatingPointLiteral
+                (
+                    JavaSyntaxKind::FloatingPointLiteral,
+                    has_binary_exponent && (has_whole_digits || has_fraction_digits),
+                )
             } else {
+                let has_digits = before_digits != self.pos;
                 self.consume_integer_suffix();
-                if before_digits == self.pos {
-                    self.invalid_numeric_literal(start);
-                }
-                JavaSyntaxKind::IntegerLiteral
+                (JavaSyntaxKind::IntegerLiteral, has_digits)
             }
         } else if self.current_char() == Some('0') && matches!(self.peek_char(1), Some('b' | 'B')) {
             self.bump();
             self.bump();
             let before_digits = self.pos;
             self.consume_digits_for_radix(2);
+            let has_digits = before_digits != self.pos;
             let invalid_digit = self.current_char().is_some_and(|ch| ch.is_ascii_digit());
             if invalid_digit {
                 self.consume_digits_for_radix(10);
             }
             self.consume_integer_suffix();
-            if before_digits == self.pos || invalid_digit {
-                self.invalid_numeric_literal(start);
-            }
-            JavaSyntaxKind::IntegerLiteral
+            (JavaSyntaxKind::IntegerLiteral, has_digits && !invalid_digit)
         } else {
             self.consume_digits_for_radix(10);
             let mut floating = false;
@@ -532,22 +500,40 @@ impl<'source> Scanner<'source> {
             }
 
             if floating {
-                JavaSyntaxKind::FloatingPointLiteral
+                (JavaSyntaxKind::FloatingPointLiteral, true)
             } else {
-                JavaSyntaxKind::IntegerLiteral
+                // A leading zero makes the literal octal (JLS 3.10.1).
+                let text = &self.source[start..self.pos];
+                let bad_octal = text.starts_with('0') && text.contains(['8', '9']);
+                (JavaSyntaxKind::IntegerLiteral, !bad_octal)
             }
         };
 
-        self.validate_numeric_literal(start_pos, start, kind);
-        self.validate_octal_literal(start_pos, start, kind);
+        let text = &self.source[start..self.pos];
+        if !valid || !underscores_are_between_digits(text) || exponent_is_missing_digits(text, kind)
+        {
+            self.diagnostics.push(
+                JavaLexDiagnosticCode::InvalidNumericLiteral.at(TextRange::new(
+                    TextSize::new(start),
+                    TextSize::new(self.pos),
+                )),
+            );
+        }
         kind
     }
 
     fn identifier_or_keyword(&mut self) -> JavaSyntaxKind {
         let start = self.pos;
         self.bump();
-        while self.current_char().is_some_and(is_java_identifier_part) {
-            self.bump();
+        loop {
+            self.pos += self.source.as_bytes()[self.pos..]
+                .iter()
+                .take_while(|&&byte| is_ascii_identifier_part(byte))
+                .count();
+            match self.current_char() {
+                Some(ch) if !ch.is_ascii() && is_java_identifier_part(ch) => self.bump(),
+                _ => break,
+            }
         }
 
         let text = &self.source[start..self.pos];
@@ -740,44 +726,6 @@ impl<'source> Scanner<'source> {
         }
     }
 
-    fn validate_numeric_literal(
-        &mut self,
-        start_pos: usize,
-        start: TextSize,
-        kind: JavaSyntaxKind,
-    ) {
-        let text = &self.source[start_pos..self.pos];
-        if !underscores_are_between_digits(text) || exponent_is_missing_digits(text, kind) {
-            self.invalid_numeric_literal(start);
-        }
-    }
-
-    fn validate_octal_literal(&mut self, start_pos: usize, start: TextSize, kind: JavaSyntaxKind) {
-        let rest = &self.source[start_pos..];
-        if kind != JavaSyntaxKind::IntegerLiteral
-            || !rest.starts_with('0')
-            || rest.starts_with("0x")
-            || rest.starts_with("0X")
-            || rest.starts_with("0b")
-            || rest.starts_with("0B")
-        {
-            return;
-        }
-
-        let text = &self.source[start_pos..self.pos];
-        let digits = text.trim_end_matches(['l', 'L']);
-        if digits.chars().any(|ch| matches!(ch, '8' | '9')) {
-            self.invalid_numeric_literal(start);
-        }
-    }
-
-    fn invalid_numeric_literal(&mut self, start: TextSize) {
-        self.diagnostics.push(
-            JavaLexDiagnosticCode::InvalidNumericLiteral
-                .at(TextRange::new(start, TextSize::new(self.pos))),
-        );
-    }
-
     fn bump_escape_tail(&mut self) {
         match self.current_char() {
             Some('0'..='7') => {
@@ -885,23 +833,15 @@ fn utf8_char_width(byte: u8) -> usize {
     }
 }
 
+/// The end of the block comment that starts at `start`, after its `*/`.
 fn find_block_comment_end(source: &str, start: usize) -> Option<usize> {
-    let mut pos = start + 2;
-    while pos + 1 < source.len() {
-        if source.as_bytes()[pos] == b'*' && source.as_bytes()[pos + 1] == b'/' {
-            return Some(pos + 2);
-        }
-        pos += source[pos..]
-            .chars()
-            .next()
-            .expect("valid char boundary")
-            .len_utf8();
-    }
-    None
+    source[start + 2..]
+        .find("*/")
+        .map(|end| start + 2 + end + 2)
 }
 
 fn contains_line_terminator(text: &str) -> bool {
-    text.chars().any(|ch| matches!(ch, '\r' | '\n'))
+    text.bytes().any(|byte| matches!(byte, b'\r' | b'\n'))
 }
 
 const BYTE_ORDER_MARK: char = '\u{feff}';
@@ -915,6 +855,9 @@ fn is_line_terminator_start(ch: char) -> bool {
 }
 
 fn is_java_identifier_start(ch: char) -> bool {
+    if ch.is_ascii() {
+        return matches!(ch, 'A'..='Z' | 'a'..='z' | '$' | '_');
+    }
     matches!(
         get_general_category(ch),
         GeneralCategory::UppercaseLetter
@@ -929,6 +872,11 @@ fn is_java_identifier_start(ch: char) -> bool {
 }
 
 fn is_java_identifier_part(ch: char) -> bool {
+    if let Ok(byte) = u8::try_from(ch)
+        && byte.is_ascii()
+    {
+        return is_ascii_identifier_part(byte);
+    }
     is_java_identifier_start(ch)
         || matches!(
             get_general_category(ch),
@@ -938,6 +886,16 @@ fn is_java_identifier_part(ch: char) -> bool {
                 | GeneralCategory::EnclosingMark
         )
         || is_identifier_ignorable(ch)
+}
+
+/// [`is_java_identifier_part`] for an ASCII byte. In ASCII, the identifier
+/// categories hold only the letters, the digits, `$` and `_`; the other part
+/// bytes are ignorable controls.
+fn is_ascii_identifier_part(byte: u8) -> bool {
+    matches!(
+        byte,
+        b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'$' | b'_' | 0x00..=0x08 | 0x0e..=0x1b | 0x7f
+    )
 }
 
 fn is_identifier_ignorable(ch: char) -> bool {

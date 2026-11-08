@@ -70,10 +70,10 @@ struct UnicodeReplacement {
 }
 
 pub(crate) fn normalize_unicode_escapes(source: &str) -> NormalizedJavaSource<'_> {
-    // Unicode escapes always begin with a backslash. Most source files do not
-    // contain one at all, so avoid decoding every UTF-8 scalar just to discover
+    // Unicode escapes always begin with `\u`. Most source files do not
+    // contain it at all, so avoid decoding every UTF-8 scalar just to discover
     // that normalization has no work to do.
-    if !source.as_bytes().contains(&b'\\') {
+    if !source.contains("\\u") {
         return NormalizedJavaSource {
             source: Cow::Borrowed(source),
             diagnostics: Vec::new(),

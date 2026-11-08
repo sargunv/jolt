@@ -96,6 +96,7 @@ syntax/lexer/reports-character-literals-unterminated-at-eof-01.java
 syntax/lexer/reports-character-literals-unterminated-at-eof-02.java
 syntax/lexer/reports-invalid-escape-sequences-in-string-and-character-literals.java
 syntax/lexer/reports-invalid-text-block-escapes.java
+syntax/lexer/reports-one-diagnostic-per-invalid-numeric-literal.java
 syntax/lexer/reports-string-literals-unterminated-at-eof.java
 syntax/lexer/reports-unterminated-block-comments.java
 syntax/lexer/reports-unterminated-character-literals.java

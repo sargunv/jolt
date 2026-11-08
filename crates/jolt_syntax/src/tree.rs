@@ -342,6 +342,8 @@ pub struct NodeSink<'a> {
     token_data: &'a [TokenData],
     bogus: RawSyntaxKind,
     mismatches: &'a mut Mismatches,
+    /// The slots of a list node being built, kept to reuse its allocation.
+    scratch: &'a mut Vec<Option<PackedSlot>>,
 }
 
 /// Children that fit no slot of the node the factory built.
@@ -413,17 +415,19 @@ impl NodeSink<'_> {
         if len >= minimum && (0..len).all(&item) {
             return self.push(kind, input.iter().map(|child| Some(child.slot)), false);
         }
-        let mut slots: Vec<Option<PackedSlot>> = (0..len)
-            .map(|index| {
-                Some(if item(index) {
-                    input[index].slot
-                } else {
-                    PackedSlot::node(self.wrap(kind, index))
-                })
+        let mut slots = std::mem::take(self.scratch);
+        slots.clear();
+        slots.extend((0..len).map(|index| {
+            Some(if item(index) {
+                input[index].slot
+            } else {
+                PackedSlot::node(self.wrap(kind, index))
             })
-            .collect();
+        }));
         slots.resize(len.max(minimum), None);
-        self.push(kind, slots.into_iter(), false)
+        let id = self.push(kind, slots.iter().copied(), false);
+        *self.scratch = slots;
+        id
     }
 
     /// A separated list node. Items and separators alternate; a missing item
@@ -440,7 +444,8 @@ impl NodeSink<'_> {
         separator: impl Fn(usize) -> bool,
     ) -> NodeId {
         let input = self.input;
-        let mut slots: Vec<Option<PackedSlot>> = Vec::with_capacity(len.max(minimum * 2));
+        let mut slots = std::mem::take(self.scratch);
+        slots.clear();
         let mut cursor = 0;
         let mut count = 0;
         let mut expect_item = true;
@@ -476,7 +481,9 @@ impl NodeSink<'_> {
             slots.push(None);
             count += 1;
         }
-        self.push(kind, slots.into_iter(), false)
+        let id = self.push(kind, slots.iter().copied(), false);
+        *self.scratch = slots;
+        id
     }
 
     /// Wraps input child `index` of a `list` node in a bogus node.
@@ -625,6 +632,7 @@ pub fn build_tree<F: SyntaxFactory>(
     let mut next_token = 0usize;
     let mut root = None;
     let mut mismatches = Mismatches::default();
+    let mut scratch = Vec::new();
 
     for position in 0..events.len() {
         match events[position] {
@@ -663,6 +671,7 @@ pub fn build_tree<F: SyntaxFactory>(
                     token_data: &tokens,
                     bogus: <F::Language as Language>::to_raw(<F::Language as Language>::BOGUS),
                     mismatches: &mut mismatches,
+                    scratch: &mut scratch,
                 };
                 let id = factory.make(kind, children, &mut sink);
                 for child in input {
