@@ -1245,7 +1245,9 @@ For an input `S` and output `F = format(S)`:
      are joined and their whitespace runs collapse; code is compared exactly. A
      line break, hard or soft, is a space: Jolt never writes trailing
      whitespace, so a two-space hard break can only survive in another spelling.
-     A `///` comment after code on its line is an ordinary line comment.
+     A `///` comment after code on its line is no doc comment to javadoc; it is
+     a run of its own, so a layout may move it to a line of its own (placement
+     does, after another trailing line comment) but not into a run.
      pulldown-cmark is a dependency of `jolt_test_support` only, which every
      crate uses as a dev-dependency, so it never reaches the CLI or the plugin.
 4. **Idempotence.** `format(F) == F`.

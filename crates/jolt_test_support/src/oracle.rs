@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
 use jolt_fmt::FormatOptions;
-use jolt_syntax::{Diagnostic, Language, SyntaxElement, SyntaxNode, TriviaKind};
+use jolt_syntax::{Diagnostic, Language, SyntaxElement, SyntaxNode, TriviaKind, TriviaPiece};
 
 use crate::doc_comments;
 
@@ -119,40 +119,53 @@ fn comment_inventory(root: SyntaxNode<'_>) -> BTreeMap<String, usize> {
     let mut comments = BTreeMap::new();
     let mut runs = MarkdownRuns::default();
     for token in root.tokens() {
-        for piece in token.leading().chain(token.trailing()) {
-            let (kind, text) = match piece.kind {
-                TriviaKind::Newline => {
-                    runs.newline();
-                    continue;
-                }
-                TriviaKind::LineComment if runs.member(piece.text, &mut comments) => continue,
-                TriviaKind::LineComment => ("line", canonical_comment_text(piece.text)),
-                TriviaKind::BlockComment | TriviaKind::UnterminatedBlockComment => {
-                    ("block", canonical_comment_text(piece.text))
-                }
-                TriviaKind::DocComment => (
-                    "doc",
-                    doc_comments::javadoc(
-                        piece.text,
-                        line_indentation(root.source(), piece.range.start().get()),
-                    )
-                    .unwrap_or_else(|| canonical_comment_text(piece.text)),
-                ),
-                TriviaKind::Whitespace => continue,
-                TriviaKind::ByteOrderMark | TriviaKind::TrailingSubstitute => {
-                    runs.code(&mut comments);
-                    continue;
-                }
-            };
-            runs.code(&mut comments);
-            *comments.entry(format!("{kind}:{text}")).or_default() += 1;
+        for piece in token.leading() {
+            inventory_piece(root.source(), piece, &mut runs, &mut comments);
         }
         if !token.text().is_empty() {
             runs.code(&mut comments);
         }
+        for piece in token.trailing() {
+            inventory_piece(root.source(), piece, &mut runs, &mut comments);
+        }
     }
     runs.code(&mut comments);
     comments
+}
+
+/// Adds one trivia piece to the comment inventory.
+fn inventory_piece<'a>(
+    source: &str,
+    piece: TriviaPiece<'a>,
+    runs: &mut MarkdownRuns<'a>,
+    comments: &mut BTreeMap<String, usize>,
+) {
+    let (kind, text) = match piece.kind {
+        TriviaKind::Newline => {
+            runs.newline();
+            return;
+        }
+        TriviaKind::LineComment if runs.member(piece.text, comments) => return,
+        TriviaKind::LineComment => ("line", canonical_comment_text(piece.text)),
+        TriviaKind::BlockComment | TriviaKind::UnterminatedBlockComment => {
+            ("block", canonical_comment_text(piece.text))
+        }
+        TriviaKind::DocComment => (
+            "doc",
+            doc_comments::javadoc(
+                piece.text,
+                line_indentation(source, piece.range.start().get()),
+            )
+            .unwrap_or_else(|| canonical_comment_text(piece.text)),
+        ),
+        TriviaKind::Whitespace => return,
+        TriviaKind::ByteOrderMark | TriviaKind::TrailingSubstitute => {
+            runs.code(comments);
+            return;
+        }
+    };
+    runs.code(comments);
+    *comments.entry(format!("{kind}:{text}")).or_default() += 1;
 }
 
 /// The spaces and tabs that start the line containing `offset`.
@@ -167,7 +180,9 @@ fn line_indentation(source: &str, offset: usize) -> &str {
 /// Groups `///` lines into runs from the trivia alone, as javadoc reads them
 /// (JEP 467): lines that start with `///` but not `////`, each starting its
 /// line, one after the other with no blank line between. A `///` comment
-/// after code on its line is an ordinary line comment.
+/// after code on its line is no doc comment to javadoc; it is a run of its
+/// own here, so that a layout may put it on a line of its own, but not make
+/// it part of a run.
 #[derive(Default)]
 struct MarkdownRuns<'a> {
     run: Vec<&'a str>,
@@ -185,16 +200,19 @@ impl<'a> MarkdownRuns<'a> {
         self.line_start = true;
     }
 
-    /// Adds a line comment to the run when it is a run member.
+    /// Adds a `///` comment to the runs; false for any other line comment.
     fn member(&mut self, text: &'a str, comments: &mut BTreeMap<String, usize>) -> bool {
-        let at_line_start = self.line_start || !self.started;
-        if !(at_line_start && text.starts_with("///") && !text.starts_with("////")) {
+        if !text.starts_with("///") || text.starts_with("////") {
             return false;
         }
-        if !self.run.is_empty() && self.newlines != 1 {
+        let at_line_start = self.line_start || !self.started;
+        if !at_line_start || self.newlines != 1 {
             self.flush(comments);
         }
         self.run.push(text);
+        if !at_line_start {
+            self.flush(comments);
+        }
         self.newlines = 0;
         self.line_start = false;
         self.started = true;
