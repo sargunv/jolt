@@ -75,6 +75,10 @@ impl CorpusLanguage for JavaCorpus {
         "Java"
     }
 
+    fn extension(&self) -> &'static str {
+        "java"
+    }
+
     fn with_parse<R>(
         &self,
         source: &str,

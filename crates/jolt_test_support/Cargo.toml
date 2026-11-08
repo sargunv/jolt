@@ -9,6 +9,7 @@ rust-version.workspace = true
 [dependencies]
 jolt_fmt = { path = "../jolt_fmt" }
 jolt_syntax = { path = "../jolt_syntax" }
+rayon = "1.10"
 
 [lints]
 workspace = true

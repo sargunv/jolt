@@ -3,27 +3,13 @@
 
 use std::path::{Path, PathBuf};
 
-use jolt_fmt::FormatOptions;
-
 use crate::oracle::{CorpusLanguage, check_source, parse_facts};
-use crate::{SnapshotBuilder, fixture_snapshot_name, read_to_string, render_diagnostics};
+use crate::{
+    SnapshotBuilder, fixture_snapshot_name, options, read_to_string, relative, render_diagnostics,
+};
 
 /// The widths every corpus fixture is checked at.
-pub const ORACLE_WIDTHS: &[u16] = &[40, 80, 120];
-
-fn relative(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .replace('\\', "/")
-}
-
-fn options(width: u16) -> FormatOptions {
-    FormatOptions {
-        line_width: width,
-        ..FormatOptions::default()
-    }
-}
+const ORACLE_WIDTHS: &[u16] = &[40, 80, 120];
 
 fn oracle_failures<C: CorpusLanguage>(
     language: &C,

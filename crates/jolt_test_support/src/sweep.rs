@@ -6,79 +6,70 @@ use std::fmt::Write as _;
 use std::fs;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 use jolt_fmt::FormatOptions;
 
 use crate::oracle::{CorpusLanguage, check_source, parse_facts};
-
-/// Which trivia a probe insertion lands in.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum ProbePosition {
-    /// Trailing trivia of the token before the boundary.
-    Trailing,
-    /// Leading trivia of the token after the boundary.
-    Leading,
-}
+use crate::{files_with_extensions, options, par_fold};
 
 /// One comment shape the sweep injects at a token boundary.
 pub struct ProbeShape {
     /// The name `<path>:<name><n>` uses to replay a probe.
     pub name: &'static str,
     pub insert: &'static str,
-    pub position: ProbePosition,
     /// Distinguishes this shape's sampled boundaries from the others'.
-    pub seed: usize,
+    seed: usize,
 }
 
+/// The probe shapes. A shape that starts on the boundary's own line lands in
+/// the trailing trivia of the token before it; one that starts with a line
+/// break lands in the leading trivia of the token after it.
 pub const PROBE_SHAPES: &[ProbeShape] = &[
     ProbeShape {
         name: "comment",
         insert: " /*hunt*/ ",
-        position: ProbePosition::Trailing,
         seed: 2_654_435_761,
     },
     ProbeShape {
         name: "linecomment",
         insert: " //hunt\n",
-        position: ProbePosition::Trailing,
         seed: 2_246_822_519,
     },
     ProbeShape {
         name: "ownline",
         insert: "\n/*hunt*/\n",
-        position: ProbePosition::Leading,
         seed: 40_503,
     },
     ProbeShape {
         name: "ownlinecomment",
         insert: "\n//hunt\n",
-        position: ProbePosition::Leading,
         seed: 374_761_393,
     },
 ];
 
 /// Boundary count up to which a sampled suite probes every boundary.
-pub const SWEEP_EXHAUSTIVE_BOUNDARY_LIMIT: usize = 120;
+const EXHAUSTIVE_BOUNDARY_LIMIT: usize = 120;
 /// Boundaries each shape samples in a larger file of a sampled suite.
-pub const SWEEP_SAMPLED_PROBES: usize = 8;
+const SAMPLED_PROBES: usize = 8;
 /// The widths the sweep formats every file at. A sampled suite probes at
-/// [`SWEEP_PROBE_WIDTH`] only; an exhaustive one probes at every width.
-pub const SWEEP_WIDTHS: &[u16] = &[40, 80, 120];
-pub const SWEEP_PROBE_WIDTH: u16 = 80;
+/// [`PROBE_WIDTH`] only; an exhaustive one probes at every width.
+const WIDTHS: &[u16] = &[40, 80, 120];
+const PROBE_WIDTH: u16 = 80;
 /// Files up to this size in an exhaustive suite get every probe at every
 /// width and every one-token deletion; larger ones are sampled.
-pub const SWEEP_EXHAUSTIVE_MAX_BYTES: usize = 4096;
+const EXHAUSTIVE_MAX_BYTES: usize = 4096;
 /// Samples kept per summary key.
-pub const MAX_SAMPLES_PER_KEY: usize = 20;
+const MAX_SAMPLES_PER_KEY: usize = 20;
 
 /// How thoroughly the sweep checks a suite.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Depth {
-    /// Every boundary of small files; [`SWEEP_SAMPLED_PROBES`] per shape
-    /// otherwise; probes at [`SWEEP_PROBE_WIDTH`].
+    /// Every boundary of small files; [`SAMPLED_PROBES`] per shape
+    /// otherwise; probes at [`PROBE_WIDTH`].
     Sampled,
     /// Every boundary at every width (and every one-token deletion when
-    /// mutating) for files up to [`SWEEP_EXHAUSTIVE_MAX_BYTES`]; larger files
+    /// mutating) for files up to [`EXHAUSTIVE_MAX_BYTES`]; larger files
     /// are sampled.
     Exhaustive,
 }
@@ -88,7 +79,7 @@ impl Depth {
     #[must_use]
     pub const fn for_source(self, source: &str) -> Self {
         match self {
-            Self::Exhaustive if source.len() <= SWEEP_EXHAUSTIVE_MAX_BYTES => Self::Exhaustive,
+            Self::Exhaustive if source.len() <= EXHAUSTIVE_MAX_BYTES => Self::Exhaustive,
             _ => Self::Sampled,
         }
     }
@@ -102,8 +93,7 @@ pub struct Suite<'a> {
 
 /// The boundary indices `shape` probes in a file with `boundaries` token
 /// boundaries.
-#[must_use]
-pub fn probe_boundaries(
+fn probe_boundaries(
     shape: &ProbeShape,
     source: &str,
     boundaries: usize,
@@ -112,12 +102,10 @@ pub fn probe_boundaries(
     if boundaries == 0 {
         return Vec::new();
     }
-    if depth.for_source(source) == Depth::Exhaustive
-        || boundaries <= SWEEP_EXHAUSTIVE_BOUNDARY_LIMIT
-    {
+    if depth.for_source(source) == Depth::Exhaustive || boundaries <= EXHAUSTIVE_BOUNDARY_LIMIT {
         return (0..boundaries).collect();
     }
-    (0..SWEEP_SAMPLED_PROBES)
+    (0..SAMPLED_PROBES)
         .map(|probe| {
             (probe + 1).wrapping_mul(shape.seed.wrapping_mul(source.len() + 17)) % boundaries
         })
@@ -125,7 +113,7 @@ pub fn probe_boundaries(
 }
 
 /// One checked variant of a file, as `jcheck` replays it: `<shape><n>`, or
-/// `<shape><n>@<width>` at a width other than [`SWEEP_PROBE_WIDTH`], or
+/// `<shape><n>@<width>` at a width other than [`PROBE_WIDTH`], or
 /// `delete<n>` (the `n`th non-empty token removed).
 #[derive(Clone, Copy)]
 pub enum Variant {
@@ -150,7 +138,7 @@ impl Variant {
         }
         let (probe, width) = match label.split_once('@') {
             Some((probe, width)) => (probe, width.parse().ok()?),
-            None => (label, SWEEP_PROBE_WIDTH),
+            None => (label, PROBE_WIDTH),
         };
         let mut shapes: Vec<&'static ProbeShape> = PROBE_SHAPES.iter().collect();
         shapes.sort_by_key(|shape| std::cmp::Reverse(shape.name.len()));
@@ -171,7 +159,7 @@ impl Variant {
                 shape,
                 index,
                 width,
-            } if width == SWEEP_PROBE_WIDTH => format!("{}{index}", shape.name),
+            } if width == PROBE_WIDTH => format!("{}{index}", shape.name),
             Self::Probe {
                 shape,
                 index,
@@ -181,11 +169,12 @@ impl Variant {
         }
     }
 
+    /// The options the sweep checks the variant at.
     #[must_use]
-    pub const fn width(self) -> u16 {
+    pub fn options(self) -> FormatOptions {
         match self {
-            Self::Probe { width, .. } => width,
-            Self::Delete { .. } => SWEEP_PROBE_WIDTH,
+            Self::Probe { width, .. } => options(width),
+            Self::Delete { .. } => options(PROBE_WIDTH),
         }
     }
 
@@ -271,7 +260,7 @@ pub fn sweep_source<C: CorpusLanguage>(
 ) -> Vec<SweepFailure> {
     let depth = depth.for_source(source);
     let mut failures = Vec::new();
-    for &width in SWEEP_WIDTHS {
+    for &width in WIDTHS {
         failures.extend(sweep_variant(
             language,
             source,
@@ -282,8 +271,8 @@ pub fn sweep_source<C: CorpusLanguage>(
     let boundaries = language.token_end_offsets(source);
     let clean = parse_facts(language, source).diagnostics.is_empty();
     let widths = match depth {
-        Depth::Sampled => &[SWEEP_PROBE_WIDTH][..],
-        Depth::Exhaustive => SWEEP_WIDTHS,
+        Depth::Sampled => &[PROBE_WIDTH][..],
+        Depth::Exhaustive => WIDTHS,
     };
     for shape in PROBE_SHAPES {
         let selected = probe_boundaries(shape, source, boundaries.len(), depth);
@@ -313,19 +302,12 @@ pub fn sweep_source<C: CorpusLanguage>(
             failures.extend(sweep_variant(
                 language,
                 &deleted,
-                &options(SWEEP_PROBE_WIDTH),
+                &options(PROBE_WIDTH),
                 &Variant::Delete { index }.label(),
             ));
         }
     }
     failures
-}
-
-fn options(width: u16) -> FormatOptions {
-    FormatOptions {
-        line_width: width,
-        ..FormatOptions::default()
-    }
 }
 
 /// Runs `check`, turning a panic into a `panic` failure.
@@ -346,9 +328,6 @@ pub fn catching(path: &Path, check: impl FnOnce() -> Vec<SweepFailure>) -> Vec<S
 /// What a sweep run needs beyond its language.
 pub struct CorpusSweep<'a> {
     pub suites: &'a [Suite<'a>],
-    pub extensions: &'a [&'a str],
-    /// Directory under `target/hunt`.
-    pub out_dir: &'a str,
     /// Failure categories already known to fire.
     pub known_open: &'a [&'a str],
 }
@@ -391,25 +370,8 @@ impl Findings {
     }
 }
 
-fn collect_files(dir: &Path, extensions: &[&str], files: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(dir) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect_files(&path, extensions, files);
-        } else if path
-            .extension()
-            .and_then(|extension| extension.to_str())
-            .is_some_and(|extension| extensions.contains(&extension))
-        {
-            files.push(path);
-        }
-    }
-}
-
-/// Runs the sweep and writes a bounded report under `target/hunt`, returning
+/// Runs the sweep over the files with the language's extension and writes a
+/// bounded report under `target/hunt/<language>`, returning
 /// the exit code: non-zero when a category is outside `known_open` or a
 /// `known_open` entry no longer fires.
 ///
@@ -426,12 +388,13 @@ pub fn run_corpus_sweep<C: CorpusLanguage>(
     for suite in sweep.suites {
         let dir = repo_root.join(suite.dir);
         assert!(dir.is_dir(), "missing corpus suite {}", dir.display());
-        let mut found = Vec::new();
-        collect_files(&dir, sweep.extensions, &mut found);
+        let found = files_with_extensions(&dir, &[language.extension()]);
         files.extend(found.into_iter().map(|path| (path, suite.depth)));
     }
     files.sort_by(|left, right| left.0.cmp(&right.0));
-    let out_dir = repo_root.join("target/hunt").join(sweep.out_dir);
+    let out_dir = repo_root
+        .join("target/hunt")
+        .join(language.name().to_ascii_lowercase());
     let _ = fs::remove_dir_all(&out_dir);
     fs::create_dir_all(&out_dir).expect("create hunt output directory");
 
@@ -542,48 +505,28 @@ fn sweep_files<C: CorpusLanguage>(
     language: &C,
     files: &[(PathBuf, Depth)],
 ) -> (Findings, Vec<(PathBuf, u128)>) {
-    let threads = std::thread::available_parallelism().map_or(4, usize::from);
-    let next = std::sync::atomic::AtomicUsize::new(0);
-    std::thread::scope(|scope| {
-        let workers: Vec<_> = (0..threads)
-            .map(|_| {
-                scope.spawn(|| {
-                    let mut findings = Findings::default();
-                    let mut slow = Vec::new();
-                    loop {
-                        let index = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                        let Some((path, depth)) = files.get(index) else {
-                            break;
-                        };
-                        let started = std::time::Instant::now();
-                        let failures = match fs::read_to_string(path) {
-                            Ok(source) => {
-                                catching(path, || sweep_source(language, &source, *depth))
-                            }
-                            Err(error) => vec![SweepFailure {
-                                category: "read-error".to_owned(),
-                                detail: error.to_string(),
-                            }],
-                        };
-                        for failure in failures {
-                            findings.push(path, failure);
-                        }
-                        let elapsed = started.elapsed().as_millis();
-                        if elapsed > 1000 {
-                            slow.push((path.clone(), elapsed));
-                        }
-                    }
-                    (findings, slow)
-                })
-            })
-            .collect();
-        let mut all = Findings::default();
-        let mut all_slow = Vec::new();
-        for worker in workers {
-            let (findings, slow) = worker.join().expect("sweep worker panicked");
-            all.merge(findings);
-            all_slow.extend(slow);
-        }
-        (all, all_slow)
-    })
+    par_fold(
+        files,
+        |(findings, slow): &mut (Findings, Vec<(PathBuf, u128)>), (path, depth)| {
+            let started = Instant::now();
+            let failures = match fs::read_to_string(path) {
+                Ok(source) => catching(path, || sweep_source(language, &source, *depth)),
+                Err(error) => vec![SweepFailure {
+                    category: "read-error".to_owned(),
+                    detail: error.to_string(),
+                }],
+            };
+            for failure in failures {
+                findings.push(path, failure);
+            }
+            let elapsed = started.elapsed().as_millis();
+            if elapsed > 1000 {
+                slow.push((path.clone(), elapsed));
+            }
+        },
+        |(findings, slow), (other_findings, other_slow)| {
+            findings.merge(other_findings);
+            slow.extend(other_slow);
+        },
+    )
 }
