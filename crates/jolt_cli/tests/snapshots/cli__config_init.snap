@@ -7,7 +7,7 @@ status: 0
 --- stderr
 Created $TEMP/jolt.toml
 --- wrote jolt.toml
-#:schema https://github.com/sargunv/jolt/releases/download/0.20260721.0/jolt-schema.json
+#:schema https://github.com/sargunv/jolt/releases/download/$VERSION/jolt-schema.json
 root = true
 
 [format]

@@ -96,6 +96,8 @@ impl Project {
         ] {
             text = text.replace(&dir.display().to_string(), "$TEMP");
         }
+        // The schema URL `config init` writes names the release.
+        text = text.replace(env!("CARGO_PKG_VERSION"), "$VERSION");
         text.lines()
             .map(|line| match line.rsplit_once(" in ") {
                 Some((summary, _))
