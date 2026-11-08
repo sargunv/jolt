@@ -1,4 +1,4 @@
-class StraySemicolonCommentIdempotence {
+class RemovedStraySemicolonCommentIdempotence {
   int field;
   /* JOLT-TRIVIA:stray-semicolon */ ;
   static {}

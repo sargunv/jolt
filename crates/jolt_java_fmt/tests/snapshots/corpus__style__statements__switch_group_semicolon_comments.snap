@@ -7,15 +7,10 @@ class SwitchGroupSemicolonComments {
   void run(int x) {
     switch (x) {
       case 1:
-        run();
-        ; /*a*/
-        ; // b
+        run(); /*a*/ // b
       case 2:
-        run();
-        ; // last
-      default:
-        ; /*a*/
-        ; // b
+        run(); // last
+      default: /*a*/ // b
     }
   }
 }

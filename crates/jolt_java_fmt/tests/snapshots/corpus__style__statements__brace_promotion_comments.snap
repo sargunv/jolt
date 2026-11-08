@@ -42,7 +42,7 @@ class BracePromotionComments {
     }
     while (b) /* empty */ {}
     if (a) {
-      ; // empty then
+      // empty then
     }
     do {
       /* once */ run();

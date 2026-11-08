@@ -91,13 +91,10 @@ class A {}
   keep their order. A blank line separates the package, the imports and each
   top-level declaration. Blank lines between header comments are kept.
 - Package annotations go one per line before `package`.
-- A stray `;` between top-level declarations is removed, unless a comment is on
-  it: on its line, or on its own line before it. A `;` that stays goes on its
-  own line, with a blank line before and after it like a top-level declaration,
-  and the imports before and after it sort separately.
+- A stray `;` between top-level declarations is removed. Comments on it stay
+  where they were.
 - In a compact source file (`void main() { … }`), the top-level members format
-  and are separated like class members, at column 0, except a `;` that stays,
-  which is separated as above.
+  and are separated like class members, at column 0.
 
 ### Imports
 
@@ -254,9 +251,8 @@ class Groups {
 
 - Members go one per line, with a blank line between them. Two consecutive field
   declarations keep the source's blank line, or its absence.
-- A redundant `;` between members is removed, unless a comment is on it: on its
-  line, or on its own line before it. A `;` that stays goes on its own line, and
-  keeps the source's blank lines, or their absence, on each side.
+- A redundant `;` between members is removed. Comments on it stay where they
+  were.
 - A body with nothing in it prints `{}`: methods, constructors, initializers,
   classes, blocks, lambdas, switches and modules alike. A body that holds only
   comments breaks.
@@ -282,12 +278,12 @@ enum Color {
 ```
 
 - Constants go one per line. Without members, every constant is followed by a
-  comma, including the last, and a `;` after the constants is removed. With
-  members, the last constant is followed by `;`, then a blank line and the
-  members.
+  comma, including the last, and a `;` after the constants is removed, its
+  comments where they were. With members, the last constant is followed by `;`,
+  then a blank line and the members.
 - A comment after the last constant stays on its line, after the comma or `;`.
-  When a comment is on the comma after the last constant or on the `;`, both
-  stay as written, and the `;` goes on its own line after the comma:
+  With members, when a comment is on the comma after the last constant or on the
+  `;`, both stay as written, and the `;` goes on its own line after the comma:
 
 ::: code-group
 
@@ -402,9 +398,9 @@ int firstFieldVariable = 1,
 
 - Statements go one per line. Blank lines between statements are kept, never
   added.
-- An empty statement (`;`) in a block or switch group is removed, unless a
-  comment is on it: on its line, or on its own line before it. A switch group's
-  only `;` stays, since removing it would merge two groups.
+- An empty statement (`;`) in a block or switch group is removed, and comments
+  on it stay where they were. A switch group's only `;` stays, since removing it
+  would merge two groups.
 
 ### Control flow
 
@@ -496,7 +492,7 @@ try (
 
 - The resources stay on the `try` line if they fit. Otherwise they break like a
   list: `try (`, one resource per line, then `) {`. A `;` after the last
-  resource is removed, unless a comment is on it.
+  resource is removed.
 - A `catch` parameter that doesn't fit breaks inside the parentheses, before
   each `|`.
 

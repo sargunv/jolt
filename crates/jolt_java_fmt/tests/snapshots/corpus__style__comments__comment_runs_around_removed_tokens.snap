@@ -6,11 +6,10 @@ formatted:
 enum OnlySeparator {
   /* a */
   // b
-  ;
 }
 
 enum EmptyWithComments {
-  /* a */ /* b */;
+  /* a */ /* b */
 }
 
 class CommentRunsAroundRemovedTokens {

@@ -318,10 +318,10 @@ fn promoted_body_comment<'a>(
 }
 
 /// H3: an end-of-line comment before a stray `;` (an empty statement or
-/// declaration, which N5 removes when no comment is on it) trails the code
-/// before it, where S1 would move it onto the `;`. So `} // c` followed by
-/// `;` keeps the comment on the `}` line, and the `;` goes. After an opener
-/// G2 still applies.
+/// declaration, which N5 removes) trails the code before it, where S1 would
+/// move it onto the `;`. So `} // c` followed by `;` keeps the comment on
+/// the `}` line whether the `;` is removed or stays (`case 1: // c` then a
+/// group's only `;`). After an opener G2 still applies.
 fn comment_before_stray_semicolon<'a>(
     context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,

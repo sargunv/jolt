@@ -201,8 +201,8 @@ pub(crate) fn synchronized_statement<'a>(
 
 /// A control statement's body, preceded by a space. N4: when `owner` is
 /// recovery-free, a body that is not a block is wrapped in a synthesized
-/// block, and an empty statement without comments becomes an empty block
-/// (its `;` elided like an empty statement inside a block).
+/// block, and an empty statement becomes an empty block (its `;` elided
+/// like an empty statement inside a block).
 fn body<'a>(f: &mut JavaFormatter<'a>, owner: SyntaxNode<'a>, body: Option<Statement<'a>>) -> Doc {
     let Some(body) = body else {
         return Doc::NIL;
@@ -210,7 +210,7 @@ fn body<'a>(f: &mut JavaFormatter<'a>, owner: SyntaxNode<'a>, body: Option<State
     let body = match body {
         Statement::Block(_) => f.fmt(body),
         _ if !owner.is_recovery_free() => f.fmt(body),
-        Statement::EmptyStatement(empty) if !f.has_comments_within(empty.syntax()) => {
+        Statement::EmptyStatement(empty) => {
             let content = f.item_list([ListItem::Elide(empty.syntax())], statement_separator);
             promoted_block(f, content)
         }

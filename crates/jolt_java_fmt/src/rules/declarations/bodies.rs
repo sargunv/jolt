@@ -80,22 +80,23 @@ fn member_body<'a, M: AstNode<'a>>(
     members: impl Iterator<Item = M>,
     close: Option<SyntaxToken<'a>>,
 ) -> Doc {
-    let members = body_items(f, body, members.map(AstNode::syntax));
+    let members = body_items(body, members.map(AstNode::syntax));
     braced_body(f, body, open, members, close, member_separator)
 }
 
-/// A stray `;` member. Removed (N5) unless the body has recovery or a
-/// comment is on the `;`.
+/// A stray `;` member. Normally removed (N5): its comments stand in its
+/// place through `item_list`. Formatted only when the body has recovery,
+/// where N5 does not apply.
 pub(crate) fn empty_declaration<'a>(f: &mut JavaFormatter<'a>, node: EmptyDeclaration<'a>) -> Doc {
     f.token_opt(node.semicolon())
 }
 
 /// Constants one per line; then, after a blank line, the members. Without
 /// members, every constant is followed by a comma (a synthesized one after
-/// the last), and the `;` is removed. With members, the `;` follows the last
-/// constant, and a comma before it is removed (N5, N8). A comment on that
-/// comma or on the `;` leaves both as written, the `;` on its own line after
-/// a comma.
+/// the last), and the `;` is removed, its comments in place. With members,
+/// the `;` follows the last constant, and a comma before it is removed (N5,
+/// N8); a comment on that comma or on the `;` leaves both as written, the
+/// `;` on its own line after a comma.
 pub(crate) fn enum_body<'a>(f: &mut JavaFormatter<'a>, node: EnumBody<'a>) -> Doc {
     let open = f.token_opt(node.open_brace());
     let members = node
@@ -103,7 +104,7 @@ pub(crate) fn enum_body<'a>(f: &mut JavaFormatter<'a>, node: EnumBody<'a>) -> Do
         .into_iter()
         .flat_map(ClassBodyMemberList::items)
         .map(AstNode::syntax);
-    let members = body_items(f, node.syntax(), members);
+    let members = body_items(node.syntax(), members);
     let has_members = members
         .iter()
         .any(|member| matches!(member, ListItem::Format(_)));
@@ -139,11 +140,11 @@ fn enum_constants<'a>(f: &mut JavaFormatter<'a>, node: EnumBody<'a>, has_members
     let commented = |token: Option<SyntaxToken<'a>>| {
         token.is_some_and(|token| f.has_comments(SyntaxElement::Token(token)))
     };
-    // A comment on the trailing comma or the `;` leaves both as written. The
-    // body owns the separators: when it is recovered (an unclosed body whose
-    // constants run into what follows), a synthesized comma could join the
-    // constants to the next tokens.
-    let as_written = commented(trailing_comma) || commented(separator);
+    // With members, a comment on the trailing comma or the `;` leaves both
+    // as written. The body owns the separators: when it is recovered (an
+    // unclosed body whose constants run into what follows), a synthesized
+    // comma could join the constants to the next tokens.
+    let as_written = has_members && (commented(trailing_comma) || commented(separator));
     let normalize = node.syntax().is_recovery_free() && !as_written;
     // With members, the `;` moves up to the last constant, past the comma.
     let move_semicolon = normalize && has_members && last_constant.is_some();
@@ -179,8 +180,14 @@ fn enum_constants<'a>(f: &mut JavaFormatter<'a>, node: EnumBody<'a>, has_members
             }
             constants.push(f.token(semicolon));
         }
-        _ if needs_comma => constants.push(f.sticky(",")),
-        _ => {}
+        separator => {
+            if needs_comma {
+                constants.push(f.sticky(","));
+            }
+            if let Some(semicolon) = separator {
+                constants.push(f.removed(SyntaxElement::Token(semicolon)));
+            }
+        }
     }
     f.concat(constants)
 }

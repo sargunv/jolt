@@ -82,8 +82,8 @@ pub(crate) fn finally_clause<'a>(f: &mut JavaFormatter<'a>, node: FinallyClause<
 }
 
 /// `(a; b)` that breaks like a call: one resource per line ending in `;`
-/// except the last. A trailing `;` after the last resource is removed (N5)
-/// unless a comment is on it.
+/// except the last. A trailing `;` after the last resource is removed (N5);
+/// its comments keep their own line before `)`.
 pub(crate) fn resource_specification<'a>(
     f: &mut JavaFormatter<'a>,
     node: ResourceSpecification<'a>,
@@ -94,10 +94,15 @@ pub(crate) fn resource_specification<'a>(
         .flat_map(ResourceList::elements);
     let line = f.line();
     let mut docs = vec![joined(f, resources, line)];
-    if let Some(semicolon) = node.trailing_semicolon()
-        && (!node.syntax().is_recovery_free() || f.has_comments(SyntaxElement::Token(semicolon)))
-    {
-        docs.push(f.token(semicolon));
+    if let Some(semicolon) = node.trailing_semicolon() {
+        if node.syntax().is_recovery_free() {
+            let removed = f.removed(SyntaxElement::Token(semicolon));
+            if !removed.is_nil() {
+                docs.extend([f.hard_line(), removed]);
+            }
+        } else {
+            docs.push(f.token(semicolon));
+        }
     }
     let inner = f.concat(docs);
     parenthesized(

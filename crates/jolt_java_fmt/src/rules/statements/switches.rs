@@ -104,7 +104,7 @@ pub(crate) fn switch_block_statement_group<'a>(
         label_count += 1;
     }
     let labels = f.concat(labels);
-    let mut statements = statement_items(f, node.syntax(), node.statements());
+    let mut statements = statement_items(node.syntax(), node.statements());
     // N5 keeps one `;` of a group that has nothing else when another group
     // follows: removing it would merge the labels into that group.
     let last = node
@@ -120,25 +120,28 @@ pub(crate) fn switch_block_statement_group<'a>(
     {
         statements[0] = ListItem::Format(first);
     }
-    // The statements that print: a removed `;` prints nothing, except
-    // verbatim in a formatter-ignore region.
-    let mut printed = statements.iter().filter_map(|&item| match item {
-        ListItem::Elide(node) if !f.in_ignore_region(node) => None,
-        ListItem::Format(node) | ListItem::Elide(node) => Some(node),
-    });
+    // The comments of removed `;` after the last statement print at the
+    // labels' indent, where the next pass reads them (leading the next group
+    // or dangling in the switch block).
+    let kept = statements
+        .iter()
+        .rposition(|item| matches!(item, ListItem::Format(_)))
+        .map_or(0, |last| last + 1);
+    let removed = statements.split_off(kept);
+    let removed = f.item_list(removed, |f, _| f.hard_line());
     if label_count == 1
-        && let (Some(statement), None) = (printed.next(), printed.next())
+        && let [ListItem::Format(statement)] = statements[..]
         && is_inline_block(f, statement)
     {
         let block = f.node(statement);
-        return cat![f; labels, f.space(), block];
+        return cat![f; labels, f.space(), block, removed];
     }
     let statements = f.item_list(statements, statement_separator);
     if statements.is_nil() {
-        return labels;
+        return cat![f; labels, removed];
     }
     let statements = indent![f; f.hard_line(), statements];
-    cat![f; labels, statements]
+    cat![f; labels, statements, removed]
 }
 
 /// A block statement that may share the label line: a plain block outside

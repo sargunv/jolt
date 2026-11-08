@@ -18,12 +18,20 @@ pub(crate) fn compilation_unit<'a>(f: &mut JavaFormatter<'a>, node: CompilationU
         .map(|list| list.items().collect())
         .unwrap_or_default();
     let Ordered { items, roles, .. } = order_items(f, &items);
+    // The items after the last formatted one are removed `;`s, whose
+    // comments lead the end of the file.
+    let last_content = items
+        .iter()
+        .rposition(|item| matches!(item, ListItem::Format(_)))
+        .unwrap_or(0);
     let body = f.item_list(items, |f, separator| {
+        let at_end = separator.next_index > last_content;
         top_level_separator(
             f,
             separator,
             roles[separator.prev_index],
             roles[separator.next_index],
+            at_end,
         )
     });
     let Some(eof) = node.eof() else {
@@ -72,8 +80,9 @@ pub(crate) fn import_declaration<'a>(
     f.concat(docs)
 }
 
-/// An import in a sorted section: `section` numbers the section, and
-/// `anchor` marks an import that carries leading comments.
+/// An import in a sorted section, or a removed `;` whose comments lead it
+/// (a carrier): `section` numbers the section, and `anchor` marks an import
+/// that carries leading comments or carriers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct ImportRole {
     section: usize,
@@ -82,7 +91,7 @@ struct ImportRole {
 }
 
 /// The top-level items in output order, each with its import role (`None`
-/// for an item that is not an import).
+/// for an item that is not an import or a carrier).
 struct Ordered<'a> {
     items: Vec<ListItem<'a>>,
     roles: Vec<Option<ImportRole>>,
@@ -130,12 +139,15 @@ impl<'a> Ordered<'a> {
     }
 
     fn import_unit(&mut self, unit: &Unit<'a>, section: usize) {
-        let role = ImportRole {
+        let role = Some(ImportRole {
             section,
             is_static: unit.is_static,
             anchor: unit.anchor,
-        };
-        self.push(ListItem::Format(unit.import.syntax()), Some(role));
+        });
+        for &carrier in &unit.carriers {
+            self.push(ListItem::Elide(carrier), role);
+        }
+        self.push(ListItem::Format(unit.import.syntax()), role);
     }
 }
 
@@ -144,12 +156,16 @@ fn top_level_separator<'a>(
     separator: Separator<'a>,
     prev: Option<ImportRole>,
     next: Option<ImportRole>,
+    at_end: bool,
 ) -> Doc {
     let blank = separator.blank_line_in_source;
     if let (Some(prev), Some(next)) = (prev, next)
         && prev.section == next.section
     {
-        return if !prev.is_static && next.is_static {
+        return if is_semicolon(separator.prev) {
+            // A carrier and the import it leads.
+            f.hard_line()
+        } else if !prev.is_static && next.is_static {
             // The blank line between the normal and the static imports.
             f.empty_line()
         } else if next.anchor {
@@ -158,18 +174,28 @@ fn top_level_separator<'a>(
             f.hard_line()
         };
     }
-    // Two fields of a compact source file keep the source's choice, as in a
-    // class body.
-    let kind = |node: SyntaxNode<'_>| K::from_raw(node.kind());
-    if (kind(separator.prev), kind(separator.next)) == (K::FieldDeclaration, K::FieldDeclaration) {
+    // The comments of a removed `;` keep the source's line breaks after
+    // them, and before them at the end of the file. Two fields of a compact
+    // source file keep the source's choice, as in a class body.
+    let is_field = |node: SyntaxNode<'_>| K::from_raw(node.kind()) == K::FieldDeclaration;
+    if is_semicolon(separator.prev)
+        || at_end
+        || (is_field(separator.prev) && is_field(separator.next))
+    {
         f.line_break(blank)
     } else {
         f.empty_line()
     }
 }
 
-/// One import of a section.
+fn is_semicolon(node: SyntaxNode<'_>) -> bool {
+    K::from_raw(node.kind()) == K::EmptyDeclaration
+}
+
+/// One import of a section, with the `;` items before it, whose comments
+/// lead it.
 struct Unit<'a> {
+    carriers: Vec<SyntaxNode<'a>>,
     import: ImportDeclaration<'a>,
     key: String,
     is_static: bool,
@@ -177,14 +203,8 @@ struct Unit<'a> {
     sortable: bool,
 }
 
-/// A `;` that N5 removes: one without comments.
-fn removed_semicolon(f: &JavaFormatter<'_>, item: CompilationUnitItem<'_>) -> bool {
-    matches!(item, CompilationUnitItem::EmptyDeclaration(_))
-        && !f.has_comments_within(item.syntax())
-}
-
-/// The items in output order: each run of imports (with the removed `;`
-/// items between them) is grouped and sorted.
+/// The items in output order: each run of imports (with the `;` items
+/// between them) is grouped and sorted.
 fn order_items<'a>(f: &JavaFormatter<'a>, items: &[CompilationUnitItem<'a>]) -> Ordered<'a> {
     let mut ordered = Ordered {
         items: Vec::with_capacity(items.len()),
@@ -195,14 +215,14 @@ fn order_items<'a>(f: &JavaFormatter<'a>, items: &[CompilationUnitItem<'a>]) -> 
     while index < items.len() {
         let item = items[index];
         if let CompilationUnitItem::ImportDeclaration(_) = item {
-            let end = section_end(f, items, index);
-            let units = import_units(f, &items[index..end], &mut ordered);
+            let end = section_end(items, index);
+            let units = import_units(f, &items[index..end]);
             ordered.import_section(units);
             index = end;
             continue;
         }
         let node = item.syntax();
-        if removed_semicolon(f, item) {
+        if is_semicolon(node) {
             ordered.push(ListItem::Elide(node), None);
         } else {
             ordered.push(ListItem::Format(node), None);
@@ -212,43 +232,48 @@ fn order_items<'a>(f: &JavaFormatter<'a>, items: &[CompilationUnitItem<'a>]) -> 
     ordered
 }
 
-/// The end of the import section starting at `start`: imports and the
-/// removed `;` items between them.
-fn section_end(f: &JavaFormatter<'_>, items: &[CompilationUnitItem<'_>], start: usize) -> usize {
+/// The end of the import section starting at `start`: imports and the `;`
+/// items between them.
+fn section_end(items: &[CompilationUnitItem<'_>], start: usize) -> usize {
     let mut end = start;
-    for (index, &item) in items.iter().enumerate().skip(start) {
+    for (index, item) in items.iter().enumerate().skip(start) {
         match item {
             CompilationUnitItem::ImportDeclaration(_) => end = index + 1,
-            _ if removed_semicolon(f, item) => {}
+            CompilationUnitItem::EmptyDeclaration(_) => {}
             _ => break,
         }
     }
     end
 }
 
-/// The imports of a section. The removed `;` items between them are listed
-/// first, since they print nothing.
-fn import_units<'a>(
-    f: &JavaFormatter<'a>,
-    items: &[CompilationUnitItem<'a>],
-    ordered: &mut Ordered<'a>,
-) -> Vec<Unit<'a>> {
+/// The imports of a section, each with the `;` items before it.
+fn import_units<'a>(f: &JavaFormatter<'a>, items: &[CompilationUnitItem<'a>]) -> Vec<Unit<'a>> {
     let mut units = Vec::new();
-    for &item in items {
+    let mut start = 0;
+    for (index, &item) in items.iter().enumerate() {
         let CompilationUnitItem::ImportDeclaration(import) = item else {
-            ordered.push(ListItem::Elide(item.syntax()), None);
             continue;
         };
+        let carriers: Vec<SyntaxNode<'a>> = items[start..index]
+            .iter()
+            .map(|item| item.syntax())
+            .collect();
+        start = index + 1;
+        let anchor = carriers
+            .iter()
+            .any(|&carrier| f.has_comments_within(carrier))
+            || f.has_leading_comments(SyntaxElement::Node(import.syntax()));
         let name = import.name();
         let mut key = name.map(name_key).unwrap_or_default();
         if import.star().is_some() {
             key.push_str(".*");
         }
         units.push(Unit {
+            carriers,
             import,
             key,
             is_static: import.static_keyword().is_some(),
-            anchor: f.has_leading_comments(SyntaxElement::Node(import.syntax())),
+            anchor,
             sortable: import.syntax().is_recovery_free()
                 && name.is_some_and(|name| !f.has_comments_within(name.syntax()))
                 && !f.in_ignore_region(import.syntax()),

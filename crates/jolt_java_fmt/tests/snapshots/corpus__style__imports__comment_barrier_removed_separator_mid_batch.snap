@@ -5,12 +5,10 @@ expression: snapshot
 formatted:
 import java.utils.*;
 import something.Different;
-
-; /*hunt*/
-
+/*hunt*/
+import abc.def.Something;
 import abc.def;
 import abc.def.Another;
-import abc.def.Something;
 import one.last;
 
 class C {}
