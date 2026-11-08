@@ -813,10 +813,11 @@ Indentation is `indent_width` spaces per level, or one tab per level with
 
 `hang(line, value)` is the one layout choice besides flat or broken. It lays out
 the value after an operator (`x = value`, `case X -> value;`, `(Type) value`)
-and the single call of a member chain after a receiver that does not keep the
-call on its line (`this.registry.register(…)`, `assertThat(…).isTrue()`). In a
-flat context it prints flat. In a broken context the printer picks the first
-layout that applies:
+and the last call of a member chain when it is the only call left after the
+receiver and the first call that joined the receiver's line
+(`this.registry.register(…)`, `assertThat(…).isTrue()`,
+`Mono.fromCallable(…).subscribeOn(…)`). In a flat context it prints flat. In a
+broken context the printer picks the first layout that applies:
 
 1. **Flat**: `line` and `value` flat, if they fit (the group fit check).
 2. **Next**: `line` broken and `value` one indent deeper, if `value` fits flat
@@ -829,20 +830,25 @@ layout that applies:
 
 The hung probe answers whether the value's first line, printed broken after
 `line`, fits and breaks in the right place. The value's outermost groups (and
-hangs) are its breakable parts. The probe measures them flat, and the groups
-inside them flat too, noting each part's first line break; a line break that the
-value requires (a hard line, a text block, a line of a group with a forced
-break) ends the line where it is. The probe fits when:
+hangs and hugs) are its breakable parts. The probe measures them flat, and the
+groups inside them flat too, noting each part's first line break; a line break
+that the value requires (a hard line, a text block, a line of a group with a
+forced break) ends the line where it is. A line break qualifies only if it is
+indented deeper than the base: the hang's indent, or the indent of the line the
+value starts on when that line is a continuation line indented deeper (a wrapped
+switch label before `->`, a wrapped array index before `=`). The probe fits
+when:
 
-- the line fits up to the first required line break, and that break is indented
-  deeper than the hang; or
-- the line is too long, and the text that overflows is inside the breakable part
-  whose first line break was passed last, and that line break is indented deeper
-  than the hang. The line then ends at that line break: the probe skips the rest
-  of the part, and fails if another breakable part follows before the value ends
-  or a required line break. When the overflowing text comes after that part
-  closed, the line ends there only if the value up to that text is too wide for
-  the next line as well, so that layout 4 would break the same part.
+- the line fits up to the first required line break, and that break qualifies;
+  or
+- the line is too long, a qualifying first line break of a breakable part was
+  passed before the overflowing text, and the value up to that text is too wide
+  for the next line as well, so that layout 4 would break the same part. The
+  line then ends at the first line break of the part passed last. After the
+  overflow the probe measures on flat, through the rest of that part's line
+  breaks, only until the text it measured is wider than the next line; it fails
+  at another breakable part, a required line break or the first line break after
+  the value.
 
 These conditions follow the printer's greedy decisions, in which a group breaks
 when its contents up to the next possible line break do not fit, and accept only
@@ -859,7 +865,9 @@ check and the next-line check measure it as layout 4, whose line break comes
 first; layout 4 is always available to the hang, and it picks layout 1 or 3 only
 when that fits, so the measured line is never shorter than the printed one. The
 hung probe measures a broken hang outside every breakable part as a breakable
-part of its own whose first line break comes before its value. So measuring a
+part of its own whose first line break comes before its value, one indent
+deeper, where it qualifies like any other; when a line comment is pending there,
+the hang will pick layout 4, so the line ends at that line break. So measuring a
 hang costs the same as measuring its children, and no fit check starts another.
 
 **Hug.** `hug(hugged, broken)` lays out an argument list whose last argument has
@@ -875,16 +883,32 @@ break in the last argument's parameters or arguments, or in a call it is nested
 in, does not, and the list breaks. The list builder offers a hug only when the
 last argument is a lambda with a block body, an anonymous class, a switch
 expression or a text block, and no argument before it has a forced break, so two
-lambda bodies keep the broken list. A fit check measures a hug as `broken`,
-which is always available. One fit check per hug.
+lambda bodies keep the broken list. A group's check and the next-line check
+measure a hug as `broken`, which is always available. One fit check per hug.
+
+The hung probe measures a hug in the value, outside the groups of a breakable
+part, as `hugged`: a breakable part (or a place where the part it is in breaks)
+whose first line break comes after its first text, `open`, where `broken` breaks
+when the hug does not fit. Its body's line break is required, so the line ends
+there when it fits up to it, and the hug then fits on the operator's line. When
+the line is too long before the body, the probe decides as above: if the value
+up to the body fits on the next line, layout 4 moves it there, and the hug's own
+check fits on that line; this is how an assignment's value keeps its last
+argument's body hugged (`handler =` / `someFactory(a, b, x -> {`), as an
+anonymous class value keeps its header whole. A required line break that the
+body does not start with (one inside a group of `hugged`, or one not indented
+deeper than the hug, such as before a comment on its own line) makes the hug
+fail on either line, so after an overflow it ends the line at `open` instead of
+choosing layout 4.
 
 Cost: the printer reaches each hang once and makes at most three fit checks
 there, each bounded like a group's: it visits at most `FIT_BUDGET` commands and
-stops at the end of the line it measures. The hung probe skips the rest of the
-part the line ends in without visiting it, and continues only through the text
-up to the next breakable part, required line break or the end of the value.
-Total: `O(doc nodes × 3 × FIT_BUDGET)` worst case, `O(width)` per hang in
-practice.
+stops at the end of the line it measures. After an overflow the hung probe
+measures the rest of the part flat, but only up to the next line's width of
+text, and stops at the next breakable part, a required line break or the first
+line break after the value. Measuring a hug as `hugged` instead of `broken`
+visits the same commands. Total: `O(doc nodes × 3 × FIT_BUDGET)` worst case,
+`O(width)` per hang in practice.
 
 ### Comments
 

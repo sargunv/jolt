@@ -16,5 +16,9 @@ class HugLastArgument {
     callback.on(e -> { handle(e); }, // why
       done);
     outer(inner(value -> { consume(value); }));
+    SomeHandlerType handler = someFactory(firstArgumentValue, secondArgument, x -> { run(); });
+    CompletableFuture<ServerResponse> future = CompletableFuture.supplyAsync(() -> { return response; });
+    Comparator<Method> comparator = new ConvertingComparator<Method, @Nullable Annotation>(new InstanceComparator<>(Around.class, Before.class), method -> { return method.getName(); });
+    assertThatExceptionOfType(UnexpectedRollbackException.class).isThrownBy(() -> { template.execute(); });
   }
 }

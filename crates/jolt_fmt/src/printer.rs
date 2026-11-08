@@ -67,6 +67,9 @@ struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     column: u32,
     /// Leading whitespace of the current output line.
     line_ws: String,
+    /// The indent of the last line the printer started (a verbatim line's
+    /// whitespace is the source's, not an indent).
+    line_indent: u32,
     /// The base indentation of the verbatim node being printed.
     verbatim_base: String,
     pending: Pending,
@@ -95,6 +98,7 @@ pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
         out: String::new(),
         column: 0,
         line_ws: String::new(),
+        line_indent: 0,
         verbatim_base: String::new(),
         pending: Pending::None,
         line: Line::FileStart,
@@ -316,6 +320,7 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     }
                 }
                 self.out.push_str(&self.line_ws);
+                self.line_indent = indent;
                 self.column = self.indent_width(indent);
                 self.last = None;
             }
@@ -463,16 +468,24 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
         let mut width = i64::from(self.options.line_width) - i64::from(start);
         let mut suffix_pending = !self.suffixes.is_empty();
         let mut hung = match probe {
-            Probe::Hung(base) => {
+            Probe::Hung(indent) => {
                 // The hang's line prints a space, or nothing.
                 let line = i64::from(stack.last().is_some_and(|line| line.doc == Doc::LINE));
+                // The line the value starts on may be a continuation line,
+                // indented deeper than the hang.
+                let line_indent = match self.pending {
+                    Pending::Newlines { indent, .. } => indent,
+                    Pending::None | Pending::Space => self.line_indent,
+                };
                 Some(Hung {
-                    base,
+                    base: line_indent.max(indent),
                     value_start: width - line,
                     next_width: i64::from(self.options.line_width)
-                        - i64::from(self.indent_width(base + 1)),
+                        - i64::from(self.indent_width(indent + 1)),
                     parts: 0,
                     last: 0,
+                    opening: 0,
+                    hug: None,
                     fallback: false,
                     forced: false,
                     deciding: false,
@@ -547,6 +560,17 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                                 return true;
                             }
                         }
+                        // A hug's `open`: its line break comes next, and is
+                        // another place the line can break.
+                        if hung.opening != 0 && hung.opening == entry.group && !in_rest {
+                            if hung.deciding {
+                                return false;
+                            }
+                            hung.last = hung.opening;
+                            hung.fallback = entry.indent + 1 > hung.base;
+                            hung.hug = Some(entry.indent);
+                            hung.opening = 0;
+                        }
                     } else if width < 0 {
                         return false;
                     }
@@ -572,6 +596,15 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                         || entry.inner
                         || matches!(self.docs.kind(doc), Kind::HardLine | Kind::EmptyLine);
                     if hung.deciding {
+                        // A required line break that the hug's body does not
+                        // start with: the hug fails on the next line too,
+                        // and its list breaks there as it does here.
+                        if let Some(hug) = hung.hug.filter(|_| entry.group == hung.last)
+                            && required
+                            && (entry.inner || entry.indent <= hug)
+                        {
+                            return true;
+                        }
                         // Another place the line can break: the line up to it
                         // fits on the next line.
                         if required || entry.group != hung.last {
@@ -585,6 +618,7 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     } else {
                         if entry.group != hung.last {
                             hung.last = entry.group;
+                            hung.hug = None;
                             hung.fallback = entry.indent > hung.base;
                         }
                         if required {
@@ -655,6 +689,33 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                         ..entry
                     });
                 }
+                // In a hung probe, outside the groups of a breakable part:
+                // measured as `hugged`, a breakable part (or a place where
+                // the part it is in breaks) whose first line break is the
+                // one `broken` has after its first text, `open`. Its body's
+                // line break is required, so the line ends there unless it
+                // was too long before.
+                Kind::Hug(hugged, _) if mode == Mode::Break && !entry.inner && value.is_some() => {
+                    let hung = value.expect("a hung probe");
+                    if hung.deciding && (entry.group == 0 || entry.group != hung.last) {
+                        return false;
+                    }
+                    let group = if entry.group == 0 {
+                        hung.parts += 1;
+                        hung.parts
+                    } else {
+                        entry.group
+                    };
+                    if group != hung.last {
+                        hung.opening = group;
+                    }
+                    stack.push(Fit {
+                        mode: Mode::Flat,
+                        doc: hugged,
+                        group,
+                        ..entry
+                    });
+                }
                 // Measured as its broken layout, which is always available.
                 Kind::Hug(_, broken) => stack.push(Fit {
                     doc: broken,
@@ -675,12 +736,18 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                             if hung.deciding {
                                 return false;
                             }
+                            // The pending comment ends the line, and the hang
+                            // breaks its line (see `hang`).
+                            if suffix_pending {
+                                return hung.line_ends(entry.indent + 1, false);
+                            }
                             hung.parts += 1;
                             hung.last = hung.parts;
-                            hung.fallback = true;
+                            hung.hug = None;
+                            hung.fallback = entry.indent + 1 > hung.base;
                             // A value that cannot be flat breaks there.
                             if self.docs.breaks(hung_value) {
-                                return true;
+                                return hung.fallback;
                             }
                             (entry.indent, Mode::Flat, hung.parts)
                         }
@@ -716,7 +783,8 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
 /// line break, or at the first line break of the last breakable part before
 /// the line is too long, and that part would break on the next line too.
 struct Hung {
-    /// The indent of the hang.
+    /// The indent the value's line breaks must be deeper than: the hang's,
+    /// or that of the line the value starts on, if deeper.
     base: u32,
     /// The width left on the line where the value starts.
     value_start: i64,
@@ -726,8 +794,13 @@ struct Hung {
     parts: u32,
     /// The breakable part whose first line break was passed last, or 0.
     last: u32,
+    /// The breakable part of a hug whose `open` comes next, or 0.
+    opening: u32,
+    /// The indent of the hug whose `open` was passed last, if `last` is its
+    /// part.
+    hug: Option<u32>,
     /// Whether the line can break at that line break: it is indented deeper
-    /// than the hang.
+    /// than `base`.
     fallback: bool,
     /// Whether the breakable part entered last contains a forced break, so
     /// that its first line break is required.
@@ -771,7 +844,7 @@ enum Probe {
     /// The entries from the start of a new line at their indent.
     NextLine,
     /// The entries from the current position, up to their first line break
-    /// that is indented deeper than the given indent.
+    /// that is indented deeper than the given indent and the current line.
     Hung(u32),
 }
 

@@ -8,5 +8,8 @@ class SingleCallHangs {
     new XmlBeanDefinitionReader(factory).loadBeanDefinitions(new ClassPathResource("annotation-config.xml", getClass()));
     configurations.getByName("checkstyle").getDependencies().add(dependencies.create(checkstyleVersion));
     this.handler /* receiver */ .setUserDestinationPredicate(destination -> destination.startsWith("/user/"));
+    Assertions.assertThat(registry.getListenerContainer("firstListenerName").getConcurrencyLimit()).isTrue();
+    return Mono.fromCallable(() -> { return compute(); }).subscribeOn(Schedulers.boundedElastic());
+    exchange.getAttributes().put(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, new PathPatternParser().parse("/**"));
   }
 }
