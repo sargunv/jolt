@@ -15,7 +15,7 @@ use std::{
 use clap::Args;
 use ignore::WalkBuilder;
 use jolt_config::FormatConfig;
-use jolt_formatter::{FormatOptions, FormatResult, Language, LineIndex, OnSyntaxError, Sink};
+use jolt_formatter::{FormatOptions, Language, OnSyntaxError, Outcome, Sink};
 use rayon::prelude::*;
 
 use crate::{
@@ -367,20 +367,11 @@ fn format_source<S: Sink>(
         OnSyntaxError::Refuse
     };
     match jolt_formatter::format(source, language, &options, on_error, sink) {
-        FormatResult::Formatted { halted } => Ok(halted),
-        FormatResult::Refused(diagnostics) => {
-            let lines = LineIndex::new(source);
+        Outcome::Formatted { halted } => Ok(halted),
+        Outcome::Refused(errors) => {
             let mut text = String::new();
-            for diagnostic in diagnostics {
-                let at = lines.line_col(diagnostic.range.start());
-                let _ = writeln!(
-                    text,
-                    "{label}:{}:{}: {}: {}",
-                    at.line + 1,
-                    at.col + 1,
-                    diagnostic.code,
-                    diagnostic.message
-                );
+            for error in errors {
+                let _ = writeln!(text, "{label}:{error}");
             }
             Err(text)
         }
