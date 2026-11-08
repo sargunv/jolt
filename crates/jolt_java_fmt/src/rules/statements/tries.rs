@@ -10,7 +10,7 @@ use jolt_syntax::{AstNode, SyntaxElement};
 
 use crate::JavaFormatter;
 use crate::helpers::lists::{joined, list_item, parenthesized};
-use crate::helpers::spaced_node;
+use crate::helpers::spaced;
 use crate::rules::types::inline_modifiers;
 
 /// `try {` … `} catch (…) {` … `} finally {` … `}`.
@@ -44,7 +44,8 @@ fn clauses<'a>(
     for clause in catches.into_iter().flat_map(CatchClauseList::elements) {
         docs.extend([f.space(), list_item(f, clause)]);
     }
-    docs.push(spaced_node(f, finally));
+    let finally = f.fmt_opt(finally);
+    docs.push(spaced(f, finally));
     f.concat(docs)
 }
 

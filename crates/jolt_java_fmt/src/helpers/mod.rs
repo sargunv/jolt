@@ -19,8 +19,15 @@ pub(crate) fn spaced(f: &mut JavaFormatter<'_>, doc: Doc) -> Doc {
 }
 
 /// A space, then `node`; NIL when `node` is missing or formats to nothing.
+/// When a leading comment of `node` breaks the line (`new int[]` / `/* c */
+/// { 1 }`), `node` continues that line, so it goes one indent deeper.
 pub(crate) fn spaced_node<'a, N: AstNode<'a>>(f: &mut JavaFormatter<'a>, node: Option<N>) -> Doc {
-    let doc = f.fmt_opt(node);
+    let Some(node) = node else {
+        return Doc::NIL;
+    };
+    let breaks = f.leading_comments_break(SyntaxElement::Node(node.syntax()));
+    let doc = f.fmt(node);
+    let doc = if breaks { f.indent(doc) } else { doc };
     spaced(f, doc)
 }
 

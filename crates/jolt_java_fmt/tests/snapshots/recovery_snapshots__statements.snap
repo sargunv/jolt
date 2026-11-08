@@ -82,7 +82,7 @@ class RecoveredStatements {
       case 2 /* case-junk */ @ -> use();
       case 3 -> /* switch-empty-rule */ ;
       case 4:
-      /* switch-label-sibling */ case :
+      /* switch-label-sibling */ case:
         use();
       case String text when (/* guard-open */ ? ? ? /* guard-close */) -> use();
     }

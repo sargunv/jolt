@@ -12,7 +12,8 @@ class SwitchGuardsAndLabels {
       case String s when s.length() > 10
         && s.startsWith("prefix")
         && s.endsWith("suffix") -> 2;
-      case CharSequence first,
+      case
+        CharSequence first,
         StringBuilder second,
         StringBuffer third,
         Appendable fourth -> 3;
