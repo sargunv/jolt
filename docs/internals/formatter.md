@@ -1554,7 +1554,6 @@ The CLI and the dprint plugin use only this API and `jolt_config`.
 
 ```rust
 pub use jolt_fmt::{FormatOptions, Sink};
-pub use jolt_syntax::{Diagnostic, LineIndex};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Language {
@@ -1571,12 +1570,16 @@ pub enum OnSyntaxError {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum FormatResult {
+pub enum Outcome {
     /// Output was written to the sink; `halted` when the sink broke early.
     Formatted { halted: bool },
     /// `Refuse` and the source has syntax errors; nothing was written.
-    Refused(Vec<Diagnostic>),
+    Refused(Vec<SyntaxError>),
 }
+
+/// Displays as `line:column: code: message`, 1-based.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SyntaxError {/* line, column, code, message */}
 
 pub fn format<S: Sink + ?Sized>(
     source: &str,
@@ -1584,7 +1587,7 @@ pub fn format<S: Sink + ?Sized>(
     options: &FormatOptions,
     on_error: OnSyntaxError,
     sink: &mut S,
-) -> FormatResult;
+) -> Outcome;
 ```
 
 Feature `serde` forwards to `jolt_fmt/serde`. `check` mode is a sink that

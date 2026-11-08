@@ -11,6 +11,7 @@ indent-width = 4
 use-tabs = false
 
 [files]
-include = ["**/*.java"]
+# Globs are relative to the directory of the config that sets them.
+include = ["**/*.java"] # default
 
 # target $TEMP/a/A.java is selected

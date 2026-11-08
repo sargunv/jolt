@@ -1,0 +1,64 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"config\", \"schema\", \"--dprint\"], \"\")"
+---
+$ jolt config schema --dprint
+status: 0
+--- stdout
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "dprint jolt plugin configuration",
+  "type": "object",
+  "properties": {
+    "jolt": {
+      "additionalProperties": false,
+      "properties": {
+        "indentWidth": {
+          "description": "Spaces per indentation level when not using tabs.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "minimum": 1.0
+        },
+        "lineWidth": {
+          "description": "Preferred maximum line width.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "minimum": 1.0
+        },
+        "useTabs": {
+          "description": "Indent with tabs instead of spaces.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "associations": {
+          "description": "Glob patterns of the files this plugin formats (read by dprint).",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "locked": {
+          "description": "Read by dprint itself; see its configuration documentation.",
+          "type": "boolean"
+        }
+      },
+      "description": "Jolt formatting options. An unset option falls through to a less specific layer, and finally to its default.",
+      "type": "object"
+    }
+  }
+}

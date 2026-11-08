@@ -1,0 +1,8 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--check\", \"B.java\"], \"\")"
+---
+$ jolt fmt --check B.java
+status: 0
+--- stderr
+Checked 1 file in $TIME

@@ -15,12 +15,12 @@ use std::{
 use clap::Args;
 use ignore::WalkBuilder;
 use jolt_config::FormatConfig;
-use jolt_formatter::{FormatOptions, FormatResult, Language, LineIndex, OnSyntaxError, Sink};
+use jolt_formatter::{FormatOptions, Language, OnSyntaxError, Outcome, Sink};
 use rayon::prelude::*;
 
 use crate::{
-    Result,
-    config::{Resolver, Sources, absolute},
+    Exit, Result,
+    config::{ConfigArgs, Resolver, absolute},
 };
 
 #[derive(Debug, Args)]
@@ -51,64 +51,22 @@ pub(crate) struct FormatArgs {
     paths: Vec<PathBuf>,
 }
 
-/// File selection and config loading.
-#[derive(Debug, Args)]
-pub(crate) struct ConfigArgs {
-    /// Include source files matching this glob.
-    #[arg(long)]
-    include: Vec<String>,
-
-    /// Exclude source files matching this glob.
-    #[arg(long)]
-    exclude: Vec<String>,
-
-    /// Load only this config file.
-    #[arg(long)]
-    config: Option<PathBuf>,
-
-    /// Disable discovered project configs.
-    #[arg(long)]
-    no_config: bool,
-}
-
-impl ConfigArgs {
-    pub(crate) fn none() -> Self {
-        Self {
-            include: Vec::new(),
-            exclude: Vec::new(),
-            config: None,
-            no_config: false,
-        }
-    }
-
-    pub(crate) fn sources<'a>(&'a self, cwd: &'a Path, format: FormatConfig) -> Sources<'a> {
-        Sources {
-            cwd,
-            format,
-            include: &self.include,
-            exclude: &self.exclude,
-            config: self.config.as_deref(),
-            no_config: self.no_config,
-        }
-    }
-}
-
-pub(crate) fn run(args: &FormatArgs) -> Result<()> {
+pub(crate) fn run(args: &FormatArgs) -> Result<Exit> {
     let cwd =
         env::current_dir().map_err(|error| format!("failed to read current directory: {error}"))?;
-    let sources = args.config.sources(&cwd, args.format);
+    let mut resolver = Resolver::new(&cwd, &args.config, args.format)?;
     if args.paths.iter().any(|path| path == Path::new("-")) {
         if args.paths.len() != 1 {
             return Err("'-' cannot be combined with filesystem paths".to_owned());
         }
-        return run_stdin(&cwd, args, &sources);
+        return run_stdin(&cwd, args, &mut resolver);
     }
     if args.stdin_filename.is_some() {
         return Err("--stdin-filename is only valid when formatting stdin with '-'".to_owned());
     }
 
     let started = Instant::now();
-    let files = collect(&cwd, &args.paths, &sources)?;
+    let files = collect(&cwd, &args.paths, &mut resolver)?;
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(args.threads.map_or(0, NonZeroUsize::get))
         .build()
@@ -120,34 +78,35 @@ pub(crate) fn run(args: &FormatArgs) -> Result<()> {
             .collect()
     });
 
-    let (mut changed, mut failed) = (0, 0);
     let mut stdout = io::stdout().lock();
     let mut stderr = io::stderr().lock();
     for report in &reports {
-        changed += usize::from(report.status == Status::Changed);
-        failed += usize::from(report.status == Status::Failed);
         stdout
             .write_all(report.stdout.as_bytes())
-            .map_err(|error| error.to_string())?;
+            .map_err(write_error("stdout"))?;
         stderr
             .write_all(report.stderr.as_bytes())
-            .map_err(|error| error.to_string())?;
+            .map_err(write_error("stderr"))?;
     }
-    let verb = if args.check { "Checked" } else { "Formatted" };
-    let _ = writeln!(
-        stderr,
-        "{verb} {} in {}",
-        count(reports.len(), "file"),
-        elapsed(started.elapsed())
-    );
-
-    if !args.check {
-        changed = 0;
-    }
-    failure(changed, failed)
+    let tally = |status| {
+        reports
+            .iter()
+            .filter(|report| report.status == status)
+            .count()
+    };
+    let files = count(reports.len(), "file");
+    let summary = if args.check {
+        format!("Checked {files}")
+    } else {
+        format!("Reformatted {} of {files}", tally(Status::Reformatted))
+    };
+    writeln!(stderr, "{summary} in {}", elapsed(started.elapsed()))
+        .map_err(write_error("stderr"))?;
+    drop(stderr);
+    end(tally(Status::Unformatted), tally(Status::Failed))
 }
 
-fn run_stdin(cwd: &Path, args: &FormatArgs, sources: &Sources<'_>) -> Result<()> {
+fn run_stdin(cwd: &Path, args: &FormatArgs, resolver: &mut Resolver) -> Result<Exit> {
     let (language, label, dir) = match &args.stdin_filename {
         Some(path) => {
             let language = Language::from_path(path).ok_or_else(|| {
@@ -158,14 +117,14 @@ fn run_stdin(cwd: &Path, args: &FormatArgs, sources: &Sources<'_>) -> Result<()>
         }
         None => (Language::Java, "<stdin>".to_owned(), cwd.to_path_buf()),
     };
-    let options = Resolver::new(sources, &dir)?.settings(&dir)?.options();
+    let options = resolver.settings(&dir, &dir)?.options();
 
     let mut source = String::new();
     io::stdin()
         .read_to_string(&mut source)
         .map_err(|error| format!("failed to read stdin as UTF-8: {error}"))?;
     let mut formatted = String::new();
-    if let Err(diagnostics) = format_source(
+    if let Err(errors) = format_source(
         &label,
         &source,
         language,
@@ -173,20 +132,23 @@ fn run_stdin(cwd: &Path, args: &FormatArgs, sources: &Sources<'_>) -> Result<()>
         args.format_with_errors,
         &mut formatted,
     ) {
-        eprint!("{diagnostics}");
-        return failure(0, 1);
+        io::stderr()
+            .write_all(errors.as_bytes())
+            .map_err(write_error("stderr"))?;
+        return end(0, 1);
     }
 
     if args.check {
         if formatted == source {
-            return Ok(());
+            return Ok(Exit::Success);
         }
-        println!("{label}");
-        return failure(1, 0);
+        writeln!(io::stdout(), "{label}").map_err(write_error("stdout"))?;
+        return end(1, 0);
     }
     io::stdout()
         .write_all(formatted.as_bytes())
-        .map_err(|error| format!("failed to write stdout: {error}"))
+        .map_err(write_error("stdout"))?;
+    Ok(Exit::Success)
 }
 
 struct Candidate {
@@ -195,9 +157,9 @@ struct Candidate {
     options: FormatOptions,
 }
 
-/// The files to format: explicit files as given, and the selected source
-/// files under each directory, sorted by path.
-fn collect(cwd: &Path, paths: &[PathBuf], sources: &Sources<'_>) -> Result<Vec<Candidate>> {
+/// The files to format: explicit files unless an exclude glob matches them,
+/// and the selected source files under each directory, sorted by path.
+fn collect(cwd: &Path, paths: &[PathBuf], resolver: &mut Resolver) -> Result<Vec<Candidate>> {
     let roots: Vec<PathBuf> = if paths.is_empty() {
         vec![cwd.to_path_buf()]
     } else {
@@ -212,14 +174,15 @@ fn collect(cwd: &Path, paths: &[PathBuf], sources: &Sources<'_>) -> Result<Vec<C
                 format!("{}: unsupported file extension", display_path(cwd, &root))
             })?;
             let dir = root.parent().unwrap_or(cwd);
-            let options = Resolver::new(sources, dir)?.settings(dir)?.options();
-            found.push(Candidate {
-                path: root,
-                language,
-                options,
-            });
+            let settings = resolver.settings(dir, dir)?;
+            if !settings.excludes(&root) {
+                found.push(Candidate {
+                    options: settings.options(),
+                    path: root,
+                    language,
+                });
+            }
         } else if root.is_dir() {
-            let mut resolver = Resolver::new(sources, &root)?;
             for entry in WalkBuilder::new(&root).require_git(false).build() {
                 let entry = entry.map_err(|error| error.to_string())?;
                 if !entry.file_type().is_some_and(|kind| kind.is_file()) {
@@ -229,7 +192,7 @@ fn collect(cwd: &Path, paths: &[PathBuf], sources: &Sources<'_>) -> Result<Vec<C
                 let Some(language) = Language::from_path(&path) else {
                     continue;
                 };
-                let settings = resolver.settings(path.parent().unwrap_or(&root))?;
+                let settings = resolver.settings(path.parent().unwrap_or(&root), &root)?;
                 if settings.selects(&path) {
                     found.push(Candidate {
                         options: settings.options(),
@@ -254,7 +217,10 @@ fn collect(cwd: &Path, paths: &[PathBuf], sources: &Sources<'_>) -> Result<Vec<C
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Status {
     Unchanged,
-    Changed,
+    /// `--check` found the file unformatted.
+    Unformatted,
+    /// The file was unformatted and is now written formatted.
+    Reformatted,
     Failed,
 }
 
@@ -301,16 +267,16 @@ fn format_file(cwd: &Path, file: &Candidate, args: &FormatArgs) -> Report {
             args.format_with_errors,
             &mut compare,
         ) {
-            Err(diagnostics) => Report::failed(diagnostics),
+            Err(errors) => Report::failed(errors),
             Ok(false) if compare.at == source.len() => Report::new(Status::Unchanged),
             Ok(_) => Report {
                 stdout: format!("{label}\n"),
-                ..Report::new(Status::Changed)
+                ..Report::new(Status::Unformatted)
             },
         };
     }
     let mut formatted = String::new();
-    if let Err(diagnostics) = format_source(
+    if let Err(errors) = format_source(
         &label,
         &source,
         file.language,
@@ -318,13 +284,13 @@ fn format_file(cwd: &Path, file: &Candidate, args: &FormatArgs) -> Report {
         args.format_with_errors,
         &mut formatted,
     ) {
-        return Report::failed(diagnostics);
+        return Report::failed(errors);
     }
     if formatted == source {
         return Report::new(Status::Unchanged);
     }
     match fs::write(&file.path, formatted) {
-        Ok(()) => Report::new(Status::Changed),
+        Ok(()) => Report::new(Status::Reformatted),
         Err(error) => Report::failed(format!(
             "{label}: failed to write formatted file: {error}\n"
         )),
@@ -367,42 +333,38 @@ fn format_source<S: Sink>(
         OnSyntaxError::Refuse
     };
     match jolt_formatter::format(source, language, &options, on_error, sink) {
-        FormatResult::Formatted { halted } => Ok(halted),
-        FormatResult::Refused(diagnostics) => {
-            let lines = LineIndex::new(source);
+        Outcome::Formatted { halted } => Ok(halted),
+        Outcome::Refused(errors) => {
             let mut text = String::new();
-            for diagnostic in diagnostics {
-                let at = lines.line_col(diagnostic.range.start());
-                let _ = writeln!(
-                    text,
-                    "{label}:{}:{}: {}: {}",
-                    at.line + 1,
-                    at.col + 1,
-                    diagnostic.code,
-                    diagnostic.message
-                );
+            for error in errors {
+                let _ = writeln!(text, "{label}:{error}");
             }
             Err(text)
         }
     }
 }
 
-/// The error for a run that left `changed` files unformatted and could not
-/// format `failed` files, if any.
-fn failure(changed: usize, failed: usize) -> Result<()> {
+/// How a run ends when `unformatted` files need formatting and `failed` files
+/// could not be formatted.
+fn end(unformatted: usize, failed: usize) -> Result<Exit> {
     let mut problems = Vec::new();
-    if changed > 0 {
-        let verb = if changed == 1 { "needs" } else { "need" };
-        problems.push(format!("{} {verb} formatting", count(changed, "file")));
+    if unformatted > 0 {
+        let verb = if unformatted == 1 { "needs" } else { "need" };
+        problems.push(format!("{} {verb} formatting", count(unformatted, "file")));
     }
     if failed > 0 {
         problems.push(format!("{} could not be formatted", count(failed, "file")));
+        return Err(problems.join(", "));
     }
     if problems.is_empty() {
-        Ok(())
-    } else {
-        Err(problems.join(", "))
+        return Ok(Exit::Success);
     }
+    writeln!(io::stderr(), "{}", problems.join(", ")).map_err(write_error("stderr"))?;
+    Ok(Exit::Unformatted)
+}
+
+fn write_error(stream: &'static str) -> impl Fn(io::Error) -> String {
+    move |error| format!("failed to write {stream}: {error}")
 }
 
 fn count(n: usize, noun: &str) -> String {

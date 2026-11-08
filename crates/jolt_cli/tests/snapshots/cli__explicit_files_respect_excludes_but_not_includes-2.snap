@@ -1,0 +1,8 @@
+---
+source: crates/jolt_cli/tests/cli.rs
+expression: "project.run(&[\"fmt\", \"--exclude\", \"other/**\", \"other/O.java\"], \"\")"
+---
+$ jolt fmt --exclude other/** other/O.java
+status: 0
+--- stderr
+Reformatted 0 of 0 files in $TIME

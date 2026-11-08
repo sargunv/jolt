@@ -5,7 +5,7 @@ expression: "project.run(&[\"fmt\"], \"\")"
 $ jolt fmt
 status: 0
 --- stderr
-Formatted 2 files in $TIME
+Reformatted 1 of 2 files in $TIME
 --- wrote A.java
 class A {
   void f() {

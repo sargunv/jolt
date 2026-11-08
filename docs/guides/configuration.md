@@ -50,8 +50,10 @@ exclude = ["generated/**"]
   directory. Every config's list applies. `.gitignore` and `.ignore` files are
   always respected too.
 
-The globs select files found in directories given to `jolt format`; files named
-on the command line are always formatted.
+The globs select the files `jolt format` finds in the directories it is given. A
+file named on the command line is formatted even when no include glob matches
+it, but the exclude globs still apply. So a pre-commit hook that passes the
+changed files by name skips excluded files, such as generated sources.
 
 ## Discovery
 
@@ -75,12 +77,14 @@ directory.
 Options given to `jolt format` override every config:
 
 ```sh
-jolt format --line-width 100 --indent-width 4 --use-tabs false .
+jolt format --line-width 100 --indent-width 4 --use-tabs=false .
 ```
+
+`--use-tabs` alone means `--use-tabs=true`.
 
 `--include` replaces the include globs and `--exclude` adds exclude globs, both
 relative to the working directory. `--config <path>` loads only that file, and
-`--no-config` loads none.
+`--no-config` loads none; they can't be combined.
 
 ## Inspect Configs
 
@@ -92,7 +96,8 @@ jolt config list [path]
 ```
 
 Print the effective config, and for a file path (existing or not) whether the
-include and exclude globs select it:
+include and exclude globs select it. Each glob is relative to the directory of
+the config file that sets it, so a comment after each glob names that file:
 
 ```sh
 jolt config resolve [path]
