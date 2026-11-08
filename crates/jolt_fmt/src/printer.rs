@@ -4,10 +4,10 @@
 use std::ops::ControlFlow;
 
 use crate::doc::{
-    Kind, LINE_COMMENT, MULTILINE, STICKY, Text, VERBATIM_START, comment_lines, display_width,
-    lines,
+    Kind, LINE_COMMENT, MULTILINE, Reindent, STICKY, Text, VERBATIM_START, comment_lines,
+    display_width, lines,
 };
-use crate::{Doc, DocBuilder, FormatOptions, Reindent, Sink};
+use crate::{Doc, DocBuilder, FormatOptions, Sink};
 
 /// The most commands one fit check visits before answering "does not fit".
 pub(crate) const FIT_BUDGET: usize = 4096;
@@ -322,27 +322,20 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 self.verbatim_base = base;
             }
             Some(Reindent::Comment) => {
-                let base = std::mem::take(&mut self.line_ws);
-                let mut first = true;
-                let out = &mut self.out;
-                let column = &mut self.column;
-                comment_lines(text.text, |parts| {
-                    if first {
-                        first = false;
-                    } else {
-                        out.push('\n');
-                        *column = 0;
+                for (index, parts) in comment_lines(text.text).enumerate() {
+                    if index > 0 {
+                        self.out.push('\n');
+                        self.column = 0;
                         if !parts.iter().all(|part| part.is_empty()) {
-                            out.push_str(&base);
-                            *column = display_width(&base);
+                            self.out.push_str(&self.line_ws);
+                            self.column = display_width(&self.line_ws);
                         }
                     }
                     for part in parts {
-                        out.push_str(part);
-                        *column += display_width(part);
+                        self.out.push_str(part);
+                        self.column += display_width(part);
                     }
-                });
-                self.line_ws = base;
+                }
             }
         }
     }
@@ -512,7 +505,7 @@ mod tests {
     #[test]
     fn fit_check_gives_up_after_its_budget() {
         let render = |lines: usize| {
-            let mut docs = DocBuilder::new();
+            let mut docs = DocBuilder::with_capacity(0);
             let mut parts = vec![docs.text("a")];
             parts.extend((0..lines).map(|_| docs.soft_line()));
             parts.push(docs.text("b"));

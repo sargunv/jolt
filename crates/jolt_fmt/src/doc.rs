@@ -14,7 +14,7 @@ impl Doc {
     const LINE: Self = Self(2);
     const SOFT_LINE: Self = Self(3);
     pub(crate) const HARD_LINE: Self = Self(4);
-    const EMPTY_LINE: Self = Self(5);
+    pub(crate) const EMPTY_LINE: Self = Self(5);
     pub(crate) const BREAK_PARENT: Self = Self(6);
 
     #[must_use]
@@ -29,7 +29,7 @@ impl Doc {
 
 /// How the printer rewrites the continuation lines of a multi-line text.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Reindent<'a> {
+pub(crate) enum Reindent<'a> {
     /// A multi-line block comment: star blocks are re-aligned under the
     /// opening delimiter, other lines are trimmed (see [`comment_lines`]).
     Comment,
@@ -82,18 +82,7 @@ pub struct DocBuilder<'a> {
     pub(crate) texts: Vec<Text<'a>>,
 }
 
-impl Default for DocBuilder<'_> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<'a> DocBuilder<'a> {
-    #[must_use]
-    pub fn new() -> Self {
-        Self::with_capacity(0)
-    }
-
     /// A builder sized for a tree of `tokens` tokens, so the arena rarely
     /// grows while a file is formatted.
     pub(crate) fn with_capacity(tokens: usize) -> Self {
@@ -171,7 +160,7 @@ impl<'a> DocBuilder<'a> {
 
     /// A multi-line source slice whose continuation lines the printer rewrites
     /// (see [`Reindent`]). Cannot be flat when it spans lines.
-    pub fn reindented(&mut self, text: &'a str, reindent: Reindent<'a>) -> Doc {
+    pub(crate) fn reindented(&mut self, text: &'a str, reindent: Reindent<'a>) -> Doc {
         self.text_with(text, Some(reindent), 0)
     }
 
@@ -185,13 +174,9 @@ impl<'a> DocBuilder<'a> {
         let width = match reindent {
             None | Some(Reindent::Strip(_)) if !multiline => display_width(text),
             None | Some(Reindent::Strip(_)) => display_width(first_line(text)),
-            Some(Reindent::Comment) => {
-                let mut width = None;
-                comment_lines(text, |parts| {
-                    width.get_or_insert_with(|| parts.iter().map(|part| display_width(part)).sum());
-                });
-                width.unwrap_or(0)
-            }
+            Some(Reindent::Comment) => comment_lines(text).next().map_or(0, |parts| {
+                parts.iter().map(|part| display_width(part)).sum()
+            }),
         };
         self.push_text(Text {
             text,
@@ -239,6 +224,16 @@ impl<'a> DocBuilder<'a> {
     #[must_use]
     pub const fn empty_line(&self) -> Doc {
         Doc::EMPTY_LINE
+    }
+
+    /// A blank line when `blank`, else a hard line.
+    #[must_use]
+    pub const fn line_break(&self, blank: bool) -> Doc {
+        if blank {
+            Doc::EMPTY_LINE
+        } else {
+            Doc::HARD_LINE
+        }
     }
 
     /// Forces every enclosing group to break.
@@ -385,61 +380,65 @@ pub(crate) fn display_width(text: &str) -> u32 {
         .sum()
 }
 
-/// The output lines of a block comment, each given as parts to concatenate:
-/// a multi-line doc comment (`/**`) is a star block whose opener text moves to its own line; a multi-line block
+/// One output line of a block comment, as parts to concatenate.
+pub(crate) type CommentLine<'t> = [&'t str; 3];
+
+/// The output lines of a block comment: a multi-line doc comment (`/**`) is
+/// a star block whose opener text moves to its own line; a multi-line block
 /// comment whose continuation starts with `*` is a star block that keeps its
 /// opener text; any other comment keeps its continuation lines' indentation
 /// relative to each other. A star line keeps its text after the `*` and one
 /// space, so `<pre>` code stays indented.
-pub(crate) fn comment_lines<'t>(text: &'t str, mut emit: impl FnMut(&[&'t str])) {
+pub(crate) fn comment_lines(text: &str) -> impl Iterator<Item = CommentLine<'_>> {
     let doc = text.starts_with("/**") && !text.starts_with("/**/");
     let content = strip_delimiters(text);
     let multiline = has_line_break(content);
     let star_block = (doc && multiline) || is_star_block(content);
-    if !star_block {
+    // Exactly one of the two layouts is `Some`.
+    let plain = (!star_block).then(|| {
         let mut lines = lines(text.trim());
-        emit(&[lines.next().unwrap_or("").trim()]);
+        let first = lines.next().unwrap_or("").trim();
         let shared = shared_indentation(lines.clone());
-        for line in lines {
-            let line = line.trim_end();
-            emit(&[line.get(shared..).unwrap_or("")]);
-        }
-        return;
-    }
-    let mut lines = lines(content);
-    let mut first = [if doc { "/**" } else { "/*" }, "", ""];
-    let mut has_content = false;
-    if !doc && multiline {
-        let opener = lines.next().unwrap_or("").trim();
-        if !opener.is_empty() {
-            has_content = true;
-            first[1] = " ";
-            first[2] = opener;
-        }
-    }
-    emit(&first);
-    let mut blank_lines = 0;
-    for line in lines {
-        // A star line keeps its text after the `*` and one space.
-        let line = match line.trim_start().strip_prefix('*') {
-            Some(rest) if multiline => {
-                let rest = rest.trim_end();
-                rest.strip_prefix(' ').unwrap_or(rest)
+        let rest = lines.map(move |line| [line.trim_end().get(shared..).unwrap_or(""), "", ""]);
+        std::iter::once([first, "", ""]).chain(rest)
+    });
+    let star = star_block.then(|| {
+        let mut lines = lines(content);
+        let mut first = [if doc { "/**" } else { "/*" }, "", ""];
+        let mut has_content = false;
+        if !doc && multiline {
+            let opener = lines.next().unwrap_or("").trim();
+            if !opener.is_empty() {
+                has_content = true;
+                first[1] = " ";
+                first[2] = opener;
             }
-            _ => line.trim(),
-        };
-        if line.is_empty() {
-            blank_lines += usize::from(has_content);
-            continue;
         }
-        has_content = true;
-        for _ in 0..blank_lines {
-            emit(&[" *"]);
-        }
-        blank_lines = 0;
-        emit(&[" * ", line]);
-    }
-    emit(&[" */"]);
+        let mut blank_lines = 0;
+        let body = lines
+            .filter_map(move |line| {
+                let line = match line.trim_start().strip_prefix('*') {
+                    Some(rest) if multiline => {
+                        let rest = rest.trim_end();
+                        rest.strip_prefix(' ').unwrap_or(rest)
+                    }
+                    _ => line.trim(),
+                };
+                if line.is_empty() {
+                    blank_lines += usize::from(has_content);
+                    return None;
+                }
+                has_content = true;
+                let blanks = std::iter::repeat_n([" *", "", ""], std::mem::take(&mut blank_lines));
+                Some(blanks.chain([[" * ", line, ""]]))
+            })
+            .flatten();
+        std::iter::once(first).chain(body).chain([[" */", "", ""]])
+    });
+    plain
+        .into_iter()
+        .flatten()
+        .chain(star.into_iter().flatten())
 }
 
 /// The byte length of the leading spaces and tabs all non-blank `lines`
