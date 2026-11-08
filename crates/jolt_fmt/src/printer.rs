@@ -171,6 +171,38 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     mode,
                     doc: child,
                 }),
+                Kind::Hug(hugged, broken) => {
+                    let hugged = Fit::new(hugged, indent, Mode::Flat);
+                    let doc = if mode == Mode::Break && self.measure(&[hugged], Probe::Hung(indent))
+                    {
+                        hugged.doc
+                    } else {
+                        broken
+                    };
+                    self.stack.push(Command { indent, mode, doc });
+                }
+                Kind::Hang(line, value) => {
+                    let layout = if mode == Mode::Flat {
+                        Hang::Flat
+                    } else {
+                        self.hang(doc, value, indent)
+                    };
+                    let (indent, line_mode, value_mode) = match layout {
+                        Hang::Flat => (indent, Mode::Flat, Mode::Flat),
+                        Hang::Here => (indent, Mode::Flat, Mode::Break),
+                        Hang::Next => (indent + 1, Mode::Break, Mode::Break),
+                    };
+                    self.stack.push(Command {
+                        indent,
+                        mode: value_mode,
+                        doc: value,
+                    });
+                    self.stack.push(Command {
+                        indent,
+                        mode: line_mode,
+                        doc: line,
+                    });
+                }
             }
             if self.out.len() >= CHUNK {
                 self.sink.write(&self.out)?;
@@ -369,54 +401,102 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
         }
     }
 
+    /// The layout of a hang (`line`, then `value`) in a broken context: at
+    /// most three fit checks, each ending at the first line end it reaches.
+    fn hang(&mut self, hang: Doc, value: Doc, indent: u32) -> Hang {
+        let forced = self.docs.breaks(value);
+        if !forced && self.fits(hang, indent) {
+            return Hang::Flat;
+        }
+        // The pending comment ends this line.
+        if !self.suffixes.is_empty() {
+            return Hang::Next;
+        }
+        let next = Fit::new(value, indent + 1, Mode::Flat);
+        if !forced && self.measure(&[next], Probe::NextLine) {
+            return Hang::Next;
+        }
+        let Kind::Hang(line, _) = self.docs.kind(hang) else {
+            unreachable!("a hang");
+        };
+        let here = [
+            Fit::new(line, indent, Mode::Flat),
+            Fit::new(value, indent, Mode::Break),
+        ];
+        if self.measure(&here, Probe::Hung(indent)) {
+            Hang::Here
+        } else {
+            Hang::Next
+        }
+    }
+
     /// Whether `doc` fits flat on the rest of the current line, followed by
     /// the rest of the stack in its recorded modes. `indent` is the group's.
     fn fits(&mut self, doc: Doc, indent: u32) -> bool {
+        self.measure(&[Fit::new(doc, indent, Mode::Flat)], Probe::Here)
+    }
+
+    /// Whether `entries`, then the rest of the stack in its recorded modes,
+    /// fit as `probe` says.
+    fn measure(&mut self, entries: &[Fit], probe: Probe) -> bool {
         let mut stack = std::mem::take(&mut self.fit_stack);
         stack.clear();
-        let fits = self.measure(doc, indent, &mut stack);
+        stack.extend(entries.iter().rev());
+        let fits = self.measure_stack(probe, &mut stack);
         self.fit_stack = stack;
         fits
     }
 
     #[allow(clippy::too_many_lines)]
-    fn measure(&self, doc: Doc, indent: u32, stack: &mut Vec<Fit>) -> bool {
+    fn measure_stack(&self, probe: Probe, stack: &mut Vec<Fit>) -> bool {
         // Spaces at the start of a line are dropped, as when printing.
         let file_start = self.line == Line::FileStart;
-        let (start, mut space, mut line_start) = match self.pending {
-            Pending::Newlines { indent, .. } => (self.indent_width(indent), false, true),
-            Pending::Space => (self.column, !file_start, file_start),
-            Pending::None => (self.column, false, file_start),
+        let (start, mut space, mut line_start) = match (probe, self.pending) {
+            (Probe::NextLine, _) => {
+                let indent = stack.last().map_or(0, |entry| entry.indent);
+                (self.indent_width(indent), false, true)
+            }
+            (_, Pending::Newlines { indent, .. }) => (self.indent_width(indent), false, true),
+            (_, Pending::Space) => (self.column, !file_start, file_start),
+            (_, Pending::None) => (self.column, false, file_start),
         };
         let mut width = i64::from(self.options.line_width) - i64::from(start);
         let mut suffix_pending = !self.suffixes.is_empty();
+        let mut hung = match probe {
+            Probe::Hung(base) => {
+                // The hang's line prints a space, or nothing.
+                let line = i64::from(stack.last().is_some_and(|line| line.doc == Doc::LINE));
+                Some(Hung {
+                    base,
+                    value_start: width - line,
+                    next_width: i64::from(self.options.line_width)
+                        - i64::from(self.indent_width(base + 1)),
+                    parts: 0,
+                    last: 0,
+                    fallback: false,
+                    forced: false,
+                    deciding: false,
+                })
+            }
+            Probe::Here | Probe::NextLine => None,
+        };
         // A flat line was measured inside the group, so breaking the group
         // would change where its text starts.
         let mut saw_line = false;
         let mut rest = self.stack.len();
-        stack.push(Fit {
-            mode: Mode::Flat,
-            doc,
-            indent,
-            in_rest: false,
-            in_suffix: false,
-        });
         let mut budget = FIT_BUDGET;
         loop {
             let entry = if let Some(entry) = stack.pop() {
                 entry
             } else {
                 if rest == 0 {
-                    return true;
+                    return hung.is_none_or(|hung| !hung.deciding);
                 }
                 rest -= 1;
                 let command = self.stack[rest];
                 Fit {
-                    mode: command.mode,
-                    doc: command.doc,
-                    indent: command.indent,
                     in_rest: true,
-                    in_suffix: false,
+                    ..Fit::new(command.doc, command.indent, command.mode)
                 }
             };
             if budget == 0 {
@@ -426,6 +506,9 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
             let Fit {
                 mode, doc, in_rest, ..
             } = entry;
+            // A hung probe measures the value's own line breaks; the rest of
+            // the stack is measured as a group's check measures it.
+            let value = hung.as_mut().filter(|_| !in_rest);
             match self.docs.kind(doc) {
                 Kind::Nil => {}
                 Kind::Text(index) => {
@@ -434,6 +517,9 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                         // The text starts a new line after the pending
                         // comment. If breaking the group cannot move it,
                         // measure the group on from that line.
+                        if let Some(hung) = hung.as_ref() {
+                            return hung.line_ends(entry.indent, in_rest);
+                        }
                         if in_rest || saw_line {
                             return in_rest;
                         }
@@ -445,24 +531,80 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     width -= i64::from(text.width) + i64::from(space);
                     space = false;
                     line_start = false;
-                    if width < 0 {
+                    if let Some(hung) = hung.as_mut() {
+                        if hung.deciding {
+                            if hung.too_wide_for_next(width) {
+                                return true;
+                            }
+                        } else if width < 0 {
+                            // The line breaks at the last breakable part's
+                            // first line break, if there is one.
+                            if !hung.fallback {
+                                return false;
+                            }
+                            hung.deciding = true;
+                            if hung.too_wide_for_next(width) {
+                                return true;
+                            }
+                        }
+                    } else if width < 0 {
                         return false;
                     }
+                    // A text block or multi-line comment ends the line it
+                    // starts.
                     if text.flags & MULTILINE != 0 {
-                        return in_rest;
+                        return match &hung {
+                            Some(hung) => hung.line_ends(hung.base + 1, in_rest),
+                            None => in_rest,
+                        };
                     }
                 }
                 Kind::Space => space = !line_start,
-                Kind::Line if mode == Mode::Flat => {
-                    space = !line_start;
+                Kind::Line | Kind::SoftLine if mode == Mode::Flat => {
+                    space |= doc == Doc::LINE && !line_start;
                     saw_line |= !in_rest;
                 }
-                Kind::SoftLine if mode == Mode::Flat => saw_line |= !in_rest,
+                Kind::Line | Kind::SoftLine | Kind::HardLine | Kind::EmptyLine
+                    if entry.group != 0 && value.is_some() =>
+                {
+                    let hung = value.expect("a hung probe");
+                    let required = hung.forced
+                        || entry.inner
+                        || matches!(self.docs.kind(doc), Kind::HardLine | Kind::EmptyLine);
+                    if hung.deciding {
+                        // Another place the line can break: the line up to it
+                        // fits on the next line.
+                        if required || entry.group != hung.last {
+                            return false;
+                        }
+                    } else if entry.inner {
+                        // A forced break inside a breakable part, as a line
+                        // too long there: that part breaks on the next line
+                        // too.
+                        return hung.last == entry.group && hung.fallback;
+                    } else {
+                        if entry.group != hung.last {
+                            hung.last = entry.group;
+                            hung.fallback = entry.indent > hung.base;
+                        }
+                        if required {
+                            return hung.fallback;
+                        }
+                    }
+                    // Measured flat; the line could break here.
+                    space |= doc == Doc::LINE && !line_start;
+                }
                 Kind::Line | Kind::SoftLine | Kind::HardLine | Kind::EmptyLine => {
-                    return in_rest;
+                    return match &hung {
+                        // A forced break inside a group of a hug's flat
+                        // contents: a list item breaks before its body.
+                        Some(_) if entry.inner && !in_rest => false,
+                        Some(hung) => hung.line_ends(entry.indent, in_rest),
+                        None => in_rest,
+                    };
                 }
                 Kind::BreakParent => {
-                    if !in_rest {
+                    if !in_rest && mode == Mode::Flat {
                         return false;
                     }
                 }
@@ -476,14 +618,25 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     ..entry
                 }),
                 Kind::Group(child) => {
-                    let mode = if self.docs.breaks(doc) {
-                        Mode::Break
-                    } else {
-                        mode
+                    let forced = self.docs.breaks(doc);
+                    let (mode, group, inner) = match value {
+                        // The value's outermost groups are its breakable
+                        // parts; the groups inside them are flat.
+                        Some(hung) if mode == Mode::Break && entry.group == 0 && !entry.inner => {
+                            hung.parts += 1;
+                            hung.forced = forced;
+                            (Mode::Break, hung.parts, false)
+                        }
+                        Some(_) if !forced => (Mode::Flat, entry.group, true),
+                        Some(_) => (Mode::Break, entry.group, true),
+                        None if forced => (Mode::Break, entry.group, entry.inner),
+                        None => (mode, entry.group, entry.inner),
                     };
                     stack.push(Fit {
                         mode,
                         doc: child,
+                        group,
+                        inner,
                         ..entry
                     });
                 }
@@ -502,9 +655,124 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                         ..entry
                     });
                 }
+                // Measured as its broken layout, which is always available.
+                Kind::Hug(_, broken) => stack.push(Fit {
+                    doc: broken,
+                    ..entry
+                }),
+                Kind::Hang(line, hung_value) => {
+                    let (indent, mode, group) = match (mode, value) {
+                        (Mode::Flat, _) => (entry.indent, Mode::Flat, entry.group),
+                        // Inside a breakable part: measured flat with it.
+                        (Mode::Break, Some(_)) if entry.group != 0 => {
+                            (entry.indent, Mode::Flat, entry.group)
+                        }
+                        // In a group with a forced break inside a hug's flat
+                        // contents: a line break in a group, as below.
+                        (Mode::Break, Some(_)) if entry.inner => return false,
+                        // A breakable part whose line break comes first.
+                        (Mode::Break, Some(hung)) => {
+                            if hung.deciding {
+                                return false;
+                            }
+                            hung.parts += 1;
+                            hung.last = hung.parts;
+                            hung.fallback = true;
+                            // A value that cannot be flat breaks there.
+                            if self.docs.breaks(hung_value) {
+                                return true;
+                            }
+                            (entry.indent, Mode::Flat, hung.parts)
+                        }
+                        // Undecided in a broken context: measured as its
+                        // last layout, which is always available (see
+                        // `hang`).
+                        (Mode::Break, None) => (entry.indent + 1, Mode::Break, entry.group),
+                    };
+                    stack.push(Fit {
+                        doc: hung_value,
+                        indent,
+                        mode,
+                        group,
+                        ..entry
+                    });
+                    stack.push(Fit {
+                        doc: line,
+                        indent,
+                        mode,
+                        group,
+                        ..entry
+                    });
+                }
             }
         }
     }
+}
+
+/// The state of a hung probe (see the printer's section in
+/// `docs/internals/formatter.md`). The value is measured with its outermost
+/// groups and hangs, its breakable parts, flat, noting where each could
+/// break. The probe fits when the value's first line breaks at a required
+/// line break, or at the first line break of the last breakable part before
+/// the line is too long, and that part would break on the next line too.
+struct Hung {
+    /// The indent of the hang.
+    base: u32,
+    /// The width left on the line where the value starts.
+    value_start: i64,
+    /// The width the value would have on the next line.
+    next_width: i64,
+    /// The breakable parts entered so far; each is numbered in turn.
+    parts: u32,
+    /// The breakable part whose first line break was passed last, or 0.
+    last: u32,
+    /// Whether the line can break at that line break: it is indented deeper
+    /// than the hang.
+    fallback: bool,
+    /// Whether the breakable part entered last contains a forced break, so
+    /// that its first line break is required.
+    forced: bool,
+    /// The line is too long, so it breaks at that line break. The probe goes
+    /// on to see whether the part would break on the next line too.
+    deciding: bool,
+}
+
+impl Hung {
+    /// Whether the line fits when it ends at a required line break at
+    /// `indent` (or at the next line break of the rest).
+    const fn line_ends(&self, indent: u32, in_rest: bool) -> bool {
+        !self.deciding && (in_rest || indent > self.base)
+    }
+
+    /// Whether the value up to here, with `width` left on its line, is
+    /// wider than the next line.
+    const fn too_wide_for_next(&self, width: i64) -> bool {
+        self.value_start - width > self.next_width
+    }
+}
+
+/// The three layouts of a hang in a broken context.
+#[derive(Clone, Copy, Debug)]
+enum Hang {
+    /// `line` and the value flat.
+    Flat,
+    /// `line` flat, the value broken at the hang's indent.
+    Here,
+    /// `line` broken, the value broken one indent deeper.
+    Next,
+}
+
+/// What a fit check measures.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Probe {
+    /// The entries from the current position: a line break among them does
+    /// not fit.
+    Here,
+    /// The entries from the start of a new line at their indent.
+    NextLine,
+    /// The entries from the current position, up to their first line break
+    /// that is indented deeper than the given indent.
+    Hung(u32),
 }
 
 /// One entry of the fit check's stack.
@@ -513,8 +781,26 @@ struct Fit {
     mode: Mode,
     doc: Doc,
     indent: u32,
+    /// In a hung probe: the breakable part the entry is in, or 0.
+    group: u32,
+    /// In a hung probe: the entry is in a group inside that part.
+    inner: bool,
     in_rest: bool,
     in_suffix: bool,
+}
+
+impl Fit {
+    const fn new(doc: Doc, indent: u32, mode: Mode) -> Self {
+        Self {
+            mode,
+            doc,
+            indent,
+            group: 0,
+            inner: false,
+            in_rest: false,
+            in_suffix: false,
+        }
+    }
 }
 
 fn leading_ws(line: &str) -> &str {

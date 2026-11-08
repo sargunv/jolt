@@ -71,27 +71,24 @@ class RecoveredExpressions {
       item /* lambda-concise-sibling */ @ -> item;
     java.util.function.Function<Integer, Integer> parenthesizedRecovered =
       (item, /* lambda-parameter-sibling */ ,) -> item;
-    java.util.function.Function<Integer, Integer> trailingLineComment =
-      (
-        first,
-        second // lambda-last-parameter
-      ) -> first;
+    java.util.function.Function<Integer, Integer> trailingLineComment = (
+      first,
+      second // lambda-last-parameter
+    ) -> first;
     java.util.function.Function<Integer, Integer> trailingBlockComment =
       (first, second /* lambda-last-block */) -> first;
-    java.util.function.Function<Integer, Integer> closeLeadingComment =
-      (
-        first,
-        second
-        // lambda-close-leading
-      ) -> first;
+    java.util.function.Function<Integer, Integer> closeLeadingComment = (
+      first,
+      second
+      // lambda-close-leading
+    ) -> first;
     int @Dimension [] array = new int[1] @Trailing [];
   }
 
   void methodReferences() {
-    Object parenthesized =
-      (
-        /* receiver */
-      )::target;
+    Object parenthesized = (
+      /* receiver */
+    )::target;
     Object primitive = void::target;
     Object postfix = value++::target;
     Object nested = value::target::nested;

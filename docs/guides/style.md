@@ -52,15 +52,24 @@ the differences readers notice first:
 - **Imports.** Jolt puts static imports after the other imports;
   google-java-format puts them first. google-java-format removes unused imports.
   Jolt doesn't, since that needs knowing which names the code uses.
+- **Assignments.** When a value doesn't fit after `=`, google-java-format moves
+  it to the next line, even when it can't fit there either, such as a lambda
+  with a block body (`Runnable task =` / `() -> {`). Jolt moves a value to the
+  next line only if that makes it fit; otherwise the value starts after `=` and
+  breaks there (`Runnable task = () -> {`).
 - **Member chains.** After a simple receiver such as a local variable or a class
   name, Jolt keeps the first call on the receiver's line
-  (`builder.withName(name)`). google-java-format starts every call on a new
-  line.
+  (`builder.withName(name)`), and a single call stays on its receiver's line
+  when moving it doesn't make it fit (`this.registry.register(` / `endpoint,` /
+  …). google-java-format starts every call on a new line.
 - **Javadoc.** google-java-format rewraps Javadoc text, and expands a one-line
   Javadoc that doesn't fit. Jolt keeps the text of every comment as written and
   only realigns the `*` at the start of its lines.
 - **Lambdas.** Jolt removes the parentheses around a single untyped lambda
-  parameter (`x -> x`).
+  parameter (`x -> x`). For a lambda with a block body or an anonymous class as
+  the last argument, google-java-format puts every argument on a new line when
+  they don't all fit (`run(` / `() -> {`); Jolt keeps the call open on its line
+  (`run(() -> {`) when the arguments before the body fit there.
 
 ## Whitespace
 
@@ -387,8 +396,8 @@ int firstFieldVariable = 1,
   thirdFieldVariable = provider();
 ```
 
-- An initializer that doesn't fit moves to the next line, as an assignment's
-  value does.
+- An initializer that doesn't fit is laid out as an
+  [assignment's value](#assignment) is.
 - Several declarators stay on one line if they fit. Otherwise each declarator
   after the first goes on its own line, one level deeper.
 
@@ -465,8 +474,8 @@ switch (value) {
 - Labels are one level inside the switch, and the statements of a `case …:`
   group one more. Each `case …:` label is on its own line. A group whose only
   statement is a block keeps the block on the label line (`case 1: {`).
-- A rule (`case X ->`) whose body doesn't fit breaks after `->`, with the body
-  one level deeper.
+- A rule's expression body (`case X -> value;`) that doesn't fit is laid out as
+  an [assignment's value](#assignment) is.
 - Label lists (`case null, default`) and guards (`when …`) stay on the label
   line. Redundant parentheses around a guard are removed, unless a comment is on
   or inside them.
@@ -501,16 +510,38 @@ try (
 ### Assignment
 
 ```java
+T factory = instantiateFactory(
+  implementationName,
+  factoryType,
+  argumentResolver,
+  failureHandler
+);
+Supplier<String> greeting =
+  () -> greetingService.greetingFor(currentUser.preferredLocale());
+Runnable task = () -> {
+  run();
+};
 allowed =
   user.isActive()
     && account.hasPermission("write")
     && featureFlags.isEnabled("collaborative-editing");
 ```
 
-An assignment or initializer that doesn't fit breaks after the operator, and the
-value continues one level deeper, where it may break further by its own rule.
-This holds for every value, including lambdas, anonymous classes, array
-initializers and switch expressions.
+- A value that doesn't fit on the operator's line moves to the next line, one
+  level deeper, if it fits there.
+- Otherwise the value starts on the operator's line and breaks by its own rule,
+  as a `return` value does: a call breaks its arguments, a lambda or an
+  anonymous class opens its body, an array initializer opens its braces. The
+  value stays on the operator's line only if the line then fits, and only if
+  what breaks is the last part of the value on that line. When an earlier part
+  would have to break instead, such as the type arguments before a call's
+  arguments or a lambda's parameters before its body, the value moves to the
+  next line.
+- An operator chain (`a && b`, `a + b`, `a instanceof T`) or a conditional that
+  doesn't fit always moves to the next line, so that its operands line up one
+  level deeper.
+- These rules apply to `=`, to compound assignments such as `+=`, to variable
+  initializers, and to the expression after a switch rule's `->`.
 
 ### Binary operators
 
@@ -553,10 +584,28 @@ return create(
   account.permissions().primaryRole(),
   settings.region().identifier()
 );
+tasks.register(taskName(sourceSet), ArchitectureCheck.class, task -> {
+  task.setClasses(sourceSet.getOutput().getClassesDirs());
+});
+template.execute(
+  first -> {
+    first.run();
+  },
+  second -> {
+    second.run();
+  }
+);
 ```
 
-- Arguments break like a list. A lambda or anonymous class as the last argument
-  gets no special treatment.
+- Arguments break like a list.
+- When the last argument has a body that always breaks (a lambda with a block
+  body, an anonymous class, a switch expression) or is a text block, and the
+  arguments before it have none, the call stays open on its line: the body
+  breaks at the call's indentation and `)` follows the body's last line (`});`).
+  This applies when the line fits up to the body's opening line and the last
+  argument doesn't break before its body (its parameters stay on one line).
+  Otherwise the arguments break like a list, as they do when two arguments have
+  bodies.
 - Explicit type arguments print without spaces: `this.<String>convert(x)`.
 - `new` expressions, including `outer.new Inner(…)`, format like calls.
 
@@ -578,6 +627,21 @@ return com.example.deep.config.ConflictResolutionFactory
   its line (`builder.withFirstValue(…)`, `Foo.builder()`). After a qualified
   receiver (`this.a.b`, `com.example.Factory`) the first call starts a new line
   too.
+- A single call after a receiver that doesn't keep it on its line (a qualified
+  name, a call, `new Foo()`) is laid out as an [assignment's value](#assignment)
+  is: it moves to the next line only if that makes it fit. Otherwise it stays on
+  the receiver's line and its arguments break:
+
+```java
+this.endpointRegistry.registerListenerContainer(
+  endpoint,
+  this.containerFactory,
+  this.startImmediately
+);
+assertThat(
+  registry.getListenerContainer("firstListenerName").getConcurrencyLimit()
+).isEqualTo(3);
+```
 
 ### Lambdas and method references
 
@@ -594,6 +658,8 @@ Supplier<String> name = User::name;
   break.
 - An expression body stays on the arrow's line when it fits, and a block body
   opens there.
+- A lambda as the last argument of a call keeps a block body at the call's
+  indentation (see [Calls](#calls)).
 - Method references have no spaces: `String::length`, `int[]::new`.
 
 ### Arrays
@@ -601,11 +667,10 @@ Supplier<String> name = User::name;
 ```java
 String[] pair = new String[] { "a", "b" };
 int[] empty = new int[] {};
-String[] labels =
-  {
-    "a very long label that forces the initializer to break across lines",
-    "another very long label that keeps each item on its own line",
-  };
+String[] labels = {
+  "a very long label that forces the initializer to break across lines",
+  "another very long label that keeps each item on its own line",
+};
 ```
 
 - Initializers have a space inside the braces when they fit on one line
@@ -615,7 +680,9 @@ String[] labels =
 
 ### Other expressions
 
-- Casts: `(String) value`, `(Runnable & AutoCloseable) value`.
+- Casts: `(String) value`, `(Runnable & AutoCloseable) value`. A cast whose
+  value doesn't fit lays out the value after the type as an
+  [assignment's value](#assignment) is.
 - Unary operators attach to their operand (`!ready`, `-x`, `i++`), with a space
   only where two operators would otherwise merge (`- -x`).
 - Parenthesized expressions that don't fit break like a call.

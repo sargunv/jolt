@@ -9,8 +9,7 @@ class UnterminatedTextBlockAtEof {
 
 formatted:
 class UnterminatedTextBlockAtEof {
-  String s =
-    """
+  String s = """
     abc
 
 diagnostics:

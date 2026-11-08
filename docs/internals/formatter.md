@@ -40,7 +40,8 @@ source ──lex──▶ tokens+trivia ──parse──▶ events ──build�
 ```
 
 Every phase is a single linear pass, except two explicitly bounded searches: the
-printer's fit check (at most `FIT_BUDGET` commands per group) and the parser's
+printer's fit checks (at most `FIT_BUDGET` commands each: one per group or
+[hug](#hang-and-hug), at most three per [hang](#hang-and-hug)) and the parser's
 speculative lookahead (each scan capped by `MAX_DEPTH` nesting, balanced
 brackets answered by a table built once in linear time; see
 [Parser rules](#parser-rules)).
@@ -705,7 +706,9 @@ formatted.
 | `empty_line()`                  | Blank line (two newlines); forces enclosing groups to break.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `line_break(blank)`             | `empty_line()` when `blank`, else `hard_line()`: a separator that keeps or adds a blank line.                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `concat([Doc])`                 | Sequence.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `group(Doc)`                    | Flat if the contents fit, else broken.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `group(Doc)`                    | Flat if the contents fit, else broken. Contents without a line of their own are returned unchanged (see below).                                                                                                                                                                                                                                                                                                                                                                                        |
+| `hang(line, value)`             | `line` (a `line` or `soft_line`), then `value`: flat if it fits; else `value` on the next line one indent deeper if it fits there flat; else `value` broken on this line if its first line fits; else the next line (see [Hang](#hang-and-hug)).                                                                                                                                                                                                                                                       |
+| `hug(hugged, broken)`           | `hugged` (a list's items with spaces for its lines, printed broken) if its first line fits up to a required line break outside its groups; else `broken`, which has a forced break (see [Hang](#hang-and-hug)).                                                                                                                                                                                                                                                                                        |
 | `indent(Doc)`                   | One more indentation level for newlines inside.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `if_break(broken, flat)`        | Chooses by the mode of the enclosing group.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `line_suffix(Doc)`              | Deferred until the next newline (or a non-sticky text; see printer).                                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -720,7 +723,12 @@ blank lines and line boundaries, so there is one kind of each line command.
 Each node stores a `forces_break` bit computed at construction from its children
 (`hard_line`, `empty_line`, `break_parent`, multi-line text). A group whose bit
 is set is broken without a fit check; this is Prettier's `propagateBreaks`, done
-in `O(1)` per constructed node.
+in `O(1)` per constructed node. A second bit, `lines`, records whether the node
+has a `line`, `soft_line`, `if_break` or `hang` outside every group inside it:
+whether its layout depends on the mode of a group around it. `group` returns
+contents without that bit unchanged, since a group around them would only add a
+fit check. So every group has a line break of its own, which the
+[hang](#hang-and-hug)'s probe relies on.
 
 Text side-table flags: `sticky`, `line_comment` (set by the comment printer for
 line comments; see the printer's "line comments end their line"), the multi-line
@@ -800,6 +808,83 @@ starts with text, so it is measured on the line the comment pushes it to.
 
 Indentation is `indent_width` spaces per level, or one tab per level with
 `use_tabs` (a tab counts `indent_width` columns for fitting).
+
+#### Hang and hug
+
+`hang(line, value)` is the one layout choice besides flat or broken. It lays out
+the value after an operator (`x = value`, `case X -> value;`, `(Type) value`)
+and the single call of a member chain after a receiver that does not keep the
+call on its line (`this.registry.register(…)`, `assertThat(…).isTrue()`). In a
+flat context it prints flat. In a broken context the printer picks the first
+layout that applies:
+
+1. **Flat**: `line` and `value` flat, if they fit (the group fit check).
+2. **Next**: `line` broken and `value` one indent deeper, if `value` fits flat
+   there (a fit check from the start of that line, followed by the rest of the
+   stack).
+3. **Here**: `line` flat and `value` broken at the hang's indent, if the hung
+   probe below fits.
+4. **Next**, with `value` broken, otherwise. A pending line suffix (`x = // c`)
+   selects this layout at once: the comment ends the line.
+
+The hung probe answers whether the value's first line, printed broken after
+`line`, fits and breaks in the right place. The value's outermost groups (and
+hangs) are its breakable parts. The probe measures them flat, and the groups
+inside them flat too, noting each part's first line break; a line break that the
+value requires (a hard line, a text block, a line of a group with a forced
+break) ends the line where it is. The probe fits when:
+
+- the line fits up to the first required line break, and that break is indented
+  deeper than the hang; or
+- the line is too long, and the text that overflows is inside the breakable part
+  whose first line break was passed last, and that line break is indented deeper
+  than the hang. The line then ends at that line break: the probe skips the rest
+  of the part, and fails if another breakable part follows before the value ends
+  or a required line break. When the overflowing text comes after that part
+  closed, the line ends there only if the value up to that text is too wide for
+  the next line as well, so that layout 4 would break the same part.
+
+These conditions follow the printer's greedy decisions, in which a group breaks
+when its contents up to the next possible line break do not fit, and accept only
+the case where the part that breaks is the last one on the line. When an earlier
+part would break instead (type arguments before the call's arguments, a lambda's
+parameters before its body, the first call of a member chain before the chain's
+own line breaks), layout 4 is chosen. A forced line break inside a part ends the
+line exactly as overflowing text there would, so a comment that forces a line
+break which the first pass already printed leads to the same choice on the
+second pass.
+
+Inside any fit check, a hang in a broken context is not decided again. A group's
+check and the next-line check measure it as layout 4, whose line break comes
+first; layout 4 is always available to the hang, and it picks layout 1 or 3 only
+when that fits, so the measured line is never shorter than the printed one. The
+hung probe measures a broken hang outside every breakable part as a breakable
+part of its own whose first line break comes before its value. So measuring a
+hang costs the same as measuring its children, and no fit check starts another.
+
+**Hug.** `hug(hugged, broken)` lays out an argument list whose last argument has
+a body that always breaks: `broken` is the list broken as usual (it has a forced
+break), and `hugged` is `open a, b, last close` with a space for each of the
+list's lines, so that the body breaks at the call's indentation. The printer
+prints `hugged`, broken, if the hung probe above fits for `hugged` measured flat
+from the current position (its groups flat, except those with a forced break):
+the line must fit up to its first required line break, which must be indented
+deeper than the hug and must not be inside a group of `hugged`. A block, class
+body, switch body or text block is not inside a group, so it qualifies; a forced
+break in the last argument's parameters or arguments, or in a call it is nested
+in, does not, and the list breaks. The list builder offers a hug only when the
+last argument is a lambda with a block body, an anonymous class, a switch
+expression or a text block, and no argument before it has a forced break, so two
+lambda bodies keep the broken list. A fit check measures a hug as `broken`,
+which is always available. One fit check per hug.
+
+Cost: the printer reaches each hang once and makes at most three fit checks
+there, each bounded like a group's: it visits at most `FIT_BUDGET` commands and
+stops at the end of the line it measures. The hung probe skips the rest of the
+part the line ends in without visiting it, and continues only through the text
+up to the next breakable part, required line break or the end of the value.
+Total: `O(doc nodes × 3 × FIT_BUDGET)` worst case, `O(width)` per hang in
+practice.
 
 ### Comments
 
@@ -1247,7 +1332,7 @@ crates/jolt_java_fmt/
   src/helpers/lists.rs       delimited comma lists, one-element delimited nodes, parenthesized headers, list items
   src/helpers/mod.rs         `spaced`, `spaced_node`: a space before what follows, if anything does; `after_token`: the value after a keyword or arrow
   src/helpers/bodies.rs      braced bodies, body items with N5, member and statement separators
-  src/helpers/assignment.rs  `left = right` layout
+  src/helpers/assignment.rs  the value after an operator: `left = right`, a switch rule's `-> value;`
   src/rules/declarations/    compilation unit, imports, modules, type declarations and headers, bodies, members
   src/rules/statements/      blocks, control flow, jumps, switch, try
   src/rules/expressions/     operators, binary chains, calls, object creation, lambdas, the receiver spine
@@ -1370,9 +1455,15 @@ the generic rules; a new hook requires a fixture and an entry here.
 ```rust
 // helpers/lists.rs
 pub(crate) enum ListLayout {
-    /// Argument, parameter, type-argument and pattern lists: `(a, b)` when
-    /// flat, and no trailing comma (Java forbids one there).
+    /// Parameter, type-argument and pattern lists: `(a, b)` when flat, and
+    /// no trailing comma (Java forbids one there).
     Plain,
+    /// Argument lists: `Plain`; when the last argument is a lambda with a
+    /// block body, an anonymous class, a switch expression or a text block,
+    /// has a forced break, and the arguments before it have none, the list
+    /// is a `hug` of `open a, b, last close` (spaces for the list's lines)
+    /// and the broken list.
+    Arguments,
     /// Array and annotation-array initializers: `{ a, b }` when flat; when
     /// broken, a synthesized `,` (sticky, so it goes before the last
     /// element's trailing line comment: `last, // c`). A trailing `,` in the
@@ -1473,14 +1564,23 @@ pub(crate) fn member_separator<'a>(f: &mut JavaFormatter<'a>, sep: Separator<'a>
 pub(crate) fn statement_separator<'a>(f: &mut JavaFormatter<'a>, sep: Separator<'a>) -> Doc;
 
 // helpers/assignment.rs
-/// `left space op` then `group(indent(line, right))`. With a trailing comment
-/// on `op` (`x = // c`), the pending-suffix fit rule breaks the group, so the
-/// value starts the next line one indent deeper.
+/// `left space`, then `op` and `right`, the formatted `value` node, as
+/// `operator_value` lays them out.
 pub(crate) fn assignment_like<'a>(
     f: &mut JavaFormatter<'a>,
     left: Doc,
     op: Option<SyntaxToken<'a>>,
+    value: Option<SyntaxNode<'a>>,
     right: Doc,
+) -> Doc;
+/// `op space doc`, the value hanging after the operator: `op hang(line, doc)`,
+/// or `op group(indent(line, doc))` for an operator chain or a conditional and
+/// after a trailing comment of `op` that ends its line.
+pub(crate) fn operator_value<'a>(
+    f: &mut JavaFormatter<'a>,
+    op: Option<SyntaxToken<'a>>,
+    value: Option<SyntaxNode<'a>>,
+    doc: Doc,
 ) -> Doc;
 ```
 
@@ -1525,6 +1625,12 @@ Comment-driven layout rules owned by one module:
   further by its own rule. When a leading comment of the value breaks the line,
   it prints `token space indent(value tail)`, so the comment and the value go
   one indent deeper.
+- **The value after an operator (helpers).** `assignment::operator_value` prints
+  `op hang(line, value)`. When a trailing comment of the operator ends its line
+  (`x = // c`), it prints `op group(indent(line, value))` instead, as
+  `after_token` does after a keyword: with a block comment, which is not a line
+  suffix, the hang could keep the value on the comment's line, and the next pass
+  would read the comment as an inline one.
 - **Promoted empty bodies (statements).** A non-block body that is an
   `EmptyStatement` (`if (a);`) promotes to an empty block: the `;` is elided
   through `removed`, exactly as an `EmptyStatement` inside a block is, so the

@@ -145,17 +145,15 @@ class DanglingAfterInnerBlankLines {
 
       // after a blank line in arguments
     );
-    x =
-      (
-        a
+    x = (
+      a
 
-        // after a blank line in parentheses
-      );
-    x =
-      values[i
+      // after a blank line in parentheses
+    );
+    x = values[i
 
-        // after a blank line in brackets
-      ];
+      // after a blank line in brackets
+    ];
   }
 }
 

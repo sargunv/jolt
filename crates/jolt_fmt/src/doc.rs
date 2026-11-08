@@ -11,7 +11,7 @@ impl Doc {
     /// Nothing.
     pub const NIL: Self = Self(0);
     pub(crate) const SPACE: Self = Self(1);
-    const LINE: Self = Self(2);
+    pub(crate) const LINE: Self = Self(2);
     const SOFT_LINE: Self = Self(3);
     pub(crate) const HARD_LINE: Self = Self(4);
     pub(crate) const EMPTY_LINE: Self = Self(5);
@@ -53,9 +53,19 @@ pub(crate) enum Kind {
     Indent(Doc),
     IfBreak(Doc, Doc),
     LineSuffix(Doc),
+    /// `line` (a `line` or `soft_line`), then the value.
+    Hang(Doc, Doc),
+    /// The hugged and the broken layout of a list.
+    Hug(Doc, Doc),
 }
 
 const _: () = assert!(size_of::<Kind>() == 12);
+
+/// Node flag: contains a forced break.
+const BREAKS: u8 = 1;
+/// Node flag: contains a line, a hang or an if-break outside any group
+/// inside it, so its layout depends on the mode of a group around it.
+const LINES: u8 = 2;
 
 pub(crate) const STICKY: u8 = 1;
 pub(crate) const LINE_COMMENT: u8 = 2;
@@ -77,7 +87,8 @@ pub(crate) struct Text<'a> {
 /// Builds documents. One builder lives for one format run.
 pub struct DocBuilder<'a> {
     pub(crate) nodes: Vec<Kind>,
-    breaks: Vec<bool>,
+    /// Per node: [`BREAKS`] and [`LINES`].
+    flags: Vec<u8>,
     pub(crate) children: Vec<Doc>,
     pub(crate) texts: Vec<Text<'a>>,
 }
@@ -87,23 +98,23 @@ impl<'a> DocBuilder<'a> {
     /// grows while a file is formatted.
     pub(crate) fn with_capacity(tokens: usize) -> Self {
         let fixed = [
-            (Kind::Nil, false),
-            (Kind::Space, false),
-            (Kind::Line, false),
-            (Kind::SoftLine, false),
-            (Kind::HardLine, true),
-            (Kind::EmptyLine, true),
-            (Kind::BreakParent, true),
+            (Kind::Nil, 0),
+            (Kind::Space, 0),
+            (Kind::Line, LINES),
+            (Kind::SoftLine, LINES),
+            (Kind::HardLine, BREAKS),
+            (Kind::EmptyLine, BREAKS),
+            (Kind::BreakParent, BREAKS),
         ];
         let mut nodes = Vec::with_capacity(fixed.len() + tokens * 3);
-        let mut breaks = Vec::with_capacity(nodes.capacity());
-        for (kind, forced) in fixed {
+        let mut flags = Vec::with_capacity(nodes.capacity());
+        for (kind, flag) in fixed {
             nodes.push(kind);
-            breaks.push(forced);
+            flags.push(flag);
         }
         Self {
             nodes,
-            breaks,
+            flags,
             children: Vec::with_capacity(tokens * 3),
             texts: Vec::with_capacity(tokens + tokens / 4),
         }
@@ -114,7 +125,11 @@ impl<'a> DocBuilder<'a> {
     }
 
     pub(crate) fn breaks(&self, doc: Doc) -> bool {
-        self.breaks[doc.index()]
+        self.flags[doc.index()] & BREAKS != 0
+    }
+
+    fn flags(&self, doc: Doc) -> u8 {
+        self.flags[doc.index()]
     }
 
     /// Whether `doc` contains a forced break (a hard line, a blank line, a
@@ -124,10 +139,10 @@ impl<'a> DocBuilder<'a> {
         self.breaks(doc)
     }
 
-    fn push(&mut self, kind: Kind, breaks: bool) -> Doc {
+    fn push(&mut self, kind: Kind, flags: u8) -> Doc {
         let id = u32::try_from(self.nodes.len()).expect("document arena fits in u32");
         self.nodes.push(kind);
-        self.breaks.push(breaks);
+        self.flags.push(flags);
         Doc(id)
     }
 
@@ -136,9 +151,13 @@ impl<'a> DocBuilder<'a> {
             return Doc::NIL;
         }
         let index = u32::try_from(self.texts.len()).expect("text table fits in u32");
-        let breaks = text.flags & MULTILINE != 0;
+        let flags = if text.flags & MULTILINE == 0 {
+            0
+        } else {
+            BREAKS
+        };
         self.texts.push(text);
-        self.push(Kind::Text(index), breaks)
+        self.push(Kind::Text(index), flags)
     }
 
     /// Literal text. A text containing a line break is written raw and cannot
@@ -250,10 +269,10 @@ impl<'a> DocBuilder<'a> {
     /// When the arena outgrows `u32` indices.
     pub fn concat(&mut self, docs: impl IntoIterator<Item = Doc>) -> Doc {
         let start = self.children.len();
-        let mut breaks = false;
+        let mut flags = 0;
         for doc in docs {
             if !doc.is_nil() {
-                breaks |= self.breaks(doc);
+                flags |= self.flags(doc);
                 self.children.push(doc);
             }
         }
@@ -263,18 +282,20 @@ impl<'a> DocBuilder<'a> {
             len => {
                 let start = u32::try_from(start).expect("children fit in u32");
                 let len = u32::try_from(len).expect("children fit in u32");
-                self.push(Kind::Concat(start, len), breaks)
+                self.push(Kind::Concat(start, len), flags)
             }
         }
     }
 
-    /// Flat if the contents fit, else broken.
+    /// Flat if the contents fit, else broken. Contents without a line of
+    /// their own (outside a nested group) are returned as they are: their
+    /// layout does not depend on a group's mode.
     pub fn group(&mut self, doc: Doc) -> Doc {
-        if doc.is_nil() {
+        let flags = self.flags(doc);
+        if flags & LINES == 0 {
             return doc;
         }
-        let breaks = self.breaks(doc);
-        self.push(Kind::Group(doc), breaks)
+        self.push(Kind::Group(doc), flags & BREAKS)
     }
 
     /// One more indentation level for newlines inside.
@@ -282,14 +303,42 @@ impl<'a> DocBuilder<'a> {
         if doc.is_nil() {
             return doc;
         }
-        let breaks = self.breaks(doc);
-        self.push(Kind::Indent(doc), breaks)
+        let flags = self.flags(doc);
+        self.push(Kind::Indent(doc), flags)
+    }
+
+    /// `line` (a [`line`](Self::line) or [`soft_line`](Self::soft_line)),
+    /// then `value`, laid out by the first that applies: flat, if it fits;
+    /// `value` on the next line one indent deeper, if it fits there flat;
+    /// `value` on this line, broken, if it fits up to its first line break
+    /// that is indented deeper than here; else `value` on the next line one
+    /// indent deeper, broken. A pending line suffix (`x = // c`) selects the
+    /// last layout. See the printer for the cost of the choice.
+    pub fn hang(&mut self, line: Doc, value: Doc) -> Doc {
+        debug_assert!(
+            matches!(line, Doc::LINE | Doc::SOFT_LINE),
+            "hang after {line:?}"
+        );
+        let flags = self.flags(value) & BREAKS | LINES;
+        self.push(Kind::Hang(line, value), flags)
+    }
+
+    /// `hugged` if its first line fits up to its first required line break,
+    /// and that break is indented deeper than here and outside every group
+    /// in `hugged`; else `broken`. `hugged` has no line break of its own and
+    /// prints broken, so each of its groups breaks only if it does not fit.
+    /// `broken` contains a forced break. One fit check, like a hang's (see
+    /// the printer).
+    pub fn hug(&mut self, hugged: Doc, broken: Doc) -> Doc {
+        debug_assert!(self.breaks(broken), "a hug whose broken layout can be flat");
+        let flags = self.flags(broken) & BREAKS;
+        self.push(Kind::Hug(hugged, broken), flags)
     }
 
     /// `broken` or `flat` by the mode of the enclosing group.
     pub fn if_break(&mut self, broken: Doc, flat: Doc) -> Doc {
-        let breaks = self.breaks(flat);
-        self.push(Kind::IfBreak(broken, flat), breaks)
+        let flags = self.flags(flat) & BREAKS | LINES;
+        self.push(Kind::IfBreak(broken, flat), flags)
     }
 
     /// Deferred until the next newline, or the next text that is not sticky.
@@ -297,7 +346,8 @@ impl<'a> DocBuilder<'a> {
         if doc.is_nil() {
             return doc;
         }
-        self.push(Kind::LineSuffix(doc), false)
+        let flags = self.flags(doc) & LINES;
+        self.push(Kind::LineSuffix(doc), flags)
     }
 }
 

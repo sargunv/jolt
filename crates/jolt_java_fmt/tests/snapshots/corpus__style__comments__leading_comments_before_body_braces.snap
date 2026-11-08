@@ -21,11 +21,10 @@ class LeadingCommentsBeforeBodyBraces {
     field = 1;
   }
 
-  Object anonymous =
-    new Object() {
-      /* leads an anonymous class body brace */
-      int inner;
-    };
+  Object anonymous = new Object() {
+    /* leads an anonymous class body brace */
+    int inner;
+  };
 }
 
 interface LeadingCommentBeforeInterfaceBrace {

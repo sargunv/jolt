@@ -4,10 +4,9 @@ expression: snapshot
 ---
 formatted:
 class AnonymousCreation {
-  Runnable runnable =
-    new Runnable() {
-      public void run() {}
-    };
+  Runnable runnable = new Runnable() {
+    public void run() {}
+  };
 }
 
 diagnostics:

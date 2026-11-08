@@ -30,10 +30,9 @@ class RedundantParentheses {
     Function<String, String> commented = (/* keep */ value) -> value;
     BiFunction<String, String, String> pair = (left, right) -> left + right;
     Supplier<String> empty = () -> "value";
-    Runnable block =
-      () -> {
-        run();
-      };
+    Runnable block = () -> {
+      run();
+    };
   }
 }
 

@@ -11,6 +11,7 @@ use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
 use super::statement_items;
 use crate::JavaFormatter;
+use crate::helpers::assignment::operator_value;
 use crate::helpers::bodies::{braced_body, statement_separator};
 use crate::helpers::lists::parenthesized;
 use crate::helpers::{after_token, spaced_node};
@@ -157,18 +158,17 @@ fn is_inline_block<'a>(f: &JavaFormatter<'a>, statement: SyntaxNode<'a>) -> bool
         && !f.in_ignore_region(statement)
 }
 
-/// `label -> body`. An expression body that does not fit continues on the
-/// next line one indent deeper.
+/// `label -> body`. An expression body is laid out as the value after an
+/// operator (see `operator_value`).
 pub(crate) fn switch_rule<'a>(f: &mut JavaFormatter<'a>, node: SwitchRule<'a>) -> Doc {
     let label = f.fmt_opt(node.label());
     let body = match node.body() {
         Some(SwitchRuleBody::Expression(expression)) => {
-            let arrow = f.token_opt(node.arrow());
+            let value = expression.syntax();
             let expression = f.fmt(expression);
             let semicolon = f.token_opt(node.semicolon());
-            let body = indent![f; f.line(), expression, semicolon];
-            let body = f.group(body);
-            cat![f; arrow, body]
+            let body = cat![f; expression, semicolon];
+            operator_value(f, node.arrow(), Some(value), body)
         }
         // A `throw` or a block (see `after_token`). H1 moves a comment
         // before a block's `{` into it, so only inline comments lead it.

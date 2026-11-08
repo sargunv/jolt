@@ -1,6 +1,7 @@
 //! Delimited comma lists.
 
 use jolt_fmt::{Doc, cat, group, indent, is_unclosed};
+use jolt_java_syntax::{Expression, JavaSyntaxKind as K};
 use jolt_syntax::{AstNode, ListElement, SyntaxNode, SyntaxToken};
 
 use crate::{JavaFormat, JavaFormatter};
@@ -8,9 +9,14 @@ use crate::{JavaFormat, JavaFormatter};
 /// The two layouts of a delimited list.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum ListLayout {
-    /// Argument, parameter, type-argument and pattern lists: `(a, b)` when
-    /// flat, and no trailing comma (Java forbids one there).
+    /// Parameter, type-argument and pattern lists: `(a, b)` when flat, and
+    /// no trailing comma (Java forbids one there).
     Plain,
+    /// Argument lists: `Plain`, and a last argument with a body (see
+    /// `has_body`) hugs the parentheses when it has a forced break and the
+    /// arguments before it have none: `run(a, () -> {` … `});` (see
+    /// `DocBuilder::hug`).
+    Arguments,
     /// Array and annotation-array initializers: `{ a, b }` when flat; when
     /// broken, a synthesized `,` after the last element (before a trailing
     /// line comment of the last element: `last, // c`). A trailing `,` in
@@ -39,13 +45,23 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     let mut has_items = false;
     // The last element is an item, or a separator (recovery: a trailing one).
     let mut after_item = false;
+    // Whether the last item has a forced break, and whether an item before it
+    // has one.
+    let (mut last_breaks, mut earlier_breaks) = (false, false);
+    let mut last_body = false;
     while let Some(element) = elements.next() {
         let separator = matches!(element, ListElement::Separator(_));
         // Two items without a separator between them (recovery).
         if !separator && after_item {
             docs.push(f.line());
         }
-        docs.push(list_item(f, element));
+        last_body = matches!(element, ListElement::Item(item) if has_body(item.syntax()));
+        let doc = list_item(f, element);
+        if !separator {
+            earlier_breaks |= last_breaks;
+            last_breaks = f.will_break(doc);
+        }
+        docs.push(doc);
         if separator && elements.peek().is_some() {
             docs.push(f.line());
         }
@@ -61,10 +77,26 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
             docs.push(f.if_break(comma, Doc::NIL));
         }
     }
+    let hugs = layout == ListLayout::Arguments
+        && last_body
+        && last_breaks
+        && !earlier_breaks
+        && after_item
+        && owner.is_recovery_free()
+        && !f.has_dangling_comments(owner);
+    // The items with a space after each separator instead of a line.
+    let hugged = hugs.then(|| {
+        let (line, space) = (f.line(), f.space());
+        let docs: Vec<Doc> = docs
+            .iter()
+            .map(|&doc| if doc == line { space } else { doc })
+            .collect();
+        f.concat(docs)
+    });
     let items = f.concat(docs);
     let inner = f.with_dangling(owner, items);
     let line = match layout {
-        ListLayout::Plain => f.soft_line(),
+        ListLayout::Plain | ListLayout::Arguments => f.soft_line(),
         ListLayout::Initializer => f.line(),
     };
     let before_close = before_closer(open, line);
@@ -74,7 +106,30 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
         return cat![f; open, close];
     }
     let inner = indent![f; line, inner];
-    group![f; open, inner, before_close, close]
+    let broken = group![f; open, inner, before_close, close];
+    match hugged {
+        Some(hugged) => {
+            let hugged = cat![f; open, hugged, close];
+            f.hug(hugged, broken)
+        }
+        None => broken,
+    }
+}
+
+/// A lambda with a block body, an anonymous class, a switch expression or a
+/// text block: an argument whose body breaks wherever it starts.
+fn has_body(node: SyntaxNode<'_>) -> bool {
+    match Expression::cast(node) {
+        Some(Expression::LambdaExpression(lambda)) => lambda
+            .body()
+            .is_some_and(|body| K::from_raw(body.syntax().kind()) == K::Block),
+        Some(Expression::ObjectCreationExpression(creation)) => creation.body().is_some(),
+        Some(Expression::SwitchExpression(_)) => true,
+        Some(Expression::LiteralExpression(literal)) => literal
+            .literal()
+            .is_some_and(|token| K::from_raw(token.kind()) == K::TextBlockLiteral),
+        _ => false,
+    }
 }
 
 /// `line`, which puts the closer on its own line when the list breaks, or

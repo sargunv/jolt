@@ -5,7 +5,7 @@ use jolt_java_syntax::{
     AnnotationList, FormalParameter, ParameterModifierList, ReceiverParameter, RecordComponent,
     Type, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
 };
-use jolt_syntax::{ListElement, SyntaxToken};
+use jolt_syntax::{AstNode, ListElement, SyntaxToken};
 
 use super::modifiers::inline_modifiers;
 use crate::JavaFormatter;
@@ -112,8 +112,12 @@ pub(crate) fn variable_declarator<'a>(
     if node.assign().is_none() && node.initializer().is_none() {
         return left;
     }
-    let right = f.fmt_opt(node.initializer());
-    assignment_like(f, left, node.assign(), right)
+    let initializer = node.initializer();
+    let value = initializer
+        .and_then(VariableInitializer::value)
+        .map(AstNode::syntax);
+    let right = f.fmt_opt(initializer);
+    assignment_like(f, left, node.assign(), value, right)
 }
 
 pub(crate) fn variable_initializer<'a>(

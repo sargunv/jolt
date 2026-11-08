@@ -9,10 +9,9 @@ class Expressions extends Base {
   void method(String[] values) {
     Object classLiteral = String[][].class;
     Object created = new Outer<String>().new Inner(1);
-    Object anonymous =
-      new Runnable() {
-        public void run() {}
-      };
+    Object anonymous = new Runnable() {
+      public void run() {}
+    };
     Object literal = null;
     Object parenthesized = (created);
     Object fieldAccess = this.field;
