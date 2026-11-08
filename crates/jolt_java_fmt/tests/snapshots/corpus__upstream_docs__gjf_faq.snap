@@ -105,8 +105,7 @@ class GoogleJavaFormatFaqSnippets {
         AssignReserved.YES,
         AttachData.YES
       )
-    )
-      .thenReturn(OPERATION);
+    ).thenReturn(OPERATION);
   }
 
   void block16() {
@@ -117,8 +116,7 @@ class GoogleJavaFormatFaqSnippets {
         AssignReserved.YES,
         AttachData.YES
       )
-    )
-      .thenReturn(OPERATION);
+    ).thenReturn(OPERATION);
   }
 
   /**

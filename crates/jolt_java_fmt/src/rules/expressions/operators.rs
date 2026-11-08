@@ -8,7 +8,7 @@ use jolt_java_syntax::{
 use jolt_syntax::AstNode;
 
 use crate::JavaFormatter;
-use crate::helpers::assignment::assignment_like;
+use crate::helpers::assignment::{assignment_like, value_after};
 use crate::helpers::lists::{enclosed, parenthesized};
 
 pub(crate) fn assignment_expression<'a>(
@@ -58,15 +58,15 @@ pub(crate) fn unary_expression<'a>(f: &mut JavaFormatter<'a>, node: UnaryExpress
     cat![f; operator, operand]
 }
 
-/// `(Type) value`, the value hanging after the type (see
-/// `DocBuilder::hang`).
+/// `(Type) value`, the value laid out as after an operator (see
+/// `value_after`).
 pub(crate) fn cast_expression<'a>(f: &mut JavaFormatter<'a>, node: CastExpression<'a>) -> Doc {
     let ty = f.fmt_opt(node.r#type());
-    let parens = (node.open_paren(), node.close_paren());
-    let parenthesized = enclosed(f, node.syntax(), parens, ty, false);
-    let expression = f.fmt_opt(node.expression());
-    let line = f.line();
-    let operand = f.hang(line, expression);
+    let close = node.close_paren();
+    let expression = node.expression();
+    let operand = f.fmt_opt(expression);
+    let operand = value_after(f, close, expression.map(AstNode::syntax), operand);
+    let parenthesized = enclosed(f, node.syntax(), (node.open_paren(), close), ty, false);
     cat![f; parenthesized, operand]
 }
 

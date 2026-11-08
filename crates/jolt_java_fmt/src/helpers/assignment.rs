@@ -20,15 +20,27 @@ pub(crate) fn assignment_like<'a>(
     cat![f; left, f.space(), right]
 }
 
-/// `op`, then a space and `doc`, the formatted `value` node with what follows
-/// it on its line. The value hangs (see `DocBuilder::hang`): it moves to the
-/// next line one indent deeper if it fits there, and otherwise starts on the
-/// operator's line. An operator chain or a conditional that doesn't fit
-/// always starts the next line, so that its operands start one level deeper
-/// than the operator's line. So does every value after a trailing comment of
-/// `op` that ends its line (`x = // c`), as after a keyword (see
-/// `after_token`).
+/// `op`, then the value: `op` and `value_after(f, op, value, doc)`.
 pub(crate) fn operator_value<'a>(
+    f: &mut JavaFormatter<'a>,
+    op: Option<SyntaxToken<'a>>,
+    value: Option<SyntaxNode<'a>>,
+    doc: Doc,
+) -> Doc {
+    let value = value_after(f, op, value, doc);
+    let op = f.token_opt(op);
+    cat![f; op, value]
+}
+
+/// A space and `doc`, the formatted `value` node with what follows it on its
+/// line, after the operator `op` (printed by the caller). The value hangs
+/// (see `DocBuilder::hang`): it moves to the next line one indent deeper if
+/// it fits there, and otherwise starts on the operator's line. An operator
+/// chain or a conditional that doesn't fit always starts the next line, so
+/// that its operands start one level deeper than the operator's line. So
+/// does every value after a trailing comment of `op` that ends its line
+/// (`x = // c`), as after a keyword (see `after_token`).
+pub(crate) fn value_after<'a>(
     f: &mut JavaFormatter<'a>,
     op: Option<SyntaxToken<'a>>,
     value: Option<SyntaxNode<'a>>,
@@ -41,13 +53,11 @@ pub(crate) fn operator_value<'a>(
             K::BinaryExpression | K::InstanceofExpression | K::ConditionalExpression
         )
     });
-    let op = f.token_opt(op);
-    let value = if op_breaks || chain {
+    if op_breaks || chain {
         let value = indent![f; f.line(), doc];
         f.group(value)
     } else {
         let line = f.line();
         f.hang(line, doc)
-    };
-    cat![f; op, value]
+    }
 }

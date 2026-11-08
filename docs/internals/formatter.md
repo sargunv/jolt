@@ -810,9 +810,11 @@ Indentation is `indent_width` spaces per level, or one tab per level with
 #### Hang
 
 `hang(line, value)` is the one layout choice besides flat or broken. It lays out
-the value after an operator (`x = value`, `case X -> value;`, `(Type) value`).
-In a flat context it prints flat. In a broken context the printer picks the
-first layout that applies:
+the value after an operator (`x = value`, `case X -> value;`, `(Type) value`)
+and the single call of a member chain after a receiver that does not keep the
+call on its line (`this.registry.register(…)`, `assertThat(…).isTrue()`). In a
+flat context it prints flat. In a broken context the printer picks the first
+layout that applies:
 
 1. **Flat**: `line` and `value` flat, if they fit (the group fit check).
 2. **Next**: `line` broken and `value` one indent deeper, if `value` fits flat

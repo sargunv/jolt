@@ -269,15 +269,14 @@ fn spine<'a>(f: &mut JavaFormatter<'a>, outer: SyntaxNode<'a>) -> Doc {
     }
     docs.push(head.map_or(Doc::NIL, |head| f.node(head)));
     let mut formatted = f.concat(docs);
-    // Whether the first segment of a member chain may join the line of the
-    // root before it: the root is simple and nothing forces a line after it.
-    let joins = |f: &JavaFormatter<'a>, root: Option<SyntaxNode<'a>>, simple: bool| {
-        simple && root.is_some_and(|root| !f.has_trailing_comments(SyntaxElement::Node(root)))
+    // Whether nothing forces a line after the root of a member chain.
+    let quiet = |f: &JavaFormatter<'a>, root: Option<SyntaxNode<'a>>| {
+        root.is_some_and(|root| !f.has_trailing_comments(SyntaxElement::Node(root)))
     };
-    let simple = head.is_some_and(|head| K::from_raw(head.kind()) == K::NameExpression);
-    let mut root_joins = joins(f, head, simple);
+    let mut root_simple = head.is_some_and(|head| K::from_raw(head.kind()) == K::NameExpression);
+    let mut root_quiet = quiet(f, head);
     let mut chain = Vec::new();
-    let mut join_first = false;
+    let mut joins = Joins::default();
     for (index, &link) in links.iter().enumerate().rev() {
         let segment = segment(f, link);
         // `1 .class` (recovery only): `1.` would lex as a float literal.
@@ -295,11 +294,16 @@ fn spine<'a>(f: &mut JavaFormatter<'a>, outer: SyntaxNode<'a>) -> Doc {
         };
         let doc = cat![f; separator, segment, form_trailing, trailing];
         if link.is_member() {
+            let dot_quiet = !link
+                .dot()
+                .is_some_and(|dot| f.has_leading_comments(SyntaxElement::Token(dot)));
             if chain.is_empty() {
-                join_first = root_joins
-                    && !link
-                        .dot()
-                        .is_some_and(|dot| f.has_leading_comments(SyntaxElement::Token(dot)));
+                joins = Joins {
+                    first: root_simple && root_quiet && dot_quiet,
+                    quiet: root_quiet && dot_quiet,
+                };
+            } else {
+                joins.quiet &= dot_quiet;
             }
             chain.push(Member {
                 doc,
@@ -307,31 +311,46 @@ fn spine<'a>(f: &mut JavaFormatter<'a>, outer: SyntaxNode<'a>) -> Doc {
             });
             continue;
         }
-        formatted = member_chain(f, formatted, &mut chain, join_first);
+        formatted = member_chain(f, formatted, &mut chain, joins);
         // No group around the two: the segment has no line breaks of its
         // own, so one would never change the layout, and nesting a group per
         // link would make each fit check walk the whole spine.
         formatted = cat![f; formatted, doc];
-        let simple = matches!(link, Link::This(_) | Link::Super(_) | Link::ClassLiteral(_));
-        root_joins = joins(f, Some(node), simple);
+        root_simple = matches!(link, Link::This(_) | Link::Super(_) | Link::ClassLiteral(_));
+        root_quiet = quiet(f, Some(node));
     }
-    member_chain(f, formatted, &mut chain, join_first)
+    member_chain(f, formatted, &mut chain, joins)
+}
+
+/// How a member chain may join the line of its root.
+#[derive(Clone, Copy, Default)]
+struct Joins {
+    /// The first segment joins the root's line: the root is simple (a name,
+    /// `this`, `super`, a class literal) and `quiet` holds.
+    first: bool,
+    /// Nothing forces a line after the root: it has no trailing comment, and
+    /// no comment leads a `.` of the chain.
+    quiet: bool,
 }
 
 /// `root` followed by the member links: flat if it fits; otherwise every
 /// call after the root starts its own line one indent deeper. Consecutive
-/// field accesses stay together. With `join_first`, the first segment joins
-/// the root's line: after a simple root (a name, `this`, `super`, a class
-/// literal) that has no trailing comment, when no comment leads the `.`.
+/// field accesses stay together. With `joins.first`, the first segment joins
+/// the root's line. A chain whose only call is its last segment and does not
+/// join the root's line hangs that call after the root (see
+/// `DocBuilder::hang`), when `joins.quiet`: the call moves to the next line
+/// only if that makes it fit.
 fn member_chain(
     f: &mut JavaFormatter<'_>,
     root: Doc,
     chain: &mut Vec<Member>,
-    join_first: bool,
+    joins: Joins,
 ) -> Doc {
     if chain.is_empty() {
         return root;
     }
+    let calls = chain.iter().filter(|member| member.call).count();
+    let last_call = chain.last().is_some_and(|member| member.call);
     let mut segments = Vec::with_capacity(chain.len());
     let mut field_run = Vec::new();
     for member in chain.drain(..) {
@@ -348,12 +367,18 @@ fn member_chain(
         segments.push(f.concat(field_run));
     }
     let mut segments = segments.into_iter();
-    let head = if join_first {
+    let head = if joins.first {
         let first = segments.next().unwrap_or(Doc::NIL);
         cat![f; root, first]
     } else {
         root
     };
+    if joins.quiet && calls == 1 && last_call && segments.len() == 1 {
+        let call = segments.next().unwrap_or(Doc::NIL);
+        let line = f.soft_line();
+        let call = f.hang(line, call);
+        return cat![f; head, call];
+    }
     let mut rest = Vec::new();
     for segment in segments {
         rest.push(f.soft_line());

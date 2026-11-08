@@ -59,8 +59,9 @@ the differences readers notice first:
   breaks there (`Runnable task = () -> {`).
 - **Member chains.** After a simple receiver such as a local variable or a class
   name, Jolt keeps the first call on the receiver's line
-  (`builder.withName(name)`). google-java-format starts every call on a new
-  line.
+  (`builder.withName(name)`), and a single call stays on its receiver's line
+  when moving it doesn't make it fit (`this.registry.register(` / `endpoint,` /
+  …). google-java-format starts every call on a new line.
 - **Javadoc.** google-java-format rewraps Javadoc text, and expands a one-line
   Javadoc that doesn't fit. Jolt keeps the text of every comment as written and
   only realigns the `*` at the start of its lines.
@@ -605,6 +606,21 @@ return com.example.deep.config.ConflictResolutionFactory
   its line (`builder.withFirstValue(…)`, `Foo.builder()`). After a qualified
   receiver (`this.a.b`, `com.example.Factory`) the first call starts a new line
   too.
+- A single call after a receiver that doesn't keep it on its line (a qualified
+  name, a call, `new Foo()`) is laid out as an [assignment's value](#assignment)
+  is: it moves to the next line only if that makes it fit. Otherwise it stays on
+  the receiver's line and its arguments break:
+
+```java
+this.endpointRegistry.registerListenerContainer(
+  endpoint,
+  this.containerFactory,
+  this.startImmediately
+);
+assertThat(
+  registry.getListenerContainer("firstListenerName").getConcurrencyLimit()
+).isEqualTo(3);
+```
 
 ### Lambdas and method references
 

@@ -1,0 +1,37 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class SingleCallHangs {
+  void calls() {
+    this.endpointRegistry.registerListenerContainer(
+      endpoint,
+      this.containerFactory,
+      this.startImmediately
+    );
+    this.messageHandlerMethodFactory
+      .setMessageHandlerMethodFactory(messageHandlerMethodFactory);
+    System.out.println(
+      "Field " + field.getName() + " is not a constant: " + field.getType()
+    );
+    assertThat(
+      registry.getListenerContainer("firstListenerName").getConcurrencyLimit()
+    ).isEqualTo(3);
+    assertThat(response.getContentAsString())
+      .isEqualTo("a long expected value that does not fit on the line");
+    new XmlBeanDefinitionReader(factory).loadBeanDefinitions(
+      new ClassPathResource("annotation-config.xml", getClass())
+    );
+    configurations.getByName("checkstyle")
+      .getDependencies()
+      .add(dependencies.create(checkstyleVersion));
+    this.handler
+      /* receiver */ .setUserDestinationPredicate(
+        destination -> destination.startsWith("/user/")
+      );
+  }
+}
+
+diagnostics:
+(none)
