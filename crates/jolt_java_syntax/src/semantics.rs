@@ -64,43 +64,45 @@ pub enum ModifierPartition {
 }
 
 impl<'a> ModifierList<'a> {
+    /// The elements, each with its partition.
     pub fn partitioned(
         self,
     ) -> impl Iterator<Item = (ModifierElement<'a>, ModifierPartition)> + 'a {
-        let mut saw_modifier = false;
-        self.items().map(move |item| {
-            let partition = if let ModifierElement::Annotation(_) = item {
-                annotation_partition(saw_modifier)
-            } else {
-                saw_modifier = true;
-                ModifierPartition::Modifier
-            };
-            (item, partition)
+        partition(self.items(), |item| {
+            matches!(item, ModifierElement::Annotation(_))
         })
     }
 }
 
 impl<'a> ParameterModifierList<'a> {
+    /// The elements, each with its partition.
     pub fn partitioned(
         self,
     ) -> impl Iterator<Item = (ParameterModifier<'a>, ModifierPartition)> + 'a {
-        let mut saw_modifier = false;
-        self.items().map(move |item| {
-            let partition = if let ParameterModifier::Annotation(_) = item {
-                annotation_partition(saw_modifier)
-            } else {
-                saw_modifier = true;
-                ModifierPartition::Modifier
-            };
-            (item, partition)
+        partition(self.items(), |item| {
+            matches!(item, ParameterModifier::Annotation(_))
         })
     }
 }
 
-const fn annotation_partition(saw_modifier: bool) -> ModifierPartition {
-    if saw_modifier {
-        ModifierPartition::TypeUseAnnotation
-    } else {
-        ModifierPartition::DeclarationAnnotation
-    }
+/// Pairs each modifier list element with its partition: an annotation is a
+/// declaration annotation until the first other element.
+fn partition<T: Copy>(
+    items: impl Iterator<Item = T>,
+    is_annotation: impl Fn(T) -> bool,
+) -> impl Iterator<Item = (T, ModifierPartition)> {
+    let mut saw_modifier = false;
+    items.map(move |item| {
+        let partition = if is_annotation(item) {
+            if saw_modifier {
+                ModifierPartition::TypeUseAnnotation
+            } else {
+                ModifierPartition::DeclarationAnnotation
+            }
+        } else {
+            saw_modifier = true;
+            ModifierPartition::Modifier
+        };
+        (item, partition)
+    })
 }

@@ -1,8 +1,8 @@
-use jolt_syntax::Diagnostic;
+//! The lexer's diagnostics.
 
-/// A lexer diagnostic with a raw source range.
-pub(crate) type LexerDiagnostic = Diagnostic;
+use jolt_syntax::{Diagnostic, TextRange};
 
+/// A lexer diagnostic: its code and message.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub(crate) enum JavaLexDiagnosticCode {
     MalformedUnicodeEscape,
@@ -36,6 +36,7 @@ impl JavaLexDiagnosticCode {
         }
     }
 
+    /// The stable diagnostic code.
     pub(crate) const fn id(self) -> &'static str {
         match self {
             Self::MalformedUnicodeEscape => "java.lex.malformed_unicode_escape",
@@ -48,6 +49,15 @@ impl JavaLexDiagnosticCode {
             Self::InvalidEscapeSequence => "java.lex.invalid_escape_sequence",
             Self::InvalidNumericLiteral => "java.lex.invalid_numeric_literal",
             Self::UnknownCharacter => "java.lex.unknown_character",
+        }
+    }
+
+    /// The diagnostic at `range`.
+    pub(crate) fn at(self, range: TextRange) -> Diagnostic {
+        Diagnostic {
+            code: self.id(),
+            message: self.message().to_owned(),
+            range,
         }
     }
 }
