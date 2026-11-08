@@ -109,7 +109,7 @@ the reviewer who knows the old behavior reads them.
   and preserve all existing tokens/trivia.
 - Formatter rules emit source tokens only through `Formatter::token`, nodes only
   through `Formatter::node`/`fmt`, and comments only through the chokepoints
-  (`node`, `token`, `verbatim`, `removed`, `dangling`, and
+  (`node`, `token`, `verbatim`, `dangling`, and
   `leading_comments`/`trailing_comments` for the rules that build a node's doc
   themselves: spines, the `else if` chain, N7 parentheses and the declaration
   header). Rules never choose how a comment prints; comment placement is decided

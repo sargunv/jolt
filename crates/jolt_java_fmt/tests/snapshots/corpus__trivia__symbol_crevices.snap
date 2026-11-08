@@ -33,7 +33,7 @@ class SymbolCrevices
     throws
       java /* JOLT-TRIVIA:throws-fqn-1 */ .io /* JOLT-TRIVIA:throws-fqn-2 */ .IOException {
     /* JOLT-TRIVIA:throws-before-body */
-    /* JOLT-TRIVIA:empty-statement-after-semi */
+    ; /* JOLT-TRIVIA:empty-statement-after-semi */
     helper /* JOLT-TRIVIA:call-name-before-paren */ (
       name /* JOLT-TRIVIA:call-arg-before-comma */,
       numbers /* JOLT-TRIVIA:call-arg-before-close */

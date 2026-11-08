@@ -35,6 +35,7 @@ class RemovedSemicolonCommentGap {
     int before = 1;
     // comment salvaged from the removed semicolon
 
+    ;
     int after = 2;
   }
 }

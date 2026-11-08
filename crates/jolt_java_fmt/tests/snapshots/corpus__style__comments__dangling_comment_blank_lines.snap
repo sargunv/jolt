@@ -131,6 +131,7 @@ class RemovedSemicolonComments {
   // a comment salvaged from a removed semicolon
 
   // a second salvaged comment
+  ;
 }
 
 class DanglingAfterInnerBlankLines {

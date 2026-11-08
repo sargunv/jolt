@@ -10,13 +10,15 @@ enum Color {
 }
 
 enum WithMembers {
-  RED; // before members
+  RED, // before members
+  ;
 
   int code;
 }
 
 enum WithBlockMembers {
-  RED; /* before members */
+  RED, /* before members */
+  ;
 
   int code;
 }

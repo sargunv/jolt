@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class SwitchGroupSemicolonComments {
+  void run(int x) {
+    switch (x) {
+      case 1:
+        run();
+        ; /*a*/
+        ; // b
+      case 2:
+        run();
+        ; // last
+      default:
+        ; /*a*/
+        ; // b
+    }
+  }
+}
+
+diagnostics:
+(none)

@@ -40,7 +40,8 @@ class SwitchGuardsAndLabels {
           run();
         }
       case 6:
-        run(); // stray
+        run();
+        ; // stray
       default:
     }
   }

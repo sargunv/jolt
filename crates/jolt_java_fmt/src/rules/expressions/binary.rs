@@ -2,10 +2,9 @@
 
 use jolt_fmt::{Doc, cat, group, indent};
 use jolt_java_syntax::{
-    BinaryExpression, Expression, InstanceofExpression, JavaSyntaxKind as K,
-    ParenthesizedExpression, binary_precedence,
+    BinaryExpression, Expression, InstanceofExpression, JavaSyntaxKind as K, binary_precedence,
 };
-use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode};
+use jolt_syntax::{AstNode, SyntaxNode};
 
 use crate::JavaFormatter;
 
@@ -99,7 +98,7 @@ fn transparent_left<'a>(
     f: &JavaFormatter<'a>,
     parent: Operation<'a>,
     left: Expression<'a>,
-) -> Option<(BinaryExpression<'a>, ParenthesizedExpression<'a>)> {
+) -> Option<BinaryExpression<'a>> {
     let (Operation::Binary(parent), Expression::ParenthesizedExpression(parenthesized)) =
         (parent, left)
     else {
@@ -111,7 +110,7 @@ fn transparent_left<'a>(
     let Some(Expression::BinaryExpression(inner)) = parenthesized.expression() else {
         return None;
     };
-    flattens(operator_kind(parent), operator_kind(inner)).then_some((inner, parenthesized))
+    flattens(operator_kind(parent), operator_kind(inner)).then_some(inner)
 }
 
 /// A chain under construction: the first operand and `operator operand`
@@ -134,31 +133,29 @@ fn finish(f: &mut JavaFormatter<'_>, run: Run) -> Doc {
 /// `instanceof` breaks before its keyword. A run ends where the next operator
 /// does not flatten, and becomes the first operand of what follows.
 fn chain<'a>(f: &mut JavaFormatter<'a>, outer: Operation<'a>) -> Doc {
-    // The spine from the outermost node inward; `removed` holds the
-    // parentheses dropped by N6 above each node.
-    let mut spine = vec![(outer, None)];
+    // The spine from the outermost node inward, through the parentheses
+    // N6 drops.
+    let mut spine = vec![outer];
     let mut head = outer.left();
     while let Some(left) = head {
-        let parent = spine.last().expect("spine is not empty").0;
-        let (next, parentheses) = match transparent_left(f, parent, left) {
-            Some((inner, parentheses)) => (Operation::Binary(inner), Some(parentheses)),
+        let parent = *spine.last().expect("spine is not empty");
+        let next = match transparent_left(f, parent, left) {
+            Some(inner) => Operation::Binary(inner),
             None => match operation(left) {
-                Some(next) => (next, None),
+                Some(next) => next,
                 None => break,
             },
         };
-        spine.push((next, parentheses));
+        spine.push(next);
         head = next.left();
     }
-    let mut leading = Vec::with_capacity(spine.len() * 2);
-    for &(operation, parentheses) in &spine[1..] {
-        if let Some(parentheses) = parentheses {
-            leading.push(f.removed(SyntaxElement::Node(parentheses.syntax())));
-        }
-        leading.push(f.leading_comments(operation.syntax()));
-    }
+    let leading: Vec<Doc> = spine[1..]
+        .iter()
+        .map(|operation| f.leading_comments(operation.syntax()))
+        .collect();
     let head_doc = f.fmt_opt(head);
-    let mut formatted = cat![f; f.concat(leading), head_doc];
+    let leading = f.concat(leading);
+    let mut formatted = cat![f; leading, head_doc];
     // The expression `formatted` stands for, for N7.
     let mut formatted_is_binary = matches!(head, Some(Expression::BinaryExpression(_)));
     let mut run: Option<Run> = None;
@@ -166,7 +163,7 @@ fn chain<'a>(f: &mut JavaFormatter<'a>, outer: Operation<'a>) -> Doc {
     // operand, outside any readability parentheses around the node, so the
     // next pass (which sees a parenthesized expression) prints them alike.
     let mut trailing = Doc::NIL;
-    for (depth, &(operation, _)) in spine.iter().enumerate().rev() {
+    for (depth, &operation) in spine.iter().enumerate().rev() {
         match operation {
             Operation::Binary(node) => {
                 let kind = operator_kind(node);

@@ -3,10 +3,9 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-/*hunt*/
-import one.last;
-
 import static java.utils.*;
+; /*hunt*/
+import one.last;
 
 class C {}
 

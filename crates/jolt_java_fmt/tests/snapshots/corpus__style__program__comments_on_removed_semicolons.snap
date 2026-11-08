@@ -3,10 +3,10 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-class A {} // trailing comment on the last brace
-
+class A {}
+; // trailing comment on the last brace
 class B {}
-// salvaged from a removed semicolon
+; // salvaged from a removed semicolon
 
 diagnostics:
 (none)

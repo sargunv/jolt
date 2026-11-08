@@ -11,6 +11,7 @@ use jolt_fmt::ListItem;
 use jolt_java_syntax::BlockStatementList;
 use jolt_syntax::{SyntaxElement, SyntaxNode};
 
+use crate::JavaFormatter;
 use crate::helpers::bodies::body_items;
 
 pub(crate) use blocks::{
@@ -38,8 +39,9 @@ pub(crate) use tries::{
 
 /// The statements of a block or switch group as item-list items: every
 /// child of the list, including bogus ones, with empty statements elided
-/// (N5) when `owner` is recovery-free.
+/// as `body_items` elides them (N5).
 fn statement_items<'a>(
+    f: &JavaFormatter<'a>,
     owner: SyntaxNode<'a>,
     list: Option<BlockStatementList<'a>>,
 ) -> Vec<ListItem<'a>> {
@@ -47,5 +49,5 @@ fn statement_items<'a>(
         .into_iter()
         .flat_map(BlockStatementList::elements)
         .filter_map(|element| element.syntax().and_then(SyntaxElement::as_node));
-    body_items(owner, statements)
+    body_items(f, owner, statements)
 }

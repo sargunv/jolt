@@ -2,7 +2,7 @@
 
 use jolt_fmt::{Doc, ListItem, Separator, cat};
 use jolt_java_syntax::{BlockItem, BlockStatement, JavaSyntaxKind as K};
-use jolt_syntax::{AstNode, SyntaxNode, SyntaxToken};
+use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode, SyntaxToken};
 
 use crate::JavaFormatter;
 
@@ -64,17 +64,25 @@ fn is_stray_semicolon(node: SyntaxNode<'_>) -> bool {
     }
 }
 
-/// The items of a body as item-list items, each stray `;` elided (N5) when
-/// `owner` is recovery-free.
+/// The items of a body as item-list items, each stray `;` without comments
+/// elided (N5) when `owner` is recovery-free. A comment after the last `;`
+/// of a list without a closer (a switch group) trails `owner`, and the `;`
+/// stays so the next pass attaches the comment the same way.
 pub(crate) fn body_items<'a>(
+    f: &JavaFormatter<'a>,
     owner: SyntaxNode<'a>,
     items: impl IntoIterator<Item = SyntaxNode<'a>>,
 ) -> Vec<ListItem<'a>> {
     let normalize = owner.is_recovery_free();
+    let owner_trailing = f.has_trailing_comments(SyntaxElement::Node(owner));
     items
         .into_iter()
         .map(|item| {
-            if normalize && is_stray_semicolon(item) {
+            let elide = normalize
+                && is_stray_semicolon(item)
+                && !f.has_comments_within(item)
+                && !(owner_trailing && item.last_token() == owner.last_token());
+            if elide {
                 ListItem::Elide(item)
             } else {
                 ListItem::Format(item)
@@ -84,12 +92,13 @@ pub(crate) fn body_items<'a>(
 }
 
 /// Members: a blank line between two members, except between two fields,
-/// which keep the source's choice. The comments of a removed `;` keep the
-/// source's choice too.
+/// and around a stray `;` kept for its comments, which keep the source's
+/// choice.
 pub(crate) fn member_separator<'a>(f: &mut JavaFormatter<'a>, separator: Separator<'a>) -> Doc {
-    let fields =
-        kind(separator.prev) == K::FieldDeclaration && kind(separator.next) == K::FieldDeclaration;
-    f.line_break(separator.blank_line_in_source || !(fields || is_stray_semicolon(separator.prev)))
+    let (prev, next) = (separator.prev, separator.next);
+    let fields = kind(prev) == K::FieldDeclaration && kind(next) == K::FieldDeclaration;
+    let stray = is_stray_semicolon(prev) || is_stray_semicolon(next);
+    f.line_break(separator.blank_line_in_source || !(fields || stray))
 }
 
 /// Statements: a blank line iff the source had one.

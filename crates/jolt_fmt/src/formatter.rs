@@ -15,7 +15,8 @@ use crate::{Doc, DocBuilder, FormatLanguage, cat};
 pub enum ListItem<'a> {
     /// Formatted with [`Formatter::node`].
     Format(SyntaxNode<'a>),
-    /// Removed by a normalization: only its comments are printed.
+    /// Removed by a normalization, which leaves an item with comments in
+    /// place: not printed, except verbatim inside a formatter-ignore region.
     Elide(SyntaxNode<'a>),
 }
 
@@ -155,76 +156,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
 
     pub fn trailing_comments(&mut self, node: SyntaxNode<'a>) -> Doc {
         self.comments_on(SyntaxElement::Node(node), Side::Trailing)
-    }
-
-    /// Every comment attached to or inside `element`, in source order, without
-    /// the element's text. NIL when there are none.
-    pub fn removed(&mut self, element: SyntaxElement<'a>) -> Doc {
-        let (before, after, _) = self.removed_parts(element);
-        cat![self; before, after]
-    }
-
-    /// `removed` for several elements, for comments a normalization moves to
-    /// lines of their own (those of an enum's moved `;`): in source order,
-    /// printed like dangling comments, which is how the next pass reads them.
-    pub fn removed_on_own_lines(&mut self, elements: &[SyntaxElement<'a>]) -> Doc {
-        let mut indices: Vec<usize> = elements
-            .iter()
-            .flat_map(|&element| self.removed_indices(element))
-            .collect();
-        indices.sort_unstable();
-        self.own_lines(&indices)
-    }
-
-    /// The comments attached to or inside `element`, in source order.
-    fn removed_indices(&self, element: SyntaxElement<'a>) -> Vec<usize> {
-        let mut indices: Vec<usize> = self
-            .comments
-            .attached(element, Side::Leading)
-            .chain(self.comments.attached(element, Side::Trailing))
-            .collect();
-        if let SyntaxElement::Node(node) = element {
-            indices.extend(self.comments.within(node.text_range()));
-        }
-        indices.sort_unstable();
-        indices
-    }
-
-    /// `removed`, split into the trailing comments that sit before the
-    /// element in the source (moved onto it by S1, so they end the previous
-    /// line) and the rest, and whether the source has a blank line after the
-    /// last comment (which, with the element gone, separates the comments
-    /// from what follows).
-    fn removed_parts(&mut self, element: SyntaxElement<'a>) -> (Doc, Doc, bool) {
-        let indices = self.removed_indices(element);
-        let start = element.text_range().start();
-        let mut before = Vec::new();
-        let mut after = Vec::new();
-        let last = indices.last().copied();
-        let blank_after =
-            last.is_some_and(|last| self.comments.list[last].comment.lines_after >= 2);
-        for index in indices {
-            let placed = self.comments.list[index];
-            // The last comment has no element left to separate it from.
-            let doc = if Some(index) == last
-                && (placed.side, placed.layout) == (Side::Leading, CommentLayout::OwnLine)
-            {
-                let text = self.comment_doc(index);
-                cat![self; Doc::HARD_LINE, text]
-            } else {
-                self.attached_comment(index)
-            };
-            if placed.side == Side::Trailing && placed.comment.range.end() <= start {
-                before.push(doc);
-            } else {
-                after.push(doc);
-            }
-        }
-        (
-            self.builder.concat(before),
-            self.builder.concat(after),
-            blank_after,
-        )
     }
 
     /// The node's source from its first to its last token, interior comments
@@ -385,14 +316,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .is_some()
     }
 
-    /// The element has a trailing line comment, which ends its line.
-    #[must_use]
-    pub fn has_trailing_line_comment(&self, element: SyntaxElement<'a>) -> bool {
-        self.comments
-            .attached(element, Side::Trailing)
-            .any(|index| self.comments.list[index].comment.kind == CommentKind::Line)
-    }
-
     /// Some leading comment of the element prints a line break between the
     /// code before it and the element: one on its own line, starting its
     /// line, or ending its line.
@@ -471,40 +394,22 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         let mut docs = Vec::new();
         // The last emitted item, its index, and whether it is ignored.
         let mut prev: Option<(SyntaxNode<'a>, usize, bool)> = None;
-        // An elided item vanished since the last emitted one.
-        let mut vanished = false;
-        // The previous item was elided and the source has a blank line after
-        // its last comment.
-        let mut blank_after_elided = false;
         for (index, item) in items.into_iter().enumerate() {
             let (node, elide) = match item {
                 ListItem::Format(node) => (node, false),
                 ListItem::Elide(node) => (node, true),
             };
             let ignored = self.in_ignore_region(node);
-            let mut blank_after = false;
             let doc = if ignored {
                 let body = self.verbatim(node);
                 self.with_comments(SyntaxElement::Node(node), body)
             } else if elide {
-                let (before, after, blank) = self.removed_parts(SyntaxElement::Node(node));
-                blank_after = blank;
-                let doc = if vanished || prev.is_none() {
-                    cat![self; before, after]
-                } else {
-                    docs.push(before);
-                    after
-                };
-                if doc.is_nil() {
-                    vanished = true;
-                    continue;
-                }
-                doc
+                continue;
             } else {
                 self.node(node)
             };
             if let Some((prev_node, prev_index, prev_ignored)) = prev {
-                let blank = blank_after_elided || self.blank_line_before(SyntaxElement::Node(node));
+                let blank = self.blank_line_before(SyntaxElement::Node(node));
                 // Items in an ignore region, and the item after one, keep the
                 // source's separation, so the region prints as written.
                 let doc = if prev_ignored {
@@ -525,8 +430,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             }
             docs.push(doc);
             prev = Some((node, index, ignored));
-            vanished = false;
-            blank_after_elided = blank_after;
         }
         self.builder.concat(docs)
     }

@@ -13,7 +13,7 @@ use crate::helpers::bodies::{braced_body, statement_separator};
 
 /// `{`, the statements one per line (blank lines kept, at most one), `}`.
 pub(crate) fn block<'a>(f: &mut JavaFormatter<'a>, node: Block<'a>) -> Doc {
-    let statements = statement_items(node.syntax(), node.statements());
+    let statements = statement_items(f, node.syntax(), node.statements());
     braced_body(
         f,
         node.syntax(),

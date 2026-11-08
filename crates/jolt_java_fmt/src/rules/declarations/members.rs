@@ -112,7 +112,7 @@ pub(crate) fn constructor_body<'a>(f: &mut JavaFormatter<'a>, node: ConstructorB
         .into_iter()
         .flat_map(ConstructorBodyEntryList::items)
         .map(AstNode::syntax);
-    let entries = body_items(node.syntax(), entries);
+    let entries = body_items(f, node.syntax(), entries);
     braced_body(
         f,
         node.syntax(),

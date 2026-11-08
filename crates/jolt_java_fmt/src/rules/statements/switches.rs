@@ -104,7 +104,7 @@ pub(crate) fn switch_block_statement_group<'a>(
         label_count += 1;
     }
     let labels = f.concat(labels);
-    let mut statements = statement_items(node.syntax(), node.statements());
+    let mut statements = statement_items(f, node.syntax(), node.statements());
     // N5 keeps one `;` of a group that has nothing else when another group
     // follows: removing it would merge the labels into that group.
     let last = node
@@ -127,21 +127,12 @@ pub(crate) fn switch_block_statement_group<'a>(
         let block = f.node(statement);
         return cat![f; labels, f.space(), block];
     }
-    // The comments of removed `;` after the last statement print at the
-    // labels' indent, where the next pass reads them (leading the next group
-    // or dangling in the switch block).
-    let kept = statements
-        .iter()
-        .rposition(|item| matches!(item, ListItem::Format(_)))
-        .map_or(0, |last| last + 1);
-    let removed = statements.split_off(kept);
     let statements = f.item_list(statements, statement_separator);
-    let removed = f.item_list(removed, |f, _| f.hard_line());
     if statements.is_nil() {
-        return cat![f; labels, removed];
+        return labels;
     }
     let statements = indent![f; f.hard_line(), statements];
-    cat![f; labels, statements, removed]
+    cat![f; labels, statements]
 }
 
 /// A block statement that may share the label line: a plain block outside
@@ -236,11 +227,7 @@ pub(crate) fn guard<'a>(f: &mut JavaFormatter<'a>, node: Guard<'a>) -> Doc {
     let (open, close) = (node.open_paren(), node.close_paren());
     let condition = match (open, close) {
         (None, None) => condition,
-        (Some(open), Some(close)) if removable_parentheses(f, node, open, close) => {
-            let open = f.removed(SyntaxElement::Token(open));
-            let close = f.removed(SyntaxElement::Token(close));
-            cat![f; open, condition, close]
-        }
+        (Some(open), Some(close)) if removable_parentheses(f, node, open, close) => condition,
         _ => parenthesized(f, node.syntax(), open, condition, close),
     };
     cat![f; when, f.space(), condition]
