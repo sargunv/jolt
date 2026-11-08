@@ -7,7 +7,7 @@ use std::ops::{Deref, DerefMut};
 use jolt_syntax::{SyntaxElement, SyntaxNode, SyntaxToken, TextRange, TextSize, TriviaKind};
 
 use crate::comments::{self, CommentKind, CommentLayout, Comments, Side};
-use crate::doc::{LINE_COMMENT, Reindent, VERBATIM_START, has_line_break};
+use crate::doc::{LINE_COMMENT, Reindent, VERBATIM_START, has_line_break, lines};
 use crate::{Doc, DocBuilder, FormatLanguage, cat};
 
 /// One item of an [`Formatter::item_list`].
@@ -640,7 +640,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
 /// Whether a continuation line of a multi-line `text` does not start with
 /// `prefix` (blank lines aside).
 fn lines_outside(text: &str, prefix: &str) -> bool {
-    text.lines()
+    lines(text)
         .skip(1)
         .any(|line| !line.trim().is_empty() && !line.starts_with(prefix))
 }

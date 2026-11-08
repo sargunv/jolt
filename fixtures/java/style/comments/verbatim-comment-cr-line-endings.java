@@ -1,0 +1,1 @@
+class VerbatimCommentCrLineEndings {    // @formatter:off    void m() {  /* a comment in an ignored member, written with CR line endings, whose * lines do not start with the member's indentation   */        int x;    }    // @formatter:on}
