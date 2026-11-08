@@ -2,63 +2,56 @@
 
 use jolt_fmt::{Doc, ListItem};
 use jolt_java_syntax::{
-    AnnotationInterfaceBody, ClassBody, EmptyDeclaration, EnumBody, EnumConstant, InterfaceBody,
-    JavaSyntaxKind as K, RecordBody,
+    AnnotationInterfaceBody, AnnotationInterfaceBodyMemberList, ClassBody, ClassBodyMemberList,
+    EmptyDeclaration, EnumBody, EnumConstant, EnumConstantList, InterfaceBody,
+    InterfaceBodyMemberList, RecordBody, RecordBodyMemberList,
 };
-use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode};
+use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
 use crate::JavaFormatter;
-use crate::helpers::bodies::{braced, braced_body, member_separator};
+use crate::helpers::bodies::{body_items, braced, braced_body, member_separator};
+use crate::helpers::spaced_node;
 use crate::rules::types::annotation_lines;
 
 pub(crate) fn class_body<'a>(f: &mut JavaFormatter<'a>, node: ClassBody<'a>) -> Doc {
-    let members = member_items(
-        node.syntax(),
-        node.members()
-            .into_iter()
-            .flat_map(jolt_java_syntax::ClassBodyMemberList::items),
-    );
-    braced_body(
+    let members = node
+        .members()
+        .into_iter()
+        .flat_map(ClassBodyMemberList::items);
+    member_body(
         f,
         node.syntax(),
         node.open_brace(),
         members,
         node.close_brace(),
-        member_separator,
     )
 }
 
 pub(crate) fn interface_body<'a>(f: &mut JavaFormatter<'a>, node: InterfaceBody<'a>) -> Doc {
-    let members = member_items(
-        node.syntax(),
-        node.members()
-            .into_iter()
-            .flat_map(jolt_java_syntax::InterfaceBodyMemberList::items),
-    );
-    braced_body(
+    let members = node
+        .members()
+        .into_iter()
+        .flat_map(InterfaceBodyMemberList::items);
+    member_body(
         f,
         node.syntax(),
         node.open_brace(),
         members,
         node.close_brace(),
-        member_separator,
     )
 }
 
 pub(crate) fn record_body<'a>(f: &mut JavaFormatter<'a>, node: RecordBody<'a>) -> Doc {
-    let members = member_items(
-        node.syntax(),
-        node.members()
-            .into_iter()
-            .flat_map(jolt_java_syntax::RecordBodyMemberList::items),
-    );
-    braced_body(
+    let members = node
+        .members()
+        .into_iter()
+        .flat_map(RecordBodyMemberList::items);
+    member_body(
         f,
         node.syntax(),
         node.open_brace(),
         members,
         node.close_brace(),
-        member_separator,
     )
 }
 
@@ -66,45 +59,36 @@ pub(crate) fn annotation_interface_body<'a>(
     f: &mut JavaFormatter<'a>,
     node: AnnotationInterfaceBody<'a>,
 ) -> Doc {
-    let members = member_items(
-        node.syntax(),
-        node.members()
-            .into_iter()
-            .flat_map(jolt_java_syntax::AnnotationInterfaceBodyMemberList::items),
-    );
-    braced_body(
+    let members = node
+        .members()
+        .into_iter()
+        .flat_map(AnnotationInterfaceBodyMemberList::items);
+    member_body(
         f,
         node.syntax(),
         node.open_brace(),
         members,
         node.close_brace(),
-        member_separator,
     )
 }
 
-/// Removed (N5): its comments stand in its place through `item_list`. Only
-/// reached when a list formats it as an item, which none does.
-pub(crate) fn empty_declaration<'a>(f: &mut JavaFormatter<'a>, node: EmptyDeclaration<'a>) -> Doc {
-    f.token_opt(node.semicolon())
+/// `{`, the members one indent deeper, `}`.
+fn member_body<'a, M: AstNode<'a>>(
+    f: &mut JavaFormatter<'a>,
+    body: SyntaxNode<'a>,
+    open: Option<SyntaxToken<'a>>,
+    members: impl Iterator<Item = M>,
+    close: Option<SyntaxToken<'a>>,
+) -> Doc {
+    let members = body_items(body, members.map(AstNode::syntax));
+    braced_body(f, body, open, members, close, member_separator)
 }
 
-/// Members as list items, stray `;` elided (N5) when the body is
-/// recovery-free.
-fn member_items<'a, M: AstNode<'a>>(
-    body: SyntaxNode<'a>,
-    members: impl Iterator<Item = M>,
-) -> Vec<ListItem<'a>> {
-    let normalize = body.is_recovery_free();
-    members
-        .map(|member| {
-            let syntax = member.syntax();
-            if normalize && K::from_raw(syntax.kind()) == K::EmptyDeclaration {
-                ListItem::Elide(syntax)
-            } else {
-                ListItem::Format(syntax)
-            }
-        })
-        .collect()
+/// A stray `;` member. Normally removed (N5): its comments stand in its
+/// place through `item_list`. Formatted only when the body has recovery,
+/// where N5 does not apply.
+pub(crate) fn empty_declaration<'a>(f: &mut JavaFormatter<'a>, node: EmptyDeclaration<'a>) -> Doc {
+    f.token_opt(node.semicolon())
 }
 
 /// Constants one per line; then, after a blank line, the members. Without
@@ -115,12 +99,12 @@ fn member_items<'a, M: AstNode<'a>>(
 /// (N5, N8).
 pub(crate) fn enum_body<'a>(f: &mut JavaFormatter<'a>, node: EnumBody<'a>) -> Doc {
     let open = f.token_opt(node.open_brace());
-    let members = member_items(
-        node.syntax(),
-        node.members()
-            .into_iter()
-            .flat_map(jolt_java_syntax::ClassBodyMemberList::items),
-    );
+    let members = node
+        .members()
+        .into_iter()
+        .flat_map(ClassBodyMemberList::items)
+        .map(AstNode::syntax);
+    let members = body_items(node.syntax(), members);
     let has_members = members
         .iter()
         .any(|member| matches!(member, ListItem::Format(_)));
@@ -163,7 +147,7 @@ fn enum_constants<'a>(
     let elements: Vec<_> = node
         .constants()
         .into_iter()
-        .flat_map(jolt_java_syntax::EnumConstantList::elements)
+        .flat_map(EnumConstantList::elements)
         .filter(|element| !matches!(element, ListElement::Missing))
         .collect();
     let last_constant = elements
@@ -242,8 +226,6 @@ pub(crate) fn enum_constant<'a>(f: &mut JavaFormatter<'a>, node: EnumConstant<'a
     let mut docs = vec![annotation_lines(f, node.annotations())];
     docs.push(f.token_opt(node.name()));
     docs.push(f.fmt_opt(node.arguments()));
-    if let Some(body) = node.body() {
-        docs.extend([f.space(), f.fmt(body)]);
-    }
+    docs.push(spaced_node(f, node.body()));
     f.concat(docs)
 }

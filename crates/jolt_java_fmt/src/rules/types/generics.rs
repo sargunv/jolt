@@ -3,18 +3,15 @@
 
 use jolt_fmt::{Doc, cat, indent};
 use jolt_java_syntax::{
-    IntersectionType, JavaSyntaxKind as K, Type, TypeArgument, TypeArgumentList, TypeBoundList,
-    TypeParameter, TypeParameterList, UnionType, WildcardType,
+    IntersectionType, JavaSyntaxKind as K, Type, TypeAmpList, TypeArgument, TypeArgumentList,
+    TypeArgumentSeparatedList, TypeBarList, TypeBoundList, TypeParameter, TypeParameterList,
+    TypeParameterSeparatedList, UnionType, WildcardType,
 };
 use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxToken};
 
 use crate::JavaFormatter;
-use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
-
-const ANGLES: ListLayout = ListLayout {
-    padded: false,
-    trailing_comma: TrailingComma::Never,
-};
+use crate::helpers::lists::{ListLayout, delimited};
+use crate::helpers::{spaced, spaced_node};
 
 /// `<T, U extends V>` as a break-all list.
 pub(crate) fn type_parameter_list<'a>(
@@ -27,20 +24,17 @@ pub(crate) fn type_parameter_list<'a>(
         node.open_angle(),
         node.parameters()
             .into_iter()
-            .flat_map(jolt_java_syntax::TypeParameterSeparatedList::elements),
+            .flat_map(TypeParameterSeparatedList::elements),
         node.close_angle(),
-        ANGLES,
+        ListLayout::Plain,
     )
 }
 
 pub(crate) fn type_parameter<'a>(f: &mut JavaFormatter<'a>, node: TypeParameter<'a>) -> Doc {
     let annotations = f.fmt_opt(node.annotations());
     let name = f.token_opt(node.name());
-    let Some(bounds) = node.bounds() else {
-        return cat![f; annotations, name];
-    };
-    let bounds = f.fmt(bounds);
-    cat![f; annotations, name, f.space(), bounds]
+    let bounds = spaced_node(f, node.bounds());
+    cat![f; annotations, name, bounds]
 }
 
 /// `extends Bound`; an intersection bound breaks with the enclosing list.
@@ -58,9 +52,9 @@ pub(crate) fn type_argument_list<'a>(f: &mut JavaFormatter<'a>, node: TypeArgume
         node.open_angle(),
         node.arguments()
             .into_iter()
-            .flat_map(jolt_java_syntax::TypeArgumentSeparatedList::elements),
+            .flat_map(TypeArgumentSeparatedList::elements),
         node.close_angle(),
-        ANGLES,
+        ListLayout::Plain,
     )
 }
 
@@ -73,14 +67,10 @@ pub(crate) fn type_argument<'a>(f: &mut JavaFormatter<'a>, node: TypeArgument<'a
 /// `?`, `? extends T`, `? super T`.
 pub(crate) fn wildcard_type<'a>(f: &mut JavaFormatter<'a>, node: WildcardType<'a>) -> Doc {
     let question = f.token_opt(node.question());
-    let mut docs = vec![question];
-    if let Some(keyword) = node.bound_keyword() {
-        docs.extend([f.space(), f.token(keyword)]);
-    }
-    if let Some(bound) = node.bound() {
-        docs.extend([f.space(), f.fmt(bound)]);
-    }
-    f.concat(docs)
+    let keyword = f.token_opt(node.bound_keyword());
+    let keyword = spaced(f, keyword);
+    let bound = spaced_node(f, node.bound());
+    cat![f; question, keyword, bound]
 }
 
 /// `A & B`: flat if it fits, else a line break before each `&` one indent
@@ -93,7 +83,7 @@ pub(crate) fn intersection_type<'a>(f: &mut JavaFormatter<'a>, node: Intersectio
         node.first_amp(),
         node.remaining_types()
             .into_iter()
-            .flat_map(jolt_java_syntax::TypeAmpList::elements),
+            .flat_map(TypeAmpList::elements),
     );
     let chain = indent![f; rest];
     let chain = cat![f; first, chain];
@@ -113,7 +103,7 @@ pub(crate) fn union_type<'a>(f: &mut JavaFormatter<'a>, node: UnionType<'a>) -> 
         node.first_bar(),
         node.remaining_types()
             .into_iter()
-            .flat_map(jolt_java_syntax::TypeBarList::elements),
+            .flat_map(TypeBarList::elements),
     );
     cat![f; first, rest]
 }

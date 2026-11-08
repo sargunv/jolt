@@ -25,9 +25,9 @@ pub(crate) use modifiers::{
     annotation_lines, annotation_list, inline_modifiers, modifier_list, non_sealed_modifier,
     parameter_modifier_list,
 };
-pub(crate) use names::{name, qualified_name, qualified_name_segment_node};
+pub(crate) use names::{name, name_key, qualified_name, qualified_name_segment_node};
 pub(crate) use patterns::{component_pattern, match_all_pattern, record_pattern, type_pattern};
 pub(crate) use variables::{
-    formal_parameter, receiver_parameter, variable_declarator, variable_declarator_list,
-    variable_initializer,
+    formal_parameter, receiver_parameter, record_component, variable_declarator,
+    variable_declarator_list, variable_initializer,
 };

@@ -4,13 +4,11 @@
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
-use jolt_syntax::{
-    NodeId, SyntaxElement, SyntaxNode, SyntaxToken, TextRange, TextSize, TriviaKind,
-};
+use jolt_syntax::{SyntaxElement, SyntaxNode, SyntaxToken, TextRange, TextSize, TriviaKind};
 
 use crate::comments::{self, CommentKind, CommentLayout, Comments, Side};
-use crate::doc::{LINE_COMMENT, VERBATIM_START, has_line_break};
-use crate::{Doc, DocBuilder, FormatLanguage, Reindent, cat};
+use crate::doc::{LINE_COMMENT, Reindent, VERBATIM_START, has_line_break, lines};
+use crate::{Doc, DocBuilder, FormatLanguage, cat};
 
 /// One item of an [`Formatter::item_list`].
 #[derive(Clone, Copy, Debug)]
@@ -21,24 +19,22 @@ pub enum ListItem<'a> {
     Elide(SyntaxNode<'a>),
 }
 
-/// What a list separator callback sees.
+/// What a list separator callback sees: the items around the separator, and
+/// their positions in the list given to [`Formatter::item_list`].
 #[derive(Clone, Copy, Debug)]
 pub struct Separator<'a> {
     pub prev: SyntaxNode<'a>,
     pub next: SyntaxNode<'a>,
+    pub prev_index: usize,
+    pub next_index: usize,
     pub blank_line_in_source: bool,
-}
-
-/// A formatter-ignore region and the item-list owner it belongs to.
-#[derive(Clone, Copy, Debug)]
-struct Region {
-    range: TextRange,
 }
 
 pub struct Formatter<'a, L: FormatLanguage> {
     builder: DocBuilder<'a>,
     comments: Comments<'a>,
-    regions: Vec<Region>,
+    /// The formatter-ignore regions, sorted and disjoint.
+    regions: Vec<TextRange>,
     emitted: Vec<u8>,
     by_verbatim: Vec<bool>,
     language: PhantomData<L>,
@@ -85,7 +81,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .enumerate()
             .filter(|&(_, &count)| count != 1)
             .map(|(index, count)| {
-                let comment = &self.comments.list[index];
+                let comment = &self.comments.list[index].comment;
                 format!(
                     "  {:?} at {} emitted {count} times",
                     comment.text, comment.range
@@ -109,7 +105,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         } else {
             L::format_node(self, node)
         };
-        self.node_with(node, body)
+        self.with_comments(SyntaxElement::Node(node), body)
     }
 
     pub fn fmt<N: jolt_syntax::AstNode<'a>>(&mut self, node: N) -> Doc {
@@ -123,37 +119,42 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// Leading comments, the token text, trailing comments.
     pub fn token(&mut self, token: SyntaxToken<'a>) -> Doc {
         let text = self.builder.text(token.text());
-        let element = SyntaxElement::Token(token);
-        if !self.comments.has(element) {
-            return text;
-        }
-        let leading = self.leading_comments_of(element);
-        let trailing = self.trailing_comments_of(element);
-        cat![self; leading, text, trailing]
+        self.with_comments(SyntaxElement::Token(token), text)
     }
 
     pub fn token_opt(&mut self, token: Option<SyntaxToken<'a>>) -> Doc {
         token.map_or(Doc::NIL, |token| self.token(token))
     }
 
-    /// `node`'s leading and trailing comments around `body`, which the caller
-    /// built from the node's children.
-    fn node_with(&mut self, node: SyntaxNode<'a>, body: Doc) -> Doc {
-        let element = SyntaxElement::Node(node);
+    /// [`node`](Self::node) or [`token`](Self::token), whichever `element`
+    /// is.
+    pub fn element(&mut self, element: SyntaxElement<'a>) -> Doc {
+        match element {
+            SyntaxElement::Node(node) => self.node(node),
+            SyntaxElement::Token(token) => self.token(token),
+        }
+    }
+
+    pub fn element_opt(&mut self, element: Option<SyntaxElement<'a>>) -> Doc {
+        element.map_or(Doc::NIL, |element| self.element(element))
+    }
+
+    /// The element's leading and trailing comments around `body`.
+    fn with_comments(&mut self, element: SyntaxElement<'a>, body: Doc) -> Doc {
         if !self.comments.has(element) {
             return body;
         }
-        let leading = self.leading_comments_of(element);
-        let trailing = self.trailing_comments_of(element);
+        let leading = self.comments_on(element, Side::Leading);
+        let trailing = self.comments_on(element, Side::Trailing);
         cat![self; leading, body, trailing]
     }
 
     pub fn leading_comments(&mut self, node: SyntaxNode<'a>) -> Doc {
-        self.leading_comments_of(SyntaxElement::Node(node))
+        self.comments_on(SyntaxElement::Node(node), Side::Leading)
     }
 
     pub fn trailing_comments(&mut self, node: SyntaxNode<'a>) -> Doc {
-        self.trailing_comments_of(SyntaxElement::Node(node))
+        self.comments_on(SyntaxElement::Node(node), Side::Trailing)
     }
 
     /// Every comment attached to or inside `element`, in source order, without
@@ -200,19 +201,20 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         let mut before = Vec::new();
         let mut after = Vec::new();
         let last = indices.last().copied();
-        let blank_after = last.is_some_and(|last| self.comments.list[last].lines_after >= 2);
+        let blank_after =
+            last.is_some_and(|last| self.comments.list[last].comment.lines_after >= 2);
         for index in indices {
-            let (side, layout) = self.comments.attached[index];
+            let placed = self.comments.list[index];
             // The last comment has no element left to separate it from.
             let doc = if Some(index) == last
-                && (side, layout) == (Side::Leading, CommentLayout::OwnLine)
+                && (placed.side, placed.layout) == (Side::Leading, CommentLayout::OwnLine)
             {
                 let text = self.comment_doc(index);
-                cat![self; self.builder.hard_line(), text]
+                cat![self; Doc::HARD_LINE, text]
             } else {
-                self.attached_comment(index, side, layout)
+                self.attached_comment(index)
             };
-            if side == Side::Trailing && self.comments.list[index].range.end() <= start {
+            if placed.side == Side::Trailing && placed.comment.range.end() <= start {
                 before.push(doc);
             } else {
                 after.push(doc);
@@ -254,8 +256,8 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .collect();
         apart.extend(
             inside
-                .map(|index| self.comments.list[index])
-                .filter(|comment| !comment.is_unterminated() && lines_outside(comment.text, prefix))
+                .map(|index| self.comments.list[index].comment)
+                .filter(|comment| !comment.raw && lines_outside(comment.text, prefix))
                 .map(|comment| (comment.range, Some(Reindent::Comment))),
         );
         apart.sort_unstable_by_key(|(range, _)| range.start());
@@ -285,7 +287,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                     if self.by_verbatim[index] {
                         continue;
                     }
-                    if self.comments.list[index].range.start() < range.start() {
+                    if self.comments.list[index].comment.range.start() < range.start() {
                         before.push(index);
                     } else {
                         after.push(index);
@@ -295,18 +297,12 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
         before.sort_unstable();
         after.sort_unstable();
-        let edge = |f: &mut Self, indices: Vec<usize>| -> Vec<Doc> {
-            indices
-                .into_iter()
-                .map(|index| {
-                    let (side, layout) = f.comments.attached[index];
-                    f.attached_comment(index, side, layout)
-                })
-                .collect()
-        };
-        let mut all = edge(self, before);
+        let mut all: Vec<Doc> = before
+            .into_iter()
+            .map(|index| self.attached_comment(index))
+            .collect();
         all.append(&mut docs);
-        all.append(&mut edge(self, after));
+        all.extend(after.into_iter().map(|index| self.attached_comment(index)));
         self.builder.concat(all)
     }
 
@@ -327,16 +323,15 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     fn own_lines(&mut self, indices: &[usize]) -> Doc {
         let mut docs = Vec::with_capacity(indices.len() * 2 + 1);
         for (position, &index) in indices.iter().enumerate() {
-            if position == 0 {
-                docs.push(self.builder.break_parent());
+            docs.push(if position == 0 {
+                Doc::BREAK_PARENT
             } else {
-                let lines_before = self.comments.list[index].lines_before;
-                docs.push(match lines_before {
+                match self.comments.list[index].comment.lines_before {
                     0 => Doc::SPACE,
                     1 => Doc::HARD_LINE,
-                    _ => self.builder.empty_line(),
-                });
-            }
+                    _ => Doc::EMPTY_LINE,
+                }
+            });
             // Dangling comments always print on their own lines.
             docs.push(self.comment_doc(index));
         }
@@ -357,11 +352,22 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         if inner.is_nil() {
             return dangling;
         }
-        let line = self.line_or_blank(self.blank_line_before_dangling(owner));
+        let blank = self
+            .comments
+            .attached(SyntaxElement::Node(owner), Side::Dangling)
+            .next()
+            .is_some_and(|index| self.comments.list[index].comment.lines_before >= 2);
+        let line = self.line_break(blank);
         cat![self; inner, line, dangling]
     }
 
     // ── Queries ──
+
+    /// Any comment attached to the element: leading, trailing or dangling.
+    #[must_use]
+    pub fn has_comments(&self, element: SyntaxElement<'a>) -> bool {
+        self.comments.has(element)
+    }
 
     #[must_use]
     pub fn has_leading_comments(&self, element: SyntaxElement<'a>) -> bool {
@@ -384,7 +390,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     pub fn has_trailing_line_comment(&self, element: SyntaxElement<'a>) -> bool {
         self.comments
             .attached(element, Side::Trailing)
-            .any(|index| self.comments.list[index].kind == CommentKind::Line)
+            .any(|index| self.comments.list[index].comment.kind == CommentKind::Line)
     }
 
     /// Some leading comment of the element prints a line break between the
@@ -394,7 +400,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     pub fn leading_comments_break(&self, element: SyntaxElement<'a>) -> bool {
         self.comments
             .attached(element, Side::Leading)
-            .any(|index| self.comments.attached[index].1 != CommentLayout::Inline)
+            .any(|index| self.comments.list[index].layout != CommentLayout::Inline)
     }
 
     /// Some trailing comment of the element ends its line.
@@ -402,7 +408,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     pub fn trailing_comments_break(&self, element: SyntaxElement<'a>) -> bool {
         self.comments
             .attached(element, Side::Trailing)
-            .any(|index| self.comments.attached[index].1 != CommentLayout::Inline)
+            .any(|index| self.comments.list[index].layout != CommentLayout::Inline)
     }
 
     #[must_use]
@@ -425,20 +431,17 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     #[must_use]
     pub fn blank_line_before(&self, element: SyntaxElement<'a>) -> bool {
         if let Some(first) = self.comments.attached(element, Side::Leading).next() {
-            return self.comments.list[first].lines_before >= 2;
+            return self.comments.list[first].comment.lines_before >= 2;
         }
         let Some(token) = element.first_token() else {
             return false;
         };
         let mut newlines = 0;
         for piece in token.leading() {
-            match piece.kind {
-                TriviaKind::Newline => newlines += 1,
-                TriviaKind::LineComment
-                | TriviaKind::BlockComment
-                | TriviaKind::DocComment
-                | TriviaKind::UnterminatedBlockComment => newlines = 0,
-                _ => {}
+            if piece.kind == TriviaKind::Newline {
+                newlines += 1;
+            } else if comments::is_comment(piece.kind) {
+                newlines = 0;
             }
         }
         newlines >= 2
@@ -448,16 +451,13 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// normalization must leave it in place.
     #[must_use]
     pub fn in_ignore_region(&self, node: SyntaxNode<'a>) -> bool {
-        self.region_of(node).is_some()
-    }
-
-    /// The source has a blank line before the node's first dangling comment.
-    #[must_use]
-    pub fn blank_line_before_dangling(&self, node: SyntaxNode<'a>) -> bool {
-        self.comments
-            .attached(SyntaxElement::Node(node), Side::Dangling)
-            .next()
-            .is_some_and(|index| self.comments.list[index].lines_before >= 2)
+        let Some(start) = node.first_token().map(|token| token.text_range().start()) else {
+            return false;
+        };
+        let index = self.regions.partition_point(|region| region.end() <= start);
+        self.regions
+            .get(index)
+            .is_some_and(|region| region.start() <= start)
     }
 
     // ── Item lists ──
@@ -469,22 +469,23 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         mut separator: impl FnMut(&mut Self, Separator<'a>) -> Doc,
     ) -> Doc {
         let mut docs = Vec::new();
-        let mut prev: Option<(SyntaxNode<'a>, Option<usize>)> = None;
+        // The last emitted item, its index, and whether it is ignored.
+        let mut prev: Option<(SyntaxNode<'a>, usize, bool)> = None;
         // An elided item vanished since the last emitted one.
         let mut vanished = false;
         // The previous item was elided and the source has a blank line after
         // its last comment.
         let mut blank_after_elided = false;
-        for item in items {
+        for (index, item) in items.into_iter().enumerate() {
             let (node, elide) = match item {
                 ListItem::Format(node) => (node, false),
                 ListItem::Elide(node) => (node, true),
             };
-            let region = self.region_of(node);
+            let ignored = self.in_ignore_region(node);
             let mut blank_after = false;
-            let doc = if region.is_some() {
+            let doc = if ignored {
                 let body = self.verbatim(node);
-                self.node_with(node, body)
+                self.with_comments(SyntaxElement::Node(node), body)
             } else if elide {
                 let (before, after, blank) = self.removed_parts(SyntaxElement::Node(node));
                 blank_after = blank;
@@ -502,18 +503,20 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             } else {
                 self.node(node)
             };
-            if let Some((prev_node, prev_region)) = prev {
+            if let Some((prev_node, prev_index, prev_ignored)) = prev {
                 let blank = blank_after_elided || self.blank_line_before(SyntaxElement::Node(node));
                 // Items in an ignore region, and the item after one, keep the
                 // source's separation, so the region prints as written.
-                let doc = if prev_region.is_some() {
-                    self.line_or_blank(blank)
+                let doc = if prev_ignored {
+                    self.line_break(blank)
                 } else {
                     separator(
                         self,
                         Separator {
                             prev: prev_node,
                             next: node,
+                            prev_index,
+                            next_index: index,
                             blank_line_in_source: blank,
                         },
                     )
@@ -521,53 +524,26 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 docs.push(doc);
             }
             docs.push(doc);
-            prev = Some((node, region));
+            prev = Some((node, index, ignored));
             vanished = false;
             blank_after_elided = blank_after;
         }
         self.builder.concat(docs)
     }
 
-    fn region_of(&self, node: SyntaxNode<'a>) -> Option<usize> {
-        let start = node.first_token()?.text_range().start();
-        let index = self
-            .regions
-            .partition_point(|region| region.range.end() <= start);
-        self.regions
-            .get(index)
-            .filter(|region| region.range.start() <= start && start < region.range.end())
-            .map(|_| index)
-    }
-
     // ── Comment printing ──
 
-    fn line_or_blank(&self, blank: bool) -> Doc {
-        if blank {
-            self.builder.empty_line()
-        } else {
-            self.builder.hard_line()
+    /// The comments attached to `element` on `side`, each in its effective
+    /// layout.
+    fn comments_on(&mut self, element: SyntaxElement<'a>, side: Side) -> Doc {
+        let positions = self.comments.positions(element, side);
+        if positions.is_empty() {
+            return Doc::NIL;
         }
-    }
-
-    fn leading_comments_of(&mut self, element: SyntaxElement<'a>) -> Doc {
-        let indices: Vec<usize> = self.comments.attached(element, Side::Leading).collect();
-        let docs: Vec<Doc> = indices
-            .into_iter()
-            .map(|index| {
-                let (_, layout) = self.comments.attached[index];
-                self.attached_comment(index, Side::Leading, layout)
-            })
-            .collect();
-        self.builder.concat(docs)
-    }
-
-    fn trailing_comments_of(&mut self, element: SyntaxElement<'a>) -> Doc {
-        let indices: Vec<usize> = self.comments.attached(element, Side::Trailing).collect();
-        let docs: Vec<Doc> = indices
-            .into_iter()
-            .map(|index| {
-                let (_, layout) = self.comments.attached[index];
-                self.attached_comment(index, Side::Trailing, layout)
+        let docs: Vec<Doc> = positions
+            .map(|position| {
+                let index = self.comments.at(position);
+                self.attached_comment(index)
             })
             .collect();
         self.builder.concat(docs)
@@ -576,52 +552,44 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// One attached comment in its effective layout. A comment that verbatim
     /// output already printed is skipped (see the formatter design's
     /// "Verbatim edges").
-    fn attached_comment(&mut self, index: usize, side: Side, layout: CommentLayout) -> Doc {
+    fn attached_comment(&mut self, index: usize) -> Doc {
         if self.by_verbatim[index] {
             return Doc::NIL;
         }
-        let comment = self.comments.list[index];
-        match (side, layout) {
+        let placed = self.comments.list[index];
+        let blank_after = placed.comment.lines_after >= 2;
+        let text = self.comment_doc(index);
+        match (placed.side, placed.layout) {
             (Side::Leading, CommentLayout::OwnLine) => {
-                let after = self.line_or_blank(comment.lines_after >= 2);
-                let text = self.comment_doc(index);
-                cat![self; self.builder.hard_line(), text, after]
+                let after = self.line_break(blank_after);
+                cat![self; Doc::HARD_LINE, text, after]
             }
             // Spaced from what follows like an inline comment, which is what
             // the comment is when the line does not break before it.
             (Side::Leading, CommentLayout::StartOfLine) => {
                 let after = self.space_after(index);
-                let text = self.comment_doc(index);
                 cat![self; Doc::HARD_LINE, text, after]
             }
             (Side::Leading, CommentLayout::EndOfLine) => {
                 let before = self.space_before(index);
-                let after = self.line_or_blank(comment.lines_after >= 2);
-                let text = self.comment_doc(index);
+                let after = self.line_break(blank_after);
                 cat![self; before, text, after]
             }
             // A block comment at the end of a line trails its code like an
             // inline one: it does not force the line to break.
             (Side::Trailing | Side::Dangling, CommentLayout::EndOfLine)
-                if comment.kind == CommentKind::Line =>
+                if placed.comment.kind == CommentKind::Line =>
             {
-                let (space, break_parent) = (Doc::SPACE, Doc::BREAK_PARENT);
-                let text = self.comment_doc(index);
-                let suffix = cat![self; space, text];
+                let suffix = cat![self; Doc::SPACE, text];
                 let suffix = self.builder.line_suffix(suffix);
-                cat![self; suffix, break_parent]
+                cat![self; suffix, Doc::BREAK_PARENT]
             }
-            (_, CommentLayout::OwnLine) => {
-                let (hard_line, after) = (Doc::HARD_LINE, Doc::HARD_LINE);
-                let text = self.comment_doc(index);
-                cat![self; hard_line, text, after]
-            }
+            (_, CommentLayout::OwnLine) => cat![self; Doc::HARD_LINE, text, Doc::HARD_LINE],
             // Code may follow on the line (after a block comment that ended
             // its line in the source), spaced as after a leading inline one.
             (_, CommentLayout::Inline | CommentLayout::StartOfLine | CommentLayout::EndOfLine) => {
                 let before = self.space_before(index);
                 let after = self.space_after(index);
-                let text = self.comment_doc(index);
                 cat![self; before, text, after]
             }
         }
@@ -630,8 +598,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// No space after a token that hugs what follows, unless another comment
     /// of the same gap precedes this one.
     fn space_before(&self, index: usize) -> Doc {
-        let after_comment = index > 0 && self.comments.next[index - 1] == self.comments.next[index];
-        if !after_comment && self.comments.prev[index].is_some_and(L::hugs_next) {
+        if comments::first_in_gap(&self.comments.list, index)
+            && self.comments.list[index].prev.is_some_and(L::hugs_next)
+        {
             Doc::NIL
         } else {
             Doc::SPACE
@@ -641,7 +610,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// No space before a closer or separator. (A comment after this one
     /// brings its own space.)
     fn space_after(&self, index: usize) -> Doc {
-        let next = self.comments.next[index];
+        let next = self.comments.list[index].next;
         if L::is_closer(next) || L::is_separator(next) {
             Doc::NIL
         } else {
@@ -652,13 +621,13 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// The comment's text, counted as emitted.
     fn comment_doc(&mut self, index: usize) -> Doc {
         self.emitted[index] += 1;
-        let comment = self.comments.list[index];
+        let comment = self.comments.list[index].comment;
         if comment.kind == CommentKind::Line {
             return self
                 .builder
                 .comment_text(comment.text.trim_end(), LINE_COMMENT);
         }
-        if comment.is_unterminated() {
+        if comment.raw {
             return self.builder.text(comment.text.trim_end());
         }
         if has_line_break(comment.text) {
@@ -671,7 +640,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
 /// Whether a continuation line of a multi-line `text` does not start with
 /// `prefix` (blank lines aside).
 fn lines_outside(text: &str, prefix: &str) -> bool {
-    text.lines()
+    lines(text)
         .skip(1)
         .any(|line| !line.trim().is_empty() && !line.starts_with(prefix))
 }
@@ -687,55 +656,57 @@ fn line_indentation(source: &str, offset: TextSize) -> &str {
     &line[..end]
 }
 
-fn marker(text: &str) -> Option<bool> {
+/// A formatter-ignore marker comment.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Marker {
+    /// `@formatter:off`, which starts a region.
+    Off,
+    /// `@formatter:on`, which ends it.
+    On,
+}
+
+fn marker(text: &str) -> Option<Marker> {
     let body = text
         .strip_prefix("//")
         .or_else(|| text.strip_prefix("/*")?.strip_suffix("*/"))?
         .trim();
     match body {
-        "@formatter:off" => Some(false),
-        "@formatter:on" => Some(true),
+        "@formatter:off" => Some(Marker::Off),
+        "@formatter:on" => Some(Marker::On),
         _ => None,
     }
 }
 
 /// Pairs `@formatter:off`/`on` markers that sit between the items of one
-/// list into sorted, disjoint regions.
+/// list into sorted, disjoint regions. A region runs from the end of its
+/// `off` marker to the start of its `on` marker, or, without one, to the end
+/// of the list's owner (before its closer).
 fn ignore_regions<'a, L: FormatLanguage>(
     root: SyntaxNode<'a>,
     comments: &Comments<'a>,
-) -> Vec<Region> {
+) -> Vec<TextRange> {
     let mut regions = Vec::new();
-    let mut open: Option<(TextSize, Option<NodeId>, SyntaxNode<'a>)> = None;
-    for (index, comment) in comments.list.iter().enumerate() {
-        let Some(on) = marker(comment.text) else {
+    // The end of the open region's `off` marker and the list owner.
+    let mut open: Option<(TextSize, SyntaxNode<'a>)> = None;
+    for placed in &comments.list {
+        let Some(marker) = marker(placed.comment.text) else {
             continue;
         };
-        let scope = || {
-            L::ignore_scope(comments::enclosing(
-                root,
-                comments.prev[index],
-                comments.next[index],
-            ))
-        };
-        match (on, open) {
-            (false, None) => {
-                if let Some(owner) = scope() {
-                    open = Some((comment.range.end(), Some(owner.id()), owner));
-                }
+        let scope = || L::ignore_scope(comments::enclosing(root, placed.prev, placed.next));
+        match (marker, open) {
+            (Marker::Off, None) => {
+                open = scope().map(|owner| (placed.comment.range.end(), owner));
             }
-            (true, Some((start, owner, _))) => {
-                if scope().map(SyntaxNode::id) == owner {
-                    regions.push(Region {
-                        range: TextRange::new(start, comment.range.start()),
-                    });
+            (Marker::On, Some((start, owner))) => {
+                if scope() == Some(owner) {
+                    regions.push(TextRange::new(start, placed.comment.range.start()));
                 }
                 open = None;
             }
             _ => {}
         }
     }
-    if let Some((start, _, owner)) = open {
+    if let Some((start, owner)) = open {
         let end = owner.last_token().map_or_else(
             || owner.text_range().end(),
             |last| {
@@ -747,9 +718,7 @@ fn ignore_regions<'a, L: FormatLanguage>(
             },
         );
         if start < end {
-            regions.push(Region {
-                range: TextRange::new(start, end),
-            });
+            regions.push(TextRange::new(start, end));
         }
     }
     regions

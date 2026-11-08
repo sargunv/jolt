@@ -7,9 +7,9 @@ use jolt_java_syntax::{
 };
 use jolt_syntax::AstNode;
 
-use super::{statement_items, statement_separator};
+use super::statement_items;
 use crate::JavaFormatter;
-use crate::helpers::bodies::braced_body;
+use crate::helpers::bodies::{braced_body, statement_separator};
 
 /// `{`, the statements one per line (blank lines kept, at most one), `}`.
 pub(crate) fn block<'a>(f: &mut JavaFormatter<'a>, node: Block<'a>) -> Doc {
@@ -37,11 +37,7 @@ pub(crate) fn local_variable_declaration<'a>(
     node: LocalVariableDeclaration<'a>,
 ) -> Doc {
     let modifiers = f.fmt_opt(node.modifiers());
-    let ty = match node.r#type() {
-        Some(LocalVariableType::Type(ty)) => f.fmt(ty),
-        Some(LocalVariableType::Token(token)) => f.token(token),
-        None => Doc::NIL,
-    };
+    let ty = f.element_opt(node.r#type().map(LocalVariableType::element));
     let declarators = f.fmt_opt(node.declarators());
     cat![f; modifiers, ty, f.space(), declarators]
 }

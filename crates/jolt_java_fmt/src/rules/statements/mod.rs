@@ -8,16 +8,15 @@ mod switches;
 mod tries;
 
 use jolt_fmt::ListItem;
-use jolt_java_syntax::{BlockItem, BlockStatementList};
+use jolt_java_syntax::BlockStatementList;
 use jolt_syntax::{AstNode, ListElement, SyntaxNode};
 
-use crate::helpers::bodies;
+use crate::helpers::bodies::body_items;
 
 pub(crate) use blocks::{
     block, block_statement, empty_statement, expression_statement, labeled_statement,
     local_class_or_interface_declaration, local_variable_declaration,
 };
-pub(crate) use control::promoted_body_comment;
 pub(crate) use control::{
     basic_for_statement, do_statement, enhanced_for_statement, enhanced_for_variable,
     for_initializer, for_statement, for_update, if_statement, synchronized_statement,
@@ -37,8 +36,6 @@ pub(crate) use tries::{
     try_with_resources_statement, variable_access,
 };
 
-pub(crate) use crate::helpers::lists::parenthesized;
-
 /// The statements of a block or switch group as item-list items: every
 /// child of the list, including bogus ones, with empty statements elided
 /// (N5) when `owner` is recovery-free.
@@ -46,22 +43,13 @@ fn statement_items<'a>(
     owner: SyntaxNode<'a>,
     list: Option<BlockStatementList<'a>>,
 ) -> Vec<ListItem<'a>> {
-    let Some(list) = list else {
-        return Vec::new();
-    };
-    let normalize = owner.is_recovery_free();
-    list.elements()
+    let statements = list
+        .into_iter()
+        .flat_map(BlockStatementList::elements)
         .filter_map(|element| match element {
-            ListElement::Item(statement)
-                if normalize && matches!(statement.item(), Some(BlockItem::EmptyStatement(_))) =>
-            {
-                Some(ListItem::Elide(statement.syntax()))
-            }
-            ListElement::Item(statement) => Some(ListItem::Format(statement.syntax())),
-            ListElement::Bogus(bogus) => Some(ListItem::Format(bogus)),
+            ListElement::Item(statement) => Some(statement.syntax()),
+            ListElement::Bogus(bogus) => Some(bogus),
             ListElement::Separator(_) | ListElement::Missing => None,
-        })
-        .collect()
+        });
+    body_items(owner, statements)
 }
-
-use bodies::statement_separator;

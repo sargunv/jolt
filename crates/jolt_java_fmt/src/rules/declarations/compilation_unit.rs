@@ -1,27 +1,30 @@
 //! The compilation unit, package and import declarations, and import sorting
 //! (N1).
 
-use std::collections::HashMap;
-
 use jolt_fmt::{Doc, ListItem, Separator, cat};
 use jolt_java_syntax::{
     CompilationUnit, CompilationUnitItem, ImportDeclaration, JavaSyntaxKind as K,
     PackageDeclaration,
 };
-use jolt_syntax::{AstNode, NodeId, SyntaxElement, SyntaxNode};
+use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode};
 
 use crate::JavaFormatter;
-use crate::rules::types::annotation_lines;
+use crate::helpers::spaced_node;
+use crate::rules::types::{annotation_lines, name_key};
 
 pub(crate) fn compilation_unit<'a>(f: &mut JavaFormatter<'a>, node: CompilationUnit<'a>) -> Doc {
     let items: Vec<CompilationUnitItem<'a>> = node
         .items()
         .map(|list| list.items().collect())
         .unwrap_or_default();
-    let mut roles = HashMap::new();
-    let ordered = order_items(f, &items, &mut roles);
-    let body = f.item_list(ordered, |f, separator| {
-        top_level_separator(f, separator, &roles)
+    let Ordered { items, roles, .. } = order_items(f, &items);
+    let body = f.item_list(items, |f, separator| {
+        top_level_separator(
+            f,
+            separator,
+            roles[separator.prev_index],
+            roles[separator.next_index],
+        )
     });
     let Some(eof) = node.eof() else {
         return body;
@@ -29,10 +32,8 @@ pub(crate) fn compilation_unit<'a>(f: &mut JavaFormatter<'a>, node: CompilationU
     let eof_element = SyntaxElement::Token(eof);
     let before_eof = if body.is_nil() || !f.has_leading_comments(eof_element) {
         Doc::NIL
-    } else if f.blank_line_before(eof_element) {
-        f.empty_line()
     } else {
-        f.hard_line()
+        f.line_break(f.blank_line_before(eof_element))
     };
     let eof = f.token(eof);
     cat![f; body, before_eof, eof]
@@ -66,10 +67,7 @@ pub(crate) fn import_declaration<'a>(
     docs.push(f.fmt_opt(node.name()));
     docs.push(f.token_opt(node.on_demand_dot()));
     docs.push(f.token_opt(node.star()));
-    if let Some(suffix) = node.suffix() {
-        docs.push(f.space());
-        docs.push(f.fmt(suffix));
-    }
+    docs.push(spaced_node(f, node.suffix()));
     docs.push(f.token_opt(node.semicolon()));
     f.concat(docs)
 }
@@ -91,21 +89,82 @@ enum Role {
     Carrier { last: bool },
 }
 
+/// The top-level items in output order, each with its role (`None` for an
+/// item that is not an import and not a removed `;`).
+struct Ordered<'a> {
+    items: Vec<ListItem<'a>>,
+    roles: Vec<Option<Role>>,
+    /// The number of import sections so far.
+    sections: usize,
+}
+
+impl<'a> Ordered<'a> {
+    fn push(&mut self, item: ListItem<'a>, role: Option<Role>) {
+        self.items.push(item);
+        self.roles.push(role);
+    }
+
+    /// Emits an import section: barriers (unsortable imports) stay in place
+    /// and split it into segments; each segment prints its normal imports,
+    /// then its static ones; within each group an anchor starts a new run and
+    /// stays first in it, and the rest of the run sorts by name.
+    fn import_section(&mut self, units: Vec<Unit<'a>>) {
+        let section = self.sections;
+        self.sections += 1;
+        let mut segment = Vec::new();
+        for unit in units {
+            if unit.sortable {
+                segment.push(unit);
+            } else {
+                self.import_segment(std::mem::take(&mut segment), section);
+                self.import_unit(&unit, section);
+            }
+        }
+        self.import_segment(segment, section);
+    }
+
+    fn import_segment(&mut self, units: Vec<Unit<'a>>, section: usize) {
+        let (statics, normals): (Vec<_>, Vec<_>) =
+            units.into_iter().partition(|unit| unit.is_static);
+        for mut group in [normals, statics] {
+            for run in group.chunk_by_mut(|_, unit| !unit.anchor) {
+                let start = usize::from(run[0].anchor);
+                run[start..].sort_by(|a, b| a.key.cmp(&b.key));
+            }
+            for unit in &group {
+                self.import_unit(unit, section);
+            }
+        }
+    }
+
+    fn import_unit(&mut self, unit: &Unit<'a>, section: usize) {
+        let is_static = unit.is_static;
+        for &carrier in &unit.carriers {
+            self.push(
+                ListItem::Elide(carrier),
+                Some(Role::ImportCarrier { section, is_static }),
+            );
+        }
+        let role = Role::Import {
+            section,
+            is_static,
+            anchor: unit.anchor,
+        };
+        self.push(ListItem::Format(unit.import.syntax()), Some(role));
+    }
+}
+
 fn top_level_separator<'a>(
     f: &mut JavaFormatter<'a>,
     separator: Separator<'a>,
-    roles: &HashMap<NodeId, Role>,
+    prev: Option<Role>,
+    next: Option<Role>,
 ) -> Doc {
-    let role = |node: SyntaxNode<'_>| roles.get(&node.id()).copied();
     let section = |role: Option<Role>| match role {
         Some(Role::Import { section, .. } | Role::ImportCarrier { section, .. }) => Some(section),
         _ => None,
     };
-    let (prev, next) = (role(separator.prev), role(separator.next));
     let blank = separator.blank_line_in_source;
-    let line_or_blank = |f: &JavaFormatter<'a>, blank| {
-        if blank { f.empty_line() } else { f.hard_line() }
-    };
     let is_static = |role: Option<Role>| {
         matches!(
             role,
@@ -126,7 +185,7 @@ fn top_level_separator<'a>(
             // The blank line between the normal and the static imports.
             _ if !is_static(prev) && is_static(next) => f.empty_line(),
             (_, Some(Role::ImportCarrier { .. } | Role::Import { anchor: true, .. })) => {
-                line_or_blank(f, blank)
+                f.line_break(blank)
             }
             _ => f.hard_line(),
         };
@@ -137,9 +196,9 @@ fn top_level_separator<'a>(
     let is_field = |node: SyntaxNode<'_>| K::from_raw(node.kind()) == K::FieldDeclaration;
     match (prev, next) {
         (Some(Role::Carrier { .. }), _) | (_, Some(Role::Carrier { last: true })) => {
-            line_or_blank(f, blank)
+            f.line_break(blank)
         }
-        _ if is_field(separator.prev) && is_field(separator.next) => line_or_blank(f, blank),
+        _ if is_field(separator.prev) && is_field(separator.next) => f.line_break(blank),
         _ => f.empty_line(),
     }
 }
@@ -156,34 +215,31 @@ struct Unit<'a> {
 
 /// The items in output order: each run of imports (with the `;` items
 /// between them) is grouped and sorted.
-fn order_items<'a>(
-    f: &JavaFormatter<'a>,
-    items: &[CompilationUnitItem<'a>],
-    roles: &mut HashMap<NodeId, Role>,
-) -> Vec<ListItem<'a>> {
-    let mut ordered = Vec::with_capacity(items.len());
+fn order_items<'a>(f: &JavaFormatter<'a>, items: &[CompilationUnitItem<'a>]) -> Ordered<'a> {
+    let mut ordered = Ordered {
+        items: Vec::with_capacity(items.len()),
+        roles: Vec::with_capacity(items.len()),
+        sections: 0,
+    };
     let last_content = items
         .iter()
         .rposition(|item| !matches!(item, CompilationUnitItem::EmptyDeclaration(_)));
-    let mut sections = 0;
     let mut index = 0;
     while index < items.len() {
         let item = items[index];
         if let CompilationUnitItem::ImportDeclaration(_) = item {
             let end = section_end(items, index);
             let units = import_units(f, &items[index..end], &mut ordered);
-            emit_section(units, sections, &mut ordered, roles);
-            sections += 1;
+            ordered.import_section(units);
             index = end;
             continue;
         }
         let node = item.syntax();
         if let CompilationUnitItem::EmptyDeclaration(_) = item {
             let last = last_content.is_none_or(|content| index > content);
-            roles.insert(node.id(), Role::Carrier { last });
-            ordered.push(ListItem::Elide(node));
+            ordered.push(ListItem::Elide(node), Some(Role::Carrier { last }));
         } else {
-            ordered.push(ListItem::Format(node));
+            ordered.push(ListItem::Format(node), None);
         }
         index += 1;
     }
@@ -204,123 +260,39 @@ fn section_end(items: &[CompilationUnitItem<'_>], start: usize) -> usize {
     end
 }
 
+/// The imports of a section with the `;` items that lead them. A `;`
+/// without comments vanishes wherever it is listed, so it is listed first.
 fn import_units<'a>(
     f: &JavaFormatter<'a>,
     items: &[CompilationUnitItem<'a>],
-    ordered: &mut Vec<ListItem<'a>>,
+    ordered: &mut Ordered<'a>,
 ) -> Vec<Unit<'a>> {
     let mut units = Vec::new();
     let mut carriers = Vec::new();
     for &item in items {
         match item {
             CompilationUnitItem::ImportDeclaration(import) => {
-                let name = import.name().map(AstNode::syntax);
+                let name = import.name();
                 let anchor = !carriers.is_empty()
                     || f.has_leading_comments(SyntaxElement::Node(import.syntax()));
+                let mut key = name.map(name_key).unwrap_or_default();
+                if import.star().is_some() {
+                    key.push_str(".*");
+                }
                 units.push(Unit {
                     carriers: std::mem::take(&mut carriers),
                     import,
-                    key: import_key(import),
+                    key,
                     is_static: import.static_keyword().is_some(),
                     anchor,
                     sortable: import.syntax().is_recovery_free()
-                        && name.is_some_and(|name| !f.has_comments_within(name))
+                        && name.is_some_and(|name| !f.has_comments_within(name.syntax()))
                         && !f.in_ignore_region(import.syntax()),
                 });
             }
             _ if f.has_comments_within(item.syntax()) => carriers.push(item.syntax()),
-            // A `;` without comments vanishes wherever it is listed.
-            _ => ordered.push(ListItem::Elide(item.syntax())),
+            _ => ordered.push(ListItem::Elide(item.syntax()), None),
         }
     }
     units
-}
-
-fn import_key(import: ImportDeclaration<'_>) -> String {
-    let mut key = String::new();
-    if let Some(name) = import.name() {
-        for token in name.syntax().tokens() {
-            key.push_str(token.text());
-        }
-    }
-    if import.star().is_some() {
-        key.push_str(".*");
-    }
-    key
-}
-
-/// Emits a section: barriers (unsortable imports) stay in place and split it
-/// into segments; each segment prints its normal imports, then its static
-/// ones; within each group an anchor starts a new run and stays first in it,
-/// and the rest of the run sorts by name.
-fn emit_section<'a>(
-    units: Vec<Unit<'a>>,
-    section: usize,
-    ordered: &mut Vec<ListItem<'a>>,
-    roles: &mut HashMap<NodeId, Role>,
-) {
-    let mut segment = Vec::new();
-    for unit in units {
-        if unit.sortable {
-            segment.push(unit);
-        } else {
-            emit_segment(std::mem::take(&mut segment), section, ordered, roles);
-            emit_unit(&unit, section, ordered, roles);
-        }
-    }
-    emit_segment(segment, section, ordered, roles);
-}
-
-fn emit_segment<'a>(
-    units: Vec<Unit<'a>>,
-    section: usize,
-    ordered: &mut Vec<ListItem<'a>>,
-    roles: &mut HashMap<NodeId, Role>,
-) {
-    let (statics, normals): (Vec<_>, Vec<_>) = units.into_iter().partition(|unit| unit.is_static);
-    for group in [normals, statics] {
-        for mut run in runs(group) {
-            let start = usize::from(run[0].anchor);
-            run[start..].sort_by(|a, b| a.key.cmp(&b.key));
-            for unit in &run {
-                emit_unit(unit, section, ordered, roles);
-            }
-        }
-    }
-}
-
-/// Splits a group before each anchor.
-fn runs(group: Vec<Unit<'_>>) -> Vec<Vec<Unit<'_>>> {
-    let mut runs: Vec<Vec<Unit<'_>>> = Vec::new();
-    for unit in group {
-        match runs.last_mut() {
-            Some(run) if !unit.anchor => run.push(unit),
-            _ => runs.push(vec![unit]),
-        }
-    }
-    runs
-}
-
-fn emit_unit<'a>(
-    unit: &Unit<'a>,
-    section: usize,
-    ordered: &mut Vec<ListItem<'a>>,
-    roles: &mut HashMap<NodeId, Role>,
-) {
-    let is_static = unit.is_static;
-    for &carrier in &unit.carriers {
-        roles.insert(carrier.id(), Role::ImportCarrier { section, is_static });
-        ordered.push(ListItem::Elide(carrier));
-    }
-    let node = unit.import.syntax();
-    roles.insert(
-        node.id(),
-        Role::Import {
-            section,
-            is_static,
-            anchor: unit.anchor,
-        },
-    );
-    ordered.push(ListItem::Format(node));
-    debug_assert_eq!(K::from_raw(node.kind()), K::ImportDeclaration);
 }

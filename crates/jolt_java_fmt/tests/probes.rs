@@ -43,17 +43,15 @@ fn probe_all(
     let clean = parse_facts(language, source).diagnostics.is_empty();
     let options = FormatOptions::default();
     for boundary in language.token_end_offsets(source) {
-        {
-            let probed = probed_source(source, boundary, shape);
-            if clean && !parse_facts(language, &probed).diagnostics.is_empty() {
-                continue;
-            }
-            for failure in sweep_variant(language, &probed, &options, shape.name) {
-                failures.push(format!(
-                    "{label} @{boundary} [{}]\n{probed}\n{}",
-                    failure.category, failure.detail
-                ));
-            }
+        let probed = probed_source(source, boundary, shape);
+        if clean && !parse_facts(language, &probed).diagnostics.is_empty() {
+            continue;
+        }
+        for failure in sweep_variant(language, &probed, &options, shape.name) {
+            failures.push(format!(
+                "{label} @{boundary} [{}]\n{probed}\n{}",
+                failure.category, failure.detail
+            ));
         }
     }
 }

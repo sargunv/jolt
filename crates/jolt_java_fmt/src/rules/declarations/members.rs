@@ -1,25 +1,20 @@
 //! Fields, methods, constructors, initializers, annotation elements, and
 //! their parts.
 
-use jolt_fmt::{Doc, ListItem, cat};
+use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
-    AnnotationElementDeclaration, BlockItem, CompactConstructorDeclaration, ConstructorBody,
-    ConstructorBodyEntry, ConstructorDeclaration, ConstructorInvocation, DefaultValue,
+    AnnotationElementDeclaration, CompactConstructorDeclaration, ConstructorBody,
+    ConstructorBodyEntryList, ConstructorDeclaration, ConstructorInvocation, DefaultValue,
     FieldDeclaration, FormalParameterList, InstanceInitializer, MethodBody, MethodDeclaration,
-    RecordComponent, StaticInitializer,
+    StaticInitializer,
 };
 use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode, SyntaxToken};
 
-use super::types::{HeaderEnd, header};
+use super::types::{HeaderEnd, header, split_close};
 use crate::JavaFormatter;
-use crate::helpers::bodies::{braced_body, statement_separator};
-use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
-use crate::rules::types::inline_modifiers;
-
-const PARAMETERS: ListLayout = ListLayout {
-    padded: false,
-    trailing_comma: TrailingComma::Never,
-};
+use crate::helpers::bodies::{body_items, braced_body, statement_separator};
+use crate::helpers::lists::{ListLayout, delimited};
+use crate::helpers::spaced_node;
 
 pub(crate) fn field_declaration<'a>(f: &mut JavaFormatter<'a>, node: FieldDeclaration<'a>) -> Doc {
     let modifiers = f.fmt_opt(node.modifiers());
@@ -74,7 +69,7 @@ pub(crate) fn method_declaration<'a>(
     });
     let header = header(f, lead, head, end);
     let body = match node.body() {
-        Some(MethodBody::Block(block)) => body_after_space(f, Some(block.syntax())),
+        Some(MethodBody::Block(block)) => spaced_node(f, Some(block)),
         Some(MethodBody::Token(semicolon)) => f.token(semicolon),
         None => Doc::NIL,
     };
@@ -109,21 +104,8 @@ pub(crate) fn constructor_declaration<'a>(
         HeaderEnd::Clauses(vec![throws.syntax()])
     });
     let header = header(f, lead, head, end);
-    let body = body_after_space(f, node.body().map(AstNode::syntax));
+    let body = spaced_node(f, node.body());
     cat![f; modifiers, header, body]
-}
-
-/// The `)` of a header: inside the parameter list, or, when it ends the
-/// header, the header's tail (see `header`).
-fn split_close(
-    close: Option<SyntaxToken<'_>>,
-    ends_head: bool,
-) -> (Option<SyntaxToken<'_>>, Option<SyntaxToken<'_>>) {
-    if ends_head {
-        (None, close)
-    } else {
-        (close, None)
-    }
 }
 
 /// `modifiers Name {`.
@@ -133,26 +115,18 @@ pub(crate) fn compact_constructor_declaration<'a>(
 ) -> Doc {
     let modifiers = f.fmt_opt(node.modifiers());
     let name = f.token_opt(node.name());
-    let body = body_after_space(f, node.body().map(AstNode::syntax));
+    let body = spaced_node(f, node.body());
     cat![f; modifiers, name, body]
 }
 
 /// A block whose first statement may be an explicit constructor invocation.
 pub(crate) fn constructor_body<'a>(f: &mut JavaFormatter<'a>, node: ConstructorBody<'a>) -> Doc {
-    let normalize = node.syntax().is_recovery_free();
-    let entries: Vec<_> = node
+    let entries = node
         .entries()
         .into_iter()
-        .flat_map(jolt_java_syntax::ConstructorBodyEntryList::items)
-        .map(|entry| match entry {
-            ConstructorBodyEntry::BlockStatement(statement)
-                if normalize && matches!(statement.item(), Some(BlockItem::EmptyStatement(_))) =>
-            {
-                ListItem::Elide(statement.syntax())
-            }
-            _ => ListItem::Format(entry.syntax()),
-        })
-        .collect();
+        .flat_map(ConstructorBodyEntryList::items)
+        .map(AstNode::syntax);
+    let entries = body_items(node.syntax(), entries);
     braced_body(
         f,
         node.syntax(),
@@ -182,7 +156,7 @@ pub(crate) fn static_initializer<'a>(
     node: StaticInitializer<'a>,
 ) -> Doc {
     let keyword = f.token_opt(node.static_keyword());
-    let body = body_after_space(f, node.body().map(AstNode::syntax));
+    let body = spaced_node(f, node.body());
     cat![f; keyword, body]
 }
 
@@ -209,13 +183,7 @@ pub(crate) fn annotation_element_declaration<'a>(
         node.close_paren(),
     );
     let dimensions = f.fmt_opt(node.dimensions());
-    let default = match node.default() {
-        Some(default) => {
-            let default = f.fmt(default);
-            cat![f; f.space(), default]
-        }
-        None => Doc::NIL,
-    };
+    let default = spaced_node(f, node.default());
     let semicolon = f.token_opt(node.semicolon());
     let declaration = cat![f; modifiers, ty, f.space(), name, parentheses, dimensions, default];
     let declaration = f.group(declaration);
@@ -229,25 +197,6 @@ pub(crate) fn default_value<'a>(f: &mut JavaFormatter<'a>, node: DefaultValue<'a
     cat![f; keyword, f.space(), value]
 }
 
-/// One component, laid out like a formal parameter: modifiers inline.
-pub(crate) fn record_component<'a>(f: &mut JavaFormatter<'a>, node: RecordComponent<'a>) -> Doc {
-    let modifiers = match node.modifiers() {
-        Some(modifiers) => inline_modifiers(f, modifiers),
-        None => Doc::NIL,
-    };
-    let ty = f.fmt_opt(node.r#type());
-    // `String @A ... names`: the annotations print with a space after them.
-    let varargs_annotations = f.fmt_opt(node.varargs_annotations());
-    let varargs_annotations = if varargs_annotations.is_nil() {
-        Doc::NIL
-    } else {
-        cat![f; f.space(), varargs_annotations]
-    };
-    let ellipsis = f.token_opt(node.ellipsis());
-    let name = f.token_opt(node.name());
-    cat![f; modifiers, ty, varargs_annotations, ellipsis, f.space(), name]
-}
-
 /// `(params)` as a break-all list owned by `owner`, the declaration that
 /// holds the parentheses.
 fn parameters<'a>(
@@ -258,16 +207,5 @@ fn parameters<'a>(
     close: Option<SyntaxToken<'a>>,
 ) -> Doc {
     let elements = list.into_iter().flat_map(FormalParameterList::elements);
-    delimited(f, owner, open, elements, close, PARAMETERS)
-}
-
-/// ` {body}`, or nothing when the body is missing.
-fn body_after_space<'a>(f: &mut JavaFormatter<'a>, body: Option<SyntaxNode<'a>>) -> Doc {
-    match body {
-        Some(body) => {
-            let body = f.node(body);
-            cat![f; f.space(), body]
-        }
-        None => Doc::NIL,
-    }
+    delimited(f, owner, open, elements, close, ListLayout::Plain)
 }

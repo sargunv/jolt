@@ -2,13 +2,13 @@
 
 use jolt_fmt::{Doc, cat};
 use jolt_java_syntax::{
-    Annotation, AnnotationArgumentList, AnnotationArrayInitializer, AnnotationElementValue,
-    AnnotationElementValuePair,
+    Annotation, AnnotationArgumentList, AnnotationArrayInitializer, AnnotationElementArgumentList,
+    AnnotationElementValue, AnnotationElementValueList, AnnotationElementValuePair,
 };
 use jolt_syntax::AstNode;
 
 use crate::JavaFormatter;
-use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
+use crate::helpers::lists::{ListLayout, delimited};
 
 pub(crate) fn annotation<'a>(f: &mut JavaFormatter<'a>, node: Annotation<'a>) -> Doc {
     let at = f.token_opt(node.at());
@@ -28,12 +28,9 @@ pub(crate) fn annotation_argument_list<'a>(
         node.open_paren(),
         node.elements()
             .into_iter()
-            .flat_map(jolt_java_syntax::AnnotationElementArgumentList::elements),
+            .flat_map(AnnotationElementArgumentList::elements),
         node.close_paren(),
-        ListLayout {
-            padded: false,
-            trailing_comma: TrailingComma::Never,
-        },
+        ListLayout::Plain,
     )
 }
 
@@ -67,11 +64,8 @@ pub(crate) fn annotation_array_initializer<'a>(
         node.open_brace(),
         node.values()
             .into_iter()
-            .flat_map(jolt_java_syntax::AnnotationElementValueList::elements),
+            .flat_map(AnnotationElementValueList::elements),
         node.close_brace(),
-        ListLayout {
-            padded: true,
-            trailing_comma: TrailingComma::IfBroken,
-        },
+        ListLayout::Initializer,
     )
 }

@@ -1,26 +1,21 @@
 //! Delimited comma lists.
 
 use jolt_fmt::{Doc, cat, group, indent, is_unclosed};
-use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
+use jolt_syntax::{AstNode, ListElement, SyntaxNode, SyntaxToken};
 
 use crate::{JavaFormat, JavaFormatter};
 
+/// The two layouts of a delimited list.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum TrailingComma {
-    /// Argument, parameter and type-argument lists (Java forbids one there).
-    Never,
-    /// Array and annotation-array initializers: a synthesized `,` when
-    /// broken (before a trailing line comment of the last element: `last, //
-    /// c`); a trailing `,` in the source forces the broken layout and is
-    /// printed with `token`.
-    IfBroken,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub(crate) struct ListLayout {
-    /// `{ a, b }` when flat.
-    pub(crate) padded: bool,
-    pub(crate) trailing_comma: TrailingComma,
+pub(crate) enum ListLayout {
+    /// Argument, parameter, type-argument and pattern lists: `(a, b)` when
+    /// flat, and no trailing comma (Java forbids one there).
+    Plain,
+    /// Array and annotation-array initializers: `{ a, b }` when flat; when
+    /// broken, a synthesized `,` after the last element (before a trailing
+    /// line comment of the last element: `last, // c`). A trailing `,` in
+    /// the source forces the broken layout and is printed with `token`.
+    Initializer,
 }
 
 /// `open item, item close` with the break-all layout: flat if it fits, else
@@ -32,48 +27,33 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     f: &mut JavaFormatter<'a>,
     owner: SyntaxNode<'a>,
     open: Option<SyntaxToken<'a>>,
-    elements: impl Iterator<Item = ListElement<'a, T>>,
+    elements: impl IntoIterator<Item = ListElement<'a, T>>,
     close: Option<SyntaxToken<'a>>,
     layout: ListLayout,
 ) -> Doc {
-    let elements: Vec<_> = elements
+    let mut elements = elements
+        .into_iter()
         .filter(|element| !matches!(element, ListElement::Missing))
-        .collect();
-    let mut docs = Vec::with_capacity(elements.len() * 2 + 2);
-    let mut after_item = false;
+        .peekable();
+    let mut docs = Vec::new();
     let mut has_items = false;
-    for (index, element) in elements.iter().enumerate() {
-        let last = index + 1 == elements.len();
-        match *element {
-            ListElement::Item(item) => {
-                if after_item {
-                    docs.push(f.line());
-                }
-                docs.push(f.fmt(item));
-                after_item = true;
-                has_items = true;
-            }
-            ListElement::Bogus(node) => {
-                if after_item {
-                    docs.push(f.line());
-                }
-                docs.push(f.node(node));
-                after_item = true;
-                has_items = true;
-            }
-            ListElement::Separator(token) => {
-                docs.push(f.token(token));
-                if !last {
-                    docs.push(f.line());
-                }
-                after_item = false;
-            }
-            ListElement::Missing => {}
+    // The last element is an item, or a separator (recovery: a trailing one).
+    let mut after_item = false;
+    while let Some(element) = elements.next() {
+        let separator = matches!(element, ListElement::Separator(_));
+        // Two items without a separator between them (recovery).
+        if !separator && after_item {
+            docs.push(f.line());
         }
+        docs.push(list_item(f, element));
+        if separator && elements.peek().is_some() {
+            docs.push(f.line());
+        }
+        after_item = !separator;
+        has_items |= !separator;
     }
-    let trailing_separator = matches!(elements.last(), Some(ListElement::Separator(_)));
-    if has_items && layout.trailing_comma == TrailingComma::IfBroken {
-        if trailing_separator {
+    if has_items && layout == ListLayout::Initializer {
+        if !after_item {
             docs.push(f.break_parent());
         } else if owner.is_recovery_free() {
             // N8 normalizes only recovery-free lists.
@@ -83,33 +63,28 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     }
     let items = f.concat(docs);
     let inner = f.with_dangling(owner, items);
-    let before_close = before_closer(f, open, layout.padded);
+    let line = match layout {
+        ListLayout::Plain => f.soft_line(),
+        ListLayout::Initializer => f.line(),
+    };
+    let before_close = before_closer(open, line);
     let open = f.token_opt(open);
     let close = f.token_opt(close);
     if inner.is_nil() {
         return cat![f; open, close];
     }
-    let line = if layout.padded {
-        f.line()
-    } else {
-        f.soft_line()
-    };
-    let inner = cat![f; line, inner];
-    let inner = f.indent(inner);
-    let list = cat![f; open, inner, before_close, close];
-    f.group(list)
+    let inner = indent![f; line, inner];
+    group![f; open, inner, before_close, close]
 }
 
-/// The line that puts the closer on its own line when the list breaks, or
-/// nothing when it is missing (recovery): what follows then continues after
-/// the last element, where the source has it.
-fn before_closer<'a>(f: &JavaFormatter<'a>, open: Option<SyntaxToken<'a>>, padded: bool) -> Doc {
+/// `line`, which puts the closer on its own line when the list breaks, or
+/// nothing when the closer is missing (recovery): what follows then
+/// continues after the last element, where the source has it.
+fn before_closer(open: Option<SyntaxToken<'_>>, line: Doc) -> Doc {
     if open.is_some_and(is_unclosed::<JavaFormat>) {
         Doc::NIL
-    } else if padded {
-        f.line()
     } else {
-        f.soft_line()
+        line
     }
 }
 
@@ -147,7 +122,7 @@ pub(crate) fn parenthesized<'a>(
     inner: Doc,
     close: Option<SyntaxToken<'a>>,
 ) -> Doc {
-    let before_close = before_closer(f, open, false);
+    let before_close = before_closer(open, f.soft_line());
     let open = f.token_opt(open);
     let inner = f.with_dangling(owner, inner);
     let inner = indent![f; f.soft_line(), inner];
@@ -174,7 +149,7 @@ pub(crate) fn list_item<'a, T: AstNode<'a>>(
 pub(crate) fn joined<'a, T: AstNode<'a>>(
     f: &mut JavaFormatter<'a>,
     elements: impl IntoIterator<Item = ListElement<'a, T>>,
-    after: fn(&JavaFormatter<'a>) -> Doc,
+    after: Doc,
 ) -> Doc {
     let mut elements = elements
         .into_iter()
@@ -185,7 +160,7 @@ pub(crate) fn joined<'a, T: AstNode<'a>>(
         let separator = matches!(element, ListElement::Separator(_));
         docs.push(list_item(f, element));
         if separator && elements.peek().is_some() {
-            docs.push(after(f));
+            docs.push(after);
         }
     }
     f.concat(docs)
@@ -200,10 +175,7 @@ pub(crate) fn unexpected_list<'a>(f: &mut JavaFormatter<'a>, node: SyntaxNode<'a
         if !docs.is_empty() {
             docs.push(f.space());
         }
-        docs.push(match child {
-            SyntaxElement::Node(child) => f.node(child),
-            SyntaxElement::Token(token) => f.token(token),
-        });
+        docs.push(f.element(child));
     }
     f.concat(docs)
 }

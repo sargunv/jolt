@@ -688,24 +688,25 @@ table with their precomputed display width (ASCII fast path) and flags. The
 arena is sized from the token count up front, so it rarely grows while a file is
 formatted.
 
-| Constructor                     | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `text(&'a str)`                 | Literal text. A text containing a line break (a text block literal) is written raw (line breaks as `\n`) and cannot be flat.                                                                                                                                                                                                                                                                                                            |
-| `sticky(&'a str)`               | A synthesized separator (`,` `;`) that is printed before a pending line suffix instead of flushing it (see printer).                                                                                                                                                                                                                                                                                                                    |
-| `reindented(&'a str, Reindent)` | A multi-line source slice (a block comment, or verbatim source) whose continuation lines the printer rewrites while writing them: `Reindent::Comment` lays out a block comment's lines (see Printing); `Reindent::Strip(prefix)` removes `prefix` from a line that starts with it. Each continuation line is then written after the indentation of the output line the text started on; blank lines get no indentation. Cannot be flat. |
-| `space()`                       | One space; dropped at line start and before a newline; consecutive spaces collapse into one.                                                                                                                                                                                                                                                                                                                                            |
-| `line()`                        | Space when flat, newline when broken.                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `soft_line()`                   | Nothing when flat, newline when broken.                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `hard_line()`                   | Newline; forces every enclosing group to break.                                                                                                                                                                                                                                                                                                                                                                                         |
-| `empty_line()`                  | Blank line (two newlines); forces enclosing groups to break.                                                                                                                                                                                                                                                                                                                                                                            |
-| `concat([Doc])`                 | Sequence.                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `group(Doc)`                    | Flat if the contents fit, else broken.                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `indent(Doc)`                   | One more indentation level for newlines inside.                                                                                                                                                                                                                                                                                                                                                                                         |
-| `if_break(broken, flat)`        | Chooses by the mode of the enclosing group.                                                                                                                                                                                                                                                                                                                                                                                             |
-| `line_suffix(Doc)`              | Deferred until the next newline (or a non-sticky text; see printer).                                                                                                                                                                                                                                                                                                                                                                    |
-| `break_parent()`                | Forces every enclosing group to break.                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `will_break(Doc)` (query)       | Whether the doc contains a forced break; a rule may choose a layout from it (qualified names break every segment when a comment forces a break inside).                                                                                                                                                                                                                                                                                 |
-| `Doc::NIL`                      | Nothing.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Constructor                     | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `text(&'a str)`                 | Literal text. A text containing a line break (a text block literal) is written raw (line breaks as `\n`) and cannot be flat.                                                                                                                                                                                                                                                                                                                                                                           |
+| `sticky(&'a str)`               | A synthesized separator (`,` `;`) that is printed before a pending line suffix instead of flushing it (see printer).                                                                                                                                                                                                                                                                                                                                                                                   |
+| `reindented(&'a str, Reindent)` | Inside `jolt_fmt` only (comment printing and verbatim output). A multi-line source slice (a block comment, or verbatim source) whose continuation lines the printer rewrites while writing them: `Reindent::Comment` lays out a block comment's lines (see Printing); `Reindent::Strip(prefix)` removes `prefix` from a line that starts with it. Each continuation line is then written after the indentation of the output line the text started on; blank lines get no indentation. Cannot be flat. |
+| `space()`                       | One space; dropped at line start and before a newline; consecutive spaces collapse into one.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `line()`                        | Space when flat, newline when broken.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `soft_line()`                   | Nothing when flat, newline when broken.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `hard_line()`                   | Newline; forces every enclosing group to break.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `empty_line()`                  | Blank line (two newlines); forces enclosing groups to break.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `line_break(blank)`             | `empty_line()` when `blank`, else `hard_line()`: a separator that keeps or adds a blank line.                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `concat([Doc])`                 | Sequence.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `group(Doc)`                    | Flat if the contents fit, else broken.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `indent(Doc)`                   | One more indentation level for newlines inside.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `if_break(broken, flat)`        | Chooses by the mode of the enclosing group.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `line_suffix(Doc)`              | Deferred until the next newline (or a non-sticky text; see printer).                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `break_parent()`                | Forces every enclosing group to break.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `will_break(Doc)` (query)       | Whether the doc contains a forced break; a rule may choose a layout from it (qualified names break every segment when a comment forces a break inside).                                                                                                                                                                                                                                                                                                                                                |
+| `Doc::NIL`                      | Nothing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 There is no `fill` or `align`: the Java style never aligns continuation lines,
 and all continuation is one indent level. Newline coalescing (below) handles
@@ -805,10 +806,11 @@ The placement pass walks every token's trivia once and records each comment:
 pub struct Comment<'a> {
     pub text: &'a str,
     pub range: TextRange,
-    pub kind: CommentKind,     // Line | Block | Doc (unterminated: Block)
-    pub lines_before: u8,      // newlines since previous token/comment, capped at 2
-    pub lines_after: u8,       // newlines until next comment/token, capped at 2
-    pub layout: CommentLayout, // from the source; the effective layout is the placement's
+    pub kind: CommentKind,         // Line | Block | Doc (unterminated: Block)
+    pub lines_before: u8,          // newlines since previous token/comment, capped at 2
+    pub lines_after: u8,           // newlines until next comment/token, capped at 2
+    pub layout: CommentLayout,     // from the source; the effective layout is the placement's
+    pub(crate) unterminated: bool, // from the trivia kind: a block comment without `*/`
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CommentLayout {
@@ -955,13 +957,15 @@ directly, through `f.with_dangling`, or by passing the node as `owner` to
 `delimited`, `enclosed`, `parenthesized` or `braced_body`. A rule that forgets
 fails the emission check on the first probe that reaches it.
 
-Storage: comments in a `Vec` in source order; attachments in a `Vec` sorted by
-`(target, side, source order)`; two bitsets (`NodeId`, `TokenId`) answer "has
-attached comments" in `O(1)`, so elements without comments never search.
-Placement is `O(tokens + trivia + Σ_comments a(c))`, where `a(c)` is the number
-of nodes that begin or end at the comment's adjacent tokens (the target walk
-stops as soon as a parent starts or ends elsewhere). That is bounded by tree
-depth and is large only at the head of a deep left-nested spine.
+Storage: one `Vec` of placed comments in source order, each record holding the
+comment, the tokens before and after its gap, its side and its effective layout;
+attachments in a `Vec` sorted by `(target, side, source order)`; two bitsets
+(`NodeId`, `TokenId`) answer "has attached comments" in `O(1)`, so elements
+without comments never search. Placement is
+`O(tokens + trivia + Σ_comments a(c))`, where `a(c)` is the number of nodes that
+begin or end at the comment's adjacent tokens (the target walk stops as soon as
+a parent starts or ends elsewhere). That is bounded by tree depth and is large
+only at the head of a deep left-nested spine.
 
 #### Printing
 
@@ -1044,6 +1048,10 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// Leading comments, the token text, trailing comments. Never sticky.
     pub fn token(&mut self, token: SyntaxToken<'a>) -> Doc;
     pub fn token_opt(&mut self, token: Option<SyntaxToken<'a>>) -> Doc;
+    /// `node` or `token`, whichever the element is (the generated
+    /// node-or-token enums convert to one with `element()`).
+    pub fn element(&mut self, element: SyntaxElement<'a>) -> Doc;
+    pub fn element_opt(&mut self, element: Option<SyntaxElement<'a>>) -> Doc;
     /// A node's leading and trailing comments, for a rule that builds the
     /// node's doc from its children itself instead of through `node`: the
     /// iterative spines and the `else if` chain, where an interior node's
@@ -1088,6 +1096,8 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     pub fn with_dangling(&mut self, owner: SyntaxNode<'a>, inner: Doc) -> Doc;
 
     // ── Queries; they emit nothing. ──
+    /// Any comment attached to the element: leading, trailing or dangling.
+    pub fn has_comments(&self, element: SyntaxElement<'a>) -> bool;
     pub fn has_leading_comments(&self, element: SyntaxElement<'a>) -> bool;
     pub fn has_trailing_comments(&self, element: SyntaxElement<'a>) -> bool;
     pub fn has_dangling_comments(&self, node: SyntaxNode<'a>) -> bool;
@@ -1108,10 +1118,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// or comment. Used for `Separator::blank_line_in_source` and before the
     /// leading comments of `Eof`.
     pub fn blank_line_before(&self, element: SyntaxElement<'a>) -> bool;
-    /// The source has a blank line before the node's first dangling comment.
-    /// `delimited` and `braced_body` put `empty_line` instead of `hard_line`
-    /// between the last item and the dangling comments when this holds.
-    pub fn blank_line_before_dangling(&self, node: SyntaxNode<'a>) -> bool;
 
     // ── Item lists ──
     pub fn item_list(
@@ -1127,6 +1133,11 @@ pub enum ListItem<'a> {
 pub struct Separator<'a> {
     pub prev: SyntaxNode<'a>,
     pub next: SyntaxNode<'a>,
+    /// The positions of `prev` and `next` in the items given to `item_list`,
+    /// so a caller can keep per-item data (import roles, directive groups) in
+    /// a `Vec` beside the items.
+    pub prev_index: usize,
+    pub next_index: usize,
     pub blank_line_in_source: bool,
 }
 ```
@@ -1234,10 +1245,11 @@ multiset catches that.
 ```text
 crates/jolt_java_fmt/
   src/lib.rs                 pub fn format, JavaFormat, type JavaFormatter
-  src/language.rs            impl FormatLanguage: separator and delimiter tables, ignore scopes, hooks H1, H2, H5 (H4 is in rules/statements/control.rs)
+  src/language.rs            impl FormatLanguage: separator and delimiter tables, ignore scopes, hooks H1, H2, H4, H5
   src/dispatch.rs            total match: node kind → rule function
   src/helpers/lists.rs       delimited comma lists, one-element delimited nodes, parenthesized headers, list items
-  src/helpers/bodies.rs      braced bodies, member and statement separators
+  src/helpers/mod.rs         `spaced`, `spaced_node`: a space before what follows, if anything does
+  src/helpers/bodies.rs      braced bodies, body items with N5, member and statement separators
   src/helpers/assignment.rs  `left = right` layout
   src/rules/declarations/    compilation unit, imports, modules, type declarations and headers, bodies, members
   src/rules/statements/      blocks, control flow, jumps, switch, try
@@ -1350,25 +1362,22 @@ the generic rules; a new hook requires a fixture and an entry here.
 
 ```rust
 // helpers/lists.rs
-pub(crate) enum TrailingComma {
-    /// Argument, parameter and type-argument lists (Java forbids one there).
-    Never,
-    /// Array and annotation-array initializers: a synthesized `,` when broken
-    /// (sticky, so it goes before the last element's trailing line comment:
-    /// `last, // c`); a trailing `,` in the source forces the broken layout and
-    /// is printed with `token`.
-    IfBroken,
-}
-pub(crate) struct ListLayout {
-    pub padded: bool, /* "{ a, b }" when flat */
-    pub trailing_comma: TrailingComma,
+pub(crate) enum ListLayout {
+    /// Argument, parameter, type-argument and pattern lists: `(a, b)` when
+    /// flat, and no trailing comma (Java forbids one there).
+    Plain,
+    /// Array and annotation-array initializers: `{ a, b }` when flat; when
+    /// broken, a synthesized `,` (sticky, so it goes before the last
+    /// element's trailing line comment: `last, // c`). A trailing `,` in the
+    /// source forces the broken layout and is printed with `token`.
+    Initializer,
 }
 /// `open item, item close` with the break-all layout: flat if it fits, else
 /// every element on its own line at one more indent and `close` on its own
 /// line. `owner` is `open.parent()` (also when `open` is missing, the node
 /// that would own it); its dangling comments are printed after the last
-/// element, on their own lines, preceded by `empty_line` when
-/// `blank_line_before_dangling(owner)`. Represented separators go through
+/// element, on their own lines (`with_dangling`), preceded by `empty_line`
+/// when the source has a blank line before the first of them. Represented separators go through
 /// `token`, synthesized ones through `sticky`; `Missing` elements print
 /// nothing. Comma-separated lists only: a resource specification (`;`
 /// separators, a removable trailing `;`) is laid out by its own rule with
@@ -1380,7 +1389,7 @@ pub(crate) fn delimited<'a, T: AstNode<'a>>(
     f: &mut JavaFormatter<'a>,
     owner: SyntaxNode<'a>,
     open: Option<SyntaxToken<'a>>,
-    elements: impl Iterator<Item = ListElement<'a, T>>,
+    elements: impl IntoIterator<Item = ListElement<'a, T>>,
     close: Option<SyntaxToken<'a>>,
     layout: ListLayout,
 ) -> Doc;
@@ -1406,12 +1415,13 @@ pub(crate) fn parenthesized<'a>(
     inner: Doc,
     close: Option<SyntaxToken<'a>>,
 ) -> Doc;
-/// A list's elements, each separator followed by a line kind of the caller's
-/// choice, except a trailing separator (recovery), which separates nothing.
+/// A list's elements, each separator followed by `after` (`space`, `line`,
+/// `hard_line`, or NIL to join directly), except a trailing separator
+/// (recovery), which separates nothing.
 pub(crate) fn joined<'a, T: AstNode<'a>>(
     f: &mut JavaFormatter<'a>,
     elements: impl IntoIterator<Item = ListElement<'a, T>>,
-    after: fn(&JavaFormatter<'a>) -> Doc,
+    after: Doc,
 ) -> Doc;
 /// One list element: the item with `fmt`, a bogus node with `node`.
 pub(crate) fn list_item<'a, T: AstNode<'a>>(
@@ -1441,6 +1451,14 @@ pub(crate) fn braced<'a>(
     content: Doc,
     close: Doc,
 ) -> Doc;
+/// The items of a body as item-list items, each stray `;` (an empty
+/// declaration or empty statement) elided (N5) when `owner` is
+/// recovery-free. Class, interface, record, enum and annotation bodies,
+/// blocks, constructor bodies and switch groups.
+pub(crate) fn body_items<'a>(
+    owner: SyntaxNode<'a>,
+    items: impl IntoIterator<Item = SyntaxNode<'a>>,
+) -> Vec<ListItem<'a>>;
 /// Members: a blank line between two members, except between two fields,
 /// which keep the source's choice (as do the comments of a removed `;`).
 pub(crate) fn member_separator<'a>(f: &mut JavaFormatter<'a>, sep: Separator<'a>) -> Doc;

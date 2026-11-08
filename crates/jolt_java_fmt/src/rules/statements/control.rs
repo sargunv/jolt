@@ -1,19 +1,18 @@
 //! `if`, loops and `synchronized`, with brace promotion (N4) of their
 //! bodies.
 
-use jolt_fmt::{CommentContext, CommentLayout, Doc, ListItem, Placement, cat};
-use jolt_java_syntax::JavaSyntaxKind as K;
+use jolt_fmt::{Doc, ListItem, cat};
 use jolt_java_syntax::{
     BasicForStatement, DoStatement, EnhancedForStatement, EnhancedForVariable,
     EnhancedForVariableType, ForInitializer, ForInitializerValue, ForStatement, ForUpdate,
     IfStatement, Statement, StatementExpressionList, SynchronizedStatement, WhileStatement,
 };
-use jolt_syntax::{AstNode, SyntaxElement, SyntaxNode};
+use jolt_syntax::{AstNode, SyntaxNode};
 
-use super::{parenthesized, statement_separator};
 use crate::JavaFormatter;
-use crate::helpers::bodies::braced;
-use crate::helpers::lists::joined;
+use crate::helpers::bodies::{braced, statement_separator};
+use crate::helpers::lists::{joined, parenthesized};
+use crate::helpers::spaced;
 use crate::rules::types::inline_modifiers;
 
 /// `if (condition) body`, then ` else body`. An `else if` chain stays flat;
@@ -35,10 +34,8 @@ pub(crate) fn if_statement<'a>(f: &mut JavaFormatter<'a>, node: IfStatement<'a>)
         );
         let then_branch = body(f, current.syntax(), current.then_branch());
         docs.extend([keyword, f.space(), header, then_branch]);
-        if let Some(keyword) = current.else_keyword() {
-            let keyword = f.token(keyword);
-            docs.extend([f.space(), keyword]);
-        }
+        let keyword = f.token_opt(current.else_keyword());
+        docs.push(spaced(f, keyword));
         match current.else_branch() {
             Some(Statement::IfStatement(next)) if !next.syntax().is_malformed() => {
                 let leading = f.leading_comments(next.syntax());
@@ -159,14 +156,8 @@ pub(crate) fn enhanced_for_variable<'a>(
     f: &mut JavaFormatter<'a>,
     node: EnhancedForVariable<'a>,
 ) -> Doc {
-    let modifiers = node
-        .modifiers()
-        .map_or(Doc::NIL, |modifiers| inline_modifiers(f, modifiers));
-    let ty = match node.r#type() {
-        Some(EnhancedForVariableType::Type(ty)) => f.fmt(ty),
-        Some(EnhancedForVariableType::Token(token)) => f.token(token),
-        None => Doc::NIL,
-    };
+    let modifiers = inline_modifiers(f, node.modifiers());
+    let ty = f.element_opt(node.r#type().map(EnhancedForVariableType::element));
     let name = f.token_opt(node.name());
     let dimensions = f.fmt_opt(node.dimensions());
     cat![f; modifiers, ty, f.space(), name, dimensions]
@@ -187,7 +178,8 @@ pub(crate) fn for_update<'a>(f: &mut JavaFormatter<'a>, node: ForUpdate<'a>) -> 
 
 /// `a, b` on one line; an end-of-line comment after a `,` ends the line.
 fn expression_list<'a>(f: &mut JavaFormatter<'a>, list: StatementExpressionList<'a>) -> Doc {
-    joined(f, list.elements(), |f| f.space())
+    let space = f.space();
+    joined(f, list.elements(), space)
 }
 
 pub(crate) fn synchronized_statement<'a>(
@@ -215,20 +207,18 @@ fn body<'a>(f: &mut JavaFormatter<'a>, owner: SyntaxNode<'a>, body: Option<State
     let Some(body) = body else {
         return Doc::NIL;
     };
-    let promoted = match body {
-        Statement::Block(_) => None,
-        _ if !owner.is_recovery_free() => None,
+    let body = match body {
+        Statement::Block(_) => f.fmt(body),
+        _ if !owner.is_recovery_free() => f.fmt(body),
         Statement::EmptyStatement(empty) => {
-            let items = [ListItem::Elide(empty.syntax())];
-            let content = f.item_list(items, statement_separator);
-            Some(promoted_block(f, content))
+            let content = f.item_list([ListItem::Elide(empty.syntax())], statement_separator);
+            promoted_block(f, content)
         }
         _ => {
             let content = f.fmt(body);
-            Some(promoted_block(f, content))
+            promoted_block(f, content)
         }
     };
-    let body = promoted.unwrap_or_else(|| f.fmt(body));
     cat![f; f.space(), body]
 }
 
@@ -237,37 +227,4 @@ fn promoted_block(f: &mut JavaFormatter<'_>, content: Doc) -> Doc {
     let open = f.text("{");
     let close = f.text("}");
     braced(f, None, open, content, close)
-}
-
-/// Comment hook H4, tried after H1. An end-of-line comment after the last
-/// token of a control statement's final non-block body (`if (a) return; //
-/// c`) would trail the whole statement by the generic rules, so it would
-/// print after the synthesized `}` of brace promotion. It trails the body
-/// instead and stays inside the block.
-pub(crate) fn promoted_body_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>> {
-    if context.comment.layout != CommentLayout::EndOfLine {
-        return None;
-    }
-    let prev = context.prev?;
-    let mut node = prev.parent();
-    while node.last_token() == Some(prev) {
-        let parent = node.parent()?;
-        let kind = K::from_raw(node.kind());
-        let body = match K::from_raw(parent.kind()) {
-            K::IfStatement => IfStatement::cast(parent).is_some_and(|statement| {
-                let is_else = statement.else_branch().map(AstNode::syntax) == Some(node);
-                !(is_else && kind == K::IfStatement)
-            }),
-            K::WhileStatement | K::BasicForStatement | K::EnhancedForStatement => true,
-            _ => false,
-        };
-        if body && kind != K::Block && Statement::can_cast(node.kind()) {
-            return Some(Placement::Trailing(
-                SyntaxElement::Node(node),
-                CommentLayout::EndOfLine,
-            ));
-        }
-        node = parent;
-    }
-    None
 }

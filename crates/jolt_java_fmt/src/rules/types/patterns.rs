@@ -1,18 +1,18 @@
 //! Type, record and match-all patterns.
 
 use jolt_fmt::{Doc, cat};
-use jolt_java_syntax::{ComponentPattern, MatchAllPattern, RecordPattern, TypePattern};
+use jolt_java_syntax::{
+    ComponentPattern, ComponentPatternList, MatchAllPattern, RecordPattern, TypePattern,
+};
 use jolt_syntax::AstNode;
 
 use crate::JavaFormatter;
-use crate::helpers::lists::{ListLayout, TrailingComma, delimited};
+use crate::helpers::lists::{ListLayout, delimited};
 use crate::rules::types::inline_modifiers;
 
 /// `modifiers Type name dims`, modifiers inline.
 pub(crate) fn type_pattern<'a>(f: &mut JavaFormatter<'a>, node: TypePattern<'a>) -> Doc {
-    let modifiers = node
-        .modifiers()
-        .map_or(Doc::NIL, |modifiers| inline_modifiers(f, modifiers));
+    let modifiers = inline_modifiers(f, node.modifiers());
     let ty = f.fmt_opt(node.r#type());
     let name = f.token_opt(node.name());
     let dimensions = f.fmt_opt(node.dimensions());
@@ -28,12 +28,9 @@ pub(crate) fn record_pattern<'a>(f: &mut JavaFormatter<'a>, node: RecordPattern<
         node.open_paren(),
         node.components()
             .into_iter()
-            .flat_map(jolt_java_syntax::ComponentPatternList::elements),
+            .flat_map(ComponentPatternList::elements),
         node.close_paren(),
-        ListLayout {
-            padded: false,
-            trailing_comma: TrailingComma::Never,
-        },
+        ListLayout::Plain,
     );
     cat![f; ty, components]
 }

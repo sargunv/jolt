@@ -15,7 +15,7 @@ pub(crate) use compilation_unit::{compilation_unit, import_declaration, package_
 pub(crate) use members::{
     annotation_element_declaration, compact_constructor_declaration, constructor_body,
     constructor_declaration, constructor_invocation, default_value, field_declaration,
-    instance_initializer, method_declaration, record_component, static_initializer,
+    instance_initializer, method_declaration, static_initializer,
 };
 pub(crate) use modules::{
     exports_directive, module_declaration, module_implementation_clause, module_target_clause,

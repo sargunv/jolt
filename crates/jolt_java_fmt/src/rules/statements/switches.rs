@@ -5,13 +5,15 @@ use jolt_fmt::{Doc, ListItem, cat, indent};
 use jolt_java_syntax::{
     BlockItem, BlockStatement, CaseConstant, CasePattern, Expression, Guard, SwitchBlock,
     SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelColonList,
-    SwitchLabelItem, SwitchLabelItemList, SwitchRule, SwitchRuleBody, SwitchStatement,
+    SwitchLabelItemList, SwitchRule, SwitchRuleBody, SwitchStatement,
 };
 use jolt_syntax::{AstNode, ListElement, SyntaxElement, SyntaxNode, SyntaxToken};
 
-use super::{parenthesized, statement_items, statement_separator};
+use super::statement_items;
 use crate::JavaFormatter;
-use crate::helpers::bodies::braced_body;
+use crate::helpers::bodies::{braced_body, statement_separator};
+use crate::helpers::lists::parenthesized;
+use crate::helpers::spaced_node;
 
 pub(crate) fn switch_statement<'a>(f: &mut JavaFormatter<'a>, node: SwitchStatement<'a>) -> Doc {
     switch(
@@ -200,12 +202,7 @@ pub(crate) fn switch_label<'a>(f: &mut JavaFormatter<'a>, node: SwitchLabel<'a>)
         .flat_map(SwitchLabelItemList::elements)
     {
         match element {
-            ListElement::Item(item) => items.push(match item {
-                SwitchLabelItem::CaseConstant(constant) => f.fmt(constant),
-                SwitchLabelItem::CasePattern(pattern) => f.fmt(pattern),
-                SwitchLabelItem::Bogus(bogus) => f.fmt(bogus),
-                SwitchLabelItem::Token(token) => f.token(token),
-            }),
+            ListElement::Item(item) => items.push(f.element(item.element())),
             ListElement::Bogus(bogus) => items.push(f.node(bogus)),
             ListElement::Separator(comma) => items.extend([f.token(comma), f.line()]),
             ListElement::Missing => {}
@@ -219,13 +216,7 @@ pub(crate) fn switch_label<'a>(f: &mut JavaFormatter<'a>, node: SwitchLabel<'a>)
         let items = f.group(items);
         cat![f; f.space(), items]
     };
-    let guard = match node.guard() {
-        Some(guard) => {
-            let guard = f.fmt(guard);
-            cat![f; f.space(), guard]
-        }
-        None => Doc::NIL,
-    };
+    let guard = spaced_node(f, node.guard());
     cat![f; keyword, items, guard]
 }
 
@@ -265,10 +256,7 @@ fn removable_parentheses<'a>(
     open: SyntaxToken<'a>,
     close: SyntaxToken<'a>,
 ) -> bool {
-    let token_comments = |token| {
-        f.has_leading_comments(SyntaxElement::Token(token))
-            || f.has_trailing_comments(SyntaxElement::Token(token))
-    };
+    let token_comments = |token| f.has_comments(SyntaxElement::Token(token));
     let condition_comments = node.condition().is_some_and(|condition| {
         let condition = SyntaxElement::Node(condition.syntax());
         f.has_leading_comments(condition) || f.trailing_comments_break(condition)
