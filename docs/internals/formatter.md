@@ -811,11 +811,11 @@ The placement pass walks every token's trivia once and records each comment:
 pub struct Comment<'a> {
     pub text: &'a str,
     pub range: TextRange,
-    pub kind: CommentKind,         // Line | Block | Doc (unterminated: Block)
-    pub lines_before: u8,          // newlines since previous token/comment, capped at 2
-    pub lines_after: u8,           // newlines until next comment/token, capped at 2
-    pub layout: CommentLayout,     // from the source; the effective layout is the placement's
-    pub(crate) unterminated: bool, // from the trivia kind: a block comment without `*/`
+    pub kind: CommentKind, // Line | Block | Doc (unterminated: Block)
+    pub lines_before: u8,  // newlines since previous token/comment, max 2
+    pub lines_after: u8,   // newlines until next comment/token, max 2
+    pub source_layout: CommentLayout, // placement decides the printed layout
+    pub(crate) raw: bool,  // no `*/`, or delimiters written as escapes
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CommentLayout {
@@ -830,15 +830,15 @@ pub enum CommentLayout {
 `Eof` token). The **enclosing node** is the deepest node containing both,
 computed on demand (hooks, debug assertions and formatter-ignore scopes use it).
 
-The layout is decided from line breaks alone: "newline before" means a line
-break between the end of `prev` (or of the previous comment) and the comment's
-start, or no `prev`; "newline after" means a line break between the comment's
-end and the start of `next` (or of the next comment), or `next` is `Eof`. A
-comment with code before it on its line that is followed only by other comments
-up to the line's end ends its line too: `/* a */` in `x; /* a */ // b` is
-`EndOfLine` like `// b`. A multi-line block comment is classified by its start
-and end lines the same way. `lines_before` and `lines_after` count line breaks
-in the same gaps.
+The source layout is decided from line breaks alone: "newline before" means a
+line break between the end of `prev` (or of the previous comment) and the
+comment's start, or no `prev`; "newline after" means a line break between the
+comment's end and the start of `next` (or of the next comment), or `next` is
+`Eof`. A comment with code before it on its line that is followed only by other
+comments up to the line's end ends its line too: `/* a */` in `x; /* a */ // b`
+is `EndOfLine` like `// b`. A multi-line block comment is classified by its
+start and end lines the same way. `lines_before` and `lines_after` count line
+breaks in the same gaps.
 
 #### Placement
 
@@ -940,8 +940,9 @@ chose:
   `/* a */ /* b */` alone on a line before code keeps both on that line).
 - **After a trailing line comment.** S1 can put a comment after a trailing line
   comment of the same element (`f // a` `;` `/* b */`). Nothing can follow a
-  line comment on its line, so such a second trailing comment is placed as if it
-  were `OwnLine`, where the next pass finds it.
+  line comment on its line, so the generic rules place such a second trailing
+  comment with the layout `OwnLine` instead of its source layout, where the next
+  pass finds it.
 
 Hook constraints (checked by debug assertions in the pass): a hook may only
 target elements inside the enclosing node; `Leading` layouts are `OwnLine`,

@@ -143,7 +143,7 @@ fn body_comment<'a>(
     // S1 would move an end-of-line line comment past a separator that the
     // `{` follows (a trailing separator, recovery), so it goes in as well.
     let open = if comment.kind == CommentKind::Line
-        && comment.layout == CommentLayout::EndOfLine
+        && comment.source_layout == CommentLayout::EndOfLine
         && JavaFormat::is_separator(next)
         && !JavaFormat::is_separator(prev)
     {
@@ -164,7 +164,7 @@ fn braced_body_comment<'a>(
     prev: SyntaxToken<'a>,
     open: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
-    if context.comment.layout == CommentLayout::Inline {
+    if context.comment.source_layout == CommentLayout::Inline {
         return None;
     }
     let body = braced_body(context, prev, open)?;
@@ -187,7 +187,7 @@ fn unbraced_body_comment<'a>(
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
     let comment = context.comment;
-    let applies = match comment.layout {
+    let applies = match comment.source_layout {
         CommentLayout::EndOfLine => true,
         CommentLayout::OwnLine | CommentLayout::StartOfLine => comment.kind == CommentKind::Line,
         CommentLayout::Inline => false,
@@ -290,7 +290,7 @@ fn promoted_body_comment<'a>(
     context: &CommentContext<'a, '_>,
     prev: SyntaxToken<'a>,
 ) -> Option<Placement<'a>> {
-    if context.comment.layout != CommentLayout::EndOfLine {
+    if context.comment.source_layout != CommentLayout::EndOfLine {
         return None;
     }
     let mut node = prev.parent();
@@ -337,7 +337,7 @@ fn block_comment_after_opener<'a>(
 ) -> Option<Placement<'a>> {
     let comment = context.comment;
     let next = context.next;
-    if comment.kind == CommentKind::Line || comment.layout != CommentLayout::EndOfLine {
+    if comment.kind == CommentKind::Line || comment.source_layout != CommentLayout::EndOfLine {
         return None;
     }
     let clause = next.parent();
