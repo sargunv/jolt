@@ -257,7 +257,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         apart.extend(
             inside
                 .map(|index| self.comments.list[index].comment)
-                .filter(|comment| !comment.unterminated && lines_outside(comment.text, prefix))
+                .filter(|comment| !comment.raw && lines_outside(comment.text, prefix))
                 .map(|comment| (comment.range, Some(Reindent::Comment))),
         );
         apart.sort_unstable_by_key(|(range, _)| range.start());
@@ -627,7 +627,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 .builder
                 .comment_text(comment.text.trim_end(), LINE_COMMENT);
         }
-        if comment.unterminated {
+        if comment.raw {
             return self.builder.text(comment.text.trim_end());
         }
         if has_line_break(comment.text) {

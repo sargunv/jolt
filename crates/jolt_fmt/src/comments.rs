@@ -39,8 +39,11 @@ pub struct Comment<'a> {
     pub lines_after: u8,
     /// The layout the source gives the comment.
     pub layout: CommentLayout,
-    /// A block comment that runs to the end of the file without `*/`.
-    pub(crate) unterminated: bool,
+    /// A block comment printed exactly as written, because its delimiters
+    /// aren't the literal `/*` and `*/` that comment layout rewrites around:
+    /// one that runs to the end of the file without `*/`, or one whose
+    /// delimiters are written with Unicode escapes (`\u002a\u002f`).
+    pub(crate) raw: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -384,7 +387,9 @@ impl<'a> Collector<'a> {
             lines_before,
             lines_after: 0,
             layout: CommentLayout::Inline,
-            unterminated: piece.kind == TriviaKind::UnterminatedBlockComment,
+            raw: piece.kind == TriviaKind::UnterminatedBlockComment
+                || (piece.kind != TriviaKind::LineComment
+                    && !(piece.text.starts_with("/*") && piece.text.ends_with("*/"))),
         };
         self.list.push(PlacedComment {
             comment,
