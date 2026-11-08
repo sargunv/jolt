@@ -783,8 +783,10 @@ whatever separator the rule itself put at that position: `a /* c */ + b`,
   star block: javadoc keeps the indentation of such a line (a code sample in
   `<pre>` relies on it), so each continuation line only loses the indentation of
   the source line the comment starts on, when it starts with it, as a verbatim
-  node's lines do. Other multi-line block comments lose only the indentation
-  their continuation lines share.
+  node's lines do. Such comments are rare, so the printer lays a doc comment out
+  as a star block and starts again as written only when it meets such a line;
+  other doc comments are scanned once. Other multi-line block comments lose only
+  the indentation their continuation lines share.
 - An unterminated comment: its text, written raw.
 - Any other single-line comment: its text as written.
 - The head of a doc line run: the run's lines, each a line comment, one per

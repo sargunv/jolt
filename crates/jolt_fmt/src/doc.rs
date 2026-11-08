@@ -1,6 +1,8 @@
 //! The document IR: an append-only arena of layout commands whose texts are
 //! borrowed from the source or `'static`.
 
+use std::cell::Cell;
+
 use unicode_width::UnicodeWidthChar;
 
 /// A handle to a document node in a [`DocBuilder`].
@@ -33,7 +35,7 @@ pub(crate) enum Reindent<'a> {
     /// A multi-line block comment: star blocks are re-aligned under the
     /// opening delimiter, other lines are trimmed (see [`comment_lines`]).
     /// The indentation of the source line the comment starts on, which a
-    /// doc comment with a line without `*` re-indents against.
+    /// doc comment kept as written re-indents against.
     Comment(&'a str),
     /// Verbatim source: `prefix` is removed from each continuation line that
     /// starts with it.
@@ -198,9 +200,22 @@ impl<'a> DocBuilder<'a> {
         let (width, multiline) = match reindent {
             None | Some(Reindent::Strip(_)) => measure(text),
             Some(Reindent::Comment(indentation)) => {
-                let width = comment_lines(text, indentation).next().map_or(0, |parts| {
-                    parts.iter().map(|part| display_width(part)).sum()
-                });
+                // The first output line of a multi-line doc comment is `/**`
+                // when its source's is, star block or not, so most doc
+                // comments need no scan here.
+                let bare = text.starts_with("/**")
+                    && !text.starts_with("/**/")
+                    && first_line(text).trim_end() == "/**";
+                let width = if bare {
+                    3
+                } else {
+                    let star_less = Cell::new(false);
+                    comment_lines(text, indentation, keeps_lines(text), &star_less)
+                        .next()
+                        .map_or(0, |parts| {
+                            parts.iter().map(|part| display_width(part)).sum()
+                        })
+                };
                 (width, has_line_break(text))
             }
         };
@@ -472,38 +487,38 @@ pub(crate) fn display_width(text: &str) -> u32 {
 /// One output line of a block comment, as parts to concatenate.
 pub(crate) type CommentLine<'t> = [&'t str; 3];
 
-/// The output lines of a block comment: a multi-line doc comment (`/**`)
-/// whose content lines all start with `*` is a star block whose opener text
-/// moves to its own line; a multi-line block comment whose continuation
-/// starts with `*` is a star block that keeps its opener text. A star line
-/// keeps its text after the `*` and one space, so `<pre>` code stays
-/// indented.
+/// The output lines of a block comment: a multi-line doc comment (`/**`) is
+/// a star block whose opener text moves to its own line; a multi-line block
+/// comment whose continuation starts with `*` is a star block that keeps its
+/// opener text. A star line keeps its text after the `*` and one space, so
+/// `<pre>` code stays indented.
 ///
-/// Javadoc keeps the indentation of a doc comment line without a `*`, so a
-/// doc comment with such a line keeps its lines as written: each loses
-/// `indentation`, the indentation of the source line the comment starts on,
-/// when it starts with it. Any other comment keeps its continuation lines'
-/// indentation relative to each other.
+/// A doc comment with a line without `*` ([`keeps_lines`]) keeps its lines as
+/// written: each loses `indentation`, the indentation of the source line the
+/// comment starts on, when it starts with it. Any other comment keeps its
+/// continuation lines' indentation relative to each other.
+///
+/// The caller says whether the doc comment is kept as written (`as_written`),
+/// or finds out while laying it out as a star block: `star_less` is set when
+/// a continuation line without `*` turns up, and the caller lays the comment
+/// out again as written. Such comments are rare, so most doc comments are
+/// scanned once.
 pub(crate) fn comment_lines<'t>(
     text: &'t str,
     indentation: &'t str,
+    as_written: bool,
+    star_less: &'t Cell<bool>,
 ) -> impl Iterator<Item = CommentLine<'t>> {
     let doc = text.starts_with("/**") && !text.starts_with("/**/");
     let content = strip_delimiters(text);
     let multiline = has_line_break(content);
-    let star_block = if doc {
-        multiline && !has_star_less_line(content)
-    } else {
-        is_star_block(content)
-    };
+    let as_written = doc && multiline && as_written;
+    let star_block = (doc && multiline && !as_written) || (!doc && is_star_block(content));
+    // Exactly one of the two layouts is `Some`.
     let plain = (!star_block).then(|| {
         let mut lines = lines(text.trim());
         let first = lines.next().unwrap_or("").trim();
-        let shared = if doc {
-            None
-        } else {
-            Some(shared_indentation(lines.clone()))
-        };
+        let shared = (!as_written).then(|| shared_indentation(lines.clone()));
         let rest = lines.map(move |line| {
             let line = line.trim_end();
             let line = match shared {
@@ -527,6 +542,7 @@ pub(crate) fn comment_lines<'t>(
             }
         }
         let mut blank_lines = 0;
+        let mut continuation = !doc;
         let body = lines
             .filter_map(move |line| {
                 let line = match line.trim_start().strip_prefix('*') {
@@ -534,8 +550,15 @@ pub(crate) fn comment_lines<'t>(
                         let rest = rest.trim_end();
                         rest.strip_prefix(' ').unwrap_or(rest)
                     }
-                    _ => line.trim(),
+                    _ => {
+                        let line = line.trim();
+                        if doc && continuation && !line.is_empty() {
+                            star_less.set(true);
+                        }
+                        line
+                    }
                 };
+                continuation = true;
                 if line.is_empty() {
                     blank_lines += usize::from(has_content);
                     return None;
@@ -579,11 +602,27 @@ fn strip_delimiters(text: &str) -> &str {
         .unwrap_or(body)
 }
 
-/// Whether a continuation line of `content` has text but no leading `*`.
-fn has_star_less_line(content: &str) -> bool {
-    lines(content)
-        .skip(1)
-        .any(|line| !line.trim().is_empty() && !line.trim_start().starts_with('*'))
+/// Whether `text` is a multi-line doc comment (`/**`) with a continuation
+/// line that has text but no leading `*`. Javadoc keeps the indentation of
+/// such a line, so the comment is kept as written (see [`comment_lines`])
+/// instead of being made a star block, which could shift a code sample in
+/// `<pre>`. Most lines start with spaces and a `*`, which a scan for `\n`
+/// answers; any other line is checked as text, Unicode whitespace counting
+/// as blank.
+pub(crate) fn keeps_lines(text: &str) -> bool {
+    if !text.starts_with("/**") || text.starts_with("/**/") {
+        return false;
+    }
+    let content = strip_delimiters(text);
+    let star_less = |line: &str| {
+        !line.trim_start_matches([' ', '\t']).starts_with('*')
+            && !line.trim().is_empty()
+            && !line.trim_start().starts_with('*')
+    };
+    if content.as_bytes().contains(&b'\r') {
+        return lines(content).skip(1).any(star_less);
+    }
+    content.split('\n').skip(1).any(star_less)
 }
 
 fn is_star_block(content: &str) -> bool {

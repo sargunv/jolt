@@ -1,12 +1,13 @@
 //! The iterative printer: a command stack, newline coalescing, line suffixes,
 //! and a bounded fit check.
 
+use std::cell::Cell;
 use std::ops::ControlFlow;
 
 use crate::comments::is_doc_line;
 use crate::doc::{
-    Kind, LINE_COMMENT, MULTILINE, RUN_END, Reindent, STICKY, Text, VERBATIM_START, comment_lines,
-    display_width, lines,
+    CommentLine, Kind, LINE_COMMENT, MULTILINE, RUN_END, Reindent, STICKY, Text, VERBATIM_START,
+    comment_lines, display_width, lines,
 };
 use crate::{Doc, DocBuilder, FormatOptions, Sink};
 
@@ -85,8 +86,8 @@ struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     line: Line,
     /// The last character written on the current line, if it is not a space.
     last: Option<char>,
-    /// The current output line starts with a doc line comment.
-    doc_line: bool,
+    /// The first text of the current output line.
+    line_first: &'a str,
     /// The last text written ends a doc line comment that starts its line.
     run_ended: bool,
     language: Language<J>,
@@ -116,7 +117,7 @@ pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
         pending: Pending::None,
         line: Line::FileStart,
         last: None,
-        doc_line: false,
+        line_first: "",
         run_ended: false,
         language,
         suffixes: Vec::new(),
@@ -279,18 +280,14 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
             };
         }
         if let Pending::Newlines { count, indent } = self.pending {
-            let doc_line = self
-                .language
-                .doc_line
-                .is_some_and(|opener| is_doc_line(text.text, opener));
             // A doc line comment right after the end of a run starts another
             // run: a blank line keeps the two apart.
-            if doc_line && self.run_ended && count == 1 {
+            if self.run_ended && count == 1 && self.is_doc_line(text.text) {
                 self.pending = Pending::Newlines { count: 2, indent };
             }
-            self.doc_line = doc_line;
+            self.line_first = text.text;
         }
-        self.run_ended = self.doc_line && text.flags & RUN_END != 0;
+        self.run_ended = text.flags & RUN_END != 0 && self.is_doc_line(self.line_first);
         self.flush_pending();
         let bytes = text.text.as_bytes();
         if let Some(last) = self.last {
@@ -319,6 +316,13 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
             Line::Commented
         };
         ControlFlow::Continue(())
+    }
+
+    /// Whether `text` starts with a doc line comment.
+    fn is_doc_line(&self, text: &str) -> bool {
+        self.language
+            .doc_line
+            .is_some_and(|opener| is_doc_line(text, opener))
     }
 
     fn flush_pending(&mut self) {
@@ -416,20 +420,33 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 self.verbatim_base = base;
             }
             Some(Reindent::Comment(indentation)) => {
-                for (index, parts) in comment_lines(text.text, indentation).enumerate() {
-                    if index > 0 {
-                        self.out.push('\n');
-                        self.column = 0;
-                        if !parts.iter().all(|part| part.is_empty()) {
-                            self.out.push_str(&self.line_ws);
-                            self.column = display_width(&self.line_ws);
-                        }
-                    }
-                    for part in parts {
-                        self.out.push_str(part);
-                        self.column += display_width(part);
-                    }
+                // Laid out again as written when it is a doc comment with a
+                // line without `*` (see `comment_lines`).
+                let (len, column) = (self.out.len(), self.column);
+                let star_less = Cell::new(false);
+                self.write_comment(comment_lines(text.text, indentation, false, &star_less));
+                if star_less.get() {
+                    self.out.truncate(len);
+                    self.column = column;
+                    self.write_comment(comment_lines(text.text, indentation, true, &star_less));
                 }
+            }
+        }
+    }
+
+    fn write_comment<'t>(&mut self, lines: impl Iterator<Item = CommentLine<'t>>) {
+        for (index, parts) in lines.enumerate() {
+            if index > 0 {
+                self.out.push('\n');
+                self.column = 0;
+                if !parts.iter().all(|part| part.is_empty()) {
+                    self.out.push_str(&self.line_ws);
+                    self.column = display_width(&self.line_ws);
+                }
+            }
+            for part in parts {
+                self.out.push_str(part);
+                self.column += display_width(part);
             }
         }
     }
