@@ -71,3 +71,15 @@ class LabeledBlockBodies {
     }
   }
 }
+
+class DocCommentBeforeTypeBody
+/** Not the Javadoc of the field. */
+{
+  int field;
+
+  void method()
+  /** Leads the first statement. */
+  {
+    run();
+  }
+}

@@ -1033,7 +1033,9 @@ rules. "Header end" below means the `)` closing the header of `if`, `while`,
     anonymous class or enum constant body, a switch block, a control statement
     body block), the body is not malformed, no opener in the header before
     `prev` is unclosed (recovery), and the comment is not `Inline` (an inline
-    comment leads the `{`: `class X /* c */ {`). An end-of-line line comment
+    comment leads the `{`: `class X /* c */ {`). A doc comment (`/**`) before
+    the `{` of a type body that has members leads the `{` inline instead:
+    inside, it would document the first member. An end-of-line line comment
     before a separator that the `{` follows (a trailing separator, recovery)
     goes in too, since S1 would move it past the separator. A `{` that starts
     its parent (a nested block, `case 1: {`) or a labeled statement's body has

@@ -797,7 +797,9 @@ int[] values = new int[]
 
 - **Between a header and its body.** A comment between a declaration or control
   statement header and its body moves to the first line inside the body, unless
-  it is inline (`class X /* c */ {` stays as written).
+  it is inline (`class X /* c */ {` stays as written). A Javadoc comment before
+  the `{` of a class body with members goes before the `{` on the header's line
+  instead, since inside it would document the first member.
 
 ::: code-group
 

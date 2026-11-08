@@ -229,6 +229,20 @@ fn braced_body_comment<'a>(
         .next()
         .filter(|&inner| !(inner.parent() == body && JavaFormat::is_closer(inner)));
     Some(match inner {
+        // Inside a type body, a doc comment would document the first member.
+        Some(_)
+            if context.comment.kind == CommentKind::Doc
+                && matches!(
+                    node_kind(body),
+                    K::ClassBody
+                        | K::InterfaceBody
+                        | K::EnumBody
+                        | K::RecordBody
+                        | K::AnnotationInterfaceBody
+                ) =>
+        {
+            Placement::Leading(leading_target::<JavaLanguage>(open), CommentLayout::Inline)
+        }
         Some(inner) => Placement::Leading(
             leading_target::<JavaLanguage>(inner),
             CommentLayout::OwnLine,
