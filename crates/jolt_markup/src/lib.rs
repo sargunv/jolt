@@ -31,6 +31,7 @@ mod java;
 mod layout;
 mod markdown;
 mod parser;
+mod reference;
 mod words;
 
 use jolt_fmt::{Doc, DocBuilder};

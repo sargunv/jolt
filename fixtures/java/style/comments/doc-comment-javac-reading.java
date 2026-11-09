@@ -165,4 +165,35 @@ class DocCommentJavacReading {
   /** {@snippet : <li>Text that is long enough to wrap {@code a long description that wraps
    * second line} */
   void itemPinnedToAnErroneousSnippet() {}
+
+  /** {@value bad!
+   * {@code good}, where javadoc's reading depends on whether the value's reference is valid */
+  void unclosedValueTag() {}
+
+  /** {@value bad!
+   * }@return value, where javadoc's reading depends on whether the value's reference is valid */
+  void valueTagClosedOnTheNextLine() {}
+
+  /** {@inheritDoc bad!
+   * }@return value, where javadoc's reading depends on whether the reference is valid */
+  int inheritDocClosedOnTheNextLine() {
+    return 0;
+  }
+
+  /** {@inheritDoc bad!
+   * {@snippet : after an unclosed inheritDoc with a reference */
+  void unclosedInheritDocWithAReference() {}
+
+  /** @see bad! a </p> b, an invalid reference that makes the tag erroneous */
+  void seeWithAnInvalidReference() {}
+
+  /**
+   * Text.
+   *
+   * @throws Bad! when the reference is invalid, which keeps the tag's text as written
+   */
+  void throwsWithAnInvalidReference() {}
+
+  /** {@link java.util.Map#put(Object, Object) a label} and {@link Map<String, Integer>#get} stay references. */
+  void validReferences() {}
 }

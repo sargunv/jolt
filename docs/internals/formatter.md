@@ -1303,12 +1303,15 @@ text, an atom or structure is javadoc's own:
    their rich text (a link's label, `{@return}`'s and `{@summary}`'s text,
    `{@index}`'s description), and block tags with their heads and text.
 
-   Deviations: a reference is not parsed (`ReferenceParser` runs the Java parser
-   on it, and a malformed reference makes the tag erroneous; here it stays a
-   reference). This doesn't change the layout's decisions, because a reference,
-   a label and an erroneous node follow the same rules (an atom, filled text,
-   and the `@` rule below), and the oracle compares erroneous nodes with their
-   whitespace collapsed. `normalizePreContent` is not applied, since a `<pre>`
+   A reference is checked as `ReferenceParser` checks it (`reference`): split at
+   its first `/`, the first `#` after that and the first `(` after both, as
+   javac splits it, with each part read by the subset of javac's type grammar
+   that references use (names that aren't keywords, primitive types, type
+   arguments with wildcards, arrays, `...` in the parameters, and the names
+   `parseType` rejects alone, such as `var`). javac makes a tag with an invalid
+   reference erroneous, and so does the port. A reference with what that subset
+   doesn't read (an annotation outside the parameters, a comment) gives up the
+   reading. Deviation: `normalizePreContent` is not applied, since a `<pre>`
    region prints as written. Where javac's Markdown scanner loops forever (a
    last line of list markers with a space after them, `/// + +`: it pushes a
    list item without reading a character, a JDK bug that the hunt's oracle hit),
@@ -1319,26 +1322,22 @@ A comment is printed as written (N9) when javac doesn't read its text from the
 source as written (it has a Unicode escape), when it is a banner (`/***`, or a
 line made only of two or more `*`s), `/**/`, and when its reading would take
 more than [linear time](#doc-comment-cost) or nest inline tags more than 32 deep
-(below), or would depend on whether javac's `ReferenceParser` accepts a
-reference, which the port doesn't read: after a `{@value}` reference that no `}`
-follows on its line, javac reads one more character only for a valid reference.
-That character can be the `{` of the next tag, or a `}` after a line break,
-after which an `@` still starts a block tag; an `{@inheritDoc}` reference whose
-`}` is on a later line does the same. An escape (`@@`, `@*`) that doesn't start
-its line gives up the reading too: javac reads it as one only when a line break
-came before a tag's argument on its line, which the layout joins onto the tag's
-line. So does a description that starts with whitespace javac doesn't skip (a
-form feed, U+2003): a `<p>` after it ends the first sentence, which as the first
-tree it doesn't, and the layout drops what HTML collapses; and the rest would
-start the layout's first line, which javac strips as indentation when it is the
-only one. So does a `{@snippet :` that the comment's end or a form feed follows
-on its line: javac reads an error there, but the snippet's body after a line
-break, which a layout on more than one line puts before `*/` and which stays
-where the layout drops the form feed. The Java hook also keeps file headers, and
-`jolt_fmt` keeps comments that share a line with code, lie in a formatter-ignore
-region, or have a target with recovery. Such a comment keeps all its trailing
-whitespace: its `<pre>` elements, code and tag bodies, where that whitespace is
-content, were not read.
+(below), or hold a reference that the port's `ReferenceParser` doesn't read (see
+above). An escape (`@@`, `@*`) that doesn't start its line gives up the reading
+too: javac reads it as one only when a line break came before a tag's argument
+on its line, which the layout joins onto the tag's line. So does a description
+that starts with whitespace javac doesn't skip (a form feed, U+2003): a `<p>`
+after it ends the first sentence, which as the first tree it doesn't, and the
+layout drops what HTML collapses; and the rest would start the layout's first
+line, which javac strips as indentation when it is the only one. So does a
+`{@snippet :` that the comment's end or a form feed follows on its line: javac
+reads an error there, but the snippet's body after a line break, which a layout
+on more than one line puts before `*/` and which stays where the layout drops
+the form feed. The Java hook also keeps file headers, and `jolt_fmt` keeps
+comments that share a line with code, lie in a formatter-ignore region, or have
+a target with recovery. Such a comment keeps all its trailing whitespace: its
+`<pre>` elements, code and tag bodies, where that whitespace is content, were
+not read.
 
 **HTML layout.** The tree of each part (the description, each block tag) is
 flattened, an inline tag's rich text in line between its head and its `}`. Then:

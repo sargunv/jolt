@@ -84,19 +84,11 @@ class DocCommentKeptAsWritten {
     return 0;
   }
 
-  /** {@value bad!
-   * {@code good}, where javadoc's reading depends on whether the value's reference is valid */
-  void unclosedValueTag() {}
-
   void docCommentThatTheLayoutPutsOnItsOwnLine() {
     if (/** a doc comment  after an opener, which the line comment after it puts on its own line */
     // a line comment
     true) {}
   }
-
-  /** {@value bad!
-   * }@return value, where javadoc's reading depends on whether the value's reference is valid */
-  void valueTagClosedOnTheNextLine() {}
 
   /** a doc comment  before an empty declaration */ ;
 
@@ -105,12 +97,6 @@ class DocCommentKeptAsWritten {
   /** @param
    * x @@ text, an escape that the line break before the tag's argument makes */
   void escapeAfterAnArgumentOnTheNextLine(int x) {}
-
-  /** {@inheritDoc bad!
-   * }@return value, where javadoc's reading depends on whether the reference is valid */
-  int inheritDocClosedOnTheNextLine() {
-    return 0;
-  }
 
   /**
    * 
@@ -129,10 +115,6 @@ class DocCommentKeptAsWritten {
     ; /** a doc comment  that the removed empty statements leave on its own line */ ;
     int x;
   }
-
-  /** {@inheritDoc bad!
-   * {@snippet : after an unclosed inheritDoc with a reference */
-  void unclosedInheritDocWithAReference() {}
 
   /**
    *  A, which starts with an em space that javadoc would strip as indentation

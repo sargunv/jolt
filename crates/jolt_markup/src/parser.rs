@@ -28,6 +28,7 @@ use std::cell::OnceCell;
 
 use crate::frame::Line;
 use crate::java;
+use crate::reference::{self, Member, Validity};
 
 /// The end of input, as javac marks it (`LayoutCharacters.EOI`).
 const EOI: char = '\u{1a}';
@@ -417,18 +418,12 @@ impl Parser<'_, '_> {
 
     /// Fails the reading where it can't follow javac's: the comment is
     /// printed as written. That is a description that starts with
-    /// whitespace (see [`parse`]); a `{@snippet :` that the comment's end or a form feed
-    /// follows on its line; an escape (`@@`, `@*`) that doesn't start its
-    /// line, which javac reads as one only after a line break before a
-    /// tag's argument that the layout joins; an inline tag nested too
-    /// deeply; and a `{@value}` or `{@inheritDoc}` reference that a `}`
-    /// doesn't follow on its line. javac stops at an invalid reference,
-    /// which `ReferenceParser` (not read by this port) decides, and reads
-    /// what follows as content; after a valid one it reads on: through a `}`
-    /// after which the line break before it still makes an `@` start a
-    /// block tag, past what an unclosed `{@inheritDoc}` holds, and for
-    /// `{@value}` one more character, which can be the `{` of the next
-    /// inline tag.
+    /// whitespace (see [`parse`]); a `{@snippet :` that the comment's end or
+    /// a form feed follows on its line; an escape (`@@`, `@*`) that doesn't
+    /// start its line, which javac reads as one only after a line break
+    /// before a tag's argument that the layout joins; an inline tag nested
+    /// too deeply; and a reference that holds what [`reference`](mod@crate::reference) doesn't
+    /// read.
     fn give_up(&mut self) {
         self.charge(self.budget + 1);
     }
@@ -1100,12 +1095,8 @@ impl Parser<'_, '_> {
                 Ok(self.rich(brace, name, Some(term), content))
             }
             Tag::InheritDoc => {
-                let reference = self.reference()?;
+                self.reference(Member::Disallowed)?;
                 self.skip_whitespace();
-                if reference.is_some() && (self.cur.ch != '}' || self.newline) {
-                    self.give_up();
-                    return Err(ParseError);
-                }
                 if self.cur.ch == '}' {
                     self.next_char();
                     return Ok(self.atomic(brace, name));
@@ -1115,7 +1106,7 @@ impl Parser<'_, '_> {
                 Err(ParseError)
             }
             Tag::Link | Tag::LinkPlain => {
-                let reference = self.reference()?;
+                let reference = self.reference(Member::Optional)?;
                 let label = self.inline_content();
                 Ok(self.rich(brace, name, reference, label))
             }
@@ -1157,13 +1148,13 @@ impl Parser<'_, '_> {
                     }
                     _ => {}
                 }
-                let reference = self.reference()?;
+                self.reference(Member::Required)?;
                 self.skip_whitespace();
-                if self.cur.ch == '}' && !(self.newline && reference.is_some()) {
-                    self.next_char();
+                let closed = self.cur.ch == '}';
+                self.next_char();
+                if closed {
                     Ok(self.atomic(brace, name))
                 } else {
-                    self.give_up();
                     Err(ParseError)
                 }
             }
@@ -1280,8 +1271,10 @@ impl Parser<'_, '_> {
     }
 
     /// javac's `reference`: up to whitespace outside `()` and `<>`, or the
-    /// tag's `}`; `None` when it is empty before a `}`.
-    fn reference(&mut self) -> Parsed<Option<Span>> {
+    /// tag's `}`; `None` when it is empty before a `}`. An error when
+    /// `ReferenceParser` rejects it (see [`reference::check`]); the reading
+    /// gives up when it holds what that port doesn't read.
+    fn reference(&mut self, member: Member) -> Parsed<Option<Span>> {
         let start = self.cur.pos;
         let mut depth = 0i32;
         while !self.at_end() {
@@ -1315,12 +1308,39 @@ impl Parser<'_, '_> {
             }
             self.next_char();
         }
-        // javac leaves a negative depth to `ReferenceParser`, which always
-        // rejects it.
-        if depth != 0 {
+        if depth > 0 {
             return Err(ParseError);
         }
-        Ok(Some(self.span(start)))
+        let span = self.span(start);
+        match reference::check(&self.signature(span), member) {
+            Validity::Valid => Ok(Some(span)),
+            Validity::Invalid => Err(ParseError),
+            Validity::Unknown => {
+                self.give_up();
+                Err(ParseError)
+            }
+        }
+    }
+
+    /// The text of `span` as javac's buffer holds it: its lines joined by
+    /// line breaks.
+    fn signature(&self, span: Span) -> std::borrow::Cow<'_, str> {
+        let line = self.lines[span.start.line as usize].text;
+        if span.start.line == span.end.line {
+            return line[span.start.off as usize..span.end.off as usize].into();
+        }
+        let mut text = line[span.start.off as usize..].to_owned();
+        for index in span.start.line + 1..=span.end.line {
+            let line = self.lines[index as usize].text;
+            let end = if index == span.end.line {
+                span.end.off as usize
+            } else {
+                line.len()
+            };
+            text.push('\n');
+            text.push_str(&line[..end]);
+        }
+        text.into()
     }
 
     /// javac's `identifier`: a Java identifier after whitespace.
@@ -1440,7 +1460,7 @@ impl Parser<'_, '_> {
         match tag {
             Tag::Exception | Tag::Throws | Tag::Provides | Tag::Uses => {
                 self.skip_whitespace();
-                let reference = self.reference()?;
+                let reference = self.reference(Member::Disallowed)?;
                 Ok((reference.into_iter().collect(), Some(self.block_content())))
             }
             Tag::Param => {
@@ -1478,7 +1498,7 @@ impl Parser<'_, '_> {
                     }
                     '<' => return Ok((Vec::new(), Some(self.block_content()))),
                     ch if java::is_java_identifier_start(ch) || ch == '#' => {
-                        let reference = self.reference()?;
+                        let reference = self.reference(Member::Optional)?;
                         return Ok((reference.into_iter().collect(), Some(self.block_content())));
                     }
                     _ => {}
@@ -1489,7 +1509,7 @@ impl Parser<'_, '_> {
                 self.skip_whitespace();
                 let name = self.identifier()?;
                 self.skip_whitespace();
-                let reference = self.reference()?;
+                let reference = self.reference(Member::Disallowed)?;
                 let mut args = vec![name];
                 args.extend(reference);
                 let body = if java::is_whitespace(self.cur.ch) {
