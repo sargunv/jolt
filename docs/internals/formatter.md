@@ -1292,8 +1292,9 @@ text, an atom or structure is javadoc's own:
    and the `@` rule below), and the oracle compares erroneous nodes with their
    whitespace collapsed. `normalizePreContent` is not applied, since a `<pre>`
    region prints as written. Where javac's Markdown scanner loops forever (a
-   list marker found past the cursor at the end of the comment, a JDK bug that
-   the hunt's oracle hit), the port stops at the end of the comment.
+   last line of list markers with a space after them, `/// + +`: it pushes a
+   list item without reading a character, a JDK bug that the hunt's oracle hit),
+   the port's reading fails, and the comment prints as written.
 3. **Layout** (`html` for `/**`, `markdown` for `///`, then `layout`).
 
 A comment is printed as written (N9) when javac doesn't read its text from the

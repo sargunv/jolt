@@ -24,6 +24,8 @@
 //!   followed by a tab at the end of a line), this reads the rest of the line
 //!   as empty.
 
+use std::cell::OnceCell;
+
 use crate::frame::Line;
 use crate::java;
 
@@ -379,16 +381,22 @@ impl Parser<'_, '_> {
         }
     }
 
-    /// javac's `nextChar`: a line break sets `newline`.
-    fn next_char(&mut self) {
-        if self.at_end() {
-            return;
-        }
-        self.steps += 1;
+    /// Counts `count` steps of the reading. Past the budget the reading
+    /// fails: the reader moves to the end, and true tells the caller to stop.
+    fn charge(&mut self, count: usize) -> bool {
+        self.steps = self.steps.saturating_add(count);
         if self.steps > self.budget {
             self.cur.pos = self.end;
             self.cur.ch = EOI;
             self.cur.width = 0;
+            return true;
+        }
+        false
+    }
+
+    /// javac's `nextChar`: a line break sets `newline`.
+    fn next_char(&mut self) {
+        if self.at_end() || self.charge(1) {
             return;
         }
         let next = self.after_cur();
@@ -1460,7 +1468,11 @@ impl Parser<'_, '_> {
     }
 
     /// `Markdown.update`: the containers and leaf block of the line that
-    /// starts at the reader.
+    /// starts at the reader. Each pass of its loop costs a step, and so does
+    /// each character that a line pattern looks at: javac's loop for a list
+    /// item reads no character at the end of the comment (`/// + + ` never
+    /// ends, in javac too), and a line of many quote or list markers is
+    /// matched once for each.
     #[allow(clippy::too_many_lines, reason = "javac's method, rule for rule")]
     fn markdown_update(&mut self) {
         let previous = self.markdown_state().leaf;
@@ -1473,9 +1485,13 @@ impl Parser<'_, '_> {
                 &line[self.cur.pos.off as usize..]
             }
         };
+        let mut scan = LineScan::new(line_text);
         let mut peek = 0usize;
         let mut index = 0;
         loop {
+            if self.charge(1) {
+                return;
+            }
             let containers = self.markdown_state().containers.len();
             if index == containers {
                 if previous == Leaf::FencedCode {
@@ -1495,7 +1511,11 @@ impl Parser<'_, '_> {
                     }
                     return;
                 }
-                match line_kind(char_suffix(line_text, peek)) {
+                let (kind, cost) = scan.kind(peek);
+                if self.charge(cost) {
+                    return;
+                }
+                match kind {
                     LineKind::BulletedListItem | LineKind::OrderedListItem => {
                         let mut count = indent;
                         while self.cur.ch != ' ' && self.cur.ch != '\t' && !self.at_end() {
@@ -1544,7 +1564,10 @@ impl Parser<'_, '_> {
                 }
             } else {
                 let block = self.markdown_state().containers[index];
-                let kind = line_kind(char_suffix(line_text, peek));
+                let (kind, cost) = scan.kind(peek);
+                if self.charge(cost) {
+                    return;
+                }
                 match block.kind {
                     ContainerKind::ListItem => {
                         if indent >= block.indent || kind == LineKind::Blank {
@@ -1649,16 +1672,6 @@ const fn is_unquoted_attr_value_terminator(ch: char) -> bool {
     )
 }
 
-/// `line.substring(index)`, with `index` counted in characters (javac's
-/// UTF-16 units, the same here for the ASCII prefix it skips), or nothing
-/// past the line's end.
-fn char_suffix(line: &str, index: usize) -> &str {
-    match line.char_indices().nth(index) {
-        Some((at, _)) => &line[at..],
-        None => "",
-    }
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 enum Leaf {
     #[default]
@@ -1708,89 +1721,179 @@ fn bytecount(bytes: &[u8], byte: u8) -> usize {
         .fold(0, |count, &found| count + usize::from(found == byte))
 }
 
-/// Whether Java's `.*` matches `text`: it has no line terminator.
-fn dot_star(text: &str) -> bool {
-    !text.contains(['\n', '\r', '\u{85}', '\u{2028}', '\u{2029}'])
+/// The line that `Markdown.update` matches javac's line patterns against,
+/// from a character index on (javac's `line.substring(peek)`), with what the
+/// patterns ask of the rest of the line found once.
+struct LineScan<'t> {
+    text: &'t str,
+    /// The character index and byte offset of the last suffix asked for.
+    chars: usize,
+    byte: usize,
+    /// The start of the line's last line terminator other than `\n` and
+    /// `\r` (which Java's `.` doesn't match), once looked for.
+    terminator: OnceCell<Option<usize>>,
+    /// The offset of the line's last `` ` ``, once looked for.
+    backtick: OnceCell<Option<usize>>,
 }
 
-/// `Markdown.getLineKind`: the first of javac's line patterns that matches.
-fn line_kind(text: &str) -> LineKind {
-    if text.chars().all(java::is_whitespace) {
-        return LineKind::Blank;
-    }
-    let bytes = text.as_bytes();
-    let first = bytes[0];
-    if !matches!(
-        first,
-        b'#' | b'=' | b'-' | b'+' | b'*' | b'_' | b'`' | b'~' | b'>' | b'0'..=b'9'
-    ) {
-        return LineKind::Other;
-    }
-    let run = |byte: u8| bytes.iter().take_while(|&&found| found == byte).count();
-    let is_tab_space = |byte: u8| byte == b' ' || byte == b'\t';
-    // BLANK: `[ \t]*`.
-    if bytes.iter().all(|&byte| is_tab_space(byte)) {
-        return LineKind::Blank;
-    }
-    // ATX_HEADER: `#{1,6}([ \t].*|$)`.
-    let hashes = run(b'#');
-    if (1..=6).contains(&hashes)
-        && (hashes == bytes.len() || is_tab_space(bytes[hashes]) && dot_star(&text[hashes..]))
-    {
-        return LineKind::AtxHeader;
-    }
-    // SETEXT_UNDERLINE: `(=+|-+)[ \t]*`.
-    if matches!(first, b'=' | b'-') {
-        let marks = run(first);
-        if bytes[marks..].iter().all(|&byte| is_tab_space(byte)) {
-            return LineKind::SetextUnderline;
+impl<'t> LineScan<'t> {
+    const fn new(text: &'t str) -> Self {
+        Self {
+            text,
+            chars: 0,
+            byte: 0,
+            terminator: OnceCell::new(),
+            backtick: OnceCell::new(),
         }
     }
-    // THEMATIC_BREAK: three or more of one of `*`, `-`, `_`, each followed
-    // by spaces and tabs.
-    if matches!(first, b'*' | b'-' | b'_')
-        && bytes
+
+    /// The byte offset of character `index` (the line's end past it), and
+    /// the characters walked to find it: the scan moves on from the last
+    /// index asked for.
+    fn offset(&mut self, index: usize) -> (usize, usize) {
+        if index < self.chars {
+            (self.chars, self.byte) = (0, 0);
+        }
+        let skip = index - self.chars;
+        let walked: usize = self.text[self.byte..]
+            .chars()
+            .take(skip)
+            .map(char::len_utf8)
+            .sum();
+        self.byte += walked;
+        self.chars = index;
+        (self.byte, skip)
+    }
+
+    /// Whether Java's `.*` matches the line from byte `at`: no line
+    /// terminator comes after it.
+    fn dot_star(&self, at: usize, cost: &mut usize) -> bool {
+        let text = self.text;
+        let last = *self.terminator.get_or_init(|| {
+            *cost += text.len();
+            text.rfind(['\u{85}', '\u{2028}', '\u{2029}'])
+        });
+        last.is_none_or(|found| found < at)
+    }
+
+    /// Whether no `` ` `` comes after byte `at`.
+    fn no_backtick(&self, at: usize, cost: &mut usize) -> bool {
+        let text = self.text;
+        let last = *self.backtick.get_or_init(|| {
+            *cost += text.len();
+            text.rfind('`')
+        });
+        last.is_none_or(|found| found < at)
+    }
+
+    /// `Markdown.getLineKind` of the line from character `index`: the first
+    /// of javac's line patterns that matches, and the steps it took.
+    fn kind(&mut self, index: usize) -> (LineKind, usize) {
+        let (at, mut cost) = self.offset(index);
+        let text = &self.text[at..];
+        let bytes = text.as_bytes();
+        let blank: usize = text
+            .chars()
+            .take_while(|&ch| java::is_whitespace(ch))
+            .map(char::len_utf8)
+            .sum();
+        cost += blank + 1;
+        if blank == text.len() {
+            return (LineKind::Blank, cost);
+        }
+        let first = bytes[0];
+        // The patterns below all start with one of these, which is not
+        // whitespace, so the line is no `[ \t]*` either.
+        if !matches!(
+            first,
+            b'#' | b'=' | b'-' | b'+' | b'*' | b'_' | b'`' | b'~' | b'>' | b'0'..=b'9'
+        ) {
+            return (LineKind::Other, cost);
+        }
+        let is_tab_space = |byte: u8| byte == b' ' || byte == b'\t';
+        let run = |byte: u8| bytes.iter().take_while(|&&found| found == byte).count();
+        // ATX_HEADER: `#{1,6}([ \t].*|$)`.
+        let hashes = bytes
             .iter()
-            .all(|&byte| byte == first || is_tab_space(byte))
-        && bytecount(bytes, first) >= 3
-    {
-        return LineKind::ThematicBreak;
+            .take(7)
+            .take_while(|&&byte| byte == b'#')
+            .count();
+        cost += hashes;
+        if (1..=6).contains(&hashes)
+            && (hashes == bytes.len()
+                || is_tab_space(bytes[hashes]) && self.dot_star(at + hashes, &mut cost))
+        {
+            return (LineKind::AtxHeader, cost);
+        }
+        // SETEXT_UNDERLINE: `(=+|-+)[ \t]*`.
+        if matches!(first, b'=' | b'-') {
+            let marks = run(first);
+            let spaces = bytes[marks..]
+                .iter()
+                .take_while(|&&byte| is_tab_space(byte))
+                .count();
+            cost += marks + spaces;
+            if marks + spaces == bytes.len() {
+                return (LineKind::SetextUnderline, cost);
+            }
+        }
+        // THEMATIC_BREAK: three or more of one of `*`, `-`, `_`, each followed
+        // by spaces and tabs.
+        if matches!(first, b'*' | b'-' | b'_') {
+            let scanned = bytes
+                .iter()
+                .take_while(|&&byte| byte == first || is_tab_space(byte))
+                .count();
+            cost += scanned;
+            if scanned == bytes.len() && bytecount(bytes, first) >= 3 {
+                return (LineKind::ThematicBreak, cost + scanned);
+            }
+        }
+        // CODE_FENCE: `` `{3,}[^`]*+ `` or `~{3,}.*+`.
+        if matches!(first, b'`' | b'~') {
+            let fence = run(first);
+            cost += fence;
+            if fence >= 3
+                && if first == b'`' {
+                    self.no_backtick(at + fence, &mut cost)
+                } else {
+                    self.dot_star(at, &mut cost)
+                }
+            {
+                return (LineKind::CodeFence, cost);
+            }
+        }
+        // BULLETED_LIST_ITEM: `[-+*][ \t].*`.
+        if matches!(first, b'-' | b'+' | b'*')
+            && bytes.get(1).is_some_and(|&byte| is_tab_space(byte))
+            && self.dot_star(at, &mut cost)
+        {
+            return (LineKind::BulletedListItem, cost);
+        }
+        // ORDERED_LIST_ITEM: `[0-9]{1,9}[.)][ \t].*`.
+        let digits = bytes
+            .iter()
+            .take(10)
+            .take_while(|byte| byte.is_ascii_digit())
+            .count();
+        cost += digits;
+        if (1..=9).contains(&digits)
+            && bytes
+                .get(digits)
+                .is_some_and(|&byte| byte == b'.' || byte == b')')
+            && bytes
+                .get(digits + 1)
+                .is_some_and(|&byte| is_tab_space(byte))
+            && self.dot_star(at, &mut cost)
+        {
+            return (LineKind::OrderedListItem, cost);
+        }
+        // BLOCK_QUOTE: `>.*`.
+        if first == b'>' && self.dot_star(at, &mut cost) {
+            return (LineKind::BlockQuote, cost);
+        }
+        (LineKind::Other, cost)
     }
-    // CODE_FENCE: `` `{3,}[^`]*+ `` or `~{3,}.*+`.
-    if first == b'`' && run(b'`') >= 3 && !text[run(b'`')..].contains('`') {
-        return LineKind::CodeFence;
-    }
-    if first == b'~' && run(b'~') >= 3 && dot_star(text) {
-        return LineKind::CodeFence;
-    }
-    // BULLETED_LIST_ITEM: `[-+*][ \t].*`.
-    if matches!(first, b'-' | b'+' | b'*')
-        && bytes.get(1).is_some_and(|&byte| is_tab_space(byte))
-        && dot_star(text)
-    {
-        return LineKind::BulletedListItem;
-    }
-    // ORDERED_LIST_ITEM: `[0-9]{1,9}[.)][ \t].*`.
-    let digits = bytes
-        .iter()
-        .take_while(|byte| byte.is_ascii_digit())
-        .count();
-    if (1..=9).contains(&digits)
-        && bytes
-            .get(digits)
-            .is_some_and(|&byte| byte == b'.' || byte == b')')
-        && bytes
-            .get(digits + 1)
-            .is_some_and(|&byte| is_tab_space(byte))
-        && dot_star(text)
-    {
-        return LineKind::OrderedListItem;
-    }
-    // BLOCK_QUOTE: `>.*`.
-    if first == b'>' && dot_star(text) {
-        return LineKind::BlockQuote;
-    }
-    LineKind::Other
 }
 
 #[cfg(test)]
