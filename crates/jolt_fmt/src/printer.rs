@@ -498,7 +498,10 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
         fits
     }
 
-    #[allow(clippy::too_many_lines)]
+    #[allow(
+        clippy::too_many_lines,
+        reason = "one loop over the document kinds that shares the measure's state"
+    )]
     fn measure_stack(&self, probe: Probe, stack: &mut Vec<Fit>) -> bool {
         // Spaces at the start of a line are dropped, as when printing.
         let file_start = self.line == Line::FileStart;

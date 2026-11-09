@@ -1,5 +1,8 @@
 //! The dprint Wasm plugin. Natively it builds only for its tests.
-#![cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+#![cfg_attr(
+    not(target_arch = "wasm32"),
+    allow(dead_code, reason = "the plugin entry points exist only in Wasm")
+)]
 
 use std::path::Path;
 

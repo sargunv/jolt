@@ -1,5 +1,5 @@
 // Shared by several test binaries and examples, each of which uses a part.
-#![allow(dead_code)]
+#![allow(dead_code, reason = "each test binary uses a part")]
 
 use jolt_fmt::FormatOptions;
 use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind as K};

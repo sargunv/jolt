@@ -87,7 +87,10 @@ pub(crate) const RUN_END: u8 = 16;
 pub(crate) const GLUED: u8 = 32;
 
 #[derive(Clone, Copy, Debug)]
-#[allow(clippy::struct_field_names)]
+#[allow(
+    clippy::struct_field_names,
+    reason = "a piece of text and its properties"
+)]
 pub(crate) struct Text<'a> {
     pub(crate) text: &'a str,
     /// Display width of the first output line.

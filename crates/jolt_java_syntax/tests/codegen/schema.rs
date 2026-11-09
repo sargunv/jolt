@@ -3,7 +3,10 @@
 
 use super::model::*;
 
-#[allow(clippy::too_many_lines)]
+#[allow(
+    clippy::too_many_lines,
+    reason = "the whole Java schema, one entry per node kind"
+)]
 pub(crate) fn java() -> Schema {
     Schema {
         tokens: vec![
