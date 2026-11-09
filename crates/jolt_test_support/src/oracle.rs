@@ -9,7 +9,7 @@ use jolt_syntax::{
     Diagnostic, Language, SyntaxElement, SyntaxNode, SyntaxToken, TriviaKind, TriviaPiece,
 };
 
-use crate::doc_comments;
+use crate::doc_oracle;
 
 /// What a language provides to the oracle, the corpus tests and the sweep.
 pub trait CorpusLanguage: Sync {
@@ -66,15 +66,22 @@ pub struct ParseFacts {
     /// structure check covers clean inputs; this covers dirty ones, whose
     /// recovered trees may reparse differently.
     pub tokens: BTreeMap<String, usize>,
+    /// The doc comments as javac groups them, in canonical text (see
+    /// `doc_oracle`), for the JDK's reading.
+    pub docs: Vec<String>,
 }
 
 pub fn parse_facts<C: CorpusLanguage>(language: &C, source: &str) -> ParseFacts {
     let policy = language.structure_policy();
-    language.with_parse(source, |root, diagnostics| ParseFacts {
-        diagnostics: diagnostics.to_vec(),
-        comments: comment_inventory(root, diagnostics.is_empty()),
-        structure: structure_fingerprint::<C::Syntax>(root, policy),
-        tokens: token_inventory::<C::Syntax>(root, policy),
+    language.with_parse(source, |root, diagnostics| {
+        let (comments, docs) = comment_inventory(root, diagnostics.is_empty());
+        ParseFacts {
+            diagnostics: diagnostics.to_vec(),
+            comments,
+            structure: structure_fingerprint::<C::Syntax>(root, policy),
+            tokens: token_inventory::<C::Syntax>(root, policy),
+            docs,
+        }
     })
 }
 
@@ -113,13 +120,16 @@ fn diagnostic_codes(diagnostics: &[Diagnostic]) -> BTreeMap<&'static str, usize>
     codes
 }
 
-/// Every comment by kind and canonical text. A `/**` comment that Jolt may
-/// reflow has the form [`doc_comments::javadoc`] gives it, and a run of `///`
-/// lines (see [`MarkdownRuns`]) the form [`doc_comments::markdown`] gives the
-/// run; every other comment its exact text. `clean` tells whether the
-/// source parses without diagnostics (see [`doc_comments::markdown`]).
+/// Every comment by kind and canonical text, and the doc comments as javac
+/// groups them (see `doc_oracle`). A doc comment's text may be reflowed, so
+/// its inventory form is its characters other than whitespace, after the
+/// frame javac strips (the delimiters, and each line's leading `*`s or
+/// `///`): a layout may change whitespace but not lose, add or reorder a
+/// character. What javadoc reads is compared by the JDK in the hunt. In a
+/// source with syntax errors (`!clean`), whose malformed nodes may put a
+/// blank line inside a run, the `///` lines of the whole file are one form.
 #[must_use]
-fn comment_inventory(root: SyntaxNode<'_>, clean: bool) -> BTreeMap<String, usize> {
+fn comment_inventory(root: SyntaxNode<'_>, clean: bool) -> (BTreeMap<String, usize>, Vec<String>) {
     let mut comments = BTreeMap::new();
     let mut runs = MarkdownRuns {
         clean,
@@ -127,22 +137,24 @@ fn comment_inventory(root: SyntaxNode<'_>, clean: bool) -> BTreeMap<String, usiz
     };
     for token in root.tokens() {
         for piece in token.leading() {
-            inventory_piece(root.source(), piece, &mut runs, &mut comments);
+            inventory_piece(piece, &mut runs, &mut comments);
         }
         if !token.text().is_empty() {
             runs.end_run(&mut comments);
         }
         for piece in token.trailing() {
-            inventory_piece(root.source(), piece, &mut runs, &mut comments);
+            inventory_piece(piece, &mut runs, &mut comments);
         }
     }
     runs.end_run(&mut comments);
-    comments
+    if !clean && !runs.all.is_empty() {
+        comments.insert(format!("markdown:{}", runs.all), 1);
+    }
+    (comments, runs.docs)
 }
 
 /// Adds one trivia piece to the comment inventory.
 fn inventory_piece<'a>(
-    source: &str,
     piece: TriviaPiece<'a>,
     runs: &mut MarkdownRuns<'a>,
     comments: &mut BTreeMap<String, usize>,
@@ -157,17 +169,11 @@ fn inventory_piece<'a>(
         TriviaKind::BlockComment | TriviaKind::UnterminatedBlockComment => {
             ("block", canonical_comment_text(piece.text))
         }
-        TriviaKind::DocComment => match doc_comments::javadoc(piece.text) {
-            Some(form) => ("javadoc", form),
-            None => (
-                "doc",
-                doc_comments::star_less(
-                    piece.text,
-                    line_indentation(source, piece.range.start().get()),
-                )
-                .unwrap_or_else(|| canonical_comment_text(piece.text)),
-            ),
-        },
+        TriviaKind::DocComment => {
+            runs.end_run(comments);
+            runs.docs.push(canonical_javadoc(piece.text));
+            ("javadoc", javadoc_characters(piece.text))
+        }
         TriviaKind::Whitespace => return,
         TriviaKind::ByteOrderMark | TriviaKind::TrailingSubstitute => {
             runs.end_run(comments);
@@ -178,76 +184,101 @@ fn inventory_piece<'a>(
     *comments.entry(format!("{kind}:{text}")).or_default() += 1;
 }
 
-/// The spaces and tabs that start the line containing `offset`.
-fn line_indentation(source: &str, offset: usize) -> &str {
-    let start = source[..offset]
-        .rfind(['\n', '\r'])
-        .map_or(0, |index| index + 1);
-    let line = &source[start..];
-    &line[..line.len() - line.trim_start_matches([' ', '\t']).len()]
+/// A `/**` comment's characters other than whitespace, without its
+/// delimiters and each line's leading run of `*`s.
+fn javadoc_characters(text: &str) -> String {
+    let body = text.strip_prefix("/**").unwrap_or(text);
+    let body = body
+        .strip_suffix("*/")
+        .unwrap_or(body)
+        .trim_end_matches('*');
+    let mut out = String::new();
+    for line in body.split(['\r', '\n']) {
+        let line = line
+            .trim_start_matches([' ', '\t', '\x0c'])
+            .trim_start_matches('*');
+        out.extend(line.chars().filter(|ch| !ch.is_whitespace()));
+    }
+    out
 }
 
-/// Groups `///` lines into runs from the trivia alone, as javadoc reads them
-/// (JEP 467): lines that start with `///` but not `////`, each starting its
-/// line, one after the other with no blank line between. A `///` comment
-/// after code on its line is no doc comment to javadoc; it is a run of its
-/// own here, so that a layout may put it on a line of its own, but not make
-/// it part of a run.
+/// A `/**` comment's canonical text: each line after the first loses the
+/// whitespace before a leading `*`, and line breaks are `\n`.
+fn canonical_javadoc(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for (index, line) in text
+        .split("\r\n")
+        .flat_map(|part| part.split(['\r', '\n']))
+        .enumerate()
+    {
+        if index > 0 {
+            out.push('\n');
+            let trimmed = line.trim_start_matches([' ', '\t', '\x0c']);
+            if trimmed.starts_with('*') {
+                out.push_str(trimmed);
+                continue;
+            }
+        }
+        out.push_str(line);
+    }
+    out
+}
+
+/// Groups `///` lines into runs as javac does (JEP 467): line comments that
+/// start with `///` (`////` too), one after the other with only whitespace
+/// before each on its line and no blank line between. The first may follow
+/// code on its line.
 #[derive(Default)]
 struct MarkdownRuns<'a> {
     /// The source parses without diagnostics.
     clean: bool,
+    /// The characters of every run, for a source that doesn't.
+    all: String,
     run: Vec<&'a str>,
     /// Line breaks since the run's last line.
     newlines: usize,
-    /// Only whitespace since the last line break or the file start.
-    line_start: bool,
-    /// Nothing but trivia seen yet.
-    started: bool,
+    /// The doc comments read so far, in canonical text.
+    docs: Vec<String>,
 }
 
 impl<'a> MarkdownRuns<'a> {
-    fn newline(&mut self) {
+    const fn newline(&mut self) {
         self.newlines += 1;
-        self.line_start = true;
     }
 
     /// Adds a `///` comment to the runs; false for any other line comment.
     fn member(&mut self, text: &'a str, comments: &mut BTreeMap<String, usize>) -> bool {
-        if !text.starts_with("///") || text.starts_with("////") {
+        if !text.starts_with("///") {
             return false;
         }
-        let at_line_start = self.line_start || !self.started;
-        if !at_line_start || self.newlines != 1 {
+        if self.newlines != 1 {
             self.end_run(comments);
         }
         self.run.push(text);
-        if !at_line_start {
-            self.end_run(comments);
-        }
         self.newlines = 0;
-        self.line_start = false;
-        self.started = true;
         true
     }
 
-    /// Code or a comment that is not a run member: the run ends. A run that
-    /// Jolt may reflow has its form; any other one is its lines, each as a
-    /// line comment.
+    /// Code or a comment that is not a run member: the run ends.
     fn end_run(&mut self, comments: &mut BTreeMap<String, usize>) {
-        if !self.run.is_empty() {
-            let run = std::mem::take(&mut self.run);
-            if let Some(form) = doc_comments::markdown(&run, self.clean) {
-                *comments.entry(format!("markdown:{form}")).or_default() += 1;
-            } else {
-                for line in run {
-                    let text = canonical_comment_text(line);
-                    *comments.entry(format!("line:{text}")).or_default() += 1;
-                }
-            }
+        self.newlines = 0;
+        if self.run.is_empty() {
+            return;
         }
-        self.line_start = false;
-        self.started = true;
+        let run = std::mem::take(&mut self.run);
+        let mut characters = String::new();
+        for line in &run {
+            let content = line.strip_prefix("///").unwrap_or(line);
+            characters.extend(content.chars().filter(|ch| !ch.is_whitespace()));
+        }
+        if self.clean {
+            *comments
+                .entry(format!("markdown:{characters}"))
+                .or_default() += 1;
+        } else {
+            self.all.push_str(&characters);
+        }
+        self.docs.push(run.join("\n"));
     }
 }
 
@@ -653,6 +684,10 @@ pub fn check_source<C: CorpusLanguage>(
                 input.comments, output.comments
             ),
         ));
+    }
+    // javadoc reads no file with syntax errors.
+    if doc_oracle::enabled() && clean {
+        doc_oracle::record(&input.docs, &output.docs);
     }
     let repeated = language.format(&formatted, options);
     if repeated != formatted {
