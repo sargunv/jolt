@@ -38,15 +38,20 @@ class DocCommentHtmlBlocks {
    *
    * <li>fifth item after two blank lines<p>with a paragraph inside
    * </ul>
-   * <dl>
-   * <dt>Term</dt>
-   * <dd>The definition, which is long enough that it does not fit on one line.</dd>
-   * </dl>
    * @param mode one of:
    * <ul><li>{@code A}, the first mode</li><li>{@code B}, the second mode</li></ul>
    * after the list in the tag.
    */
   void lists(int mode) {}
+
+  /**
+   * A definition list, which Jolt keeps as written:
+   * <dl>
+   * <dt>Term</dt>
+   * <dd>The definition, which is long enough that it does not fit on one line.</dd>
+   * </dl>
+   */
+  void definitionList() {}
 
   /**
    * Line breaks:<br>

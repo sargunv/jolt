@@ -1,19 +1,27 @@
-//! The oracle's canonical forms of doc comments: what a doc comment means to
-//! javadoc, so that formatting may rewrap its text but not change it.
+//! The oracle's canonical forms of doc comments that Jolt may reflow: what a
+//! doc comment means to javadoc, so that formatting may rewrap its text but
+//! not change it.
 //!
-//! - A `/**` comment is its description's words, its block tags with their
-//!   words, and its verbatim regions as exact text ([`javadoc`]).
+//! These rules are deliberately simpler than the formatter's tokenizers and
+//! don't share code with them. Each form applies only when a comment passes
+//! a coarse precondition of the oracle's own; for any other comment the
+//! oracle compares the text exactly, as for every other comment. A comment
+//! that Jolt doesn't reflow keeps its text, so it has the same form either
+//! way.
+//!
+//! - A `/**` comment is its words, its HTML tags, its inline tags, its block
+//!   tags and its `<pre>` regions ([`javadoc`]).
 //! - A run of `///` lines is the Markdown events of its description and of
-//!   each block tag ([`markdown`]).
+//!   each block tag, read by pulldown-cmark ([`markdown`]).
 
 use std::fmt::Write as _;
 
 use pulldown_cmark::{CodeBlockKind, CowStr, Event, Options, Parser, Tag, TagEnd};
 
-/// HTML elements that start or end a block. Javadoc's HTML collapses the
-/// whitespace around them, so the canonical form splits them off as words
-/// of their own: gluing `<p>` to the next word, or moving it to a line of its
-/// own, does not change the form.
+/// HTML elements that start or end a block. HTML collapses the whitespace
+/// around them, so the form splits them off as words of their own: gluing
+/// `<p>` to the next word, or moving it to a line of its own, doesn't change
+/// the form.
 const BLOCK_ELEMENTS: &[&str] = &[
     "p",
     "ul",
@@ -34,454 +42,307 @@ const BLOCK_ELEMENTS: &[&str] = &[
     "br",
 ];
 
-/// Elements whose content is kept byte for byte.
-const VERBATIM_ELEMENTS: &[&str] = &["pre", "table"];
-
-/// The canonical form of a `/**` comment, or `None` when `text` is not a
-/// terminated `/**` comment with literal delimiters.
-///
-/// Each line of a multi-line comment loses its indentation, then its run of
-/// `*`s and one space after them, as javadoc reads it, and its trailing
-/// whitespace; a comment on one line loses only its delimiters and the
-/// whitespace around its text. Then the form is, in order:
-///
-/// - the whitespace-separated words of the description, with block-level
-///   HTML tags split off as words of their own, and the whitespace inside an
-///   HTML tag's quoted attribute value kept, as javadoc keeps it;
-/// - each block tag (a line that starts with `@` and a letter) on a line of
-///   its own, with its words;
-/// - each verbatim region (`<pre>`, `<table>`, `{@snippet}`) as its exact
-///   lines.
-///
-/// Inline tags (`{@…}`, matched by brace balance) are lexed first: nothing
-/// inside one starts a block tag, a block element or a verbatim region. A
-/// `<pre>` or `<table>` without its end tag runs to the end of the comment.
-///
-/// A comment with a content line that does not start with `*` is printed
-/// with its lines as written (javadoc keeps the indentation of such a line),
-/// re-indented with the code: its form is the first line trimmed, then each
-/// other non-blank line without trailing whitespace and without
-/// `indentation`, the indentation of the source line the comment starts on,
-/// when it starts with it.
-pub(crate) fn javadoc(text: &str, indentation: &str) -> Option<String> {
-    let body = text.strip_prefix("/**")?.strip_suffix("*/")?;
-    let lines: Vec<&str> = body.split(['\r', '\n']).collect();
-    let multiline = lines.len() > 1;
-    let star_less = lines
-        .iter()
-        .skip(1)
-        .any(|line| !line.trim().is_empty() && !line.trim_start().starts_with('*'));
-    if star_less {
-        let mut form = String::new();
-        for (index, line) in text.split(['\r', '\n']).enumerate() {
-            let line = if index == 0 {
-                line.trim()
-            } else {
-                let line = line.trim_end();
-                line.strip_prefix(indentation).unwrap_or(line)
-            };
-            if !line.is_empty() {
-                form.push_str(line);
-                form.push('\n');
-            }
-        }
-        return Some(form);
-    }
-    let content: Vec<&str> = lines
-        .iter()
-        .map(|line| {
-            let line = line.trim_start();
-            match line.strip_prefix('*') {
-                Some(rest) if multiline => {
-                    let rest = rest.trim_start_matches('*').trim_end();
-                    rest.strip_prefix(' ').unwrap_or(rest)
-                }
-                _ => line.trim(),
-            }
-        })
-        .collect();
-    Some(javadoc_form(&content.join("\n")))
+/// One content line of a `/**` comment, without trailing whitespace.
+struct Line<'t> {
+    /// After the leading whitespace, the run of `*`s and one space.
+    text: &'t str,
+    /// After the leading whitespace and the run of `*`s: what javadoc reads
+    /// in a `<pre>` region.
+    code: &'t str,
 }
 
-/// The form of a `/**` comment's content lines, joined with `\n`.
-fn javadoc_form(content: &str) -> String {
+/// The form of a `/**` comment that Jolt may reflow, or `None` when the
+/// oracle compares it exactly. Without trailing whitespace, and after the
+/// leading whitespace, the run of `*`s and one space of each line (as
+/// javadoc reads it; a comment on one line loses only its delimiters), the
+/// form is a list of items:
+///
+/// - the words of the text, split at whitespace;
+/// - an HTML tag, from a `<` and a letter or `/` to the next `>` on its
+///   line, exactly: it is part of the word around it, except a block-level
+///   element's tag, which is a word of its own;
+/// - an inline tag (`{@` to the `}` that balances it), with its whitespace
+///   collapsed to one space: part of the word around it;
+/// - a block tag (a line that starts with `@` and a letter);
+/// - a `<pre>` region, from `<pre` to `</pre>`, exactly: its first line
+///   from `<pre`, and the others after their run of `*`s, as javadoc reads
+///   them.
+///
+/// Inline tags are read first, then the rest from left to right. The
+/// precondition: the comment is a terminated `/**` (not `/***`) without
+/// `<!--` or `{@snippet`, each content line after the first starts with
+/// `*`, each `<pre>` is closed, and each HTML tag outside inline tags and
+/// `<pre>` regions closes on its line.
+pub(crate) fn javadoc(text: &str) -> Option<String> {
+    if text.starts_with("/***") || text.contains("<!--") || text.contains("{@snippet") {
+        return None;
+    }
+    let lines = content_lines(text)?;
     let mut form = Form::default();
-    let bytes = content.as_bytes();
-    let mut index = 0;
-    let mut line_start = true;
-    while index < bytes.len() {
-        let rest = &content[index..];
-        let byte = bytes[index];
-        if line_start {
-            let indentation = rest.len() - rest.trim_start_matches([' ', '\t']).len();
-            let after = &rest[indentation..];
-            if after.starts_with('@') && after[1..].starts_with(|ch: char| ch.is_ascii_alphabetic())
-            {
-                form.block_tag();
-            }
-            line_start = false;
-        }
-        if byte == b'\n' {
+    let (mut index, mut at) = (0, 0);
+    while index < lines.len() {
+        let text = lines[index].text;
+        if at == 0 {
             form.boundary();
-            line_start = true;
-            index += 1;
-            continue;
-        }
-        if rest.starts_with("{@")
-            && let Some(len) = inline_tag_len(rest)
-        {
-            let tag = &rest[..len];
-            if tag.starts_with("{@snippet") {
-                form.verbatim(tag);
-            } else {
-                for ch in tag.chars() {
-                    form.char(ch);
-                }
+            let rest = text.trim_start_matches([' ', '\t']);
+            if rest.starts_with('@') && rest[1..].starts_with(|ch: char| ch.is_ascii_alphabetic()) {
+                form.items.push("BlockTag".to_owned());
             }
-            index += len;
+        }
+        let Some(ch) = text[at..].chars().next() else {
+            (index, at) = (index + 1, 0);
+            continue;
+        };
+        let rest = &text[at..];
+        if rest.starts_with("{@")
+            && let Some((end_line, end)) = inline_tag_end(&lines, index, at)
+        {
+            let tag: Vec<&str> = (index..=end_line)
+                .map(|line| {
+                    let text = lines[line].text;
+                    let to = if line == end_line { end } else { text.len() };
+                    &text[if line == index { at } else { 0 }..to]
+                })
+                .collect();
+            form.word.push_str(collapse(&tag.join(" ")).trim_end());
+            (index, at) = (end_line, end);
             continue;
         }
-        if byte == b'<'
-            && let Some((name, len)) = block_element(rest)
-        {
-            let closing = rest.as_bytes()[1] == b'/';
-            if !closing && VERBATIM_ELEMENTS.contains(&name.as_str()) {
-                let end = find_ascii_ci(rest, &format!("</{name}"))
-                    .and_then(|start| rest[start..].find('>').map(|end| start + end + 1))
-                    .unwrap_or(rest.len());
-                form.verbatim(&rest[..end]);
-                index += end;
+        let next = rest[ch.len_utf8()..].chars().next();
+        if ch == '<' && next.is_some_and(|next| next.is_ascii_alphabetic() || next == '/') {
+            let len = rest.find('>')? + 1;
+            let tag = &rest[..len];
+            if element_name(tag) == Some(("pre", false)) {
+                let (end_line, end) = closing_pre(&lines, index, at + len)?;
+                form.boundary();
+                let mut region = rest.to_owned();
+                for line in &lines[index + 1..=end_line] {
+                    region.push('\n');
+                    region.push_str(line.code);
+                }
+                if end_line > index {
+                    let last = &lines[end_line];
+                    region.truncate(region.len() - (last.text.len() - end));
+                } else {
+                    region.truncate(end - at);
+                }
+                form.items.push(format!("Pre({region:?})"));
+                (index, at) = (end_line, end);
                 continue;
             }
-            form.boundary();
-            form.tag(&rest[..len]);
-            form.boundary();
-            index += len;
+            let block = element_name(tag).is_some_and(|(name, _)| BLOCK_ELEMENTS.contains(&name));
+            if block {
+                form.boundary();
+            }
+            form.word.push_str(tag);
+            if block {
+                form.boundary();
+            }
+            at += len;
             continue;
         }
-        if byte == b'<'
-            && rest[1..].starts_with(|ch: char| ch.is_ascii_alphabetic() || ch == '/')
-            && let Some(len) = tag_len(rest)
-        {
-            form.tag(&rest[..len]);
-            index += len;
-            continue;
+        if ch.is_whitespace() {
+            form.boundary();
+        } else {
+            form.word.push(ch);
         }
-        let ch = rest.chars().next().expect("a char at a boundary");
-        form.char(ch);
-        index += ch.len_utf8();
+        at += ch.len_utf8();
     }
-    form.finish()
+    form.boundary();
+    Some(form.items.join("\n"))
 }
 
-/// The canonical form being built: words joined by spaces, a line break
-/// before each block tag, and verbatim regions between marker lines.
+/// The content lines of a terminated `/**` comment, or `None` when a line
+/// after the first doesn't start with `*`.
+fn content_lines(text: &str) -> Option<Vec<Line<'_>>> {
+    let body = text.strip_prefix("/**")?.strip_suffix("*/")?;
+    let parts: Vec<&str> = body
+        .split("\r\n")
+        .flat_map(|line| line.split(['\r', '\n']))
+        .collect();
+    let mut lines = Vec::with_capacity(parts.len());
+    for (index, part) in parts.iter().enumerate() {
+        let trimmed = part.trim_start();
+        let line = match trimmed.strip_prefix('*') {
+            Some(after) if parts.len() > 1 => {
+                let code = after.trim_start_matches('*').trim_end();
+                Line {
+                    text: code.strip_prefix(' ').unwrap_or(code),
+                    code,
+                }
+            }
+            _ if index > 0 && !trimmed.trim().is_empty() => return None,
+            _ => Line {
+                text: trimmed.trim(),
+                code: "",
+            },
+        };
+        lines.push(line);
+    }
+    Some(lines)
+}
+
+/// The form of a `/**` comment with a content line after the first that
+/// doesn't start with `*`, or `None` for another comment. Jolt moves such a
+/// comment as a unit, so its form is the first line trimmed, then each other
+/// non-blank line without trailing whitespace and without `indentation`, the
+/// indentation of the source line the comment starts on, when it starts with
+/// it.
+pub(crate) fn star_less(text: &str, indentation: &str) -> Option<String> {
+    text.strip_prefix("/**")?.strip_suffix("*/")?;
+    let mut lines = text.split(['\r', '\n']);
+    lines.next();
+    if !lines.any(|line| !line.trim().is_empty() && !line.trim_start().starts_with('*')) {
+        return None;
+    }
+    let mut form = String::new();
+    for (index, line) in text.split(['\r', '\n']).enumerate() {
+        let line = if index == 0 {
+            line.trim()
+        } else {
+            let line = line.trim_end();
+            line.strip_prefix(indentation).unwrap_or(line)
+        };
+        if !line.is_empty() {
+            form.push_str(line);
+            form.push('\n');
+        }
+    }
+    Some(form)
+}
+
+/// The items of a `/**` form being built.
 #[derive(Default)]
 struct Form {
-    out: String,
+    items: Vec<String>,
     word: String,
 }
 
 impl Form {
     /// Ends the current word.
     fn boundary(&mut self) {
-        if self.word.is_empty() {
-            return;
+        if !self.word.is_empty() {
+            let word = std::mem::take(&mut self.word);
+            self.items.push(format!("{word:?}"));
         }
-        if !self.out.is_empty() && !self.out.ends_with('\n') {
-            self.out.push(' ');
-        }
-        self.out.push_str(&self.word);
-        self.word.clear();
-    }
-
-    fn char(&mut self, ch: char) {
-        if ch.is_whitespace() {
-            self.boundary();
-        } else {
-            self.word.push(ch);
-        }
-    }
-
-    /// An HTML tag: its whitespace separates words, except inside a quoted
-    /// attribute value (a `"` or `'` after `=`), which javadoc keeps as
-    /// written.
-    fn tag(&mut self, tag: &str) {
-        let mut value = false;
-        let mut at = 0;
-        while let Some(ch) = tag[at..].chars().next() {
-            let mut len = ch.len_utf8();
-            match ch {
-                '"' | '\'' if value => {
-                    len = tag[at + 1..].find(ch).map_or(tag.len() - at, |end| end + 2);
-                    self.word.push_str(&tag[at..at + len]);
-                    value = false;
-                }
-                '=' => {
-                    value = true;
-                    self.char(ch);
-                }
-                ch if ch.is_whitespace() => self.boundary(),
-                ch => {
-                    value = false;
-                    self.char(ch);
-                }
-            }
-            at += len;
-        }
-    }
-
-    fn block_tag(&mut self) {
-        self.boundary();
-        self.out.push('\n');
-    }
-
-    fn verbatim(&mut self, text: &str) {
-        self.boundary();
-        let _ = write!(self.out, "\n[verbatim]\n{text}\n[/verbatim]\n");
-    }
-
-    fn finish(mut self) -> String {
-        self.boundary();
-        self.out.trim().to_owned()
     }
 }
 
-/// The length of the brace-balanced inline tag at the start of `text`, or
-/// `None` when its braces don't balance.
-fn inline_tag_len(text: &str) -> Option<usize> {
-    let mut depth = 0usize;
-    for (index, byte) in text.bytes().enumerate() {
-        match byte {
-            b'{' => depth += 1,
-            b'}' => {
-                depth -= 1;
-                if depth == 0 {
-                    return Some(index + 1);
-                }
-            }
-            _ => {}
-        }
-    }
-    None
-}
-
-/// The lowercase name and length of the block-level HTML tag (opening or
-/// closing, attributes included) at the start of `text`.
-fn block_element(text: &str) -> Option<(String, usize)> {
-    let after = text.strip_prefix('<')?;
-    let after = after.strip_prefix('/').unwrap_or(after);
-    let name_len = after
+/// The lowercase name of the HTML tag `tag` (`<…>`), and whether it closes
+/// its element.
+fn element_name(tag: &str) -> Option<(&'static str, bool)> {
+    let after = tag.strip_prefix('<')?;
+    let closing = after.starts_with('/');
+    let name = &after[usize::from(closing)..];
+    let len = name
         .find(|ch: char| !ch.is_ascii_alphanumeric())
-        .unwrap_or(after.len());
-    let name = after[..name_len].to_ascii_lowercase();
-    if !BLOCK_ELEMENTS.contains(&name.as_str()) {
+        .unwrap_or(name.len());
+    if !name[len..].starts_with(|ch: char| ch == '>' || ch == '/' || ch.is_whitespace()) {
         return None;
     }
-    let next = after[name_len..].chars().next()?;
-    if !(next == '>' || next == '/' || next.is_whitespace()) {
-        return None;
-    }
-    Some((name, tag_len(text)?))
+    BLOCK_ELEMENTS
+        .iter()
+        .find(|element| element.eq_ignore_ascii_case(&name[..len]))
+        .map(|&element| (element, closing))
 }
 
-/// The length of the HTML tag at the start of `text`, up to and including
-/// its `>`: a quoted attribute value (a `"` or `'` after `=`) may hold `>`,
-/// and an unquoted `<` ends the text before the tag does.
-fn tag_len(text: &str) -> Option<usize> {
-    let bytes = text.as_bytes();
-    let mut value = false;
-    let mut at = 1;
-    while let Some(&byte) = bytes.get(at) {
-        match byte {
-            b'>' => return Some(at + 1),
-            b'<' => return None,
-            b'=' => value = true,
-            quote @ (b'"' | b'\'') if value => {
-                at += 1 + text[at + 1..].find(char::from(quote))?;
-                value = false;
+/// The line and byte after the `}` that balances the `{` at byte `at` of
+/// line `index`.
+fn inline_tag_end(lines: &[Line<'_>], index: usize, at: usize) -> Option<(usize, usize)> {
+    let mut depth = 0usize;
+    for (line, text) in lines.iter().enumerate().skip(index) {
+        let from = if line == index { at } else { 0 };
+        for (offset, byte) in text.text.bytes().enumerate().skip(from) {
+            match byte {
+                b'{' => depth += 1,
+                b'}' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        return Some((line, offset + 1));
+                    }
+                }
+                _ => {}
             }
-            byte if byte.is_ascii_whitespace() => {}
-            _ => value = false,
         }
-        at += 1;
     }
     None
 }
 
-/// The byte offset of `needle` (ASCII) in `text`, ignoring ASCII case.
-fn find_ascii_ci(text: &str, needle: &str) -> Option<usize> {
-    let needle = needle.as_bytes();
-    text.as_bytes()
-        .windows(needle.len())
-        .position(|window| window.eq_ignore_ascii_case(needle))
+/// The line and byte after the `</pre>` that follows byte `from` of line
+/// `index`, whose `>` is on its line.
+fn closing_pre(lines: &[Line<'_>], index: usize, from: usize) -> Option<(usize, usize)> {
+    for (line, text) in lines.iter().enumerate().skip(index) {
+        let start = if line == index { from } else { 0 };
+        let text = &text.text[start..];
+        for (at, _) in text.match_indices("</") {
+            let rest = &text[at..];
+            if let Some(len) = rest.find('>')
+                && element_name(&rest[..=len]) == Some(("pre", true))
+            {
+                return Some((line, start + at + len + 1));
+            }
+        }
+    }
+    None
 }
 
-/// The canonical form of a run of `///` lines (each the comment's text,
-/// `///` included), as JEP 467 reads it: the text after `///` without the
-/// indentation all non-blank lines share, split at block tags (lines that
-/// start with `@` and a letter, outside fenced code blocks and inline tags),
-/// each part as its Markdown events ([`markdown_events`]). As javadoc reads
-/// fences, a line that starts with three or more `` ` `` (with no `` ` ``
-/// after them) or `~` opens one, and a line that starts with at least as
-/// many of the same character closes it.
-///
-/// A run that is `documentation` (the doc comment of a declaration, in a
-/// source without syntax errors) is read as `CommonMark` reads it, hard
-/// breaks included. javadoc reads no other run, and Jolt keeps one as
-/// written without trailing whitespace, or lays it out where the tree around
-/// it has no recovery, which writes a two-space hard break as `\`: such a run
-/// is read without the whitespace and `\` that end its lines, and with hard
-/// breaks as spaces.
-///
-/// Inline tags (`{@…}`, matched by brace balance, outside fenced code
-/// blocks) are lexed before block tags, and each is replaced by U+FFFC, as
-/// javadoc does before it parses the Markdown. The tags follow the part's
-/// events: a `{@snippet}` by its exact lines, any other tag by its words.
-pub(crate) fn markdown(run: &[&str], documentation: bool) -> String {
+/// The form of a run of `///` lines (each with its `///`) that Jolt may
+/// reflow, or `None` when the oracle compares its lines exactly. As JEP 467
+/// reads it: the text after `///` without the indentation that all lines
+/// with text share and without trailing whitespace, split at block tags
+/// (lines that start with `@` and a letter), each part as its Markdown
+/// events ([`markdown_events`]). The precondition: no `{@snippet`, and no
+/// line with text that ends in two spaces or `\` before a line with text,
+/// which may be a hard break. In a source with syntax errors (not `clean`),
+/// trailing spaces don't count: javadoc reads no doc comment there, and Jolt
+/// may print a run in a malformed node without its trailing whitespace.
+pub(crate) fn markdown(run: &[&str], clean: bool) -> Option<String> {
     let lines: Vec<&str> = run
         .iter()
         .map(|line| line.strip_prefix("///").unwrap_or(line))
-        .map(|line| if line.trim().is_empty() { "" } else { line })
         .collect();
+    for (index, line) in lines.iter().enumerate() {
+        let has_text = |line: &str| !line.trim().is_empty();
+        let ends_in_break = (clean && line.ends_with("  ")) || line.trim_end().ends_with('\\');
+        if line.contains("{@snippet")
+            || (has_text(line)
+                && ends_in_break
+                && lines.get(index + 1).is_some_and(|next| has_text(next)))
+        {
+            return None;
+        }
+    }
     let shared = lines
         .iter()
-        .filter(|line| !line.is_empty())
+        .filter(|line| !line.trim().is_empty())
         .map(|line| line.len() - line.trim_start_matches([' ', '\t']).len())
         .min()
         .unwrap_or(0);
-    let mut text = String::new();
+    let mut parts = vec![String::new()];
     for line in &lines {
-        text.push_str(line.get(shared..).unwrap_or(""));
-        text.push('\n');
-    }
-    // Each part: its Markdown, and the forms of its inline tags.
-    let mut parts: Vec<(String, Vec<String>)> = vec![(String::new(), Vec::new())];
-    let mut copied = 0;
-    let mut fence: Option<(u8, usize)> = None;
-    let mut tag_end = 0;
-    let mut start = 0;
-    for line in text.split_inclusive('\n') {
-        let line_start = start;
-        start += line.len();
-        // Where the inline-tag scan of this line starts.
-        let mut from = tag_end.max(line_start) - line_start;
-        if line_start < tag_end {
-            // Inside an inline tag: no fence or block tag starts here.
-        } else {
-            let trimmed = line.trim_start();
-            if let Some((marker, len)) = fence {
-                let run = trimmed.bytes().take_while(|&b| b == marker).count();
-                if run < len {
-                    continue;
-                }
-                // javadoc reads the rest of a closing line as text, where an
-                // inline tag may start.
-                fence = None;
-                from = line.len() - trimmed.len() + run;
-            } else if let Some(marker @ (b'`' | b'~')) = trimmed.bytes().next() {
-                let len = trimmed.bytes().take_while(|&b| b == marker).count();
-                if len >= 3 && !(marker == b'`' && trimmed[len..].contains('`')) {
-                    fence = Some((marker, len));
-                    continue;
-                }
-            }
-            if trimmed.starts_with('@')
-                && trimmed[1..].starts_with(|ch: char| ch.is_ascii_alphabetic())
-            {
-                let part = &mut parts.last_mut().expect("a part").0;
-                part.push_str(&text[copied..line_start]);
-                copied = line_start;
-                parts.push((String::new(), Vec::new()));
-            }
+        let line = line.get(shared..).unwrap_or("").trim_end();
+        let trimmed = line.trim_start();
+        if trimmed.starts_with('@') && trimmed[1..].starts_with(|ch: char| ch.is_ascii_alphabetic())
+        {
+            parts.push(String::new());
         }
-        while let Some(found) = line.get(from..).and_then(|rest| rest.find("{@")) {
-            let at = line_start + from + found;
-            let Some(len) = inline_tag_len(&text[at..]) else {
-                from += found + 2;
-                continue;
-            };
-            tag_end = at + len;
-            let (part, tags) = parts.last_mut().expect("a part");
-            part.push_str(&text[copied..at]);
-            part.push('\u{fffc}');
-            copied = tag_end;
-            let tag = &text[at..tag_end];
-            tags.push(if tag.starts_with("{@snippet") {
-                let lines: Vec<&str> = tag.lines().map(str::trim_end).collect();
-                format!("Snippet({:?})", lines.join("\n"))
-            } else {
-                format!("Tag({:?})", collapse(tag))
-            });
-            if tag_end >= start {
-                break;
-            }
-            from = tag_end - line_start;
-        }
+        let part = parts.last_mut().expect("a part");
+        part.push_str(line);
+        part.push('\n');
     }
-    parts
-        .last_mut()
-        .expect("a part")
-        .0
-        .push_str(&text[copied..]);
-    parts
-        .iter()
-        .map(|(part, tags)| {
-            let mut form = markdown_events(part, documentation);
-            for tag in tags {
-                form.push_str(tag);
-                form.push('\n');
-            }
-            form
-        })
-        .collect::<Vec<_>>()
-        .join("\n@@\n")
-}
-
-/// Where `markdown` ends lines in two spaces as `CommonMark` reads them,
-/// with every other trailing whitespace removed: Jolt never writes trailing
-/// whitespace, so only a two-space hard break can be kept, in another
-/// spelling (`\`). Trailing whitespace elsewhere renders nothing (at the end
-/// of a block) or, inside code, nothing more than one space.
-fn trailing_hard_breaks(markdown: &str) -> String {
-    // The start offsets of the two-space hard breaks, ascending.
-    let mut breaks = Parser::new_ext(markdown, Options::ENABLE_TABLES)
-        .into_offset_iter()
-        .filter(|(event, range)| {
-            *event == Event::HardBreak && markdown[range.clone()].starts_with(' ')
-        })
-        .map(|(_, range)| range.start)
-        .peekable();
-    let mut out = String::with_capacity(markdown.len());
-    let mut end = 0;
-    for line in markdown.split_inclusive('\n') {
-        end += line.len();
-        out.push_str(line.trim_end());
-        if breaks.next_if(|&start| start < end).is_some() {
-            out.push_str("  ");
-        }
-        out.push('\n');
-    }
-    out
+    Some(
+        parts
+            .iter()
+            .map(|part| markdown_events(part))
+            .collect::<Vec<_>>()
+            .join("\n@@\n"),
+    )
 }
 
 /// The events of `markdown`, one per line. Adjacent texts are joined and
 /// their runs of whitespace collapse, since a rewrapped paragraph renders the
-/// same; code is kept exactly. A soft line break is a space. For
-/// `documentation`, a line keeps the trailing whitespace of a hard break
-/// ([`trailing_hard_breaks`]) and a hard break is an event of its own, after
-/// a text without its trailing whitespace; else lines lose the whitespace
-/// and `\` that end them, and hard breaks are spaces too.
-fn markdown_events(markdown: &str, documentation: bool) -> String {
-    let markdown = if documentation {
-        trailing_hard_breaks(markdown)
-    } else {
-        markdown.lines().fold(String::new(), |mut out, line| {
-            out.push_str(line.trim_end_matches(|ch: char| ch.is_whitespace() || ch == '\\'));
-            out.push('\n');
-            out
-        })
-    };
+/// same; code is kept exactly. A soft line break is a space.
+fn markdown_events(markdown: &str) -> String {
     let mut out = String::new();
     let mut text = String::new();
     // Inside a code block or an HTML block, where whitespace is content.
@@ -492,7 +353,7 @@ fn markdown_events(markdown: &str, documentation: bool) -> String {
             text.clear();
         }
     };
-    for event in Parser::new_ext(&markdown, Options::ENABLE_TABLES) {
+    for event in Parser::new_ext(markdown, Options::ENABLE_TABLES) {
         let event = borrowed(&event);
         match event {
             Event::Text(value) if literal > 0 => {
@@ -501,12 +362,6 @@ fn markdown_events(markdown: &str, documentation: bool) -> String {
             }
             Event::Text(value) => text.push_str(&value),
             Event::SoftBreak => text.push(' '),
-            Event::HardBreak if !documentation => text.push(' '),
-            Event::HardBreak => {
-                text.truncate(text.trim_end().len());
-                flush(&mut out, &mut text);
-                out.push_str("HardBreak\n");
-            }
             event => {
                 flush(&mut out, &mut text);
                 match &event {

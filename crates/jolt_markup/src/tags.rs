@@ -41,6 +41,19 @@ impl InlineTags {
         Self { tags, cursor: 0 }
     }
 
+    /// Whether an inline tag that starts in `start..end` ends after `end`.
+    /// Like [`end`](Self::end), offsets are asked in increasing order.
+    pub(crate) fn crosses(&mut self, start: usize, end: usize) -> bool {
+        while self.tags.get(self.cursor).is_some_and(|tag| tag.0 < end) {
+            let tag = self.tags[self.cursor];
+            if tag.0 >= start && tag.1 > end {
+                return true;
+            }
+            self.cursor += 1;
+        }
+        false
+    }
+
     /// The end of the inline tag that starts at `offset`, if one does.
     /// Offsets are asked in increasing order.
     pub(crate) fn end(&mut self, offset: usize) -> Option<usize> {
@@ -131,12 +144,35 @@ pub(crate) fn is_ruler(text: &str) -> bool {
     count >= 3
 }
 
-/// The characters that separate words.
-pub(crate) const SPACES: [char; 3] = [' ', '\t', '\x0c'];
-
-/// Whether `byte` separates words: one of [`SPACES`].
+/// Whether `byte` separates words: a space, a tab or a form feed.
 pub(crate) const fn is_space(byte: u8) -> bool {
     matches!(byte, b' ' | b'\t' | b'\x0c')
+}
+
+/// The length of the HTML tag at the start of `text` (a `<`), up to and
+/// including its `>` on the same line, or `None` when it doesn't close
+/// there. A quoted attribute value (a `"` or `'` after `=`) may hold `>` and
+/// must close on the line too; an unquoted `<` ends the text before the tag
+/// does.
+pub(crate) fn html_tag_len(text: &str) -> Option<usize> {
+    let bytes = text.as_bytes();
+    let mut value = false;
+    let mut at = 1;
+    while let Some(&byte) = bytes.get(at) {
+        match byte {
+            b'>' => return Some(at + 1),
+            b'<' => return None,
+            b'=' => value = true,
+            quote @ (b'"' | b'\'') if value => {
+                at += 1 + bytes[at + 1..].iter().position(|&next| next == quote)?;
+                value = false;
+            }
+            byte if is_space(byte) => {}
+            _ => value = false,
+        }
+        at += 1;
+    }
+    None
 }
 
 /// What glues a word to the word before it, in a block tag's arguments and

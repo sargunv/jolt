@@ -56,12 +56,6 @@ class DocCommentHtmlBlocks {
    *       <p>with a paragraph inside
    * </ul>
    *
-   * <dl>
-   *   <dt>Term</dt>
-   *   <dd>The definition, which is long enough that it does not fit on one
-   *       line.</dd>
-   * </dl>
-   *
    * @param mode one of:
    *     <ul>
    *       <li>{@code A}, the first mode</li>
@@ -70,6 +64,15 @@ class DocCommentHtmlBlocks {
    *     after the list in the tag.
    */
   void lists(int mode) {}
+
+  /**
+   * A definition list, which Jolt keeps as written:
+   * <dl>
+   * <dt>Term</dt>
+   * <dd>The definition, which is long enough that it does not fit on one line.</dd>
+   * </dl>
+   */
+  void definitionList() {}
 
   /**
    * Line breaks:<br>
@@ -81,28 +84,24 @@ class DocCommentHtmlBlocks {
 
   /**
    * A table:
-   *
    * <table>
    *   <tr><th>Key</th>   <th>Value</th></tr>
    *   <tr><td>a</td>     <td>1</td></tr>
    * </table>
-   *
    * <blockquote>
    *   A quotation,   kept as   written.
    * </blockquote>
-   *
-   * Text with an <!-- inline comment --> in it, and a comment on lines of its
-   * own:
+   * Text with an <!-- inline comment --> in it, and a comment on lines of its own:
    * <!--
    *   hidden   text
-   * --> The end.
+   * -->
+   * The end.
    */
   void keptBlocks() {}
 
   /**
-   * Text.
-   *
-   * <p class="note">A paragraph whose tag runs onto the next line.
+   * Text. <p
+   * class="note">A paragraph whose tag runs onto the next line.
    */
   void tagOnTwoLines() {}
 
@@ -110,54 +109,43 @@ class DocCommentHtmlBlocks {
   void quotedGreaterThan() {}
 
   /**
-   * Text.
-   *
-   * <p title="hello
-   * Ġworld">A paragraph whose quoted attribute value runs onto a line that
-   * starts with a letter whose code point ends in the byte of a space.
-   *
-   * <p Ġdata="x">So does a paragraph whose tag runs onto such a line outside a
-   * quoted value.
+   * Text. <p title="hello
+   * Ġworld">A paragraph whose quoted attribute value runs onto a line that starts with a letter
+   * whose code point ends in the byte of a space. <p
+   * Ġdata="x">So does a paragraph whose tag runs onto such a line outside a quoted value.
    */
   void tagLineStartingWithUnicode() {}
 
   /**
-   * Text.
-   *
-   * <p title="first
-   * second">A paragraph whose quoted attribute value keeps its line break, and
-   * a link whose title does too: <a href="https://example.com" title="third
+   * Text. <p title="first
+   * second">A paragraph whose quoted attribute value keeps its line break, and a link whose title
+   * does too: <a href="https://example.com" title="third
    *   fourth">example</a>.
    */
   void lineBreakInQuotedValue() {}
 
   /**
-   * An image whose tag runs onto the next line, with alt text long enough to
-   * cross the line width: <img src="image.png"
-   * alt="The following text describes this graphic." height=600> wraps only
-   * between attributes.
+   * An image whose tag runs onto the next line, with alt text long enough to cross the line width: <img src="image.png"
+   * alt="The following text describes this graphic." height=600> wraps only between attributes.
    */
   void tagWrapsBetweenAttributes() {}
 
   /**
-   * A snippet keeps its lines, and a line in it that starts with {@code @}
-   * starts no block tag:
-   *
+   * A snippet keeps its lines, and a line in it that starts with {@code @} starts no block tag:
    * {@snippet :
    * @Override
    * public String toString() {
    *   return "example";
    * }
    * }
-   *
-   * Text with {@code a code tag that runs onto @the next line}, where the
-   * {@code @} starts no block tag.
+   * Text with {@code a code tag that runs onto
+   * @the next line}, where the {@code @} starts no block tag.
    */
   void snippetAndInlineTagLines() {}
 
   /**
-   * This is value="<a title="alpha  beta" href="x">link</a>", where only the
-   * tag's quotes hold an attribute value.
+   * This is value="<a title="alpha  beta"
+   * href="x">link</a>", where only the tag's quotes hold an attribute value.
    */
   void quoteBeforeATag() {}
 }

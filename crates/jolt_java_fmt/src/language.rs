@@ -47,7 +47,7 @@ impl FormatLanguage for JavaFormat {
                 lines,
                 before,
                 after: Some(after),
-            } if documents(before, after) => Some(jolt_markup::markdown(docs, lines)),
+            } if documents(before, after) => jolt_markup::markdown(docs, lines),
             DocCommentSource::Block(_) | DocCommentSource::Lines { .. } => None,
         }
     }

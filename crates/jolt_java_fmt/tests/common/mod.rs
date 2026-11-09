@@ -3,7 +3,7 @@
 
 use jolt_fmt::FormatOptions;
 use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind as K};
-use jolt_syntax::{Diagnostic, SyntaxNode, SyntaxToken};
+use jolt_syntax::{Diagnostic, SyntaxNode};
 use jolt_test_support::{CorpusLanguage, Depth, StructurePolicy, Suite};
 
 /// The sweep's suites (`mise run hunt`, replayed by `jcheck`): the repository
@@ -112,55 +112,6 @@ impl CorpusLanguage for JavaCorpus {
         name.starts_with("diagnoses-")
             || name.starts_with("recovers-")
             || name == "disambiguates-when-in-switch-labels--invalid-guard.java"
-    }
-
-    /// JEP 467 and javadoc: a module, a package in a file without types
-    /// (`package-info.java`), a type that is not local, or a member, of which
-    /// `token` is the first token.
-    fn starts_documented_declaration(&self, token: SyntaxToken<'_>) -> bool {
-        let mut node = Some(token.parent());
-        // Only the nodes that start at `token` are climbed.
-        while let Some(declaration) = node.filter(|node| node.first_token() == Some(token)) {
-            match K::from_raw(declaration.kind()) {
-                K::PackageDeclaration => {
-                    let has_types = declaration.parent().is_some_and(|items| {
-                        items.children().any(|item| {
-                            item.as_node().is_some_and(|item| {
-                                matches!(
-                                    K::from_raw(item.kind()),
-                                    K::ClassDeclaration
-                                        | K::InterfaceDeclaration
-                                        | K::EnumDeclaration
-                                        | K::RecordDeclaration
-                                        | K::AnnotationInterfaceDeclaration
-                                )
-                            })
-                        })
-                    });
-                    return !has_types;
-                }
-                K::ModuleDeclaration
-                | K::ClassDeclaration
-                | K::InterfaceDeclaration
-                | K::EnumDeclaration
-                | K::RecordDeclaration
-                | K::AnnotationInterfaceDeclaration
-                | K::FieldDeclaration
-                | K::MethodDeclaration
-                | K::ConstructorDeclaration
-                | K::CompactConstructorDeclaration
-                | K::EnumConstant
-                | K::AnnotationElementDeclaration => {
-                    let local = declaration.parent().is_some_and(|parent| {
-                        K::from_raw(parent.kind()) == K::LocalClassOrInterfaceDeclaration
-                    });
-                    return !local;
-                }
-                K::LocalClassOrInterfaceDeclaration => return false,
-                _ => node = declaration.parent(),
-            }
-        }
-        false
     }
 }
 

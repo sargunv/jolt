@@ -1,4 +1,5 @@
-//! The layout: turns a body parser's lines and words into `jolt_fmt` docs.
+//! The layout: turns the lines and words that a flavour's layout places into
+//! `jolt_fmt` docs.
 //!
 //! Words are filled: between two words on a line is a wrap point, a group
 //! that is a space when the next word fits on the line, and else a line break
@@ -13,8 +14,6 @@
 //! ([`DocBuilder::line_comment`]).
 
 use jolt_fmt::{Doc, DocBuilder, cat};
-
-use crate::tags;
 
 /// How a word joins the word before it on its line.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -108,22 +107,17 @@ impl<'d, 'a> Layout<'d, 'a> {
     }
 
     /// Adds a word, joined to the word before it by `join` unless it starts
-    /// a line. A word that would start new structure at the start of a line
-    /// ([`tags::starts_structure`]) never follows a wrap point: it is glued
-    /// to the word before it with a space. In Markdown, neither does a word
-    /// after one that ends in `\`, which a line break would make a hard
-    /// break.
-    pub(crate) fn word(&mut self, text: &'a str, join: Join) {
+    /// a line. A `sticky` word, which would start new structure at the start
+    /// of a line, never follows a wrap point: it is glued to the word before
+    /// it with a space.
+    pub(crate) fn word(&mut self, text: &'a str, join: Join, sticky: bool) {
         if let Some(start) = self.pending.take() {
             self.start_line(start);
         } else if !self.started {
             self.first = Some(0);
         } else {
-            let markdown = self.markdown();
-            let glued = tags::starts_structure(text, markdown)
-                || (markdown && self.last.is_some_and(|(_, last)| last.ends_with('\\')));
             match join {
-                Join::Wrap if !glued => {
+                Join::Wrap if !sticky => {
                     let wrap = self.wrap(self.hang);
                     self.parts.push(wrap);
                 }
@@ -133,20 +127,6 @@ impl<'d, 'a> Layout<'d, 'a> {
         }
         self.started = true;
         self.push_text(text);
-    }
-
-    /// Ends a Markdown line with a hard break (`\`); the caller starts the
-    /// next line. After a word that ends in `\` it goes after a space, so that the two
-    /// don't read as an escaped `\`.
-    pub(crate) fn hard_break(&mut self) {
-        if self.last.is_some_and(|(_, last)| last.ends_with('\\')) {
-            self.parts.push(self.docs.space());
-            self.push_text("\\");
-        } else {
-            let text = self.docs.glued("\\");
-            self.last = Some((self.parts.len(), "\\"));
-            self.parts.push(text);
-        }
     }
 
     /// Adds a text. In Markdown it is glued to a frame before it: the
