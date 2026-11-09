@@ -158,3 +158,12 @@ fn deeply_nested_type_arguments_in_a_reference() {
     let formatted = format_in_time(&comment);
     assert!(formatted.contains("@see X<X<"), "{formatted}");
 }
+
+/// A paragraph line indented by more tab columns than a `u16` counts: the
+/// layout's column count saturates rather than overflowing.
+#[test]
+fn paragraph_line_indented_by_many_tabs() {
+    let tabs = "\t".repeat(16_384);
+    let formatted = format_in_time(&format!("    ///text\n    ///{tabs}more"));
+    assert!(formatted.contains("more"), "{formatted}");
+}

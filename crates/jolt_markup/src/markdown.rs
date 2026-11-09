@@ -473,7 +473,7 @@ impl LinkScan {
 fn columns(indentation: &str) -> u16 {
     indentation.chars().fold(0, |column, ch| {
         if ch == '\t' {
-            column + 4 - column % 4
+            column.saturating_add(4 - column % 4)
         } else {
             column.saturating_add(1)
         }
