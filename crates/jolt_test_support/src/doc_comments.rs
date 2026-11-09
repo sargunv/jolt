@@ -262,23 +262,27 @@ fn find_ascii_ci(text: &str, needle: &str) -> Option<usize> {
 
 /// The canonical form of a run of `///` lines (each the comment's text,
 /// `///` included), as JEP 467 reads it: the text after `///` without the
-/// indentation all non-blank lines share and without trailing whitespace,
-/// split at block tags (lines that start with `@` and a letter, outside
-/// fenced code blocks and inline tags), each part as its Markdown events.
+/// indentation all non-blank lines share, split at block tags (lines that
+/// start with `@` and a letter, outside fenced code blocks and inline tags),
+/// each part as its Markdown events ([`markdown_events`]).
+///
+/// A run that is `documentation` (the doc comment of a declaration, in a
+/// source without syntax errors) is read as `CommonMark` reads it, hard
+/// breaks included. javadoc reads no other run, and Jolt keeps one as
+/// written without trailing whitespace, or lays it out where the tree around
+/// it has no recovery, which writes a two-space hard break as `\`: such a run
+/// is read without the whitespace and `\` that end its lines, and with hard
+/// breaks as spaces.
 ///
 /// Inline tags (`{@…}`, matched by brace balance, outside fenced code
-/// blocks) are lexed before block tags. A `{@snippet}` is replaced by U+FFFC,
-/// as javadoc does before it parses the Markdown, and its exact lines follow
-/// the part's events.
-///
-/// Adjacent texts are joined and their runs of whitespace collapse, since a
-/// rewrapped paragraph renders the same; code is kept exactly. Line breaks
-/// are spaces, hard ones included: Jolt never writes trailing whitespace,
-/// so a two-space hard break can only be kept in another spelling (`\`).
-pub(crate) fn markdown(run: &[&str]) -> String {
+/// blocks) are lexed before block tags, and each is replaced by U+FFFC, as
+/// javadoc does before it parses the Markdown. The tags follow the part's
+/// events: a `{@snippet}` by its exact lines, any other tag by its words.
+pub(crate) fn markdown(run: &[&str], documentation: bool) -> String {
     let lines: Vec<&str> = run
         .iter()
-        .map(|line| line.strip_prefix("///").unwrap_or(line).trim_end())
+        .map(|line| line.strip_prefix("///").unwrap_or(line))
+        .map(|line| if line.trim().is_empty() { "" } else { line })
         .collect();
     let shared = lines
         .iter()
@@ -291,7 +295,7 @@ pub(crate) fn markdown(run: &[&str]) -> String {
         text.push_str(line.get(shared..).unwrap_or(""));
         text.push('\n');
     }
-    // Each part: its Markdown, and its snippets.
+    // Each part: its Markdown, and the forms of its inline tags.
     let mut parts: Vec<(String, Vec<String>)> = vec![(String::new(), Vec::new())];
     let mut copied = 0;
     let mut fence: Option<(u8, usize)> = None;
@@ -334,14 +338,17 @@ pub(crate) fn markdown(run: &[&str]) -> String {
                 continue;
             };
             tag_end = at + len;
-            if text[at..].starts_with("{@snippet") {
-                let (part, snippets) = parts.last_mut().expect("a part");
-                part.push_str(&text[copied..at]);
-                part.push('\u{fffc}');
-                copied = tag_end;
-                let lines: Vec<&str> = text[at..tag_end].lines().map(str::trim_end).collect();
-                snippets.push(lines.join("\n"));
-            }
+            let (part, tags) = parts.last_mut().expect("a part");
+            part.push_str(&text[copied..at]);
+            part.push('\u{fffc}');
+            copied = tag_end;
+            let tag = &text[at..tag_end];
+            tags.push(if tag.starts_with("{@snippet") {
+                let lines: Vec<&str> = tag.lines().map(str::trim_end).collect();
+                format!("Snippet({:?})", lines.join("\n"))
+            } else {
+                format!("Tag({:?})", collapse(tag))
+            });
             if tag_end >= start {
                 break;
             }
@@ -355,10 +362,11 @@ pub(crate) fn markdown(run: &[&str]) -> String {
         .push_str(&text[copied..]);
     parts
         .iter()
-        .map(|(part, snippets)| {
-            let mut form = markdown_events(part);
-            for snippet in snippets {
-                let _ = writeln!(form, "Snippet({snippet:?})");
+        .map(|(part, tags)| {
+            let mut form = markdown_events(part, documentation);
+            for tag in tags {
+                form.push_str(tag);
+                form.push('\n');
             }
             form
         })
@@ -366,8 +374,50 @@ pub(crate) fn markdown(run: &[&str]) -> String {
         .join("\n@@\n")
 }
 
-/// The events of `markdown`, one per line, with texts joined.
-fn markdown_events(markdown: &str) -> String {
+/// Where `markdown` ends lines in two spaces as `CommonMark` reads them,
+/// with every other trailing whitespace removed: Jolt never writes trailing
+/// whitespace, so only a two-space hard break can be kept, in another
+/// spelling (`\`). Trailing whitespace elsewhere renders nothing (at the end
+/// of a block) or, inside code, nothing more than one space.
+fn trailing_hard_breaks(markdown: &str) -> String {
+    // The start offsets of the two-space hard breaks, ascending.
+    let mut breaks = Parser::new_ext(markdown, Options::ENABLE_TABLES)
+        .into_offset_iter()
+        .filter(|(event, range)| {
+            *event == Event::HardBreak && markdown[range.clone()].starts_with(' ')
+        })
+        .map(|(_, range)| range.start)
+        .peekable();
+    let mut out = String::with_capacity(markdown.len());
+    let mut end = 0;
+    for line in markdown.split_inclusive('\n') {
+        end += line.len();
+        out.push_str(line.trim_end());
+        if breaks.next_if(|&start| start < end).is_some() {
+            out.push_str("  ");
+        }
+        out.push('\n');
+    }
+    out
+}
+
+/// The events of `markdown`, one per line. Adjacent texts are joined and
+/// their runs of whitespace collapse, since a rewrapped paragraph renders the
+/// same; code is kept exactly. A soft line break is a space. For
+/// `documentation`, a line keeps the trailing whitespace of a hard break
+/// ([`trailing_hard_breaks`]) and a hard break is an event of its own, after
+/// a text without its trailing whitespace; else lines lose the whitespace
+/// and `\` that end them, and hard breaks are spaces too.
+fn markdown_events(markdown: &str, documentation: bool) -> String {
+    let markdown = if documentation {
+        trailing_hard_breaks(markdown)
+    } else {
+        markdown.lines().fold(String::new(), |mut out, line| {
+            out.push_str(line.trim_end_matches(|ch: char| ch.is_whitespace() || ch == '\\'));
+            out.push('\n');
+            out
+        })
+    };
     let mut out = String::new();
     let mut text = String::new();
     // Inside a code block or an HTML block, where whitespace is content.
@@ -378,7 +428,7 @@ fn markdown_events(markdown: &str) -> String {
             text.clear();
         }
     };
-    for event in Parser::new_ext(markdown, Options::ENABLE_TABLES) {
+    for event in Parser::new_ext(&markdown, Options::ENABLE_TABLES) {
         let event = borrowed(&event);
         match event {
             Event::Text(value) if literal > 0 => {
@@ -386,7 +436,13 @@ fn markdown_events(markdown: &str) -> String {
                 let _ = writeln!(out, "Literal({value:?})");
             }
             Event::Text(value) => text.push_str(&value),
-            Event::SoftBreak | Event::HardBreak => text.push(' '),
+            Event::SoftBreak => text.push(' '),
+            Event::HardBreak if !documentation => text.push(' '),
+            Event::HardBreak => {
+                text.truncate(text.trim_end().len());
+                flush(&mut out, &mut text);
+                out.push_str("HardBreak\n");
+            }
             event => {
                 flush(&mut out, &mut text);
                 match &event {

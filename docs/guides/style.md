@@ -1091,7 +1091,8 @@ formatting: a run that Jolt moves to just before a declaration counts. Other
   line in the page. Jolt writes such a break as a `\` at the end of the line,
   because it removes trailing whitespace. At the end of a paragraph, two spaces
   break nothing, and Jolt removes them. A line that ends in `\` keeps its line
-  break.
+  break. A `\` before the two spaces is a literal backslash, so Jolt writes the
+  break after a space: `foo\` becomes `foo\ \`.
 
 ::: code-group
 

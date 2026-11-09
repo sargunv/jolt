@@ -683,15 +683,22 @@ impl<'p, 'a> Fill<'p, 'a> {
             if carry.is_some() || index + 1 == self.lines.len() {
                 continue;
             }
-            let backslashes = bytes
+            // A line that ends in two spaces ends in a hard break (outside
+            // tags), and a `\` before them is literal; else an odd run of
+            // `\` is a hard break.
+            if line.hard_break {
+                if !open_tag && line.offset + bytes.len() >= self.tag_end {
+                    layout.hard_break();
+                    break_before = true;
+                }
+            } else if bytes
                 .iter()
                 .rev()
                 .take_while(|&&byte| byte == b'\\')
-                .count();
-            if backslashes % 2 == 1 {
-                break_before = true;
-            } else if line.hard_break && !open_tag && line.offset + bytes.len() >= self.tag_end {
-                layout.hard_break();
+                .count()
+                % 2
+                == 1
+            {
                 break_before = true;
             }
         }

@@ -5,7 +5,9 @@ use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
 use jolt_fmt::FormatOptions;
-use jolt_syntax::{Diagnostic, Language, SyntaxElement, SyntaxNode, TriviaKind, TriviaPiece};
+use jolt_syntax::{
+    Diagnostic, Language, SyntaxElement, SyntaxNode, SyntaxToken, TriviaKind, TriviaPiece,
+};
 
 use crate::doc_comments;
 
@@ -52,6 +54,9 @@ pub trait CorpusLanguage: Sync {
     }
     /// Whether the fixture at `relative` is expected to carry diagnostics.
     fn expects_diagnostics(&self, relative: &str) -> bool;
+    /// Whether `token` starts a declaration that javadoc documents, so that
+    /// the doc comment right before it is documentation.
+    fn starts_documented_declaration(&self, token: SyntaxToken<'_>) -> bool;
 }
 
 /// Owned facts about one parse.
@@ -70,7 +75,9 @@ pub fn parse_facts<C: CorpusLanguage>(language: &C, source: &str) -> ParseFacts 
     let policy = language.structure_policy();
     language.with_parse(source, |root, diagnostics| ParseFacts {
         diagnostics: diagnostics.to_vec(),
-        comments: comment_inventory(root),
+        comments: comment_inventory(root, |token| {
+            diagnostics.is_empty() && language.starts_documented_declaration(token)
+        }),
         structure: structure_fingerprint::<C::Syntax>(root, policy),
         tokens: token_inventory::<C::Syntax>(root, policy),
     })
@@ -114,8 +121,14 @@ fn diagnostic_codes(diagnostics: &[Diagnostic]) -> BTreeMap<&'static str, usize>
 /// Every comment by kind and canonical text. A `/**` comment has the form
 /// [`doc_comments::javadoc`] gives it, and a run of `///` lines (see
 /// [`MarkdownRuns`]) the form [`doc_comments::markdown`] gives the run.
+/// `documented` tells whether javadoc reads the doc comment right before a
+/// token: the token starts a declaration that javadoc documents, in a
+/// source without syntax errors.
 #[must_use]
-fn comment_inventory(root: SyntaxNode<'_>) -> BTreeMap<String, usize> {
+fn comment_inventory(
+    root: SyntaxNode<'_>,
+    documented: impl Fn(SyntaxToken<'_>) -> bool,
+) -> BTreeMap<String, usize> {
     let mut comments = BTreeMap::new();
     let mut runs = MarkdownRuns::default();
     for token in root.tokens() {
@@ -123,13 +136,13 @@ fn comment_inventory(root: SyntaxNode<'_>) -> BTreeMap<String, usize> {
             inventory_piece(root.source(), piece, &mut runs, &mut comments);
         }
         if !token.text().is_empty() {
-            runs.code(&mut comments);
+            runs.token(|| documented(token), &mut comments);
         }
         for piece in token.trailing() {
             inventory_piece(root.source(), piece, &mut runs, &mut comments);
         }
     }
-    runs.code(&mut comments);
+    runs.token(|| false, &mut comments);
     comments
 }
 
@@ -150,21 +163,25 @@ fn inventory_piece<'a>(
         TriviaKind::BlockComment | TriviaKind::UnterminatedBlockComment => {
             ("block", canonical_comment_text(piece.text))
         }
-        TriviaKind::DocComment => (
-            "doc",
-            doc_comments::javadoc(
-                piece.text,
-                line_indentation(source, piece.range.start().get()),
+        TriviaKind::DocComment => {
+            // Only the last doc comment before a declaration documents it.
+            runs.doc_comment(comments);
+            (
+                "doc",
+                doc_comments::javadoc(
+                    piece.text,
+                    line_indentation(source, piece.range.start().get()),
+                )
+                .unwrap_or_else(|| canonical_comment_text(piece.text)),
             )
-            .unwrap_or_else(|| canonical_comment_text(piece.text)),
-        ),
+        }
         TriviaKind::Whitespace => return,
         TriviaKind::ByteOrderMark | TriviaKind::TrailingSubstitute => {
-            runs.code(comments);
+            runs.token(|| false, comments);
             return;
         }
     };
-    runs.code(comments);
+    runs.end_run(comments);
     *comments.entry(format!("{kind}:{text}")).or_default() += 1;
 }
 
@@ -183,9 +200,16 @@ fn line_indentation(source: &str, offset: usize) -> &str {
 /// after code on its line is no doc comment to javadoc; it is a run of its
 /// own here, so that a layout may put it on a line of its own, but not make
 /// it part of a run.
+///
+/// A run is documentation when it is the last doc comment before a token
+/// that starts a documented declaration; only then does its form read the
+/// hard breaks of lines that end in two spaces (see
+/// [`doc_comments::markdown`]).
 #[derive(Default)]
 struct MarkdownRuns<'a> {
     run: Vec<&'a str>,
+    /// The last run that ended, before the token after it.
+    waiting: Vec<&'a str>,
     /// Line breaks since the run's last line.
     newlines: usize,
     /// Only whitespace since the last line break or the file start.
@@ -207,11 +231,11 @@ impl<'a> MarkdownRuns<'a> {
         }
         let at_line_start = self.line_start || !self.started;
         if !at_line_start || self.newlines != 1 {
-            self.flush(comments);
+            self.end_run(comments);
         }
         self.run.push(text);
         if !at_line_start {
-            self.flush(comments);
+            self.doc_comment(comments);
         }
         self.newlines = 0;
         self.line_start = false;
@@ -219,20 +243,40 @@ impl<'a> MarkdownRuns<'a> {
         true
     }
 
-    /// Code or a comment that is not a run member: the run ends.
-    fn code(&mut self, comments: &mut BTreeMap<String, usize>) {
-        self.flush(comments);
+    /// A comment that is not a run member: the run ends, and waits for the
+    /// token after it.
+    fn end_run(&mut self, comments: &mut BTreeMap<String, usize>) {
+        if !self.run.is_empty() {
+            Self::add(&self.waiting, false, comments);
+            self.waiting = std::mem::take(&mut self.run);
+        }
         self.line_start = false;
         self.started = true;
     }
 
-    fn flush(&mut self, comments: &mut BTreeMap<String, usize>) {
-        if self.run.is_empty() {
+    /// A doc comment that is not a run member: the runs before it are not
+    /// documentation.
+    fn doc_comment(&mut self, comments: &mut BTreeMap<String, usize>) {
+        self.end_run(comments);
+        Self::add(&std::mem::take(&mut self.waiting), false, comments);
+    }
+
+    /// Code: the run ends, and the run before the token is documentation
+    /// when `documented()`, which is asked only when a run waits.
+    fn token(&mut self, documented: impl FnOnce() -> bool, comments: &mut BTreeMap<String, usize>) {
+        self.end_run(comments);
+        if !self.waiting.is_empty() {
+            let documentation = documented();
+            Self::add(&std::mem::take(&mut self.waiting), documentation, comments);
+        }
+    }
+
+    fn add(run: &[&str], documentation: bool, comments: &mut BTreeMap<String, usize>) {
+        if run.is_empty() {
             return;
         }
-        let form = doc_comments::markdown(&self.run);
+        let form = doc_comments::markdown(run, documentation);
         *comments.entry(format!("markdown:{form}")).or_default() += 1;
-        self.run.clear();
     }
 }
 
@@ -401,7 +445,7 @@ enum Step<'a, K> {
         parent: Option<K>,
         separated: bool,
     },
-    Token(jolt_syntax::SyntaxToken<'a>),
+    Token(SyntaxToken<'a>),
     Close,
 }
 

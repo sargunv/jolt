@@ -89,6 +89,10 @@ class DocCommentMarkdownHardCases {
   /// `a
   ///   b`.
   void codeSpanContinuation() {}
+
+  /// A backslash before a hard break is a literal backslash: foo\ \
+  /// bar.
+  void backslashBeforeHardBreak() {}
 }
 
 diagnostics:

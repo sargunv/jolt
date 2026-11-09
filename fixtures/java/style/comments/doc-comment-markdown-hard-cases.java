@@ -77,4 +77,8 @@ class DocCommentMarkdownHardCases {
   /// A code span that runs onto the next line keeps the spaces that start it: `a
   ///   b`.
   void codeSpanContinuation() {}
+
+  /// A backslash before a hard break is a literal backslash: foo\  
+  /// bar.
+  void backslashBeforeHardBreak() {}
 }

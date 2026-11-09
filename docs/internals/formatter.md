@@ -1325,8 +1325,9 @@ after a hard break that has such a word keeps its indentation. A line that
 starts inside an atom keeps its leading whitespace, which is the atom's text (a
 code span keeps its spaces). A two-space hard break becomes a `\` glued to its
 word (`DocBuilder::glued`, since Java's `joins` would put a space before a `\`
-after a word), and a line that ends in an odd run of `\` keeps its line break.
-The layout never wraps after a word that ends in `\`.
+after a word, and after a space when the word ends in `\`, which the two spaces
+make literal), and a line without them that ends in an odd run of `\` keeps its
+line break. The layout never wraps after a word that ends in `\`.
 
 The docs:
 
@@ -1406,20 +1407,27 @@ For an input `S` and output `F = format(S)`:
      without the indentation of the source line the comment starts on.
    - A run of `///` lines (consecutive lines that start with `///` but not
      `////`, with no blank line between, grouped from the trivia alone, as JEP
-     467 reads them): the run loses `///`, the indentation its lines share and
-     trailing whitespace, is split at block tags outside fenced code and inline
-     tags (matched by brace balance outside fenced code), and each part is
-     compared by its pulldown-cmark events (tables on). A `{@snippet}` is
-     replaced by U+FFFC, as javadoc does before it reads the Markdown, and its
-     exact lines are compared after the part's events. Adjacent texts are joined
-     and their whitespace runs collapse; code is compared exactly. A line break,
-     hard or soft, is a space: Jolt never writes trailing whitespace, so a
-     two-space hard break can only survive in another spelling. A `///` comment
-     after code on its line is no doc comment to javadoc; it is a run of its
-     own, so a layout may move it to a line of its own (placement does, after
-     another trailing line comment) but not into a run. pulldown-cmark is a
-     dependency of `jolt_test_support` only, which every crate uses as a
-     dev-dependency, so it never reaches the CLI or the plugin.
+     467 reads them): the run loses `///` and the indentation its lines share,
+     is split at block tags outside fenced code and inline tags (matched by
+     brace balance outside fenced code), and each part is compared by its
+     pulldown-cmark events (tables on). Each inline tag is replaced by U+FFFC,
+     as javadoc does before it reads the Markdown, and compared after the part's
+     events: a `{@snippet}` by its exact lines, any other tag by its words.
+     Adjacent texts are joined and their whitespace runs collapse; code is
+     compared exactly. A soft line break is a space. A run that documents a
+     declaration (the last doc comment before the first token of a module, a
+     package in a file without types, a type that is not local, or a member, in
+     a source without syntax errors) keeps the hard breaks of lines that end in
+     two spaces, as CommonMark reads them, and its other trailing whitespace
+     goes, since Jolt never writes any. javadoc reads no other run, and Jolt
+     keeps it as written without trailing whitespace, or lays it out when it is
+     in a recovered tree, so such a run is compared without the whitespace and
+     `\` that end its lines, with hard breaks as spaces. A `///` comment after
+     code on its line is no doc comment to javadoc; it is a run of its own, so a
+     layout may move it to a line of its own (placement does, after another
+     trailing line comment) but not into a run. pulldown-cmark is a dependency
+     of `jolt_test_support` only, which every crate uses as a dev-dependency, so
+     it never reaches the CLI or the plugin.
 4. **Idempotence.** `format(F) == F`.
 5. **Tokens.** For dirty `S` (whose recovered tree the structure check cannot
    compare), the multiset of token texts of `F` equals that of `S`, ignoring
