@@ -131,7 +131,10 @@ pub(crate) fn is_ruler(text: &str) -> bool {
     count >= 3
 }
 
-/// Whether `byte` separates words.
+/// The characters that separate words.
+pub(crate) const SPACES: [char; 3] = [' ', '\t', '\x0c'];
+
+/// Whether `byte` separates words: one of [`SPACES`].
 pub(crate) const fn is_space(byte: u8) -> bool {
     matches!(byte, b' ' | b'\t' | b'\x0c')
 }

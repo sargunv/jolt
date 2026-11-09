@@ -82,6 +82,14 @@ class DocCommentHtmlBlocks {
   void quotedGreaterThan() {}
 
   /**
+   * Text. <p title="hello
+   * Ġworld">A paragraph whose quoted attribute value runs onto a line that starts with a letter
+   * whose code point ends in the byte of a space. <p
+   * Ġdata="x">So does a paragraph whose tag runs onto such a line outside a quoted value.
+   */
+  void tagLineStartingWithUnicode() {}
+
+  /**
    * A snippet keeps its lines, and a line in it that starts with {@code @} starts no block tag:
    * {@snippet :
    * @Override

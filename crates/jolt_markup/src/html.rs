@@ -11,7 +11,7 @@ use std::cell::Cell;
 
 use crate::frame::Line;
 use crate::layout::{Join, Layout};
-use crate::tags::{self, Arg, InlineTags, is_space};
+use crate::tags::{self, Arg, InlineTags, SPACES, is_space};
 
 /// The block-level elements, matched without regard to case.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -742,7 +742,7 @@ impl<'a> Parser<'_, '_, 'a> {
         for line in index + 1..=end_line {
             let text = self.lines[line].text;
             let text = if line == end_line { &text[..end] } else { text };
-            let text = text.trim_start_matches(|ch: char| is_space(ch as u8));
+            let text = text.trim_start_matches(SPACES);
             if !text.is_empty() {
                 self.layout.word(text, Join::Space);
             }
@@ -785,7 +785,7 @@ impl<'a> Parser<'_, '_, 'a> {
         let text = self.lines[end_line].text;
         if block {
             self.gap = self.gap.max(Gap::Block);
-            let rest = text[end_pos..].trim_start_matches(|ch: char| is_space(ch as u8));
+            let rest = text[end_pos..].trim_start_matches(SPACES);
             self.request(Kind::Text, !rest.is_empty());
         }
         if end_pos >= text.len() {
