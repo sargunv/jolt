@@ -73,6 +73,15 @@ class DocCommentHtmlBlocks {
   void keptBlocks() {}
 
   /**
+   * Text. <p
+   * class="note">A paragraph whose tag runs onto the next line.
+   */
+  void tagOnTwoLines() {}
+
+  /** <p title="a > b">An attribute value with a greater-than sign. */
+  void quotedGreaterThan() {}
+
+  /**
    * A snippet keeps its lines, and a line in it that starts with {@code @} starts no block tag:
    * {@snippet :
    * @Override

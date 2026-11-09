@@ -1277,8 +1277,14 @@ at 4 more). A block tag closes every open block. `<pre>`, `<table>`,
 the first line from the opener starts a block (except the HTML comment, which
 may be glued to the words around it), and the lines after it are printed as
 written, the last up to the closer; an unclosed region runs to the comment's
-last line of text. Other HTML tags, entities and words are atoms; an inline tag
-with spaces inside (`<a href="…">`) is one atom when it ends on its line.
+last line of text. A tag ends at the first `>` outside a quoted attribute value
+(a `"` or `'` after `=`), and an unquoted `<` before it means it is no tag. Once
+a search for a closing quote reaches the end of the comment, no search from a
+later point looks again, so a comment full of unclosed quotes is scanned in
+linear time. A block element's tag may run onto later lines, which print as its
+words glued with spaces, since a line break inside a tag renders nothing. Other
+HTML tags, entities and words are atoms; an inline tag with spaces inside
+(`<a href="…">`) is one atom when it ends on its line.
 
 Line structure the source gives some text is kept: a line that starts with a
 list marker keeps the line break before it, a ruler keeps its own line, and a
@@ -1396,15 +1402,16 @@ For an input `S` and output `F = format(S)`:
    javadoc reads in them (`jolt_test_support`'s `doc_comments`), so that a
    layout may rewrap their text but not change it:
    - A `/**` comment: the whitespace-separated words of the description, with
-     block-level HTML tags (`<p>`, `<li>`, `</ul>`, …) split off as words of
-     their own; each block tag (a line starting with `@` and a letter) with its
-     words; and the verbatim regions (`<pre>`, `<table>`, `{@snippet}`) as exact
-     lines. Each line of a multi-line comment first loses its run of leading
-     `*`s and one space after them, as javadoc reads it. Inline tags (`{@…}`,
-     matched by brace balance) are lexed first, so nothing inside one starts a
-     block tag, a block element or a verbatim region. A `/**` comment with a
-     content line that has no leading `*` is compared line by line, each line
-     without the indentation of the source line the comment starts on.
+     block-level HTML tags (`<p>`, `<li>`, `</ul>`, …, ending at the first `>`
+     outside a quoted attribute value) split off as words of their own; each
+     block tag (a line starting with `@` and a letter) with its words; and the
+     verbatim regions (`<pre>`, `<table>`, `{@snippet}`) as exact lines. Each
+     line of a multi-line comment first loses its run of leading `*`s and one
+     space after them, as javadoc reads it. Inline tags (`{@…}`, matched by
+     brace balance) are lexed first, so nothing inside one starts a block tag, a
+     block element or a verbatim region. A `/**` comment with a content line
+     that has no leading `*` is compared line by line, each line without the
+     indentation of the source line the comment starts on.
    - A run of `///` lines (consecutive lines that start with `///` but not
      `////`, with no blank line between, grouped from the trivia alone, as JEP
      467 reads them): the run loses `///` and the indentation its lines share,

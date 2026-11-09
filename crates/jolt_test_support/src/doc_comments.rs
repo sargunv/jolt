@@ -248,8 +248,31 @@ fn block_element(text: &str) -> Option<(String, usize)> {
     if !(next == '>' || next == '/' || next.is_whitespace()) {
         return None;
     }
-    let end = text.find('>')?;
-    Some((name, end + 1))
+    Some((name, tag_len(text)?))
+}
+
+/// The length of the HTML tag at the start of `text`, up to and including
+/// its `>`: a quoted attribute value (a `"` or `'` after `=`) may hold `>`,
+/// and an unquoted `<` ends the text before the tag does.
+fn tag_len(text: &str) -> Option<usize> {
+    let bytes = text.as_bytes();
+    let mut value = false;
+    let mut at = 1;
+    while let Some(&byte) = bytes.get(at) {
+        match byte {
+            b'>' => return Some(at + 1),
+            b'<' => return None,
+            b'=' => value = true,
+            quote @ (b'"' | b'\'') if value => {
+                at += 1 + text[at + 1..].find(char::from(quote))?;
+                value = false;
+            }
+            byte if byte.is_ascii_whitespace() => {}
+            _ => value = false,
+        }
+        at += 1;
+    }
+    None
 }
 
 /// The byte offset of `needle` (ASCII) in `text`, ignoring ASCII case.

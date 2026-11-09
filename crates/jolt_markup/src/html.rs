@@ -7,6 +7,8 @@
 //! the [`Layout`]. HTML collapses whitespace outside `<pre>`, so the line
 //! breaks and blank lines it chooses don't change the rendered page.
 
+use std::cell::Cell;
+
 use crate::frame::Line;
 use crate::layout::{Join, Layout};
 use crate::tags::{self, Arg, InlineTags, is_space};
@@ -32,25 +34,23 @@ enum Name {
 struct Element {
     name: Name,
     closing: bool,
-    /// The tag's length, up to and including its `>`, or to the end of the
-    /// line when its `>` is on a later line (only for a verbatim region).
-    len: usize,
+    /// The line and byte after the tag's `>`, which may be on a later line;
+    /// the end of the tag's line when a verbatim region's tag has no `>`.
+    end: (usize, usize),
 }
 
-/// The block-level element whose tag starts `text`, which starts with `<`.
-fn element(text: &str) -> Option<Element> {
-    let bytes = text.as_bytes();
-    let closing = bytes.get(1) == Some(&b'/');
-    let start = 1 + usize::from(closing);
-    let name_len = bytes[start..]
+/// The block-level element name at the start of `name`, and its length.
+fn element_name(name: &str) -> Option<(Name, usize)> {
+    let bytes = name.as_bytes();
+    let len = bytes
         .iter()
         .take_while(|byte| byte.is_ascii_alphanumeric())
         .count();
-    let after = bytes.get(start + name_len);
+    let after = bytes.get(len);
     if !after.is_none_or(|&byte| matches!(byte, b'>' | b'/') || byte.is_ascii_whitespace()) {
         return None;
     }
-    let name = &text[start..start + name_len];
+    let name = &name[..len];
     let is = |candidate: &str| name.eq_ignore_ascii_case(candidate);
     let name = if is("p") {
         Name::P
@@ -74,31 +74,7 @@ fn element(text: &str) -> Option<Element> {
     } else {
         return None;
     };
-    let region = matches!(name, Name::Pre | Name::Table | Name::Blockquote) && !closing;
-    let len = match text.find('>') {
-        Some(end) => end + 1,
-        None if region => text.len(),
-        None => return None,
-    };
-    Some(Element { name, closing, len })
-}
-
-/// Whether a block-level element's tag or an HTML comment starts at `at`.
-fn starts_block(text: &str, at: usize) -> bool {
-    let rest = &text[at..];
-    rest.starts_with("<!--") || element(rest).is_some()
-}
-
-/// The length up to the end of the `<p>` that starts `text` after spaces
-/// and tabs, if one does.
-fn paragraph_len(text: &str) -> Option<usize> {
-    let rest = text.trim_start_matches([' ', '\t']);
-    if !rest.starts_with('<') {
-        return None;
-    }
-    element(rest)
-        .filter(|element| element.name == Name::P && !element.closing)
-        .map(|element| text.len() - rest.len() + element.len)
+    Some((name, len))
 }
 
 /// How a unit of lines starts.
@@ -194,6 +170,7 @@ pub(crate) fn parse<'a>(lines: &[Line<'a>], layout: &mut Layout<'_, 'a>) {
         next_line: None,
         gap: Gap::None,
         attach: false,
+        no_quote: Cell::new([usize::MAX; 2]),
     };
     parser.run();
 }
@@ -216,6 +193,9 @@ struct Parser<'p, 'l, 'a> {
     /// The next word follows the last with nothing between (after `<p>` or
     /// `<li>`).
     attach: bool,
+    /// For `"` and `'`: the comment offset from which a search for one
+    /// found none, so that no later search looks again.
+    no_quote: Cell<[usize; 2]>,
 }
 
 impl<'a> Parser<'_, '_, 'a> {
@@ -235,7 +215,7 @@ impl<'a> Parser<'_, '_, 'a> {
                 let is_tag = tags::is_block_tag(line.text);
                 let lead = if is_tag {
                     Lead::Tag
-                } else if paragraph_len(line.text).is_some() {
+                } else if self.paragraph_len(index).is_some() {
                     Lead::Paragraph
                 } else {
                     Lead::Text
@@ -271,6 +251,100 @@ impl<'a> Parser<'_, '_, 'a> {
             }
             (index, pos) = (next_index, next_pos);
         }
+    }
+
+    /// The block-level element whose tag starts at byte `at` of line `index`,
+    /// which is a `<`.
+    fn block_element(&self, index: usize, at: usize) -> Option<Element> {
+        let text = &self.lines[index].text[at..];
+        let closing = text.as_bytes().get(1) == Some(&b'/');
+        let start = 1 + usize::from(closing);
+        let (name, len) = element_name(&text[start..])?;
+        let region = matches!(name, Name::Pre | Name::Table | Name::Blockquote) && !closing;
+        let end = match self.tag_end(index, at + start + len) {
+            Some(end) => end,
+            None if region => (index, self.lines[index].text.len()),
+            None => return None,
+        };
+        Some(Element { name, closing, end })
+    }
+
+    /// The end of the HTML tag whose name ends at byte `at` of line `index`:
+    /// the line and byte after its `>`. A line break inside the tag is
+    /// whitespace, and a quoted attribute value (a `"` or `'` after `=`) may
+    /// hold `>`. `None` when an unquoted `<` or the comment's end comes
+    /// first.
+    fn tag_end(&self, mut index: usize, mut at: usize) -> Option<(usize, usize)> {
+        // After `=`, where a quote starts a value.
+        let mut value = false;
+        loop {
+            let text = self.lines.get(index)?.text.as_bytes();
+            let Some(&byte) = text.get(at) else {
+                (index, at) = (index + 1, 0);
+                continue;
+            };
+            match byte {
+                b'>' => return Some((index, at + 1)),
+                b'<' => return None,
+                b'=' => value = true,
+                quote @ (b'"' | b'\'') if value => {
+                    (index, at) = self.closing_quote(quote, index, at + 1)?;
+                    value = false;
+                }
+                byte if is_space(byte) => {}
+                _ => value = false,
+            }
+            at += 1;
+        }
+    }
+
+    /// The line and byte of the first `quote` at or after byte `at` of line
+    /// `index`.
+    fn closing_quote(&self, quote: u8, mut index: usize, mut at: usize) -> Option<(usize, usize)> {
+        let kind = usize::from(quote == b'\'');
+        let from = self.lines[index].offset + at;
+        let mut no_quote = self.no_quote.get();
+        if from >= no_quote[kind] {
+            return None;
+        }
+        while let Some(line) = self.lines.get(index) {
+            let rest = line.text.as_bytes().get(at..).unwrap_or_default();
+            if let Some(found) = rest.iter().position(|&byte| byte == quote) {
+                return Some((index, at + found));
+            }
+            (index, at) = (index + 1, 0);
+        }
+        no_quote[kind] = from;
+        self.no_quote.set(no_quote);
+        None
+    }
+
+    /// Whether a block-level element's tag or an HTML comment starts at byte
+    /// `at` of line `index`.
+    fn starts_block(&self, index: usize, at: usize) -> bool {
+        let rest = &self.lines[index].text[at..];
+        rest.starts_with("<!--")
+            || (rest.starts_with('<') && self.block_element(index, at).is_some())
+    }
+
+    /// The length up to the end of the `<p>` that starts line `index` after
+    /// spaces and tabs, if one does: the line's length when the tag ends on
+    /// a later line.
+    fn paragraph_len(&self, index: usize) -> Option<usize> {
+        let text = self.lines[index].text;
+        let rest = text.trim_start_matches([' ', '\t']);
+        if !rest.starts_with('<') {
+            return None;
+        }
+        self.block_element(index, text.len() - rest.len())
+            .filter(|element| element.name == Name::P && !element.closing)
+            .map(|element| {
+                if element.end.0 == index {
+                    element.end.1
+                } else {
+                    text.len()
+                }
+            })
     }
 
     /// The column of a new line in the innermost open block.
@@ -361,7 +435,7 @@ impl<'a> Parser<'_, '_, 'a> {
             if rest.is_empty() {
                 break;
             }
-            let block = rest.starts_with('<') && starts_block(rest, 0);
+            let block = self.starts_block(end, text.len() - rest.len());
             if end == index && block && lead == Lead::Text {
                 return None;
             }
@@ -377,10 +451,10 @@ impl<'a> Parser<'_, '_, 'a> {
         if most < least.saturating_add(2) {
             return None;
         }
-        let plain = self.lines[index..end].iter().enumerate().all(|(at, line)| {
-            let text = line.text;
+        let plain = (index..end).all(|line| {
+            let text = self.lines[line].text;
             let from = match lead {
-                Lead::Paragraph if at == 0 => paragraph_len(text).unwrap_or(0),
+                Lead::Paragraph if line == index => self.paragraph_len(index).unwrap_or(0),
                 _ => 0,
             };
             !text.contains("{@")
@@ -388,7 +462,7 @@ impl<'a> Parser<'_, '_, 'a> {
                     .bytes()
                     .enumerate()
                     .skip(from)
-                    .any(|(at, byte)| byte == b'<' && starts_block(text, at))
+                    .any(|(at, byte)| byte == b'<' && self.starts_block(line, at))
         });
         plain.then_some(end)
     }
@@ -480,11 +554,20 @@ impl<'a> Parser<'_, '_, 'a> {
                 continue;
             }
             if bytes[pos] == b'<' {
-                if let Some(element) = element(&text[pos..]) {
+                if let Some(element) = self.block_element(index, pos) {
                     if let Some(next) = self.element(index, pos, element, sep) {
                         return next;
                     }
-                    pos += element.len;
+                    let (end_line, end) = element.end;
+                    if end_line != index {
+                        // Go on after the tag, on its last line.
+                        return if end >= self.lines[end_line].text.len() {
+                            (end_line + 1, 0, false)
+                        } else {
+                            (end_line, end, false)
+                        };
+                    }
+                    pos = end;
                     sep = Sep::None;
                     continue;
                 }
@@ -501,7 +584,7 @@ impl<'a> Parser<'_, '_, 'a> {
                     }
                 }
             }
-            let end = self.word_end(text, pos, line.offset);
+            let end = self.word_end(index, pos);
             let piece = &text[pos..end];
             let glue = self.block_arg.glue(piece);
             self.emit(piece, sep, glue);
@@ -513,7 +596,8 @@ impl<'a> Parser<'_, '_, 'a> {
     /// The end of the word at `pos`: at a space, or where a block element or
     /// an inline tag starts. An inline HTML tag (`<a href="…">`) is part of
     /// the word with the spaces inside it.
-    fn word_end(&mut self, text: &str, pos: usize, offset: usize) -> usize {
+    fn word_end(&mut self, index: usize, pos: usize) -> usize {
+        let Line { text, offset, .. } = self.lines[index];
         let bytes = text.as_bytes();
         let mut at = pos;
         while at < bytes.len() {
@@ -525,14 +609,14 @@ impl<'a> Parser<'_, '_, 'a> {
                 {
                     break;
                 }
-                b'<' if at > pos && starts_block(text, at) => break,
+                b'<' if at > pos && self.starts_block(index, at) => break,
                 b'<' if bytes
                     .get(at + 1)
                     .is_some_and(|&next| next.is_ascii_alphabetic() || next == b'/') =>
                 {
-                    match text[at..].find('>') {
-                        Some(end) => at += end + 1,
-                        None => at += 1,
+                    match self.tag_end(index, at + 1) {
+                        Some((line, end)) if line == index => at = end,
+                        _ => at += 1,
                     }
                 }
                 _ => at += 1,
@@ -550,7 +634,6 @@ impl<'a> Parser<'_, '_, 'a> {
         element: Element,
         sep: Sep,
     ) -> Option<(usize, usize, bool)> {
-        let text = &self.lines[index].text[pos..pos + element.len];
         let mid_line = true;
         self.block_arg = Arg::None;
         match (element.name, element.closing) {
@@ -566,12 +649,12 @@ impl<'a> Parser<'_, '_, 'a> {
                 if !(self.attach && element.name == Name::P) {
                     self.request(Kind::Block, mid_line);
                 }
-                self.emit(text, sep, false);
+                self.emit_tag(index, pos, element, sep, false);
                 self.attach = true;
             }
             (Name::P | Name::Heading, true) => {
                 self.attach |= self.next_line.is_none();
-                self.emit(text, sep, true);
+                self.emit_tag(index, pos, element, sep, true);
                 if element.name == Name::Heading {
                     self.gap = self.gap.max(Gap::Block);
                     self.request(Kind::Text, mid_line);
@@ -580,7 +663,7 @@ impl<'a> Parser<'_, '_, 'a> {
             (Name::List, false) => {
                 self.request(Kind::Block, mid_line);
                 let open = self.column();
-                self.emit(text, sep, false);
+                self.emit_tag(index, pos, element, sep, false);
                 self.frames.push(Frame::List {
                     open,
                     column: open + 2,
@@ -593,7 +676,7 @@ impl<'a> Parser<'_, '_, 'a> {
                     .iter()
                     .rposition(|frame| matches!(frame, Frame::List { .. }))
                 else {
-                    self.emit(text, sep, false);
+                    self.emit_tag(index, pos, element, sep, false);
                     return None;
                 };
                 let Frame::List { open, .. } = self.frames[list] else {
@@ -602,7 +685,7 @@ impl<'a> Parser<'_, '_, 'a> {
                 self.frames.truncate(list);
                 self.next_line = None;
                 self.layout.line(self.gap == Gap::Blank, open, open);
-                self.emit(text, sep, false);
+                self.emit_tag(index, pos, element, sep, false);
                 self.gap = self.gap.max(Gap::Block);
                 self.request(Kind::Text, mid_line);
             }
@@ -613,7 +696,7 @@ impl<'a> Parser<'_, '_, 'a> {
                 let line = self.column();
                 self.next_line = None;
                 self.start(Kind::Block, line, line + 4);
-                self.emit(text, sep, false);
+                self.emit_tag(index, pos, element, sep, false);
                 self.frames.push(Frame::Item {
                     line,
                     column: line + 4,
@@ -627,19 +710,43 @@ impl<'a> Parser<'_, '_, 'a> {
                     } else {
                         self.attach = true;
                     }
-                    self.emit(text, sep, true);
+                    self.emit_tag(index, pos, element, sep, true);
                     self.frames.pop();
                 } else {
-                    self.emit(text, sep, true);
+                    self.emit_tag(index, pos, element, sep, true);
                 }
             }
             (Name::Br, _) => {
-                self.emit(text, sep, true);
+                self.emit_tag(index, pos, element, sep, true);
                 self.request(Kind::Break, mid_line);
             }
-            (Name::Pre | Name::Table | Name::Blockquote, true) => self.emit(text, sep, false),
+            (Name::Pre | Name::Table | Name::Blockquote, true) => {
+                self.emit_tag(index, pos, element, sep, false);
+            }
         }
         None
+    }
+
+    /// Adds the tag of `element`, which starts at `pos` on line `index`, as
+    /// [`emit`](Self::emit) adds a word. A tag that runs onto later lines
+    /// adds a word for each, glued with a space: whitespace inside a tag
+    /// renders nothing.
+    fn emit_tag(&mut self, index: usize, pos: usize, element: Element, sep: Sep, glue: bool) {
+        let (end_line, end) = element.end;
+        let first = self.lines[index].text;
+        if end_line == index {
+            self.emit(&first[pos..end], sep, glue);
+            return;
+        }
+        self.emit(&first[pos..], sep, glue);
+        for line in index + 1..=end_line {
+            let text = self.lines[line].text;
+            let text = if line == end_line { &text[..end] } else { text };
+            let text = text.trim_start_matches(|ch: char| is_space(ch as u8));
+            if !text.is_empty() {
+                self.layout.word(text, Join::Space);
+            }
+        }
     }
 
     /// A verbatim region from `pos` on line `index` to its closer: its first
