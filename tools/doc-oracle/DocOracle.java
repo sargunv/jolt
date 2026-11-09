@@ -17,15 +17,16 @@
 // - text inside <pre> and HTML's raw text elements (<script>, <style>,
 //   <textarea>, <title>), the bodies of {@code}, {@literal}, {@snippet} and
 //   unknown inline tags, attribute values, {@value} formats, references and
-//   HTML comments are written exactly, except the spaces and tabs at the ends
-//   of the lines of text in <pre> (and of Markdown code), which a browser
-//   doesn't show;
+//   HTML comments are written exactly, whitespace at the ends of lines
+//   included; a raw text element ends only at its own end tag, as HTML reads
+//   it, and holds no elements;
 // - an erroneous node is written with its diagnostic code, so a formatted
 //   comment can't add or lose a javadoc error;
 // - Markdown (a list of trees with Markdown text) is rendered to HTML as the
 //   doclet renders it (HtmlDocletWriter.MarkdownHandler: commonmark-java with
 //   the tables extension, U+FFFC for each embedded tree), then dumped like
-//   HTML; code spans are written exactly.
+//   HTML, its tags read as HTML reads them (a `>` in a quoted attribute
+//   value doesn't end a tag); code is written exactly.
 //
 // Run by `doc_oracle` with `java --add-modules jdk.internal.md --add-exports
 // … DocOracle.java` (see EXPORTS there).
@@ -60,7 +61,7 @@ public class DocOracle {
             "header", "hgroup", "hr", "li", "main", "menu", "nav", "ol", "p", "pre", "section",
             "summary", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "ul");
     private static final Set<String> EXACT = Set.of("pre", "script", "style", "textarea", "title");
-    /** The exact elements whose content keeps the whitespace at its line ends. */
+    /** The raw text elements: their content is text up to their own end tag. */
     private static final Set<String> RAW = Set.of("script", "style", "textarea", "title");
 
     private static final JavaCompiler COMPILER = ToolProvider.getSystemJavaCompiler();
@@ -334,9 +335,10 @@ public class DocOracle {
         /** The pieces of rendered HTML, with the embedded trees for the placeholders. */
         private static void html(String html, Iterator<List<Piece>> embedded, List<Piece> pieces) {
             int i = 0;
-            int codeDepth = 0;
+            // The raw text element that is open: its content is text up to its end tag.
+            String raw = null;
             while (i < html.length()) {
-                if (html.startsWith(PLACEHOLDER_BLOCK, i)) {
+                if (raw == null && html.startsWith(PLACEHOLDER_BLOCK, i)) {
                     pieces.add(new Piece(Piece.Kind.BLOCK, ""));
                     pieces.addAll(embedded.next());
                     pieces.add(new Piece(Piece.Kind.BLOCK, ""));
@@ -347,24 +349,33 @@ public class DocOracle {
                 if (c == PLACEHOLDER) {
                     pieces.addAll(embedded.next());
                     i++;
-                } else if (c == '<') {
-                    int end = html.indexOf('>', i);
-                    end = end < 0 ? html.length() : end + 1;
-                    var tag = html.substring(i, end);
-                    var name = tagName(tag);
-                    boolean closing = tag.startsWith("</");
-                    if (name.equals("code")) {
-                        codeDepth += closing ? -1 : 1;
+                } else if (c == '<' && (raw == null ? startsTag(html, i) : endsRaw(html, i, raw))) {
+                    int end = tagEnd(html, i);
+                    var tag = new StringBuilder();
+                    for (int k = i; k < end; k++) {
+                        // An embedded tree in an attribute value.
+                        if (html.charAt(k) == PLACEHOLDER) {
+                            for (var piece : embedded.next()) {
+                                tag.append(piece.text());
+                            }
+                        } else {
+                            tag.append(html.charAt(k));
+                        }
                     }
-                    element(name, closing, tag, pieces);
+                    var name = tagName(tag.toString());
+                    boolean closing = tag.charAt(1) == '/';
+                    element(name, closing, tag.toString(), pieces);
                     if (name.equals("code") && !closing) {
                         pieces.add(new Piece(Piece.Kind.EXACT_ON, name));
                     } else if (name.equals("code")) {
-                        pieces.add(pieces.size() - 1, new Piece(Piece.Kind.EXACT_OFF, ""));
+                        pieces.add(pieces.size() - 1, new Piece(Piece.Kind.EXACT_OFF, name));
+                    }
+                    if (RAW.contains(name)) {
+                        raw = closing ? null : name;
                     }
                     i = end;
                 } else {
-                    int next = i;
+                    int next = i + 1;
                     while (next < html.length() && html.charAt(next) != '<'
                             && html.charAt(next) != PLACEHOLDER) {
                         next++;
@@ -373,6 +384,56 @@ public class DocOracle {
                     i = next;
                 }
             }
+        }
+
+        /** Whether a tag, comment or declaration starts at `i` (a `<`). */
+        private static boolean startsTag(String html, int i) {
+            if (i + 1 >= html.length()) {
+                return false;
+            }
+            char next = html.charAt(i + 1);
+            if (next == '/') {
+                return i + 2 < html.length() && Character.isLetter(html.charAt(i + 2));
+            }
+            return Character.isLetter(next) || next == '!' || next == '?';
+        }
+
+        /** Whether the end tag of the raw text element `name` starts at `i`. */
+        private static boolean endsRaw(String html, int i, String name) {
+            int after = i + 2 + name.length();
+            return html.startsWith("</", i) && after < html.length()
+                    && html.regionMatches(true, i + 2, name, 0, name.length())
+                    && " \t\n\f\r/>".indexOf(html.charAt(after)) >= 0;
+        }
+
+        /**
+         * The end of the tag at `i`: after its `>`, outside quoted attribute
+         * values (after `-->` for a comment), or the end of the text.
+         */
+        private static int tagEnd(String html, int i) {
+            if (html.startsWith("<!--", i)) {
+                int end = html.indexOf("-->", i + 4);
+                return end < 0 ? html.length() : end + 3;
+            }
+            boolean eq = false;
+            for (int k = i + 1; k < html.length(); k++) {
+                char c = html.charAt(k);
+                if (c == '>') {
+                    return k + 1;
+                } else if ((c == '"' || c == '\'') && eq) {
+                    int close = html.indexOf(c, k + 1);
+                    if (close < 0) {
+                        return html.length();
+                    }
+                    k = close;
+                    eq = false;
+                } else if (c == '=') {
+                    eq = true;
+                } else if (" \t\n\f\r".indexOf(c) < 0) {
+                    eq = false;
+                }
+            }
+            return html.length();
         }
 
         private static String tagName(String tag) {
@@ -391,7 +452,7 @@ public class DocOracle {
                 pieces.add(new Piece(Piece.Kind.BLOCK, ""));
             }
             if (EXACT.contains(name) && closing) {
-                pieces.add(new Piece(Piece.Kind.EXACT_OFF, ""));
+                pieces.add(new Piece(Piece.Kind.EXACT_OFF, name));
             }
             pieces.add(new Piece(Piece.Kind.ATOM, text));
             if (EXACT.contains(name) && !closing) {
@@ -518,37 +579,45 @@ public class DocOracle {
         var out = new ArrayList<String>();
         // The open exact elements, innermost last.
         var exactNames = new ArrayDeque<String>();
-        int exact = 0;
         var text = new StringBuilder();
         boolean pendingSpace = false;
         boolean atBoundary = true;
         for (var piece : pieces) {
             switch (piece.kind()) {
                 case EXACT_ON -> {
-                    if (exact > 0) {
+                    // A raw text element holds no elements.
+                    if (!exactNames.isEmpty() && RAW.contains(exactNames.peekLast())) {
+                        continue;
+                    }
+                    if (!exactNames.isEmpty()) {
                         if (!text.isEmpty()) {
-                            out.add(exact(text.toString(), exactNames.peekLast()));
+                            out.add(exact(text.toString()));
                         }
                     } else {
                         flushText(out, text, pendingSpace && !atBoundary);
                     }
                     text.setLength(0);
                     pendingSpace = false;
-                    exact++;
                     exactNames.addLast(piece.text());
                 }
                 case EXACT_OFF -> {
-                    if (exact > 0) {
-                        if (!text.isEmpty()) {
-                            out.add(exact(text.toString(), exactNames.peekLast()));
-                        }
-                        text.setLength(0);
-                        exact--;
-                        exactNames.removeLast();
+                    // Only its own end tag ends a raw text element, and an end
+                    // tag closes the elements opened after its element.
+                    var top = exactNames.peekLast();
+                    if (top == null || (RAW.contains(top) && !top.equals(piece.text()))
+                            || !exactNames.contains(piece.text())) {
+                        continue;
+                    }
+                    if (!text.isEmpty()) {
+                        out.add(exact(text.toString()));
+                    }
+                    text.setLength(0);
+                    while (!exactNames.removeLast().equals(piece.text())) {
+                        // The elements opened inside it.
                     }
                 }
                 case TEXT -> {
-                    if (exact > 0) {
+                    if (!exactNames.isEmpty()) {
                         text.append(piece.text());
                         continue;
                     }
@@ -572,9 +641,9 @@ public class DocOracle {
                     }
                 }
                 case ATOM -> {
-                    if (exact > 0) {
+                    if (!exactNames.isEmpty()) {
                         if (!text.isEmpty()) {
-                            out.add(exact(text.toString(), exactNames.peekLast()));
+                            out.add(exact(text.toString()));
                         }
                         text.setLength(0);
                         out.add("@" + piece.text());
@@ -587,7 +656,7 @@ public class DocOracle {
                     atBoundary = false;
                 }
                 case BLOCK -> {
-                    if (exact > 0) {
+                    if (!exactNames.isEmpty()) {
                         continue;
                     }
                     flushText(out, text, false);
@@ -597,9 +666,9 @@ public class DocOracle {
                 }
             }
         }
-        if (exact > 0) {
+        if (!exactNames.isEmpty()) {
             if (!text.isEmpty()) {
-                out.add(exact(text.toString(), exactNames.peekLast()));
+                out.add(exact(text.toString()));
             }
         } else {
             flushText(out, text, false);
@@ -614,18 +683,9 @@ public class DocOracle {
         }
     }
 
-    /**
-     * Exact text in the element `name`: in a raw text element as written, and
-     * elsewhere (<pre>, Markdown code) without the spaces and tabs at the end
-     * of each line, which a browser doesn't show even in {@code <pre>}, and
-     * which formatters trim.
-     */
-    static String exact(String text, String name) {
-        return "=" + escape(RAW.contains(name) ? text : trimLines(text));
-    }
-
-    static String trimLines(String text) {
-        return text.replaceAll("[ \\t\\f]+\n", "\n");
+    /** Exact text: as written, whitespace at the ends of lines included. */
+    static String exact(String text) {
+        return "=" + escape(text);
     }
 
     static String collapse(String text) {
