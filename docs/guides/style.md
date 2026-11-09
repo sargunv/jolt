@@ -941,21 +941,30 @@ inside a reference doesn't change what it refers to (unless a later line starts
 with `@`, which ends the reference for javadoc). Any other such part that spans
 lines keeps its lines: each later line is printed after `*` with the indentation
 that javadoc reads on it (javadoc removes the `*` and the indentation that all
-lines of the comment share). A tab after the `*` stays a tab. The spaces at the
-end of such a line stay too, since javadoc reads them, except on the lines of
-text in `<pre>` and tables, where a browser doesn't show them.
+lines of the comment share). A tab after the `*` stays a tab.
+
+Whitespace at the end of a line (spaces, tabs and form feeds) is content where
+javadoc keeps whitespace, and Jolt keeps it exactly there: in the text of
+`<pre>` elements and of `<script>`, `<style>`, `<textarea>` and `<title>`
+elements (inside a `<pre>` or a table too), in the bodies of `{@code}`,
+`{@literal}`, `{@snippet}` and tags javadoc doesn't know, in attribute values
+and HTML comments, and in Markdown code. Everywhere else HTML collapses it, and
+Jolt removes it. Any other character, such as a no-break space (U+00A0), is text
+and stays.
 
 Jolt keeps these comments as written, realigning only their `*`s as for any
-other comment (see [Comments](#comments)): a comment that shares its line with
-code; a comment that starts with `/***` or has a line of only `*`s, which is a
-banner; `/**/`; a comment before `package` or an import in a file that declares
-a type, which is a file header such as a licence; the Javadoc of a member that
-formatting is turned off for (see [Formatter-ignore](#formatter-ignore)); a
-comment with a Unicode escape (`@`), which javac decodes before javadoc reads
-the comment; and a comment that javac's reader can't read in bounded time or
-depth: one that nests inline tags more than 32 deep, one that it reads in more
-than linear time (it rescans some malformed text), and a Markdown comment whose
-last line it never finishes reading (such as `/// + +`).
+other comment (see [Comments](#comments)) and keeping the whitespace at the end
+of their lines, since Jolt didn't read where it is content: a comment that
+shares its line with code; a comment that starts with `/***` or has a line of
+only `*`s, which is a banner; `/**/`; a comment before `package` or an import in
+a file that declares a type, which is a file header such as a licence; the
+Javadoc of a member that formatting is turned off for (see
+[Formatter-ignore](#formatter-ignore)); a comment with a Unicode escape (`@`),
+which javac decodes before javadoc reads the comment; and a comment that javac's
+reader can't read in bounded time or depth: one that nests inline tags more than
+32 deep, one that it reads in more than linear time (it rescans some malformed
+text), and a Markdown comment whose last line it never finishes reading (such as
+`/// + +`).
 
 A comment that Jolt lays out gets this style:
 
@@ -1120,7 +1129,8 @@ annotation element, module, or the package of a `package-info.java`. A run is a
 group of `///` lines one after the other, with no blank line between them; the
 first may end a line of code. Jolt reads the position after formatting: a run
 that Jolt moves to just before a declaration counts. Other `///` lines are
-ordinary line comments, which Jolt prints as written.
+ordinary line comments, which Jolt prints as written, with the whitespace at the
+end of their lines.
 
 javadoc reads the description and the text of each block tag as a Markdown
 document of its own. Jolt reads them the same way and fills their paragraphs;
@@ -1129,8 +1139,9 @@ blocks, block quotes, tables, HTML blocks, link reference definitions and
 thematic breaks. So do lines that two blocks share, and a run with a block tag
 that doesn't start its line. Lines printed as written lose their trailing
 whitespace, except two or more spaces after text before a line with text, which
-may be a hard break, and the spaces at the end of a line inside an inline tag or
-a `<script>`, `<style>`, `<textarea>` or `<title>` element, which javadoc reads.
+may be a hard break, and the whitespace at the end of a line inside a code
+block, an inline tag, or a `<pre>`, `<script>`, `<style>`, `<textarea>` or
+`<title>` element, which javadoc reads (see [Doc comments](#doc-comments)).
 
 A Markdown doc comment gets this style:
 
