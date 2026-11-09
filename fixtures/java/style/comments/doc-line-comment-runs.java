@@ -15,12 +15,12 @@ class DocLineCommentRuns
   /// and starts again after it.
   int third;
 
-  int fourth; /// A doc line after code is an ordinary line comment
-  /// so this run stays one line.
+  int fourth; /// A doc line after code starts a run, as javac reads it,
+  /// so the line after it stays right after it.
   int fifth;
 
   int sixth // before the semicolon
-  ; /// After code, so no doc comment; placement moves it to its own line.
+  ; /// After code, the first line of the run below; placement moves it to its own line.
   /// The seventh member.
   int seventh;
 }

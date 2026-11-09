@@ -1,141 +1,228 @@
-//! The frame: a doc comment's content lines, borrowed from its source.
+//! The frame: the text of a doc comment as javac reads it, line by line,
+//! borrowed from the source.
+//!
+//! A port of javac's comment framing (JDK 25: `JavaTokenizer.BasicComment.
+//! scanDocComment`, and `JavadocTokenizer.StrippedComment`, which removes
+//! the indentation that the lines share).
 
-/// One content line of a doc comment.
+use crate::java;
+
+/// One line of a doc comment, as javadoc reads it. The lines of a comment
+/// are read joined by `\n`.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Line<'a> {
-    /// The text after the frame, without trailing whitespace: for `/**`, the
-    /// text after the line's run of `*` and one space.
+    /// What javadoc reads: the line without its frame and without the
+    /// indentation that the comment's lines share.
     pub(crate) text: &'a str,
-    /// The byte offset of `text` in the comment.
-    pub(crate) offset: usize,
-    /// The line from its frame on (the first `*`, or `///`), without
-    /// trailing whitespace, for printing it as written. Empty for a `/**`
-    /// line without a `*`: a blank line, or the comment's first line.
+    /// `/**`: the line without its frame (leading whitespace and run of `*`s)
+    /// but with the shared indentation, so `text` is a suffix of it.
+    /// `///`: the source line from its `///`, which a line printed as
+    /// written starts with.
     pub(crate) raw: &'a str,
-    /// The source line ends in two or more spaces: in a Markdown paragraph,
-    /// a hard line break. Always false for `/**`.
-    pub(crate) hard_break: bool,
 }
 
-/// The content lines of a `/**` comment, or `None` when the comment is laid
-/// out as written:
-///
-/// - it starts with `/***` (a banner) or is `/**/`, or isn't terminated;
-/// - a content line other than the first has text but no leading `*`
-///   (javadoc keeps the indentation of such a line);
-/// - a line is made only of two or more `*`s (a ruler of a banner).
-///
-/// Each line loses its leading whitespace, its run of `*`s and one space
-/// after them, as javadoc reads it (` ** Double` is `Double`), and its
-/// trailing whitespace. A comment on one line keeps its `*`s: only its
-/// delimiters and the whitespace inside them go. This is the reading of
-/// `jolt_test_support`'s doc comment oracle, and N9 keeps the same comments
-/// as written (see `docs/internals/formatter.md`).
-pub(crate) fn javadoc(text: &str) -> Option<Vec<Line<'_>>> {
-    if text.starts_with("/***") {
+impl Line<'_> {
+    /// Whether javadoc reads the line as blank: only whitespace.
+    pub(crate) fn is_blank(&self) -> bool {
+        self.text.chars().all(java::is_whitespace)
+    }
+}
+
+/// javac's whitespace inside a comment's frame (`UnicodeReader.isWhitespace`).
+const fn is_frame_space(byte: u8) -> bool {
+    matches!(byte, b' ' | b'\t' | 0x0c)
+}
+
+/// Whether `text` has a Unicode escape (`@`): a `\` that no other `\`
+/// escapes, followed by `u`. javac decodes escapes before it reads a comment,
+/// so the source text doesn't show what javadoc reads; such a comment is
+/// printed as written.
+pub(crate) fn has_unicode_escape(text: &str) -> bool {
+    let bytes = text.as_bytes();
+    let mut at = 0;
+    while let Some(found) = bytes[at..].iter().position(|&byte| byte == b'\\') {
+        let start = at + found;
+        let run = bytes[start..]
+            .iter()
+            .take_while(|&&byte| byte == b'\\')
+            .count();
+        // The last `\` of an odd run escapes nothing.
+        if run % 2 == 1 && bytes.get(start + run) == Some(&b'u') {
+            return true;
+        }
+        at = start + run;
+    }
+    false
+}
+
+/// The lines of a `/** … */` comment as javac reads them, or `None` when the
+/// comment is printed as written: a banner (`/***`, or a line made only of
+/// two or more `*`s), `/**/`, an unterminated comment, or one with a Unicode
+/// escape. The flag tells whether the first line is on the line of `/**`.
+pub(crate) fn javadoc(text: &str) -> Option<(Vec<Line<'_>>, bool)> {
+    if text.starts_with("/***")
+        || text.starts_with("/**/")
+        || !text.starts_with("/**")
+        || !text.ends_with("*/")
+        || text.len() < "/***/".len()
+        || has_unicode_escape(text)
+    {
         return None;
     }
-    let body = text.strip_prefix("/**")?.strip_suffix("*/")?;
-    let offset_of = |part: &str| part.as_ptr() as usize - text.as_ptr() as usize;
-    let mut lines = Vec::new();
-    let mut parts = split_lines(body);
-    let first = parts.next().unwrap_or("");
-    let Some(second) = parts.next() else {
-        let content = first.trim();
-        lines.push(Line {
-            text: content,
-            offset: offset_of(content),
-            raw: "",
-            hard_break: false,
-        });
-        return Some(lines);
-    };
-    for (index, line) in [first, second].into_iter().chain(parts).enumerate() {
-        let trimmed = line.trim_start();
-        let (content, raw) = if let Some(after) = trimmed.strip_prefix('*') {
-            let rest = after.trim_start_matches('*');
-            let stars = 1 + after.len() - rest.len();
-            let rest = rest.trim_end();
-            if stars >= 2 && rest.is_empty() {
-                return None;
-            }
-            (rest.strip_prefix(' ').unwrap_or(rest), trimmed.trim_end())
-        } else {
-            let content = trimmed.trim_end();
-            if index > 0 && !content.is_empty() {
-                return None;
-            }
-            (content, "")
-        };
-        lines.push(Line {
-            text: content,
-            offset: offset_of(content),
-            raw,
-            hard_break: false,
-        });
+    let bytes = text.as_bytes();
+    let mut pos = 3;
+    while pos < bytes.len() && is_frame_space(bytes[pos]) {
+        pos += 1;
     }
-    Some(lines)
+    // A first line with nothing after `/**` is no line.
+    let opener_text = !matches!(bytes.get(pos), Some(b'\r' | b'\n'));
+    if !opener_text {
+        if bytes[pos] == b'\r' {
+            pos += 1;
+        }
+        if bytes.get(pos) == Some(&b'\n') {
+            pos += 1;
+        }
+    }
+    let mut lines = Vec::new();
+    while pos < bytes.len() {
+        let end = bytes[pos..]
+            .iter()
+            .position(|&byte| matches!(byte, b'\r' | b'\n'))
+            .map_or(bytes.len(), |found| pos + found);
+        let source = &text[pos..end];
+        let trimmed = source.trim_matches(|ch: char| ch.is_ascii_whitespace());
+        if trimmed.len() >= 2 && trimmed.bytes().all(|byte| byte == b'*') {
+            return None;
+        }
+        lines.push(content(source));
+        pos = end;
+        if bytes.get(pos) == Some(&b'\r') {
+            pos += 1;
+        }
+        if bytes.get(pos) == Some(&b'\n') {
+            pos += 1;
+        }
+    }
+    strip_indent(&mut lines);
+    Some((lines, opener_text))
 }
 
-/// The content lines of a run of `///` lines (each with its `///` and
-/// without its line break), and the run's frame: `///` and the indentation
-/// that every line with text shares, which JEP 467 strips (` ` for most
-/// runs, nothing for `///CLOVER:OFF`). Each line's text is what follows the
-/// frame, without trailing whitespace. Offsets count from the run's first
-/// line, as if its lines were joined by one line break.
-pub(crate) fn markdown<'a>(run: &[&'a str]) -> (Vec<Line<'a>>, &'a str) {
-    const OPENER: usize = "///".len();
-    let indentation = |line: &str| {
-        let body = &line[OPENER..];
-        body.len() - body.trim_start_matches([' ', '\t']).len()
+/// `trimJavadocComment`: a line without the comment's closer and without its
+/// frame (leading whitespace and its run of `*`s). A line without `*` keeps
+/// its leading whitespace.
+fn content(line: &str) -> Line<'_> {
+    let line = trim_end_of_comment(line);
+    let bytes = line.as_bytes();
+    let mut at = 0;
+    while at < bytes.len() && is_frame_space(bytes[at]) {
+        at += 1;
+    }
+    if at == bytes.len() {
+        let rest = &line[at..];
+        return Line {
+            text: rest,
+            raw: rest,
+        };
+    }
+    let stars = bytes[at..].iter().take_while(|&&byte| byte == b'*').count();
+    let rest = if stars == 0 {
+        line
+    } else {
+        &line[at + stars..]
     };
+    Line {
+        text: rest,
+        raw: rest,
+    }
+}
+
+/// `trimEndOfComment`: the line up to the run of `*`s before the closing
+/// `/`, or nothing when only whitespace (and `*`s each followed by
+/// whitespace) comes before it; the whole line when it has no closer.
+fn trim_end_of_comment(line: &str) -> &str {
+    let bytes = line.as_bytes();
+    let mut at = 0;
+    let mut all_whitespace = true;
+    while at < bytes.len() {
+        let end = at;
+        let stars = bytes[at..].iter().take_while(|&&byte| byte == b'*').count();
+        at += stars;
+        if stars > 0 && bytes.get(at) == Some(&b'/') {
+            return if all_whitespace {
+                &line[end..end]
+            } else {
+                &line[..end]
+            };
+        }
+        match line[at..].chars().next() {
+            Some(ch) => {
+                all_whitespace &= ch.is_ascii() && is_frame_space(ch as u8);
+                at += ch.len_utf8();
+            }
+            None => all_whitespace = false,
+        }
+    }
+    line
+}
+
+/// `StrippedComment`: removes from each line the indentation that every
+/// line with text shares, counted in `Character.isWhitespace` characters.
+fn strip_indent(lines: &mut [Line<'_>]) {
+    let indent = lines
+        .iter()
+        .filter_map(|line| line.text.chars().position(|ch| !java::is_whitespace(ch)))
+        .min()
+        .unwrap_or(0);
+    if indent == 0 {
+        return;
+    }
+    for line in lines {
+        let skip: usize = line
+            .text
+            .chars()
+            .take(indent)
+            .take_while(|&ch| java::is_whitespace(ch))
+            .map(char::len_utf8)
+            .sum();
+        line.text = &line.text[skip..];
+    }
+}
+
+/// The lines of a run of `///` lines (each with its `///` and without its
+/// line break) as javac reads them, and the run's frame (`///` and the
+/// indentation that javac removes, from a line that has it), or `None` when
+/// the run has a Unicode escape.
+pub(crate) fn markdown<'a>(run: &[&'a str]) -> Option<(Vec<Line<'a>>, &'a str)> {
+    const OPENER: usize = "///".len();
+    if run.iter().any(|line| has_unicode_escape(line)) {
+        return None;
+    }
+    // `getJavadocLineCommentIndent`: the least whitespace after `///` of a
+    // line with text.
     let mut shared: Option<(usize, &'a str)> = None;
     for &line in run {
-        if line[OPENER..].trim_end().is_empty() {
-            continue;
-        }
-        let indent = indentation(line);
-        if shared.is_none_or(|(least, _)| indent < least) {
+        let body = &line.as_bytes()[OPENER..];
+        let indent = body
+            .iter()
+            .take_while(|&&byte| is_frame_space(byte))
+            .count();
+        if indent < body.len() && shared.is_none_or(|(least, _)| indent < least) {
             shared = Some((indent, &line[..OPENER + indent]));
         }
     }
-    let (shared, frame) = shared.unwrap_or((0, &run[0][..OPENER]));
-    let mut offset = 0;
+    let (indent, frame) = shared.unwrap_or((0, &run[0][..OPENER]));
+    // `trimJavadocLineComment`: `indent` characters go, whatever they are.
     let lines = run
         .iter()
         .map(|&line| {
-            let raw = line.trim_end();
-            let text = raw.get(OPENER + shared..).unwrap_or("");
-            let start = offset + raw.len() - text.len();
-            offset += line.len() + 1;
+            let body = &line[OPENER..];
+            let skip: usize = body.chars().take(indent).map(char::len_utf8).sum();
             Line {
-                text,
-                offset: start,
-                raw,
-                hard_break: line[raw.len()..].ends_with("  "),
+                text: &body[skip..],
+                raw: line,
             }
         })
         .collect();
-    (lines, frame)
-}
-
-/// Splits on `\r\n`, `\r` and `\n`.
-fn split_lines(text: &str) -> impl Iterator<Item = &str> {
-    let mut rest = Some(text);
-    std::iter::from_fn(move || {
-        let text = rest?;
-        let bytes = text.as_bytes();
-        if let Some(end) = bytes.iter().position(|&byte| matches!(byte, b'\n' | b'\r')) {
-            let skip = if bytes[end..].starts_with(b"\r\n") {
-                2
-            } else {
-                1
-            };
-            rest = Some(&text[end + skip..]);
-            Some(&text[..end])
-        } else {
-            rest = None;
-            Some(text)
-        }
-    })
+    Some((lines, frame))
 }

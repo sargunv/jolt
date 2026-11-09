@@ -1,333 +1,685 @@
-//! Markdown doc comments (`///`, JEP 467): the tokenizer and the layout.
+//! Markdown doc comments (`///`, JEP 467): javadoc's reading of a run
+//! (`parser`), whose Markdown text is read again with pulldown-cmark, and
+//! its layout.
 //!
-//! The tokenizer decides whether the run is in the subset that Jolt lays
-//! out: paragraphs, blank lines, block tags (`@param` at a line start, whose
-//! text continues on lines flush with the frame), and fenced code blocks
-//! whose closing line is only its fence. Anything else keeps the whole run
-//! as written (`None`): any other block (a line that starts with a word that
-//! could start one, a line indented by four or more columns that doesn't
-//! continue a paragraph, a table delimiter row, a link reference
-//! definition), a fence that isn't closed
-//! or that holds a line starting with `@`, `{@snippet`, an inline tag that
-//! doesn't close in its paragraph or holds a line starting with `@`, a code
-//! span, link or HTML tag that doesn't close on its line, and a hard break
-//! (a line that ends in two spaces or `\`, before a non-blank line).
+//! javadoc reads the description and each block tag's text as a Markdown
+//! document of its own, in which each inline tag is one character (U+FFFC,
+//! as `HtmlDocletWriter.MarkdownHandler` builds it for commonmark-java).
+//! This module builds the same text for each part, copying the run's
+//! Markdown text into one `String`, parses it with pulldown-cmark, and maps
+//! each top-level block back to its source lines:
 //!
-//! The layout fills the paragraphs and prints every other line as written.
-//! Blank lines are kept as written; one is added only before the first block
-//! tag.
+//! - a paragraph whose lines hold no other block is filled; its atoms (code
+//!   spans, links, autolinks, inline HTML, a `<pre>` element, inline tags)
+//!   never split, and its hard breaks stay;
+//! - every other block (a list, heading, code block, quote, table, HTML
+//!   block), every line that no block covers (a blank line, a link
+//!   reference definition), and lines that two blocks share are printed as
+//!   written.
+//!
+//! A block tag's head (`@param name`) is joined with single spaces; its text
+//! starts after it on the tag's line, and its wrapped lines are flush with
+//! the frame (an indented line could start code or continue a list).
+
+use std::ops::Range;
+
+use pulldown_cmark::{BrokenLink, CowStr, Event, Options, Parser, Tag, TagEnd};
 
 use crate::frame::Line;
 use crate::layout::{Join, Layout};
-use crate::tags::{self, Arg, InlineTags, html_tag_len, is_space};
-use crate::token::{Kind, Sep, Token};
+use crate::parser::{BlockTag, Comment, Inline, Node, Pos, Span, to_u32};
+use crate::words;
 
-/// The tokens of a `///` run's content lines, or `None` when the run is
-/// kept as written.
-pub(crate) fn tokenize<'a>(lines: &[Line<'a>]) -> Option<Vec<Token<'a>>> {
-    for (index, line) in lines.iter().enumerate() {
-        // Java decodes Unicode escapes before javadoc reads the comment, so
-        // the source text can hide its structure.
-        if line.text.contains("{@snippet") || line.text.contains("\\u") || hard_break(lines, index)
+/// Whether an element that keeps whitespace (`<pre>`, `<script>`, `<style>`,
+/// `<textarea>`) is open after the HTML `html`, when `open` before it.
+fn keeps_whitespace_after(html: &str, mut open: bool) -> bool {
+    let lower = html.to_ascii_lowercase();
+    let mut rest = lower.as_str();
+    while let Some(at) = rest.find('<') {
+        rest = &rest[at + 1..];
+        let closing = rest.starts_with('/');
+        let name = rest.trim_start_matches('/');
+        let named = ["pre", "script", "style", "textarea"].iter().any(|tag| {
+            name.strip_prefix(tag).is_some_and(|after| {
+                !after.starts_with(|ch: char| ch.is_ascii_alphanumeric() || ch == '-')
+            })
+        });
+        if named {
+            open = !closing;
+        }
+    }
+    open
+}
+
+/// The Object Replacement Character, for an inline tag.
+const PLACEHOLDER: char = '\u{fffc}';
+
+/// Lays out a Markdown comment read by `parser`; `None` keeps the run as
+/// written: when a block tag doesn't start its line (javac reads `- @tag`
+/// as a list marker and a block tag).
+pub(crate) fn lay_out<'l, 'a>(
+    comment: &Comment,
+    lines: &'l [Line<'a>],
+    layout: &mut Layout<'_, 'l, 'a>,
+) -> Option<()> {
+    for tag in &comment.tags {
+        let line = lines[tag.span.start.line as usize].text;
+        if !line[..tag.span.start.off as usize]
+            .bytes()
+            .all(|byte| byte == b' ' || byte == b'\t')
         {
             return None;
         }
     }
-    let mut tokens = Vec::new();
-    let mut index = 0;
-    while index < lines.len() {
-        let line = lines[index];
-        if line.text.is_empty() {
-            tokens.push(Token::new(Kind::Blank, line.raw, Sep::Line));
-            index += 1;
-            continue;
-        }
-        if columns(line.text) >= 4 {
-            return None;
-        }
-        if let Some((marker, len)) = opens_fence(line.text.trim_start().as_bytes()) {
-            tokens.push(Token::new(Kind::Verbatim, line.raw, Sep::Line));
-            index = fence(lines, index + 1, marker, len, &mut tokens)?;
-            continue;
-        }
-        let end = (index..lines.len())
-            .find(|&at| {
-                let text = lines[at].text;
-                text.is_empty() || opens_fence(text.trim_start().as_bytes()).is_some()
-            })
-            .unwrap_or(lines.len());
-        if Paragraph::new(&lines[index..end]).run(&mut tokens)? {
-            // From the first block tag on, the run is printed as written:
-            // javadoc reads each tag's text as Markdown of its own, which a
-            // reflow could restructure.
-            for line in &lines[end..] {
-                let kind = if line.text.is_empty() {
-                    Kind::Blank
-                } else {
-                    Kind::Verbatim
-                };
-                tokens.push(Token::new(kind, line.raw, Sep::Line));
-            }
-            break;
-        }
-        index = end;
-    }
-    Some(tokens)
-}
-
-/// Whether line `index` ends in a hard break: it has text that ends in two
-/// spaces or `\`, and the next line has text. (Inside a paragraph that is a
-/// hard break; elsewhere it may not be, which only makes the rule coarser.)
-fn hard_break(lines: &[Line<'_>], index: usize) -> bool {
-    let line = lines[index];
-    !line.text.is_empty()
-        && (line.hard_break || line.text.ends_with('\\'))
-        && lines
-            .get(index + 1)
-            .is_some_and(|next| !next.text.is_empty())
-}
-
-/// Adds the lines of a fenced code block from line `index` to its closing
-/// line; where to go on after it.
-fn fence<'a>(
-    lines: &[Line<'a>],
-    mut index: usize,
-    marker: u8,
-    len: usize,
-    tokens: &mut Vec<Token<'a>>,
-) -> Option<usize> {
-    loop {
-        let line = lines.get(index)?;
-        tokens.push(Token::new(Kind::Verbatim, line.raw, Sep::Line));
-        index += 1;
-        let trimmed = line.text.trim_start();
-        if tags::is_block_tag(trimmed) {
-            return None;
-        }
-        // javadoc closes a fence at a line that starts with the fence; so
-        // does CommonMark when nothing follows it and it is indented by
-        // less than four columns.
-        let run = trimmed.bytes().take_while(|&byte| byte == marker).count();
-        if run >= len {
-            return (run == trimmed.len() && columns(line.text) < 4).then_some(index);
-        }
-    }
-}
-
-/// One paragraph's lines: up to a blank line or a fence.
-struct Paragraph<'p, 'a> {
-    lines: &'p [Line<'a>],
-    tags: InlineTags,
-    /// The end of the inline tag being read, or 0.
-    tag_end: usize,
-    inline_arg: Arg,
-    /// The last word ends in `\`.
-    escape: bool,
-}
-
-impl<'p, 'a> Paragraph<'p, 'a> {
-    fn new(lines: &'p [Line<'a>]) -> Self {
-        Self {
-            lines,
-            tags: InlineTags::new(lines),
-            tag_end: 0,
-            inline_arg: Arg::None,
-            escape: false,
-        }
-    }
-
-    /// Adds the paragraph's tokens; `Some(true)` when it reaches a block tag,
-    /// which it and the rest of the paragraph are printed as written from.
-    fn run(mut self, tokens: &mut Vec<Token<'a>>) -> Option<bool> {
-        for (index, &line) in self.lines.iter().enumerate() {
-            let text = line.text;
-            let trimmed = text.trim_start_matches([' ', '\t']);
-            let first = trimmed.split([' ', '\t', '\x0c']).next();
-            if is_delimiter_row(trimmed.as_bytes())
-                || (trimmed.starts_with('[') && trimmed.contains("]:"))
-            {
-                return None;
-            }
-            if tags::is_block_tag(trimmed) {
-                if line.offset < self.tag_end {
-                    return None;
-                }
-                for line in &self.lines[index..] {
-                    tokens.push(Token::new(Kind::Verbatim, line.raw, Sep::Line));
-                }
-                return Some(true);
-            } else if first.is_some_and(|word| tags::starts_structure(word, true)) {
-                return None;
-            }
-            let bytes = text.as_bytes();
-            let mut pos = text.len() - trimmed.len();
-            let mut sep = Sep::Line;
-            while pos < bytes.len() {
-                let in_tag = line.offset + pos < self.tag_end;
-                let end = self.word_end(line, pos)?;
-                let word = &text[pos..end];
-                let glue = in_tag && self.inline_arg.glue(word);
-                tokens.push(Token {
-                    glue,
-                    sticky: tags::starts_structure(word, true) || self.escape,
-                    ..Token::new(Kind::Word, word, sep)
-                });
-                self.escape = word.ends_with('\\');
-                if self.tag_end != 0 && line.offset + end >= self.tag_end {
-                    self.tag_end = 0;
-                    self.inline_arg = Arg::None;
-                }
-                pos = end;
-                while pos < bytes.len() && is_space(bytes[pos]) {
-                    pos += 1;
-                }
-                sep = Sep::Space;
-            }
-        }
-        (self.tag_end == 0).then_some(false)
-    }
-
-    /// The end of the word at `pos` on `line`: at whitespace outside atoms
-    /// (code spans, links, HTML tags), which must close on the line.
-    fn word_end(&mut self, line: Line<'a>, pos: usize) -> Option<usize> {
-        let text = line.text;
-        let bytes = text.as_bytes();
-        let mut at = pos;
-        while at < bytes.len() {
-            match bytes[at] {
-                byte if is_space(byte) => break,
-                b'\\' => {
-                    at += 1 + usize::from(bytes.get(at + 1).is_some_and(u8::is_ascii_punctuation));
-                }
-                b'`' => at = code_span_end(bytes, at)?,
-                b'[' => at = link_end(bytes, at)?,
-                b'<' => match bytes.get(at + 1) {
-                    Some(next) if next.is_ascii_alphabetic() || *next == b'/' => {
-                        at += html_tag_len(&text[at..])?;
-                    }
-                    Some(b'!' | b'?') => return None,
-                    _ => at += 1,
-                },
-                b'{' if bytes.get(at + 1) == Some(&b'@') && line.offset + at >= self.tag_end => {
-                    self.tag_end = self.tags.end(line.offset + at)?;
-                    if self.tags.keeps_whitespace(line.offset + at) {
-                        return None;
-                    }
-                    self.inline_arg = Arg::inline(tags::inline_tag_name(&text[at..]));
-                    at += 2;
-                }
-                _ => at += 1,
-            }
-        }
-        Some(at)
-    }
-}
-
-/// The end of the code span whose backtick run starts at `at`: after the
-/// next run of the same length on the line.
-fn code_span_end(bytes: &[u8], at: usize) -> Option<usize> {
-    let run = |from: usize| {
-        bytes[from..]
-            .iter()
-            .take_while(|&&byte| byte == b'`')
-            .count()
+    let mut markdown = Markdown {
+        lines,
+        layout,
+        next: 0,
+        first_text: to_u32(
+            lines
+                .iter()
+                .position(|line| !line.is_blank())
+                .unwrap_or(lines.len()),
+        ),
+        first_sentence: true,
     };
-    let len = run(at);
-    let mut next = at + len;
-    while next < bytes.len() {
-        if bytes[next] == b'`' {
-            let found = run(next);
-            if found == len {
-                return Some(next + len);
-            }
-            next += found;
-        } else {
-            next += 1;
-        }
+    markdown.section(&comment.body, None);
+    for (index, tag) in comment.tags.iter().enumerate() {
+        markdown.block_tag(tag, index == 0);
     }
-    None
+    let last = to_u32(lines.len() - 1);
+    if let Some(tail) = comment.tail {
+        markdown.verbatim_until(tail.start.line);
+    }
+    markdown.verbatim_until(last + 1);
+    Some(())
 }
 
-/// The end of the link whose `[` is at `at`: its text up to the `]` that
-/// balances it, and a destination `(…)` or a reference `[…]` right after,
-/// all on the line. Code spans and escapes inside count as text.
-fn link_end(bytes: &[u8], at: usize) -> Option<usize> {
-    let close = |open: u8, close: u8, mut at: usize| {
-        let mut depth = 0usize;
-        while let Some(&byte) = bytes.get(at) {
-            match byte {
-                b'\\' => at += 1,
-                b'`' => at = code_span_end(bytes, at)? - 1,
-                b'"' if open == b'(' => {
-                    at += 1 + bytes[at + 1..].iter().position(|&next| next == b'"')?;
+/// A piece of a part's Markdown text: the text of a source line from `pos`
+/// on, or a placeholder for an inline tag at `span`.
+#[derive(Clone, Copy, Debug)]
+enum Segment<'n> {
+    Text {
+        pos: Pos,
+    },
+    /// An inline tag (or an escape or erroneous node, `inline` `None`).
+    Placeholder {
+        span: Span,
+        inline: Option<&'n Inline>,
+    },
+}
+
+/// One part's Markdown text, as javadoc builds it, and where each piece
+/// comes from.
+struct Text<'n> {
+    text: String,
+    /// The start of each piece in `text`, in order.
+    segments: Vec<(usize, Segment<'n>)>,
+}
+
+impl<'n> Text<'n> {
+    /// The source position of byte `offset` of the text (the start of a
+    /// placeholder for an offset inside it).
+    fn pos(&self, offset: usize) -> Pos {
+        let index = self
+            .segments
+            .partition_point(|&(start, _)| start <= offset)
+            .saturating_sub(1);
+        let (start, segment) = self.segments[index];
+        match segment {
+            Segment::Text { pos } => Pos {
+                line: pos.line,
+                off: pos.off + to_u32(offset - start),
+            },
+            Segment::Placeholder { span, .. } => span.start,
+        }
+    }
+
+    /// The inline tag whose placeholder starts at byte `offset`.
+    fn inline_at(&self, offset: usize) -> Option<&'n Inline> {
+        let index = self.segments.partition_point(|&(start, _)| start < offset);
+        match self.segments.get(index) {
+            Some(&(start, Segment::Placeholder { inline, .. })) if start == offset => inline,
+            _ => None,
+        }
+    }
+
+    /// The end position of a range that ends at `offset`.
+    fn end(&self, offset: usize) -> Pos {
+        if offset == 0 {
+            return self.pos(0);
+        }
+        let index = self
+            .segments
+            .partition_point(|&(start, _)| start < offset)
+            .saturating_sub(1);
+        match self.segments[index] {
+            (_, Segment::Placeholder { span, .. }) => span.end,
+            _ => self.pos(offset),
+        }
+    }
+}
+
+/// A top-level block of a part: its range in the part's text, its source
+/// lines, and the paragraph's layout when it is one.
+struct Block {
+    lines: Range<u32>,
+    paragraph: Option<Paragraph>,
+}
+
+/// A paragraph's text range, its atoms (ranges no wrap splits), and where
+/// its hard breaks end lines.
+struct Paragraph {
+    range: Range<usize>,
+    atoms: Vec<Range<usize>>,
+    breaks: Vec<usize>,
+}
+
+struct Markdown<'m, 'd, 'l, 'a> {
+    lines: &'l [Line<'a>],
+    layout: &'m mut Layout<'d, 'l, 'a>,
+    /// The first source line not yet printed.
+    next: u32,
+    /// The first line with text.
+    first_text: u32,
+    /// Whether the next word may still be in javadoc's first sentence: in
+    /// the description's first block. (javadoc ends the sentence at a `.` and
+    /// whitespace outside code spans, links and brackets, or at a line that
+    /// starts with one of [`words::ends_first_paragraph`].)
+    first_sentence: bool,
+}
+
+impl Markdown<'_, '_, '_, '_> {
+    /// Prints the lines before `line` that are not printed yet, as written.
+    fn verbatim_until(&mut self, line: u32) {
+        while self.next < line && (self.next as usize) < self.lines.len() {
+            // The blank lines that start a run keep their whitespace: javadoc
+            // ends the first sentence at the first blank line, and keeps what
+            // comes before it.
+            if self.next < self.first_text {
+                self.layout.exact_line(self.next);
+            } else {
+                self.layout.verbatim_lines(self.next, self.next);
+            }
+            self.next += 1;
+        }
+    }
+
+    fn block_tag(&mut self, tag: &BlockTag, first: bool) {
+        self.first_sentence = false;
+        let line = tag.span.start.line;
+        if first {
+            // One blank line before the first block tag, and the source's
+            // blank lines.
+            let blank_before = line > 0 && self.lines[line as usize - 1].is_blank();
+            self.verbatim_until(line);
+            if !blank_before {
+                self.layout.blank();
+            }
+        } else {
+            self.verbatim_until(line);
+        }
+        let Some(body) = &tag.body else {
+            self.verbatim_until(tag.span.end.line + 1);
+            return;
+        };
+        self.layout.line(false, 0, 0);
+        for (index, &head) in tag.head.iter().enumerate() {
+            let join = if index == 0 { Join::Wrap } else { Join::Space };
+            self.layout.word(head, join, false);
+        }
+        let head_end = tag.head.last().map_or(tag.span.start, |head| head.end);
+        self.next = head_end.line + 1;
+        self.section(body, Some(head_end.line));
+    }
+
+    /// Lays out a part: the description (`tag_line` `None`), or a block
+    /// tag's text, whose head is printed on `tag_line`.
+    fn section(&mut self, nodes: &[Node], tag_line: Option<u32>) {
+        let Some(text) = self.text(nodes) else {
+            return;
+        };
+        let blocks = Self::blocks(&text);
+        // Text on the tag's line that no block holds (a link reference
+        // definition) follows the head as written.
+        let start = text.pos(0);
+        if tag_line == Some(start.line)
+            && blocks
+                .first()
+                .is_none_or(|block| block.lines.start != start.line)
+        {
+            let line = self.lines[start.line as usize].text;
+            let end = Pos {
+                line: start.line,
+                off: to_u32(line.len()),
+            };
+            self.layout.word(Span { start, end }, Join::Space, false);
+        }
+        let mut index = 0;
+        while index < blocks.len() {
+            // Blocks that share a line are printed as written together.
+            let mut lines = blocks[index].lines.clone();
+            let mut end = index + 1;
+            while end < blocks.len() && blocks[end].lines.start < lines.end {
+                lines.end = lines.end.max(blocks[end].lines.end);
+                end += 1;
+            }
+            let on_tag_line = tag_line == Some(lines.start);
+            if !on_tag_line {
+                self.verbatim_until(lines.start);
+            }
+            match &blocks[index].paragraph {
+                Some(paragraph) if end == index + 1 => {
+                    self.paragraph(&text, paragraph, on_tag_line);
+                    self.first_sentence = false;
                 }
-                byte if byte == open => depth += 1,
-                byte if byte == close => {
-                    depth -= 1;
-                    if depth == 0 {
-                        return Some(at + 1);
+                _ if on_tag_line => {
+                    // The tag's text, from its start to the end of its
+                    // first lines, as written after the head.
+                    let start = text.pos(0);
+                    let last = lines.end - 1;
+                    let end_pos = Pos {
+                        line: last,
+                        off: u32::try_from(self.lines[last as usize].text.len())
+                            .unwrap_or(u32::MAX),
+                    };
+                    self.layout.word(
+                        Span {
+                            start,
+                            end: end_pos,
+                        },
+                        Join::Space,
+                        false,
+                    );
+                }
+                _ => self.layout.verbatim_lines(lines.start, lines.end - 1),
+            }
+            self.first_sentence = false;
+            self.next = self.next.max(lines.end);
+            index = end;
+        }
+    }
+
+    /// The Markdown text of a part, as javadoc builds it, or `None` when it
+    /// is empty.
+    fn text<'n>(&self, nodes: &'n [Node]) -> Option<Text<'n>> {
+        let mut text = Text {
+            text: String::new(),
+            segments: Vec::new(),
+        };
+        for node in nodes {
+            match node {
+                Node::Text(span) => {
+                    for line in span.start.line..=span.end.line {
+                        let source = self.lines[line as usize].text;
+                        let from = if line == span.start.line {
+                            span.start.off as usize
+                        } else {
+                            0
+                        };
+                        let to = if line == span.end.line {
+                            span.end.off as usize
+                        } else {
+                            source.len()
+                        };
+                        text.segments.push((
+                            text.text.len(),
+                            Segment::Text {
+                                pos: Pos {
+                                    line,
+                                    off: to_u32(from),
+                                },
+                            },
+                        ));
+                        text.text.push_str(&source[from..to]);
+                        if line < span.end.line {
+                            text.text.push('\n');
+                        }
                     }
                 }
+                Node::Atom(span) | Node::Element { span, .. } => {
+                    text.segments.push((
+                        text.text.len(),
+                        Segment::Placeholder {
+                            span: *span,
+                            inline: None,
+                        },
+                    ));
+                    text.text.push(PLACEHOLDER);
+                }
+                Node::Inline(inline) => {
+                    let name = &self.lines[inline.name.start.line as usize].text
+                        [inline.name.start.off as usize..inline.name.end.off as usize];
+                    let start = text.text.len();
+                    text.segments.push((
+                        start,
+                        Segment::Placeholder {
+                            span: inline.span,
+                            inline: Some(inline),
+                        },
+                    ));
+                    if name == "{@snippet" {
+                        // A block placeholder (`<!--￼-->`), on a line of its own.
+                        if !text.text.is_empty() && !text.text.ends_with('\n') {
+                            text.text.push('\n');
+                        }
+                        text.text.push_str("<!--\u{fffc}-->");
+                    } else {
+                        text.text.push(PLACEHOLDER);
+                    }
+                }
+            }
+        }
+        (!text.text.is_empty()).then_some(text)
+    }
+
+    /// The top-level blocks of a part's text. A paragraph inside an element
+    /// that keeps whitespace (`<pre>`, opened by an HTML block before it) is
+    /// no paragraph to fill.
+    fn blocks(text: &Text) -> Vec<Block> {
+        let mut blocks: Vec<Block> = Vec::new();
+        let mut depth = 0usize;
+        let mut paragraph: Option<Paragraph> = None;
+        // Whether an element that keeps whitespace is open, and where it
+        // opened in the paragraph being read.
+        let mut exact = false;
+        let mut exact_start: Option<usize> = None;
+        // javadoc reads `[text][ref]` and `[ref]` as links to program
+        // elements even without a definition: keep them whole.
+        let links = |_: BrokenLink<'_>| Some((CowStr::from(""), CowStr::from("")));
+        let parser =
+            Parser::new_with_broken_link_callback(&text.text, Options::ENABLE_TABLES, Some(links))
+                .into_offset_iter();
+        for (event, range) in parser {
+            match event {
+                Event::Start(tag) => {
+                    if depth == 0 {
+                        if matches!(tag, Tag::Paragraph) && !exact {
+                            paragraph = Some(Paragraph {
+                                range: range.clone(),
+                                atoms: Vec::new(),
+                                breaks: Vec::new(),
+                            });
+                        }
+                        blocks.push(Self::block(text, &range));
+                    } else if let Some(paragraph) = &mut paragraph
+                        && matches!(tag, Tag::Link { .. } | Tag::Image { .. })
+                        && exact_start.is_none()
+                    {
+                        paragraph.atoms.push(range);
+                    }
+                    depth += 1;
+                }
+                Event::End(end) => {
+                    depth -= 1;
+                    if depth == 0
+                        && end == TagEnd::Paragraph
+                        && let Some(mut done) = paragraph.take()
+                    {
+                        if let Some(start) = exact_start.take() {
+                            done.atoms.push(start..done.range.end);
+                        }
+                        done.atoms.sort_by_key(|atom| atom.start);
+                        if let Some(block) = blocks.last_mut() {
+                            block.paragraph = Some(done);
+                        }
+                    }
+                }
+                Event::Code(_) | Event::InlineMath(_) | Event::DisplayMath(_) => {
+                    if let Some(paragraph) = &mut paragraph
+                        && exact_start.is_none()
+                    {
+                        paragraph.atoms.push(range);
+                    }
+                }
+                Event::Html(html) | Event::InlineHtml(html) => {
+                    let before = exact;
+                    exact = keeps_whitespace_after(&html, exact);
+                    if depth == 0 {
+                        blocks.push(Self::block(text, &range));
+                    } else if let Some(paragraph) = &mut paragraph {
+                        // An element that keeps whitespace is an atom up to
+                        // its end tag (or the paragraph's end).
+                        if !before && exact {
+                            exact_start = Some(range.start);
+                        } else if before && !exact {
+                            if let Some(start) = exact_start.take() {
+                                paragraph.atoms.push(start..range.end);
+                            }
+                        } else if !exact {
+                            paragraph.atoms.push(range);
+                        }
+                    }
+                }
+                Event::HardBreak => {
+                    if let Some(paragraph) = &mut paragraph {
+                        paragraph.breaks.push(range.start);
+                    }
+                }
+                Event::Rule if depth == 0 => blocks.push(Self::block(text, &range)),
                 _ => {}
             }
-            at += 1;
         }
-        None
-    };
-    let end = close(b'[', b']', at)?;
-    match bytes.get(end) {
-        Some(b'(') => close(b'(', b')', end),
-        Some(b'[') => close(b'[', b']', end),
-        _ => Some(end),
+        blocks
     }
-}
 
-/// The columns of the whitespace that starts `text` (a tab advances to the
-/// next multiple of 4).
-fn columns(text: &str) -> usize {
-    text.bytes()
-        .take_while(|&byte| matches!(byte, b' ' | b'\t'))
-        .fold(0, |col, byte| {
-            if byte == b'\t' {
-                col + 4 - col % 4
+    /// A block's source lines.
+    fn block(text: &Text, range: &Range<usize>) -> Block {
+        let mut end = range.end;
+        while end > range.start && text.text.as_bytes()[end - 1] == b'\n' {
+            end -= 1;
+        }
+        let first = text.pos(range.start).line;
+        let last = text.end(end.max(range.start + 1)).line;
+        Block {
+            lines: first..last.max(first) + 1,
+            paragraph: None,
+        }
+    }
+
+    /// Fills a paragraph: its words, split at whitespace outside atoms, on
+    /// lines flush with the frame (after the head when `on_tag_line`).
+    fn paragraph(&mut self, text: &Text, paragraph: &Paragraph, on_tag_line: bool) {
+        let source = text.text.as_bytes();
+        let mut at = paragraph.range.start;
+        let end = paragraph.range.end;
+        let mut atoms = paragraph.atoms.iter().peekable();
+        let mut first = true;
+        let mut previous_backslash = false;
+        let mut breaks = paragraph.breaks.iter().copied().peekable();
+        let mut break_pending = false;
+        while at < end {
+            while at < end && matches!(source[at], b' ' | b'\t' | b'\n' | b'\r') {
+                at += 1;
+            }
+            if at >= end {
+                break;
+            }
+            let start = at;
+            loop {
+                while atoms.peek().is_some_and(|atom| atom.end <= at) {
+                    atoms.next();
+                }
+                if let Some(atom) = atoms.peek().filter(|atom| atom.start <= at) {
+                    at = atom.end.max(at + 1);
+                    continue;
+                }
+                if at >= end || matches!(source[at], b' ' | b'\t' | b'\n' | b'\r') {
+                    break;
+                }
+                at += text.text[at..].chars().next().map_or(1, char::len_utf8);
+            }
+            let word = &text.text[start..at];
+            let mut span = Span {
+                start: text.pos(start),
+                end: text.end(at),
+            };
+            // A hard break after the word: its trailing spaces or `\` stay,
+            // and the next word starts a line.
+            let mut hard = false;
+            while breaks.peek().is_some_and(|&found| found < start) {
+                breaks.next();
+            }
+            let line_end = text.text[at..].find('\n').map_or(end, |found| at + found);
+            let last_on_line = text.text[at..line_end]
+                .bytes()
+                .all(|byte| byte == b' ' || byte == b'\t');
+            if last_on_line && breaks.peek().is_some_and(|&found| found <= line_end) {
+                breaks.next();
+                hard = true;
+                let line = self.lines[span.end.line as usize].text;
+                span.end.off = to_u32(line.len());
+            }
+            // The spaces before the word on its line, when it starts one.
+            let line_start =
+                text.text[..start]
+                    .rfind('\n')
+                    .map_or(start == paragraph.range.start, |found| {
+                        text.text[found + 1..start]
+                            .bytes()
+                            .all(|byte| byte == b' ' || byte == b'\t')
+                    });
+            let indent = text.text[..start]
+                .rfind('\n')
+                .map_or(0, |found| start - found - 1);
+            // In the first sentence, javadoc ends the sentence at a line that
+            // starts with one of these; an `@` that starts a line is a block
+            // tag or an escape: such a word keeps the line break before it.
+            let at = self.layout.text_at(span.start).starts_with('@');
+            let ends_sentence = self.first_sentence && words::ends_first_paragraph(word);
+            let keeps_break = !first
+                && line_start
+                && (ends_sentence
+                    && indent <= 3
+                    && !text.text[start - indent..start].contains('\t')
+                    || at);
+            let sticky =
+                previous_backslash || at || ends_sentence || words::starts_structure(word, true);
+            let (join, sticky) = if first {
+                if on_tag_line {
+                    (Join::Space, false)
+                } else {
+                    self.layout.line(false, 0, 0);
+                    (Join::Wrap, false)
+                }
+            } else if break_pending || keeps_break {
+                self.layout.hard_break();
+                (Join::Wrap, false)
             } else {
-                col + 1
+                (Join::Wrap, sticky)
+            };
+            match text.inline_at(start).filter(|_| word == "\u{fffc}") {
+                Some(inline) if self.fills_label(inline) => self.label(inline, join, sticky),
+                _ => self.layout.word(span, join, sticky),
             }
-        })
-}
+            break_pending = hard;
+            first = false;
+            previous_backslash = word.ends_with('\\');
+        }
+    }
 
-/// The fence that `rest` opens: three or more `` ` `` (with no `` ` `` in
-/// the info string after them) or `~`.
-fn opens_fence(rest: &[u8]) -> Option<(u8, usize)> {
-    let &marker @ (b'`' | b'~') = rest.first()? else {
-        return None;
-    };
-    let len = rest.iter().take_while(|&&byte| byte == marker).count();
-    (len >= 3 && !(marker == b'`' && rest[len..].contains(&b'`'))).then_some((marker, len))
-}
-
-/// Whether `rest` may be a table's delimiter row (`|---|:--:|`): only `|`,
-/// `:`, `-` and whitespace, with a `-` and a `|` or `:`.
-fn is_delimiter_row(rest: &[u8]) -> bool {
-    rest.iter()
-        .all(|&byte| matches!(byte, b'|' | b':' | b'-' | b' ' | b'\t'))
-        && rest.contains(&b'-')
-        && (rest.contains(&b'|') || rest.contains(&b':'))
-}
-
-/// Lays out a `///` run's tokens.
-pub(crate) fn lay_out<'a>(tokens: &[Token<'a>], layout: &mut Layout<'_, 'a>) {
-    let mut in_paragraph = false;
-    for token in tokens {
-        if token.kind == Kind::Word {
-            if !std::mem::replace(&mut in_paragraph, true) {
-                layout.line(false, 0, 0);
+    /// The words of the plain text of `nodes`, each with whether it starts
+    /// a source line.
+    fn label_words(&self, nodes: &[Node]) -> Vec<(Span, bool)> {
+        let mut words = Vec::new();
+        for node in nodes {
+            let Node::Text(span) = node else { continue };
+            for line in span.start.line..=span.end.line {
+                let text = self.lines[line as usize].text;
+                let from = if line == span.start.line {
+                    span.start.off as usize
+                } else {
+                    0
+                };
+                let to = if line == span.end.line {
+                    span.end.off as usize
+                } else {
+                    text.len()
+                };
+                let mut at = from;
+                let bytes = text.as_bytes();
+                let mut line_start = line != span.start.line;
+                while at < to {
+                    while at < to && matches!(bytes[at], b' ' | b'\t') {
+                        at += 1;
+                    }
+                    let start = at;
+                    while at < to && !matches!(bytes[at], b' ' | b'\t') {
+                        at += 1;
+                    }
+                    if at > start {
+                        words.push((
+                            Span {
+                                start: Pos {
+                                    line,
+                                    off: to_u32(start),
+                                },
+                                end: Pos {
+                                    line,
+                                    off: to_u32(at),
+                                },
+                            },
+                            line_start,
+                        ));
+                        line_start = false;
+                    }
+                }
             }
-            let join = if token.glue { Join::Space } else { Join::Wrap };
-            layout.word(token.text, join, token.sticky);
-        } else {
-            layout.verbatim(token.text);
-            in_paragraph = false;
+        }
+        words
+    }
+
+    /// Whether the label (or description) of an inline tag is filled: plain
+    /// text, without the Markdown that could change when its line breaks
+    /// move (code spans, links, HTML, escapes) and without a line that
+    /// starts with a word that starts structure.
+    fn fills_label(&self, inline: &Inline) -> bool {
+        let Some(rich) = &inline.rich else {
+            return false;
+        };
+        rich.close.is_some()
+            && rich
+                .content
+                .iter()
+                .all(|node| matches!(node, Node::Text(_)))
+            && self
+                .label_words(&rich.content)
+                .iter()
+                .all(|&(span, line_start)| {
+                    let word = self.layout.text_at(span.start);
+                    let word = &word[..(span.end.off - span.start.off) as usize];
+                    !word.contains(['`', '<', '[', '\\', '{', '&', '*', '_'])
+                        && !(line_start
+                            && (words::starts_structure(word, true)
+                                || words::ends_first_paragraph(word)
+                                || word.starts_with('@')))
+                })
+    }
+
+    /// Lays out an inline tag whose label is filled: its name and head
+    /// glued, the label's words, and its `}`.
+    fn label(&mut self, inline: &Inline, join: Join, sticky: bool) {
+        let Some(rich) = &inline.rich else { return };
+        self.layout.word(inline.name, join, sticky);
+        if let Some(head) = rich.head {
+            self.layout.word(head, Join::Space, false);
+        }
+        let words = self.label_words(&rich.content);
+        let mut last = rich.head.map_or(inline.name.end, |head| head.end);
+        for &(span, _) in &words {
+            let word = self.layout.text_at(span.start);
+            let word = &word[..(span.end.off - span.start.off) as usize];
+            let sticky = words::starts_structure(word, true) || word.starts_with('@');
+            self.layout.word(span, Join::Wrap, sticky);
+            last = span.end;
+        }
+        if let Some(close) = rich.close {
+            let join = if close.start == last {
+                Join::None
+            } else {
+                Join::Space
+            };
+            self.layout.word(close, join, false);
         }
     }
 }

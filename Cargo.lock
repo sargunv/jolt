@@ -415,6 +415,8 @@ name = "jolt_markup"
 version = "0.0.0"
 dependencies = [
  "jolt_fmt",
+ "pulldown-cmark",
+ "unicode-general-category",
 ]
 
 [[package]]
@@ -427,7 +429,6 @@ version = "0.0.0"
 dependencies = [
  "jolt_fmt",
  "jolt_syntax",
- "pulldown-cmark",
  "rayon",
 ]
 

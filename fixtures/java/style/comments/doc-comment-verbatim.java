@@ -38,7 +38,7 @@ class DocCommentVerbatim {
    * A long code line overflows:
    * <pre>
    * someObject.someMethodWithAVeryLongName(firstArgument, secondArgument, thirdArgument);
-   * @Bean starts a line in code, which is not a block tag.
+   * @Bean starts a line in code, which javac reads as a block tag even in pre.
    * </pre>
    */
   void upperCaseAndLong() {}

@@ -28,7 +28,8 @@ class DocCommentMarkdownHardCases {
   /// and a hard break written with a backslash\
   /// and the end of the paragraph, whose trailing spaces are dropped.
   ///
-  /// A word that ends in a backslash\ never ends a wrapped line, so it stays with the next.
+  /// A word that ends in a backslash\ never ends a wrapped line, so it stays
+  /// with the next.
   void hardBreaks() {}
 
   /// Example:
@@ -40,7 +41,8 @@ class DocCommentMarkdownHardCases {
   ///     @Deprecated
   ///     void old() {}
   ///
-  /// @return a line-leading `@` in a fence or in indented code starts no block tag
+  /// @return a line-leading `@` in a fence or in indented code starts no block
+  /// tag
   String lineLeadingAt();
 
   /// Never starts a list or a heading by wrapping: it costs 2 dollars + 3
@@ -48,21 +50,24 @@ class DocCommentMarkdownHardCases {
   /// pipes, *** stars, === rules and <b>tags</b> and 1) items.
   void listMarkerWords() {}
 
-  /// A line that starts with a marker the source puts there keeps its line break:
-  /// 2) is not a list item, since an ordered list that interrupts a paragraph starts at 1
-  /// #hashtag is not a heading
-  ///     # but a marker indented as code joins the line before
+  /// A line that starts with a marker the source puts there keeps its line
+  /// break: 2) is not a list item, since an ordered list that interrupts a
+  /// paragraph starts at 1
+  /// #hashtag is not a heading # but a marker indented as code joins the line
+  /// before
   void keptLineBreaks() {}
 
   /// A code span `that  keeps   its spaces` and one that spans `lines
-  /// of the source` stay whole, and so do <a href="https://example.com">HTML tags</a> and <https://example.com/an/autolink>.
+  /// of the source` stay whole, and so do <a href="https://example.com">HTML
+  /// tags</a> and <https://example.com/an/autolink>.
   void atoms() {}
 
   /// Text before {@link java.util.Map#put(Object, Object) the label of the
   /// link, which is filled like other words} and {@code a code tag}.
   void inlineTags() {}
 
-  /// A snippet keeps its lines, and a line in it that starts with `@` starts no block tag:
+  /// A snippet keeps its lines, and a line in it that starts with `@` starts no
+  /// block tag:
   /// {@snippet :
   /// @Override
   /// public String toString() {
@@ -91,7 +96,8 @@ class DocCommentMarkdownHardCases {
   /// }
   void snippetAfterACodeSpan() {}
 
-  /// A code span that runs onto the next line keeps the spaces that start it: `a
+  /// A code span that runs onto the next line keeps the spaces that start it:
+  /// `a
   ///   b`.
   void codeSpanContinuation() {}
 
@@ -130,6 +136,7 @@ class DocCommentMarkdownHardCases {
 
   /// A method whose description is reflowed, with enough words to wrap the line
   /// past the width of the comment.
+  ///
   /// @see String # A heading after the reference, with enough words to wrap the line past the width
   void headingAfterASeeReference() {}
 
@@ -142,7 +149,8 @@ class DocCommentMarkdownHardCases {
   }
 
   /// A method whose block tag is indented, which javadoc still reads as a tag.
-  ///     @return the value
+  ///
+  /// @return the value
   int indentedFirstTag() {
     return 0;
   }

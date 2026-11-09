@@ -36,12 +36,15 @@ class DocCommentKeptAsWritten {
    * A multi-line code tag: {@code
    * @Bean
    * Foo foo() {}
-   * } and {@code <ul>} are inline tags, so nothing inside them is a block tag or a list.
-   * Braces balance: {@code "/{year:\d{1,4}}"} and {@code ${...}}.
+   * } and {@code <ul>} are inline tags, so nothing inside them is a block tag
+   * or a list. Braces balance: {@code "/{year:\d{1,4}}"} and {@code ${...}}.
    */
   void inlineTagsFirst() {}
 
-  /** A{@literal  b}C, where the second space is text javadoc keeps, with enough words to wrap the line. */
+  /**
+   * A{@literal  b}C, where the second space is text javadoc keeps, with enough
+   * words to wrap the line.
+   */
   void literalLeadingSpace() {}
 
   /**
@@ -50,13 +53,22 @@ class DocCommentKeptAsWritten {
    */
   void codeAfterALineBreak() {}
 
-  /** A {@code value } whose content ends in a space, with enough words to wrap the line. */
+  /**
+   * A {@code value } whose content ends in a space, with enough words to wrap
+   * the line.
+   */
   void codeTrailingSpace() {}
 
-  /** A{@literal b}C, whose form feed is text javadoc keeps, with enough words to wrap the line. */
+  /**
+   * A{@literal b}C, whose form feed is text javadoc keeps, with enough words to
+   * wrap the line.
+   */
   void literalFormFeed() {}
 
-  /** A{@link String {@code  label}}C, a tag inside a tag, with enough words to wrap the line past the width. */
+  /**
+   * A{@link String {@code  label}}C, a tag inside a tag, with enough words to
+   * wrap the line past the width.
+   */
   void nestedInlineTag() {}
 
   /**
@@ -78,15 +90,21 @@ class DocCommentKeptAsWritten {
    */
   void nonAsciiTagName() {}
 
-  /** The value is {@value "% d" #NUMBER}, with enough words to wrap the line past the width of it. */
+  /**
+   * The value is {@value "% d" #NUMBER}, with enough words to wrap the line
+   * past the width of it.
+   */
   void quotedValueFormat() {}
 
   /**
-   * * first item, with enough words to wrap the line past the width of the comment here
+   * * first item, with enough words to wrap the line past the width of the
+   * comment here
    */
   void leadingStar() {}
 
-  /** * @return value */
+  /**
+   * @return value
+   */
   int leadingStarOnOneLine() {
     return 0;
   }

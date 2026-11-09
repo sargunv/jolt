@@ -8,17 +8,17 @@ class DocCommentVerbatim {
    * Tabs after the star stay.
    *
    * <pre class="code">
-   *	client.get()
-   *		.retrieve();
-   * </pre>
+   * 	client.get()
+   * 		.retrieve();
+   *  </pre>
    *
    * A ruler in code:
    *
    * <pre>
-   *=====
-   *   x
-   *=====
-   * </pre>
+   * =====
+   *    x
+   * =====
+   *  </pre>
    */
   void tabsAndRulers() {}
 
@@ -52,8 +52,9 @@ class DocCommentVerbatim {
    *
    * <pre>
    * someObject.someMethodWithAVeryLongName(firstArgument, secondArgument, thirdArgument);
-   * @Bean starts a line in code, which is not a block tag.
-   * </pre>
+   *
+   * @Bean starts a line in code, which javac reads as a block tag even in pre.
+   *     </pre>
    */
   void upperCaseAndLong() {}
 
@@ -70,6 +71,7 @@ class DocCommentVerbatim {
 
   /**
    * An unclosed pre runs to the end:
+   *
    * <pre>
    *   run();
    *       more();

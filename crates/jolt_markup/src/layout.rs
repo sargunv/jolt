@@ -9,11 +9,19 @@
 //! the check). Each comment shares one wrap point doc per indentation, so a
 //! word costs one text and two child slots.
 //!
+//! A word may span lines (an atom such as a multi-line `{@code …}`): its
+//! first line is placed like any word, each later line is printed as written
+//! after a line break (see [`Layout::continuation`]), and the next word
+//! follows its last line.
+//!
 //! The flavour sets the frame: ` * ` inside `/**` and `*/` for Javadoc, and
 //! the run's own `///` frame for Markdown, whose last text ends the line
 //! ([`DocBuilder::line_comment`]).
 
 use jolt_fmt::{Doc, DocBuilder, cat};
+
+use crate::frame::Line;
+use crate::parser::{Pos, Span};
 
 /// How a word joins the word before it on its line.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -47,9 +55,10 @@ struct Start {
 }
 
 /// Builds the docs of one doc comment.
-pub(crate) struct Layout<'d, 'a> {
+pub(crate) struct Layout<'d, 'l, 'a> {
     docs: &'d mut DocBuilder<'a>,
     flavour: Flavour<'a>,
+    lines: &'l [Line<'a>],
     /// Everything after the first line's start.
     parts: Vec<Doc>,
     pending: Option<Start>,
@@ -57,7 +66,7 @@ pub(crate) struct Layout<'d, 'a> {
     first: Option<u16>,
     /// Whether anything has been laid out.
     started: bool,
-    /// Whether the comment has more than one line.
+    /// Whether the comment has more than one line, or can't be on one line.
     multiline: bool,
     /// The indentation of the lines a wrap starts.
     hang: u16,
@@ -67,11 +76,16 @@ pub(crate) struct Layout<'d, 'a> {
     last: Option<(usize, &'a str)>,
 }
 
-impl<'d, 'a> Layout<'d, 'a> {
-    pub(crate) const fn new(docs: &'d mut DocBuilder<'a>, flavour: Flavour<'a>) -> Self {
+impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
+    pub(crate) const fn new(
+        docs: &'d mut DocBuilder<'a>,
+        flavour: Flavour<'a>,
+        lines: &'l [Line<'a>],
+    ) -> Self {
         Self {
             docs,
             flavour,
+            lines,
             parts: Vec::new(),
             pending: None,
             first: None,
@@ -96,7 +110,8 @@ impl<'d, 'a> Layout<'d, 'a> {
         self.hang = hang;
     }
 
-    /// Keeps the comment off the one-line form (it has block tags).
+    /// Keeps the comment off the one-line form (it has block tags, or its
+    /// first word would lose a leading `*` on the opener's line).
     pub(crate) const fn multiline(&mut self) {
         self.multiline = true;
     }
@@ -106,11 +121,38 @@ impl<'d, 'a> Layout<'d, 'a> {
         !self.started
     }
 
-    /// Adds a word, joined to the word before it by `join` unless it starts
-    /// a line. A `sticky` word, which would start new structure at the start
-    /// of a line, never follows a wrap point: it is glued to the word before
-    /// it with a space.
-    pub(crate) fn word(&mut self, text: &'a str, join: Join, sticky: bool) {
+    /// The text of line `line` from byte `from` of its text, to byte `to`
+    /// (or its end), as javadoc reads it.
+    fn segment(&self, line: u32, from: u32, to: Option<u32>) -> &'a str {
+        let text = self.lines[line as usize].text;
+        let to = to.map_or(text.len(), |to| to as usize);
+        &text[from as usize..to]
+    }
+
+    /// The text of `pos`'s line from `pos` on.
+    pub(crate) fn text_at(&self, pos: Pos) -> &'a str {
+        self.segment(pos.line, pos.off, None)
+    }
+
+    /// Adds a word or an atom that may span lines, joined to the word before
+    /// it by `join` unless it starts a line. A `sticky` word, which would
+    /// start new structure at the start of a line, never follows a wrap
+    /// point: it is glued to the word before it with a space.
+    pub(crate) fn word(&mut self, span: Span, join: Join, sticky: bool) {
+        let first_end = (span.end.line == span.start.line).then_some(span.end.off);
+        let mut first = self.segment(span.start.line, span.start.off, first_end);
+        if first_end.is_none() && !self.markdown() {
+            first = first.trim_end();
+        }
+        self.push_word(first, join, sticky);
+        for line in span.start.line + 1..=span.end.line {
+            let to = (line == span.end.line).then_some(span.end.off);
+            self.continuation(Pos { line, off: 0 }, to);
+        }
+    }
+
+    /// Adds a word with this text (see [`word`](Self::word)).
+    pub(crate) fn push_word(&mut self, text: &'a str, join: Join, sticky: bool) {
         if let Some(start) = self.pending.take() {
             self.start_line(start);
         } else if !self.started {
@@ -129,46 +171,119 @@ impl<'d, 'a> Layout<'d, 'a> {
         self.push_text(text);
     }
 
-    /// Adds a text. In Markdown it is glued to a frame before it: the
-    /// printer's join check would put a space between `///` and `*` or `=`
-    /// (`///**` is not `/// **`). Not a text that starts with `/`, where
-    /// that space keeps the line from starting with `////`, which ends a run.
+    /// Adds a text, glued to the text before it: the printer's join check
+    /// would put a space between `&` and `&` (two erroneous entities), or
+    /// between `///` and `*` (`///**` is not `/// **`). Not a Markdown text
+    /// that starts with `/`, where that space keeps the line from starting
+    /// with `////`, which ends a run.
     fn push_text(&mut self, text: &'a str) {
+        if text.is_empty() {
+            return;
+        }
         self.last = Some((self.parts.len(), text));
-        let doc = if self.markdown() && !text.starts_with('/') {
-            self.docs.glued(text)
-        } else {
+        let doc = if self.markdown() && text.starts_with('/') {
             self.docs.text(text)
+        } else {
+            self.docs.glued(text)
         };
         self.parts.push(doc);
     }
 
-    /// Adds a line printed as written, `raw` from its frame on: only the
-    /// comment's indentation changes, and no list or tag indentation is
-    /// added. A blank line asked for before it is kept.
-    pub(crate) fn verbatim(&mut self, raw: &'a str) {
+    /// Prints line `pos.line` as written, from byte `pos.off` of its text to
+    /// byte `to` (or its end), after a line break: only the comment's
+    /// indentation changes, and no list or tag indentation is added. In a
+    /// Javadoc comment the line gets the frame `" * "` (`" *"` and its tab
+    /// when javadoc removed a tab of indentation from it, so that the tab
+    /// stays), and in Markdown its own source frame, from its `///`.
+    pub(crate) fn continuation(&mut self, pos: Pos, to: Option<u32>) {
+        let started = std::mem::replace(&mut self.started, true);
+        self.multiline = true;
+        let line = self.lines[pos.line as usize];
+        let text = self.segment(pos.line, pos.off, to);
+        match self.flavour {
+            Flavour::Javadoc => {
+                let hard = self.docs.hard_line();
+                self.parts.push(hard);
+                let text = text.trim_end();
+                if text.is_empty() {
+                    self.push_text(&FRAME[..2]);
+                    return;
+                }
+                let lead = line.raw.len() - line.text.len();
+                let tab = pos.off == 0 && line.raw[..lead].ends_with('\t');
+                if tab {
+                    self.push_text(&FRAME[..2]);
+                    self.push_text(&line.raw[lead - 1..lead + text.len()]);
+                } else {
+                    self.push_text(&FRAME[..3]);
+                    self.push_text(text);
+                }
+            }
+            Flavour::Markdown { .. } => {
+                if started {
+                    self.parts.push(self.docs.hard_line());
+                }
+                let lead = line.raw.len() - line.text.len();
+                let end = lead + pos.off as usize + text.len();
+                self.push_text(&line.raw[..end]);
+            }
+        }
+    }
+
+    /// Prints whole lines as written (see [`continuation`](Self::continuation)),
+    /// after the blank line asked for before them.
+    pub(crate) fn verbatim_lines(&mut self, first: u32, last: u32) {
         if let Some(start) = self.pending.take()
             && start.blank
             && self.started
         {
             self.blank_line();
         }
+        for line in first..=last {
+            self.verbatim_line(line);
+        }
+    }
+
+    /// Prints a Markdown line exactly as written, trailing whitespace
+    /// included.
+    pub(crate) fn exact_line(&mut self, line: u32) {
         let started = std::mem::replace(&mut self.started, true);
         self.multiline = true;
-        match self.flavour {
-            Flavour::Javadoc => {
-                let raw = if raw.is_empty() { "*" } else { raw };
-                let line = self.docs.hard_line();
-                let space = self.docs.text(&FRAME[..1]);
-                self.parts.extend([line, space]);
-                self.push_text(raw);
+        if started {
+            self.parts.push(self.docs.hard_line());
+        }
+        self.push_text(self.lines[line as usize].raw);
+    }
+
+    /// Prints one whole line as written. A Markdown line keeps trailing
+    /// spaces when there are two or more (a hard break in a paragraph).
+    fn verbatim_line(&mut self, line: u32) {
+        if self.markdown() {
+            let started = std::mem::replace(&mut self.started, true);
+            self.multiline = true;
+            if started {
+                self.parts.push(self.docs.hard_line());
             }
-            Flavour::Markdown { .. } => {
-                if started {
-                    self.parts.push(self.docs.hard_line());
-                }
-                self.push_text(raw);
-            }
+            let raw = self.lines[line as usize].raw;
+            let trimmed = raw.trim_end();
+            let kept = if raw[trimmed.len()..].starts_with("  ")
+                && !self.lines[line as usize].is_blank()
+            {
+                raw.trim_end_matches(['\r', '\n'])
+            } else {
+                trimmed
+            };
+            self.push_text(kept);
+        } else {
+            self.continuation(Pos { line, off: 0 }, None);
+        }
+    }
+
+    /// A blank Markdown line, printed as its frame.
+    pub(crate) fn blank(&mut self) {
+        self.pending = None;
+        if self.started {
+            self.blank_line();
         }
     }
 
@@ -239,6 +354,14 @@ impl<'d, 'a> Layout<'d, 'a> {
         let wrap = self.docs.group(choice);
         self.wraps.push((indent, wrap));
         wrap
+    }
+
+    /// Adds a hard line break inside a Markdown paragraph after the last word
+    /// (a hard break, kept as written): the next word starts a line at the
+    /// paragraph's indentation.
+    pub(crate) fn hard_break(&mut self) {
+        let indent = self.hang;
+        self.line(false, indent, indent);
     }
 
     /// The comment. For Javadoc, `/** text */` on one line when it is one

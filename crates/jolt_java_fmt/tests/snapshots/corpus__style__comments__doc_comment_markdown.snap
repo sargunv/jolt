@@ -3,12 +3,12 @@ source: crates/jolt_java_fmt/tests/corpus.rs
 expression: snapshot
 ---
 formatted:
-/// Indicates that the annotated class or interface is allowed to be _AOT-initialized_,
-/// because its author considers it safe to execute the static initializer of
-/// the class or interface during the AOT assembly phase.
+/// Indicates that the annotated class or interface is allowed to
+/// be _AOT-initialized_, because its author considers it safe to execute the
+/// static initializer of the class or interface during the AOT assembly phase.
 ///
-/// For a class or interface _X_ annotated with `@AOTSafeClassInitializer`, it will
-/// be initialized in the AOT assembly phase under two circumstances:
+/// For a class or interface _X_ annotated with `@AOTSafeClassInitializer`, it
+/// will be initialized in the AOT assembly phase under two circumstances:
 ///
 /// 1. If _X_ was initialized during the AOT training run, the JVM will proactively
 ///    initialize _X_ in the assembly phase.
@@ -23,13 +23,16 @@ formatted:
 ///  - A transient configuration parameter specific to this VM run, such as
 ///    wall clock time, process ID, host name, temporary directory names, etc.
 class DocCommentMarkdown {
-  /// Splits the text at each comma and trims each part. Empty parts are dropped - except the last one, which is kept.
+  /// Splits the text at each comma and trims each part. Empty parts are
+  /// dropped - except the last one, which is kept.
   /// - `limit` is the maximum number of parts, or zero for no limit.
   ///
   /// ```java
   ///   split("a, b,", 0); // ["a", "b", ""]
   /// ```
-  /// @param text the text to split, which may be empty or contain only commas and spaces
+  ///
+  /// @param text the text to split, which may be empty or contain only commas
+  /// and spaces
   String[] split(String text, int limit);
 
   /// User-defined function to validate a public key.
@@ -41,9 +44,10 @@ class DocCommentMarkdown {
   /// method along with the raw key.
   ///
   /// @param pname parameter name
-  /// @param fac the `KeyFactory` used to translate foreign keys and
-  ///         perform key validation
-  /// @return the key encapsulation message and the shared key (in this order), which is long
+  /// @param fac the `KeyFactory` used to translate foreign keys and perform key
+  /// validation
+  /// @return the key encapsulation message and the shared key (in this order),
+  /// which is long
   /// @throws ProviderException if there is an internal error
   Object implCheckPublicKey(String pname, byte[] pk);
 
@@ -74,13 +78,14 @@ class DocCommentMarkdown {
   ///
   /// ***
   ///
-  /// A last paragraph, after a thematic break, which is long enough to wrap onto the next line.
+  /// A last paragraph, after a thematic break, which is long enough to wrap
+  /// onto the next line.
   void blocks();
 
   /// VerifierImpl performs selected checks and verifications of the class file
-  /// format according to {@jvms 4.8 Format Checking}, {@jvms 4.9 Constraints on
-  /// Java Virtual Machine code}, {@jvms 4.10 Verification of class Files} and
-  /// {@jvms 6.5 Instructions}
+  /// format according to {@jvms 4.8 Format Checking},
+  /// {@jvms 4.9 Constraints on Java Virtual Machine code},
+  /// {@jvms 4.10 Verification of class Files} and {@jvms 6.5 Instructions}
   ///
   /// From `verifier.cpp`.
   final class VerifierImpl {}
