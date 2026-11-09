@@ -30,6 +30,11 @@ pub(crate) fn tokenize(text: &str) -> Option<Vec<Token<'_>>> {
         return None;
     }
     let lines = frame::javadoc(text)?;
+    // javadoc strips a line's leading run of `*`s, the first line's too, so
+    // text that starts with `*` reads differently when its frame changes.
+    if lines.iter().any(|line| line.text.starts_with('*')) {
+        return None;
+    }
     let mut tokenizer = Tokenizer {
         lines: &lines,
         tags: InlineTags::new(&lines),
@@ -195,9 +200,9 @@ impl<'a> Tokenizer<'_, 'a> {
             self.block_arg = Arg::Name;
             self.push(Kind::BlockTag, "", Sep::Line);
         } else if index > 0 {
-            if tags::is_ruler(text) {
+            if tags::is_ruler(rest) {
                 self.push(Kind::Break, "", Sep::Line);
-                self.word(text, Sep::Line, false);
+                self.word(rest, Sep::Line, false);
                 self.push(Kind::Break, "", Sep::Line);
                 return Some(false);
             }

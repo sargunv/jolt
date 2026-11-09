@@ -38,7 +38,9 @@ impl InlineTags {
                 match byte {
                     b'{' => {
                         let tag = bytes.get(index + 1) == Some(&b'@');
-                        let mut keeps = tag && literal_content_starts_with_space(&bytes[index..]);
+                        let mut keeps = tag
+                            && (literal_content_starts_with_space(&bytes[index..])
+                                || quoted_value_format(&bytes[index..]));
                         if tag && let Some(outer) = innermost {
                             // A tag inside a tag: both are kept as written.
                             open[outer].2 = true;
@@ -116,6 +118,18 @@ fn literal_content_starts_with_space(tag: &[u8]) -> bool {
     rest.is_empty() || rest.get(1).copied().is_some_and(is_space)
 }
 
+/// Whether the `{@value}` tag at the start of `tag` (one line's bytes from
+/// its `{@`) may have a quoted format (`{@value "% d" #N}`), which javadoc
+/// passes to `String.format`, where a line break in place of a space is a
+/// different format: one whose format starts on the line, or on a later one.
+fn quoted_value_format(tag: &[u8]) -> bool {
+    let Some(rest) = tag.strip_prefix(b"{@value") else {
+        return false;
+    };
+    let rest = rest.trim_ascii_start();
+    rest.is_empty() || rest.starts_with(b"\"")
+}
+
 /// The name of an inline tag whose text starts at `text` (`{@name`).
 pub(crate) fn inline_tag_name(text: &str) -> &str {
     let name = &text[2..];
@@ -130,7 +144,7 @@ pub(crate) fn inline_tag_name(text: &str) -> &str {
 pub(crate) fn is_block_tag(text: &str) -> bool {
     let text = text.trim_start_matches([' ', '\t']);
     text.strip_prefix('@')
-        .is_some_and(|rest| rest.starts_with(|ch: char| ch.is_ascii_alphabetic()))
+        .is_some_and(|rest| rest.starts_with(char::is_alphabetic))
 }
 
 /// Whether `word` starts a list item in plain text: `-`, `*`, `+`, `•`, or

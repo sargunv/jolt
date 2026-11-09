@@ -85,7 +85,7 @@ pub(crate) fn javadoc(text: &str) -> Option<String> {
         if at == 0 {
             form.boundary();
             let rest = text.trim_start_matches([' ', '\t']);
-            if rest.starts_with('@') && rest[1..].starts_with(|ch: char| ch.is_ascii_alphabetic()) {
+            if rest.starts_with('@') && rest[1..].starts_with(char::is_alphabetic) {
                 form.items.push("BlockTag".to_owned());
             }
         }
@@ -337,8 +337,7 @@ pub(crate) fn markdown(run: &[&str], clean: bool) -> Option<String> {
     for line in &lines {
         let line = line.get(shared..).unwrap_or("").trim_end();
         let trimmed = line.trim_start();
-        if trimmed.starts_with('@') && trimmed[1..].starts_with(|ch: char| ch.is_ascii_alphabetic())
-        {
+        if trimmed.starts_with('@') && trimmed[1..].starts_with(char::is_alphabetic) {
             parts.push(String::new());
         }
         let part = parts.last_mut().expect("a part");
@@ -360,8 +359,7 @@ pub(crate) fn markdown(run: &[&str], clean: bool) -> Option<String> {
 /// is a heading, and an indented line after `@return` alone is code.
 fn tag_part_events(part: &str) -> String {
     let trimmed = part.trim_start_matches([' ', '\t']);
-    if !(trimmed.starts_with('@') && trimmed[1..].starts_with(|ch: char| ch.is_ascii_alphabetic()))
-    {
+    if !(trimmed.starts_with('@') && trimmed[1..].starts_with(char::is_alphabetic)) {
         return markdown_events(part);
     }
     let word_end = |text: &str| text.find(char::is_whitespace).unwrap_or(text.len());

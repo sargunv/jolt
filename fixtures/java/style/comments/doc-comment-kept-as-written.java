@@ -64,4 +64,23 @@ class DocCommentKeptAsWritten {
 
   /** <pre><span title="</pre>">first  second</span></pre> */
   void preCloserInAnAttribute() {}
+
+  /**
+   * Summary.
+   * @étiquette value of a custom tag, with enough words to wrap the line past the width
+   */
+  void nonAsciiTagName() {}
+
+  /** The value is {@value "% d" #NUMBER}, with enough words to wrap the line past the width of it. */
+  void quotedValueFormat() {}
+
+  /**
+   * * first item, with enough words to wrap the line past the width of the comment here
+   */
+  void leadingStar() {}
+
+  /** * @return value */
+  int leadingStarOnOneLine() {
+    return 0;
+  }
 }
