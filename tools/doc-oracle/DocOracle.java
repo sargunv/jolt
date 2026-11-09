@@ -14,9 +14,12 @@
 //
 // - text has its HTML whitespace collapsed, and dropped next to a block-level
 //   element and at the ends of a section;
-// - text inside <pre> (and <script>, <style>, <textarea>), the bodies of
-//   {@code}, {@literal}, {@snippet} and unknown inline tags, attribute values,
-//   {@value} formats, references and HTML comments are written exactly;
+// - text inside <pre> and HTML's raw text elements (<script>, <style>,
+//   <textarea>, <title>), the bodies of {@code}, {@literal}, {@snippet} and
+//   unknown inline tags, attribute values, {@value} formats, references and
+//   HTML comments are written exactly, except the spaces and tabs at the ends
+//   of the lines of text in <pre> (and of Markdown code), which a browser
+//   doesn't show;
 // - an erroneous node is written with its diagnostic code, so a formatted
 //   comment can't add or lose a javadoc error;
 // - Markdown (a list of trees with Markdown text) is rendered to HTML as the
@@ -56,7 +59,9 @@ public class DocOracle {
             "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6",
             "header", "hgroup", "hr", "li", "main", "menu", "nav", "ol", "p", "pre", "section",
             "summary", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "ul");
-    private static final Set<String> EXACT = Set.of("pre", "script", "style", "textarea");
+    private static final Set<String> EXACT = Set.of("pre", "script", "style", "textarea", "title");
+    /** The exact elements whose content keeps the whitespace at its line ends. */
+    private static final Set<String> RAW = Set.of("script", "style", "textarea", "title");
 
     private static final JavaCompiler COMPILER = ToolProvider.getSystemJavaCompiler();
     private static final int TIMEOUT_SECONDS = 10;
@@ -353,7 +358,7 @@ public class DocOracle {
                     }
                     element(name, closing, tag, pieces);
                     if (name.equals("code") && !closing) {
-                        pieces.add(new Piece(Piece.Kind.EXACT_ON, ""));
+                        pieces.add(new Piece(Piece.Kind.EXACT_ON, name));
                     } else if (name.equals("code")) {
                         pieces.add(pieces.size() - 1, new Piece(Piece.Kind.EXACT_OFF, ""));
                     }
@@ -390,7 +395,7 @@ public class DocOracle {
             }
             pieces.add(new Piece(Piece.Kind.ATOM, text));
             if (EXACT.contains(name) && !closing) {
-                pieces.add(new Piece(Piece.Kind.EXACT_ON, ""));
+                pieces.add(new Piece(Piece.Kind.EXACT_ON, name));
             }
             if (block) {
                 pieces.add(new Piece(Piece.Kind.BLOCK, ""));
@@ -421,7 +426,7 @@ public class DocOracle {
                 case CommentTree t -> pieces.add(atom("comment:" + escape(t.getBody())));
                 case DocTypeTree t -> pieces.add(atom("doctype:" + escape(t.getText())));
                 case LiteralTree t -> pieces.add(atom("{@" + t.getKind().tagName + " "
-                        + escape(trimLines(t.getBody().getBody())) + "}"));
+                        + escape(t.getBody().getBody()) + "}"));
                 case LinkTree t -> {
                     pieces.add(atom("{@" + t.getTagName() + " " + reference(t.getReference())));
                     list(t.getLabel(), pieces);
@@ -436,7 +441,7 @@ public class DocOracle {
                         attributes.append(' ').append(attribute((AttributeTree) attribute));
                     }
                     pieces.add(atom("{@snippet" + attributes
-                            + (t.getBody() == null ? "" : ":" + escape(trimLines(t.getBody().getBody()))) + "}"));
+                            + (t.getBody() == null ? "" : ":" + escape(t.getBody().getBody())) + "}"));
                 }
                 case DocRootTree t -> pieces.add(atom("{@docRoot}"));
                 case InheritDocTree t -> pieces.add(atom("{@inheritDoc "
@@ -462,7 +467,7 @@ public class DocOracle {
                     for (var part : t.getContent()) {
                         content.append(part instanceof TextTree text ? text.getBody() : part.toString());
                     }
-                    pieces.add(atom("{@" + t.getTagName() + " " + escape(trimLines(content.toString())) + "}"));
+                    pieces.add(atom("{@" + t.getTagName() + " " + escape(content.toString()) + "}"));
                 }
                 case ReferenceTree t -> pieces.add(atom(reference(t)));
                 case RawTextTree t -> pieces.add(new Piece(Piece.Kind.TEXT, t.getContent()));
@@ -511,7 +516,8 @@ public class DocOracle {
      */
     static String normalize(List<Piece> pieces) {
         var out = new ArrayList<String>();
-        // Whether a space is pending, and whether it may be dropped.
+        // The open exact elements, innermost last.
+        var exactNames = new ArrayDeque<String>();
         int exact = 0;
         var text = new StringBuilder();
         boolean pendingSpace = false;
@@ -519,18 +525,26 @@ public class DocOracle {
         for (var piece : pieces) {
             switch (piece.kind()) {
                 case EXACT_ON -> {
-                    flushText(out, text, pendingSpace && !atBoundary);
+                    if (exact > 0) {
+                        if (!text.isEmpty()) {
+                            out.add(exact(text.toString(), exactNames.peekLast()));
+                        }
+                    } else {
+                        flushText(out, text, pendingSpace && !atBoundary);
+                    }
                     text.setLength(0);
                     pendingSpace = false;
                     exact++;
+                    exactNames.addLast(piece.text());
                 }
                 case EXACT_OFF -> {
                     if (exact > 0) {
                         if (!text.isEmpty()) {
-                            out.add(exact(text.toString()));
+                            out.add(exact(text.toString(), exactNames.peekLast()));
                         }
                         text.setLength(0);
                         exact--;
+                        exactNames.removeLast();
                     }
                 }
                 case TEXT -> {
@@ -560,7 +574,7 @@ public class DocOracle {
                 case ATOM -> {
                     if (exact > 0) {
                         if (!text.isEmpty()) {
-                            out.add(exact(text.toString()));
+                            out.add(exact(text.toString(), exactNames.peekLast()));
                         }
                         text.setLength(0);
                         out.add("@" + piece.text());
@@ -585,7 +599,7 @@ public class DocOracle {
         }
         if (exact > 0) {
             if (!text.isEmpty()) {
-                out.add(exact(text.toString()));
+                out.add(exact(text.toString(), exactNames.peekLast()));
             }
         } else {
             flushText(out, text, false);
@@ -601,11 +615,13 @@ public class DocOracle {
     }
 
     /**
-     * Exact text without the spaces and tabs at the end of each line, which a
-     * browser doesn't show even in {@code <pre>}, and which formatters trim.
+     * Exact text in the element `name`: in a raw text element as written, and
+     * elsewhere (<pre>, Markdown code) without the spaces and tabs at the end
+     * of each line, which a browser doesn't show even in {@code <pre>}, and
+     * which formatters trim.
      */
-    static String exact(String text) {
-        return "=" + escape(trimLines(text));
+    static String exact(String text, String name) {
+        return "=" + escape(RAW.contains(name) ? text : trimLines(text));
     }
 
     static String trimLines(String text) {

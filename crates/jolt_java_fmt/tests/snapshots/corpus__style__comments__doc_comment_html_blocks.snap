@@ -166,6 +166,26 @@ class DocCommentHtmlBlocks {
    * href="x">link</a>", where only the tag's quotes hold an attribute value.
    */
   void quoteBeforeATag() {}
+
+  /**
+   * An attribute value keeps the spaces at the end of its line:
+   * <a title="alpha  
+   * beta">link</a>, and so does a code tag: {@code alpha  
+   * beta}, with enough words to wrap the line past the width.
+   */
+  void spacesAtTheEndOfAnAtomsLine() {}
+
+  /**
+   * HTML reads the content of its raw text elements with its whitespace:
+   * <script>const label = "first  second";</script>,
+   * <style>p {  color: red;  }</style>, <textarea>first  second</textarea> and
+   * <title>first  second</title> stay as written, with enough words to wrap the
+   * line past the width.
+   * <script>
+   *   run(  "first" );   
+   * </script>
+   */
+  void rawTextElements() {}
 }
 
 diagnostics:

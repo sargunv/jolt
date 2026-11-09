@@ -6,10 +6,14 @@
 //! Every node whose whitespace javadoc keeps is an atom printed as written:
 //! inline tags without rich text (`{@code}`, `{@literal}`, `{@value}`,
 //! `{@snippet}`, unknown tags), references, HTML tags with their attribute
-//! values, comments and erroneous nodes. An atom that spans lines keeps its
-//! line breaks. `<pre>` and `<table>` elements are verbatim regions, and so
-//! is a paragraph of plain text whose lines are indented differently (ASCII
-//! art, a grammar, aligned text).
+//! values, comments, erroneous nodes, and the raw text elements of HTML
+//! (`<script>`, `<style>`, `<textarea>`, `<title>`), whose content HTML reads
+//! with its whitespace. An atom that spans lines keeps its line breaks, and
+//! the whitespace at the ends of its lines. `<pre>` and `<table>` elements
+//! are verbatim regions, and so is a paragraph of plain text whose lines are
+//! indented differently (ASCII art, a grammar, aligned text); their lines
+//! lose their trailing whitespace outside atoms, which a browser doesn't
+//! show even in `<pre>`.
 
 use crate::frame::Line;
 use crate::layout::{Join, Layout};
@@ -35,6 +39,11 @@ enum Name {
     Pre,
     /// `<table>`, which starts a verbatim region.
     Table,
+    /// A raw text element of HTML (`<script>`, `<style>`) or an escapable
+    /// raw text element (`<textarea>`, `<title>`): HTML reads its content
+    /// as text with its whitespace, so the element, to its end tag, is an
+    /// atom.
+    Raw,
 }
 
 impl Name {
@@ -52,6 +61,8 @@ impl Name {
             Self::Pre
         } else if is("table") {
             Self::Table
+        } else if is("script") || is("style") || is("textarea") || is("title") {
+            Self::Raw
         } else if name.len() == 2
             && name.as_bytes()[0].eq_ignore_ascii_case(&b'h')
             && matches!(name.as_bytes()[1], b'1'..=b'6')
@@ -167,6 +178,7 @@ pub(crate) fn lay_out<'a>(
         break_next: false,
         after_error: false,
         glue_next: false,
+        kept: Vec::new(),
     };
     let mut pieces = Vec::new();
     flatten(&comment.body, lines, &mut pieces);
@@ -180,6 +192,9 @@ pub(crate) fn lay_out<'a>(
             span: tail,
             glue: false,
         });
+    }
+    for &span in &tokens.kept {
+        layout.keep_ends(span);
     }
     let mut tokens = tokens.list;
     verbatim_paragraphs(&mut tokens, lines, opener_text);
@@ -292,14 +307,17 @@ pub(crate) fn head_parts(lines: &[Line<'_>], head: Span) -> Vec<Span> {
 }
 
 /// Replaces each `<pre>` element (to its `</pre>`, or the section's end) and
-/// each `<table>` element (to the `</table>` that closes it) with a region.
-fn regions(pieces: &mut Vec<Piece>) {
+/// each `<table>` element (to the `</table>` that closes it) with a region,
+/// and each raw text element (to its end tag, or the section's end) with an
+/// atom. Adds to `kept` the pieces in a region whose whitespace javadoc
+/// reads.
+fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
     let mut out = Vec::with_capacity(pieces.len());
     let mut index = 0;
     while index < pieces.len() {
         let piece = pieces[index];
         let PieceKind::Element {
-            name: Some(name @ (Name::Pre | Name::Table)),
+            name: Some(name @ (Name::Pre | Name::Table | Name::Raw)),
             closing: false,
         } = piece.kind
         else {
@@ -318,7 +336,7 @@ fn regions(pieces: &mut Vec<Piece>) {
             {
                 if closing {
                     depth = depth.saturating_sub(1);
-                    if depth == 0 || name == Name::Pre {
+                    if depth == 0 || name != Name::Table {
                         end = at;
                         break;
                     }
@@ -327,8 +345,20 @@ fn regions(pieces: &mut Vec<Piece>) {
                 }
             }
         }
+        if name != Name::Raw {
+            kept.extend(
+                pieces[index..=end]
+                    .iter()
+                    .filter(|inner| inner.kind != PieceKind::Text)
+                    .map(|inner| inner.span),
+            );
+        }
         out.push(Piece {
-            kind: PieceKind::Region,
+            kind: if name == Name::Raw {
+                PieceKind::Atom
+            } else {
+                PieceKind::Region
+            },
             span: Span {
                 start: piece.span.start,
                 end: pieces[end].span.end,
@@ -352,12 +382,14 @@ struct Tokens<'l, 'a> {
     after_error: bool,
     /// The next token is the first of a block tag's text.
     glue_next: bool,
+    /// The atoms that span lines, whose line ends keep their whitespace.
+    kept: Vec<Span>,
 }
 
 impl Tokens<'_, '_> {
     fn section(&mut self, pieces: &[Piece]) {
         let mut pieces = pieces.to_vec();
-        regions(&mut pieces);
+        regions(&mut pieces, &mut self.kept);
         for piece in pieces {
             self.piece(piece);
         }
@@ -404,7 +436,7 @@ impl Tokens<'_, '_> {
             PieceKind::Element {
                 name: Some(name),
                 closing,
-            } if !matches!(name, Name::Pre | Name::Table) || closing => {
+            } if name != Name::Raw && (!matches!(name, Name::Pre | Name::Table) || closing) => {
                 let name = if matches!(name, Name::Pre | Name::Table) {
                     Name::Block
                 } else {
@@ -605,6 +637,12 @@ impl Tokens<'_, '_> {
                 sticky: true,
                 plain: false,
             });
+        }
+        if matches!(kind, Kind::Word | Kind::Element { .. })
+            && !plain
+            && span.end.line > span.start.line
+        {
+            self.kept.push(span);
         }
         self.list.push(Token {
             kind,
@@ -999,6 +1037,8 @@ impl Html<'_, '_, '_, '_> {
                     self.emit(token, true);
                 }
             }
+            // A raw text element is an atom, and a stray end tag a word.
+            (Name::Raw, _) => self.emit(token, false),
             (Name::Br, _) => {
                 self.emit(token, true);
                 self.request(Why::Break);

@@ -169,6 +169,15 @@ class DocCommentMarkdownHardCases {
   int blankLineInADescription() {
     return 0;
   }
+
+  /// - A list item with a code tag whose line ends with a space: {@code alpha 
+  ///   beta}, which stays.
+  void spaceAtTheEndOfACodeTagLine() {}
+
+  /// <textarea>
+  /// a text area keeps the space at the end of its lines 
+  /// </textarea>
+  void textArea() {}
 }
 
 diagnostics:

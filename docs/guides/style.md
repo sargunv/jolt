@@ -923,6 +923,8 @@ Everything else in the comment keeps its exact text, line breaks included, and
 affects only itself:
 
 - `<pre>` and `<table>` elements, from their start tag to their end tag;
+- `<script>`, `<style>`, `<textarea>` and `<title>` elements, whose content HTML
+  reads with its whitespace, from their start tag to their end tag;
 - inline tags whose text javadoc keeps as it is: `{@code …}`, `{@literal …}`,
   `{@snippet …}`, `{@value …}`, `{@index …}`'s term, and tags javadoc doesn't
   know;
@@ -939,7 +941,9 @@ inside a reference doesn't change what it refers to (unless a later line starts
 with `@`, which ends the reference for javadoc). Any other such part that spans
 lines keeps its lines: each later line is printed after `*` with the indentation
 that javadoc reads on it (javadoc removes the `*` and the indentation that all
-lines of the comment share). A tab after the `*` stays a tab.
+lines of the comment share). A tab after the `*` stays a tab. The spaces at the
+end of such a line stay too, since javadoc reads them, except on the lines of
+text in `<pre>` and tables, where a browser doesn't show them.
 
 Jolt keeps these comments as written, realigning only their `*`s as for any
 other comment (see [Comments](#comments)): a comment that shares its line with
@@ -1123,7 +1127,8 @@ blocks, block quotes, tables, HTML blocks, link reference definitions and
 thematic breaks. So do lines that two blocks share, and a run with a block tag
 that doesn't start its line. Lines printed as written lose their trailing
 whitespace, except two or more spaces after text before a line with text, which
-may be a hard break.
+may be a hard break, and the spaces at the end of a line inside an inline tag or
+a `<script>`, `<style>`, `<textarea>` or `<title>` element, which javadoc reads.
 
 A Markdown doc comment gets this style:
 

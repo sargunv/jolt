@@ -74,6 +74,9 @@ pub(crate) struct Layout<'d, 'l, 'a> {
     wraps: Vec<(u16, Doc)>,
     /// The last text and its index in `parts`.
     last: Option<(usize, &'a str)>,
+    /// The lines whose trailing whitespace stays, by index (empty when
+    /// none): their ends lie inside a node whose whitespace javadoc reads.
+    kept_ends: Vec<bool>,
 }
 
 impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
@@ -94,7 +97,28 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
             hang: 0,
             wraps: Vec::new(),
             last: None,
+            kept_ends: Vec::new(),
         }
+    }
+
+    /// Keeps the trailing whitespace of each line of `span` but its last:
+    /// the line ends inside a node whose whitespace javadoc reads (an inline
+    /// tag's body, an attribute value, an HTML comment, a raw text element).
+    pub(crate) fn keep_ends(&mut self, span: Span) {
+        if span.end.line == span.start.line {
+            return;
+        }
+        if self.kept_ends.is_empty() {
+            self.kept_ends = vec![false; self.lines.len()];
+        }
+        for line in span.start.line..span.end.line {
+            self.kept_ends[line as usize] = true;
+        }
+    }
+
+    /// Whether line `line` keeps its trailing whitespace.
+    fn kept_end(&self, line: u32) -> bool {
+        self.kept_ends.get(line as usize).copied().unwrap_or(false)
     }
 
     const fn markdown(&self) -> bool {
@@ -141,7 +165,7 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
     pub(crate) fn word(&mut self, span: Span, join: Join, sticky: bool) {
         let first_end = (span.end.line == span.start.line).then_some(span.end.off);
         let mut first = self.segment(span.start.line, span.start.off, first_end);
-        if first_end.is_none() && !self.markdown() {
+        if first_end.is_none() && !self.markdown() && !self.kept_end(span.start.line) {
             first = first.trim_end();
         }
         self.push_word(first, join, sticky);
@@ -204,7 +228,11 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
             Flavour::Javadoc => {
                 let hard = self.docs.hard_line();
                 self.parts.push(hard);
-                let text = text.trim_end();
+                let text = if to.is_none() && self.kept_end(pos.line) {
+                    text
+                } else {
+                    text.trim_end()
+                };
                 if text.is_empty() {
                     self.push_text(&FRAME[..2]);
                     return;
@@ -257,7 +285,8 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
 
     /// Prints one whole line as written. A Markdown line keeps two or more
     /// trailing spaces after text before a line with text (a hard break, in
-    /// a paragraph of a list or a quote).
+    /// a paragraph of a list or a quote), and a line that [keeps its
+    /// end](Self::keep_ends) all of them.
     fn verbatim_line(&mut self, line: u32) {
         if self.markdown() {
             let started = std::mem::replace(&mut self.started, true);
@@ -273,7 +302,8 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
                     .lines
                     .get(line as usize + 1)
                     .is_some_and(|next| !next.is_blank());
-            self.push_text(if hard_break { source.raw } else { trimmed });
+            let kept = hard_break || self.kept_end(line);
+            self.push_text(if kept { source.raw } else { trimmed });
         } else {
             self.continuation(Pos { line, off: 0 }, None);
         }

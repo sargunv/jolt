@@ -1309,7 +1309,11 @@ with recovery.
 flattened, an inline tag's rich text in line between its head and its `}`. Then:
 
 - A `<pre>` element up to its `</pre>` (or the part's end) and a `<table>`
-  element up to the `</table>` that closes it become one verbatim region.
+  element up to the `</table>` that closes it become one verbatim region. A raw
+  text element of HTML (`<script>`, `<style>`) or an escapable raw text element
+  (`<textarea>`, `<title>`), whose content HTML reads with its whitespace, up to
+  its end tag (or the part's end), becomes one atom, which stays in line as
+  written.
 - Text is split into words at HTML whitespace (space, tab, form feed and line
   breaks); other whitespace, such as U+00A0 or U+2003, is part of a word. Every
   other node is one atom. The gap between two tokens is whitespace by
@@ -1348,9 +1352,13 @@ removed a tab of indentation from that line. Every line Jolt writes starts with
 `*` and one whitespace character, and the comment's first line has no other
 indentation, so javadoc removes exactly that character as the shared
 indentation, and reads each line as written exactly as in the source. Trailing
-whitespace is dropped, as N9 drops it. The one-line form is not used when the
-first word starts with `*` or whitespace, which javadoc would strip on the
-opener's line.
+whitespace is dropped, as N9 drops it, except where the line ends inside an atom
+(an inline tag's body or head, an attribute value, a comment, an erroneous node,
+a raw text element, also inside a region): javadoc reads it there, so the layout
+prints those lines' ends exactly (`Layout::keep_ends`). The text lines of a
+region lose it, which a browser doesn't show even in `<pre>`. The one-line form
+is not used when the first word starts with `*` or whitespace, which javadoc
+would strip on the opener's line.
 
 **Markdown layout.** javadoc reads the description and each block tag's text as
 a Markdown document of its own, in which each inline tag is U+FFFC (as
@@ -1363,16 +1371,20 @@ HTML, a `<pre>` element to its `</pre>`, inline tags) whole and its hard breaks
 kept; every other block, every line no block covers (a blank line, a link
 reference definition), and lines that two blocks share are printed as written
 from their `///`, with trailing whitespace dropped except two or more spaces
-after text before a line with text. A block tag's head is joined with single
-spaces, and its text starts on the tag's line, flush with the frame on later
-lines. Besides the words that start Markdown blocks, two of javadoc's own rules
-shape the filling: in the description's first block, up to its first word that
-ends in `.`, a word that starts with one of `-+*#=_>` at a line start would end
-javadoc's first sentence there (`DocTreeMaker`'s `endPara`), so such a word
-keeps the line break the source gives it and is never put at a line start; and a
-word that ends in `\` never ends a wrapped line. A run with a block tag that
-doesn't start its line (javac reads `- @param` as a list marker and a tag) is
-printed as written.
+after text before a line with text, and except at the end of a line inside an
+inline tag, an escape, an erroneous node, a rich tag's head or a raw text
+element. An inline tag's label (or description) is filled only when it is plain
+words: one with Markdown that a line break could change (a code span, a link,
+HTML, an escape, a line that ends in two spaces or a blank line) makes the tag
+one atom. A block tag's head is joined with single spaces, and its text starts
+on the tag's line, flush with the frame on later lines. Besides the words that
+start Markdown blocks, two of javadoc's own rules shape the filling: in the
+description's first block, up to its first word that ends in `.`, a word that
+starts with one of `-+*#=_>` at a line start would end javadoc's first sentence
+there (`DocTreeMaker`'s `endPara`), so such a word keeps the line break the
+source gives it and is never put at a line start; and a word that ends in `\`
+never ends a wrapped line. A run with a block tag that doesn't start its line
+(javac reads `- @param` as a list marker and a tag) is printed as written.
 
 **Rules about the output.** Both layouts share these, and they make the layout
 idempotent: every line break that depends on the source is one the output
@@ -1475,11 +1487,14 @@ sentence, the full body and each block tag:
 
 - text with its HTML whitespace collapsed, and dropped next to a block-level
   element and at the ends of a section;
-- exactly: text inside `<pre>`, `<script>`, `<style>` and `<textarea>`, the
-  bodies of `{@code}`, `{@literal}`, `{@snippet}` and unknown inline tags,
-  attribute values and their quotes, `{@value}` formats, HTML comments, entities
-  and escapes (references with their whitespace collapsed), all without the
-  spaces at the end of a line, which no browser shows (and which N9 drops);
+- exactly: text inside `<pre>`, `<script>`, `<style>`, `<textarea>` and
+  `<title>`, the bodies of `{@code}`, `{@literal}`, `{@snippet}` and unknown
+  inline tags, attribute values and their quotes, `{@value}` formats, HTML
+  comments, entities and escapes (references with their whitespace collapsed).
+  Only the text in `<pre>` and in Markdown code is compared without the spaces
+  at the end of a line, which a browser doesn't show there (and which N9 drops);
+  a tag's body is read by its taglet or copied by the snippet's copy button, and
+  a raw text element's content is a script, a style or a form's value;
 - erroneous nodes with their diagnostic code and collapsed text, so a formatted
   comment can't add or lose a javadoc error;
 - for a list of trees with Markdown, the HTML that the doclet renders

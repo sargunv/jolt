@@ -30,25 +30,67 @@ use crate::layout::{Join, Layout};
 use crate::parser::{BlockTag, Comment, Inline, Node, Pos, Span, to_u32};
 use crate::words;
 
-/// Whether an element that keeps whitespace (`<pre>`, `<script>`, `<style>`,
-/// `<textarea>`) is open after the HTML `html`, when `open` before it.
-fn keeps_whitespace_after(html: &str, mut open: bool) -> bool {
+/// An element whose content HTML doesn't collapse.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Keeps {
+    /// `<pre>`.
+    Pre,
+    /// A raw text element of HTML (`<script>`, `<style>`) or an escapable
+    /// raw text element (`<textarea>`, `<title>`), whose line ends keep
+    /// their whitespace too.
+    Raw,
+}
+
+/// The element that keeps whitespace open after the HTML `html`, when
+/// `open` before it.
+fn open_after(html: &str, mut open: Option<Keeps>) -> Option<Keeps> {
     let lower = html.to_ascii_lowercase();
     let mut rest = lower.as_str();
     while let Some(at) = rest.find('<') {
         rest = &rest[at + 1..];
         let closing = rest.starts_with('/');
         let name = rest.trim_start_matches('/');
-        let named = ["pre", "script", "style", "textarea"].iter().any(|tag| {
+        let named = |tag: &str| {
             name.strip_prefix(tag).is_some_and(|after| {
                 !after.starts_with(|ch: char| ch.is_ascii_alphanumeric() || ch == '-')
             })
-        });
-        if named {
-            open = !closing;
-        }
+        };
+        let keeps = if named("pre") {
+            Keeps::Pre
+        } else if ["script", "style", "textarea", "title"]
+            .into_iter()
+            .any(named)
+        {
+            Keeps::Raw
+        } else {
+            continue;
+        };
+        open = (!closing).then_some(keeps);
     }
     open
+}
+
+/// Keeps the line ends inside the nodes whose whitespace javadoc reads:
+/// inline tags without rich text, escapes, erroneous nodes, and a rich
+/// tag's head.
+fn keep_ends(nodes: &[Node], layout: &mut Layout<'_, '_, '_>) {
+    for node in nodes {
+        match node {
+            Node::Text(_) => {}
+            Node::Atom(span) | Node::Erroneous(span) | Node::Element { span, .. } => {
+                layout.keep_ends(*span);
+            }
+            Node::Inline(inline) => match &inline.rich {
+                None => layout.keep_ends(inline.span),
+                Some(rich) => {
+                    if let Some(head) = rich.head {
+                        layout.keep_ends(head);
+                    }
+                    keep_ends(&rich.content, layout);
+                }
+            },
+        }
+    }
 }
 
 /// The Object Replacement Character, for an inline tag.
@@ -70,6 +112,16 @@ pub(crate) fn lay_out<'l, 'a>(
         {
             return None;
         }
+    }
+    keep_ends(&comment.body, layout);
+    for tag in &comment.tags {
+        match &tag.body {
+            Some(body) => keep_ends(body, layout),
+            None => layout.keep_ends(tag.span),
+        }
+    }
+    if let Some(tail) = comment.tail {
+        layout.keep_ends(tail);
     }
     let mut markdown = Markdown {
         lines,
@@ -275,7 +327,11 @@ impl Markdown<'_, '_, '_, '_> {
         let Some(text) = self.text(nodes) else {
             return;
         };
-        let blocks = Self::blocks(&text);
+        let mut kept = Vec::new();
+        let blocks = Self::blocks(&text, &mut kept);
+        for span in kept {
+            self.layout.keep_ends(span);
+        }
         // Text on the tag's line that no block holds (a link reference
         // definition) follows the head as written.
         let start = text.pos(0);
@@ -416,15 +472,16 @@ impl Markdown<'_, '_, '_, '_> {
 
     /// The top-level blocks of a part's text. A paragraph inside an element
     /// that keeps whitespace (`<pre>`, opened by an HTML block before it) is
-    /// no paragraph to fill.
-    fn blocks(text: &Text) -> Vec<Block> {
+    /// no paragraph to fill. Adds to `kept` each raw text element.
+    fn blocks(text: &Text, kept: &mut Vec<Span>) -> Vec<Block> {
         let mut blocks: Vec<Block> = Vec::new();
         let mut depth = 0usize;
         let mut paragraph: Option<Paragraph> = None;
-        // Whether an element that keeps whitespace is open, and where it
-        // opened in the paragraph being read.
-        let mut exact = false;
+        // The element that keeps whitespace that is open, where it opened in
+        // the paragraph being read, and where a raw text element opened.
+        let mut open: Option<Keeps> = None;
         let mut exact_start: Option<usize> = None;
+        let mut raw_start: Option<usize> = None;
         // javadoc reads `[text][ref]` and `[ref]` as links to program
         // elements even without a definition: keep them whole.
         let links = |_: BrokenLink<'_>| Some((CowStr::from(""), CowStr::from("")));
@@ -435,7 +492,7 @@ impl Markdown<'_, '_, '_, '_> {
             match event {
                 Event::Start(tag) => {
                     if depth == 0 {
-                        if matches!(tag, Tag::Paragraph) && !exact {
+                        if matches!(tag, Tag::Paragraph) && open.is_none() {
                             paragraph = Some(Paragraph {
                                 range: range.clone(),
                                 atoms: Vec::new(),
@@ -474,8 +531,21 @@ impl Markdown<'_, '_, '_, '_> {
                     }
                 }
                 Event::Html(html) | Event::InlineHtml(html) => {
-                    let before = exact;
-                    exact = keeps_whitespace_after(&html, exact);
+                    let before = open.is_some();
+                    let was_raw = open == Some(Keeps::Raw);
+                    open = open_after(&html, open);
+                    let exact = open.is_some();
+                    if !was_raw && open == Some(Keeps::Raw) {
+                        raw_start = Some(range.start);
+                    } else if was_raw
+                        && open != Some(Keeps::Raw)
+                        && let Some(start) = raw_start.take()
+                    {
+                        kept.push(Span {
+                            start: text.pos(start),
+                            end: text.end(range.end),
+                        });
+                    }
                     if depth == 0 {
                         blocks.push(Self::block(text, &range));
                     } else if let Some(paragraph) = &mut paragraph {
@@ -500,6 +570,12 @@ impl Markdown<'_, '_, '_, '_> {
                 Event::Rule if depth == 0 => blocks.push(Self::block(text, &range)),
                 _ => {}
             }
+        }
+        if let Some(start) = raw_start {
+            kept.push(Span {
+                start: text.pos(start),
+                end: text.end(text.text.len()),
+            });
         }
         blocks
     }
