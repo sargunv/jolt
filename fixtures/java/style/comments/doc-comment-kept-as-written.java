@@ -111,4 +111,10 @@ class DocCommentKeptAsWritten {
   int inheritDocClosedOnTheNextLine() {
     return 0;
   }
+
+  /**
+   * 
+   * <p>Text after a line of a form feed, which javadoc reads as text before the paragraph tag.
+   */
+  void formFeedLineBeforeAParagraph() {}
 }

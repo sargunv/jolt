@@ -145,6 +145,15 @@ pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
     };
     (parser.cur.ch, parser.cur.width) = parser.decode(parser.cur.pos);
     let (body, _) = parser.content(Phase::Body);
+    if !markdown
+        && let Some(&Node::Text(span)) = body.first()
+        && parser.is_blank(span)
+    {
+        // Text of only whitespace (a form feed, which javac doesn't skip at
+        // the start) makes a `<p>` after it a sentence break, which it isn't
+        // as the first tree; the layout drops that text.
+        parser.give_up();
+    }
     let mut tags = Vec::new();
     while !parser.at_end() && parser.cur.ch == '@' {
         tags.push(parser.block_tag());
@@ -404,7 +413,8 @@ impl Parser<'_, '_> {
     }
 
     /// Fails the reading where it can't follow javac's: the comment is
-    /// printed as written. That is an escape (`@@`, `@*`) that doesn't
+    /// printed as written. That is a description that starts with text of
+    /// only whitespace (see [`parse`]); an escape (`@@`, `@*`) that doesn't
     /// start its line, which javac reads as one only after a line break
     /// before a tag's argument that the layout joins; an inline tag nested
     /// too deeply; a `{@value}` reference that no `}` follows on its line;
@@ -437,6 +447,22 @@ impl Parser<'_, '_> {
         trees.push(Node::Atom(self.span(at)));
         self.text_start = Some(self.cur.pos);
         true
+    }
+
+    /// Whether `span` holds only whitespace.
+    fn is_blank(&self, span: Span) -> bool {
+        (span.start.line..=span.end.line).all(|line| {
+            let from = if line == span.start.line {
+                span.start.off
+            } else {
+                0
+            };
+            let to = (line == span.end.line).then_some(span.end.off);
+            let text = self.lines[line as usize].text;
+            text[from as usize..to.map_or(text.len(), |to| to as usize)]
+                .chars()
+                .all(is_ws)
+        })
     }
 
     /// Whether only spaces and tabs come before `pos` on its line.

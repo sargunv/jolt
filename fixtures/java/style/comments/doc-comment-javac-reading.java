@@ -157,4 +157,8 @@ class DocCommentJavacReading {
 
   /** {@link X> */
   void referenceWithAnUnmatchedCloser() {}
+
+  /** {@snippet :
+   */
+  void unfinishedSnippetAtTheEnd() {}
 }

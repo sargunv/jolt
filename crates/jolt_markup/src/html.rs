@@ -259,6 +259,15 @@ pub(crate) fn lay_out<'a>(
     for &span in &tokens.kept {
         layout.keep_ends(span);
     }
+    // An erroneous node that ends the comment keeps the line break after it
+    // (an unfinished `{@snippet :`), which the one-line form would drop.
+    if tokens.after_error
+        && tokens
+            .last_end
+            .is_some_and(|end| end.line as usize + 1 < lines.len())
+    {
+        layout.multiline();
+    }
     let mut tokens = tokens.list;
     verbatim_paragraphs(&mut tokens, lines, opener_text);
     if tokens.first().is_some_and(|first| {

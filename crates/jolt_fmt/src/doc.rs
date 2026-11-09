@@ -611,7 +611,14 @@ pub(crate) fn comment_lines<'t>(
                     }
                 };
                 continuation = true;
-                if line.trim_start_matches(ws).is_empty() {
+                // javac skips spaces and tabs, but reads a form feed: a line
+                // of one is text.
+                let blank = if doc {
+                    line.trim_start_matches([' ', '\t']).is_empty()
+                } else {
+                    line.trim_start_matches(ws).is_empty()
+                };
+                if blank {
                     if has_content {
                         blank_lines.push(line);
                     }
