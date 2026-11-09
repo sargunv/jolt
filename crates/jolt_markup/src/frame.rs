@@ -95,7 +95,8 @@ pub(crate) fn javadoc(text: &str) -> Option<(Vec<Line<'_>>, bool)> {
         if trimmed.len() >= 2 && trimmed.bytes().all(|byte| byte == b'*') {
             return None;
         }
-        lines.push(content(source));
+        // Only the last line holds the closer.
+        lines.push(content(source, end == bytes.len()));
         pos = end;
         if bytes.get(pos) == Some(&b'\r') {
             pos += 1;
@@ -111,8 +112,12 @@ pub(crate) fn javadoc(text: &str) -> Option<(Vec<Line<'_>>, bool)> {
 /// `trimJavadocComment`: a line without the comment's closer and without its
 /// frame (leading whitespace and its run of `*`s). A line without `*` keeps
 /// its leading whitespace.
-fn content(line: &str) -> Line<'_> {
-    let line = trim_end_of_comment(line);
+fn content(line: &str, last: bool) -> Line<'_> {
+    let line = if last {
+        trim_end_of_comment(line)
+    } else {
+        line
+    };
     let bytes = line.as_bytes();
     let mut at = 0;
     while at < bytes.len() && is_frame_space(bytes[at]) {

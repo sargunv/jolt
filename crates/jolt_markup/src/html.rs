@@ -467,6 +467,10 @@ impl Tokens<'_, '_> {
             }
             let mut at = 0;
             let bytes = segment.as_bytes();
+            // Whether the next word is the first on its source line.
+            let mut first_on_line = text[..from]
+                .bytes()
+                .all(|byte| matches!(byte, b' ' | b'\t' | 0x0c));
             while at < bytes.len() {
                 while at < bytes.len() && matches!(bytes[at], b' ' | b'\t' | 0x0c) {
                     at += 1;
@@ -488,11 +492,10 @@ impl Tokens<'_, '_> {
                         off: to_u32(from + at),
                     },
                 };
-                let first_on_line = self
-                    .slice(line, 0, to_u32(from + start))
-                    .bytes()
-                    .all(|byte| matches!(byte, b' ' | b'\t' | 0x0c));
-                if first_on_line && line > 0 && words::is_list_marker(&segment[start..at]) {
+                if std::mem::take(&mut first_on_line)
+                    && line > 0
+                    && words::is_list_marker(&segment[start..at])
+                {
                     self.push_break();
                 }
                 self.word(word, false, true);

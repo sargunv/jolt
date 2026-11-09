@@ -125,14 +125,19 @@ pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
         cur: Cursor {
             pos: Pos { line: 0, off: 0 },
             ch: EOI,
+            width: 0,
             prev: EOI,
         },
         newline: true,
         text_start: None,
         last_non_white: None,
         markdown: markdown.then(Markdown::default),
+        end: Pos {
+            line: to_u32(lines.len() - 1),
+            off: to_u32(lines[lines.len() - 1].text.len()),
+        },
     };
-    parser.cur.ch = parser.char_at(parser.cur.pos);
+    (parser.cur.ch, parser.cur.width) = parser.decode(parser.cur.pos);
     let (body, _) = parser.content(Phase::Body);
     let mut tags = Vec::new();
     while !parser.at_end() && parser.cur.ch == '@' {
@@ -161,6 +166,8 @@ enum Phase {
 struct Cursor {
     pos: Pos,
     ch: char,
+    /// The width of `ch` in bytes (none for a line break or the end).
+    width: u8,
     prev: char,
 }
 
@@ -182,6 +189,8 @@ struct Parser<'l, 'a> {
     /// The end (exclusive) of javac's `lastNonWhite`.
     last_non_white: Option<Pos>,
     markdown: Option<Markdown>,
+    /// The end of the comment.
+    end: Pos,
 }
 
 /// The kinds of tag that javac knows.
@@ -291,41 +300,61 @@ const fn is_ws(ch: char) -> bool {
 impl Parser<'_, '_> {
     // The reader.
 
-    fn char_at(&self, pos: Pos) -> char {
-        let line = self.lines[pos.line as usize].text;
-        match line[pos.off as usize..].chars().next() {
-            Some(ch) => ch,
-            None if (pos.line as usize) + 1 < self.lines.len() => '\n',
-            None => EOI,
+    /// The character at `pos` and its width in bytes: the line break after
+    /// a line and the end of input have none.
+    fn decode(&self, pos: Pos) -> (char, u8) {
+        let text = self.lines[pos.line as usize].text;
+        let bytes = text.as_bytes();
+        let off = pos.off as usize;
+        match bytes.get(off) {
+            Some(&byte) if byte.is_ascii() => (char::from(byte), 1),
+            Some(_) => {
+                let ch = text[off..].chars().next().unwrap_or(EOI);
+                (ch, u8::try_from(ch.len_utf8()).unwrap_or(1))
+            }
+            None if (pos.line as usize) + 1 < self.lines.len() => ('\n', 0),
+            None => (EOI, 0),
         }
     }
 
-    fn end(&self) -> Pos {
-        let last = self.lines.len() - 1;
-        Pos {
-            line: to_u32(last),
-            off: to_u32(self.lines[last].text.len()),
-        }
+    fn char_at(&self, pos: Pos) -> char {
+        self.decode(pos).0
+    }
+
+    const fn end(&self) -> Pos {
+        self.end
     }
 
     fn at_end(&self) -> bool {
-        self.cur.pos >= self.end()
+        self.cur.pos >= self.end
     }
 
     /// The position after the character at `pos`.
     fn after(&self, pos: Pos) -> Pos {
-        let line = self.lines[pos.line as usize].text;
-        match line[pos.off as usize..].chars().next() {
-            Some(ch) => Pos {
+        let (_, width) = self.decode(pos);
+        self.step(pos, width)
+    }
+
+    /// The position after a character of `width` bytes at `pos`.
+    fn step(&self, pos: Pos, width: u8) -> Pos {
+        if width > 0 {
+            Pos {
                 line: pos.line,
-                off: pos.off + u32::try_from(ch.len_utf8()).unwrap_or(1),
-            },
-            None if (pos.line as usize) + 1 < self.lines.len() => Pos {
+                off: pos.off + u32::from(width),
+            }
+        } else if pos < self.end {
+            Pos {
                 line: pos.line + 1,
                 off: 0,
-            },
-            None => pos,
+            }
+        } else {
+            pos
         }
+    }
+
+    /// The position after the reader's character.
+    fn after_cur(&self) -> Pos {
+        self.step(self.cur.pos, self.cur.width)
     }
 
     /// The position of the character before `pos`, and that character.
@@ -357,18 +386,15 @@ impl Parser<'_, '_> {
         }
         self.steps += 1;
         if self.steps > self.budget {
-            self.cur.pos = self.end();
+            self.cur.pos = self.end;
             self.cur.ch = EOI;
+            self.cur.width = 0;
             return;
         }
-        let next = self.after(self.cur.pos);
+        let next = self.after_cur();
         self.cur.prev = self.cur.ch;
         self.cur.pos = next;
-        self.cur.ch = if self.at_end() {
-            EOI
-        } else {
-            self.char_at(next)
-        };
+        (self.cur.ch, self.cur.width) = self.decode(next);
         if self.cur.ch == '\n' {
             self.newline = true;
         }
@@ -378,12 +404,7 @@ impl Parser<'_, '_> {
         if self.at_end() {
             return EOI;
         }
-        let next = self.after(self.cur.pos);
-        if next >= self.end() {
-            EOI
-        } else {
-            self.char_at(next)
-        }
+        self.char_at(self.after_cur())
     }
 
     /// Sets the reader to a saved place without touching `newline`, as
@@ -450,8 +471,51 @@ impl Parser<'_, '_> {
         if self.text_start.is_none() {
             self.text_start = Some(self.cur.pos);
         }
-        self.last_non_white = Some(self.after(self.cur.pos));
+        self.last_non_white = Some(self.after_cur());
         self.next_char();
+    }
+
+    /// `default_content` for the reader's character and the ordinary
+    /// characters after it on its line, at once: the characters that no case
+    /// of `content` reads differently.
+    fn plain_run(&mut self) {
+        self.default_content();
+        let text = self.lines[self.cur.pos.line as usize].text;
+        let bytes = text.as_bytes();
+        let start = self.cur.pos.off as usize;
+        let mut end = start;
+        while end < bytes.len()
+            && !matches!(
+                bytes[end],
+                b' ' | b'\t'
+                    | b'&'
+                    | b'<'
+                    | b'{'
+                    | b'}'
+                    | b'@'
+                    | b'\\'
+                    | b'`'
+                    | b'~'
+                    | b'*'
+                    | 0x0c
+                    | 0x80..=0xff
+            )
+        {
+            end += 1;
+        }
+        let count = end - start;
+        if count == 0 || self.steps + count > self.budget {
+            return;
+        }
+        self.steps += count;
+        self.newline = false;
+        self.cur.prev = char::from(bytes[end - 1]);
+        self.cur.pos.off = to_u32(end);
+        self.last_non_white = Some(self.cur.pos);
+        (self.cur.ch, self.cur.width) = self.decode(self.cur.pos);
+        if self.cur.ch == '\n' {
+            self.newline = true;
+        }
     }
 
     /// javac's `addPendingText`, with an exclusive end.
@@ -575,7 +639,7 @@ impl Parser<'_, '_> {
                     self.default_content();
                 }
                 '`' | '~' if markdown => self.markdown_code(),
-                _ => self.default_content(),
+                _ => self.plain_run(),
             }
         }
         if self.last_non_white.is_some() {
@@ -803,7 +867,7 @@ impl Parser<'_, '_> {
                 self.next_char();
                 list.push(Node::Atom(self.span(at)));
                 self.text_start = None;
-                self.last_non_white = Some(self.after(self.cur.pos));
+                self.last_non_white = Some(self.after_cur());
             } else {
                 self.add_pending_text(list, Some(brace));
                 let tag = self.inline_tag_tree(brace);
@@ -816,7 +880,7 @@ impl Parser<'_, '_> {
             if self.text_start.is_none() {
                 self.text_start = Some(brace);
             }
-            self.last_non_white = Some(self.after(self.cur.pos));
+            self.last_non_white = Some(self.after_cur());
         }
         false
     }
@@ -1071,7 +1135,7 @@ impl Parser<'_, '_> {
                 ch if is_ws(ch) => {}
                 '{' => {
                     self.newline = false;
-                    self.last_non_white = Some(self.after(self.cur.pos));
+                    self.last_non_white = Some(self.after_cur());
                     depth += 1;
                 }
                 '}' => {
@@ -1080,11 +1144,11 @@ impl Parser<'_, '_> {
                         return Ok(self.span(start));
                     }
                     self.newline = false;
-                    self.last_non_white = Some(self.after(self.cur.pos));
+                    self.last_non_white = Some(self.after_cur());
                 }
                 _ => {
                     self.newline = false;
-                    self.last_non_white = Some(self.after(self.cur.pos));
+                    self.last_non_white = Some(self.after_cur());
                 }
             }
             self.next_char();
@@ -1377,7 +1441,7 @@ impl Parser<'_, '_> {
             self.text_start = Some(self.cur.pos);
         }
         let opening = self.cur;
-        self.last_non_white = Some(self.after(self.cur.pos));
+        self.last_non_white = Some(self.after_cur());
         let save_newline = self.newline;
         let fence = self.markdown_state().leaf == Leaf::FencedCode;
         if self.cur.ch == '`' || self.cur.ch == '~' && fence {
