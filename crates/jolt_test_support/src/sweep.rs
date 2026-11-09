@@ -10,6 +10,7 @@ use std::time::Instant;
 
 use jolt_fmt::FormatOptions;
 
+use crate::doc_oracle;
 use crate::oracle::{CorpusLanguage, check_source, parse_facts};
 use crate::{files_with_extensions, options, par_fold};
 
@@ -45,6 +46,19 @@ pub const PROBE_SHAPES: &[ProbeShape] = &[
         name: "ownlinecomment",
         insert: "\n//hunt\n",
         seed: 374_761_393,
+    },
+    // About 100 characters of words, so that a doc comment layout that fills
+    // to the width wraps it at every position and width.
+    ProbeShape {
+        name: "ownlinedoc",
+        insert: "\n/** Hunt probe: a doc comment with enough words in it to wrap at each \
+                 probe position and width. */\n",
+        seed: 668_265_263,
+    },
+    ProbeShape {
+        name: "ownlinemarkdown",
+        insert: "\n/// Hunt probe: a `///` doc comment line.\n",
+        seed: 3_266_489_917,
     },
 ];
 
@@ -240,6 +254,7 @@ pub fn sweep_variant<C: CorpusLanguage>(
     options: &FormatOptions,
     label: &str,
 ) -> Vec<SweepFailure> {
+    doc_oracle::set_variant(label);
     check_source(language, source, options)
         .into_iter()
         .map(|(check, detail)| SweepFailure {
@@ -399,6 +414,26 @@ pub fn run_corpus_sweep<C: CorpusLanguage>(
     fs::create_dir_all(&out_dir).expect("create hunt output directory");
 
     let (mut findings, mut slow) = sweep_files(language, &files);
+    if doc_oracle::enabled() {
+        let started = Instant::now();
+        let resolved = doc_oracle::resolve();
+        println!(
+            "doc oracle: {} comparisons, {} comments read by the JDK, {} failing ({} ms)",
+            resolved.comparisons,
+            resolved.comments,
+            resolved.failures.len(),
+            started.elapsed().as_millis()
+        );
+        for failure in resolved.failures {
+            findings.push(
+                &failure.path,
+                SweepFailure {
+                    category: format!("{}:{}", failure.label, failure.check),
+                    detail: failure.detail,
+                },
+            );
+        }
+    }
 
     let mut report = write_report(&mut findings, &mut slow, &out_dir);
 
@@ -509,6 +544,7 @@ fn sweep_files<C: CorpusLanguage>(
         files,
         |(findings, slow): &mut (Findings, Vec<(PathBuf, u128)>), (path, depth)| {
             let started = Instant::now();
+            doc_oracle::set_file(path);
             let failures = match fs::read_to_string(path) {
                 Ok(source) => catching(path, || sweep_source(language, &source, *depth)),
                 Err(error) => vec![SweepFailure {

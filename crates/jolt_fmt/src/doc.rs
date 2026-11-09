@@ -1,6 +1,8 @@
 //! The document IR: an append-only arena of layout commands whose texts are
 //! borrowed from the source or `'static`.
 
+use std::cell::Cell;
+
 use unicode_width::UnicodeWidthChar;
 
 /// A handle to a document node in a [`DocBuilder`].
@@ -32,7 +34,9 @@ impl Doc {
 pub(crate) enum Reindent<'a> {
     /// A multi-line block comment: star blocks are re-aligned under the
     /// opening delimiter, other lines are trimmed (see [`comment_lines`]).
-    Comment,
+    /// The indentation of the source line the comment starts on, which a
+    /// doc comment kept as written re-indents against.
+    Comment(&'a str),
     /// Verbatim source: `prefix` is removed from each continuation line that
     /// starts with it.
     Strip(&'a str),
@@ -73,6 +77,14 @@ pub(crate) const MULTILINE: u8 = 4;
 /// The first text of a verbatim node: the printer records the indentation of
 /// the current output line as the base its `Strip` pieces re-indent against.
 pub(crate) const VERBATIM_START: u8 = 8;
+/// The last text of a run of doc line comments: a doc line comment that
+/// starts the next line belongs to another run, so the printer writes a blank
+/// line before it.
+pub(crate) const RUN_END: u8 = 16;
+/// Written right after the text before it, without the space that
+/// [`FormatLanguage::joins`](crate::FormatLanguage::joins) would put between
+/// them.
+pub(crate) const GLUED: u8 = 32;
 
 #[derive(Clone, Copy, Debug)]
 #[allow(clippy::struct_field_names)]
@@ -191,10 +203,23 @@ impl<'a> DocBuilder<'a> {
     ) -> Doc {
         let (width, multiline) = match reindent {
             None | Some(Reindent::Strip(_)) => measure(text),
-            Some(Reindent::Comment) => {
-                let width = comment_lines(text).next().map_or(0, |parts| {
-                    parts.iter().map(|part| display_width(part)).sum()
-                });
+            Some(Reindent::Comment(indentation)) => {
+                // The first output line of a multi-line doc comment is `/**`
+                // when its source's is, star block or not, so most doc
+                // comments need no scan here.
+                let bare = text.starts_with("/**")
+                    && !text.starts_with("/**/")
+                    && first_line(text).trim_end() == "/**";
+                let width = if bare {
+                    3
+                } else {
+                    let kept = Cell::new(false);
+                    comment_lines(text, indentation, keeps_lines(text), &kept)
+                        .next()
+                        .map_or(0, |parts| {
+                            parts.iter().map(|part| display_width(part)).sum()
+                        })
+                };
                 (width, has_line_break(text))
             }
         };
@@ -204,6 +229,23 @@ impl<'a> DocBuilder<'a> {
             flags: flags | if multiline { MULTILINE } else { 0 },
             reindent,
         })
+    }
+
+    /// The last text of a run of doc line comments (`///` lines): the line
+    /// ends after it, as after any line comment, and a doc line comment that
+    /// starts the next line is kept apart from the run by a blank line, so
+    /// the two never read as one run. `glued` as for [`glued`](Self::glued).
+    pub fn line_comment(&mut self, text: &'a str, glued: bool) -> Doc {
+        let glue = if glued { GLUED } else { 0 };
+        self.comment_text(text, LINE_COMMENT | RUN_END | glue)
+    }
+
+    /// Comment text written right after the text before it, even where the
+    /// language's [`joins`](crate::FormatLanguage::joins) would put a space
+    /// between them: the `\` of a Markdown hard break after a word, or a word
+    /// after the `///` that frames it (`///**`).
+    pub fn glued(&mut self, text: &'a str) -> Doc {
+        self.comment_text(text, GLUED)
     }
 
     pub(crate) fn comment_text(&mut self, text: &'a str, flags: u8) -> Doc {
@@ -285,6 +327,23 @@ impl<'a> DocBuilder<'a> {
                 self.push(Kind::Concat(start, len), flags)
             }
         }
+    }
+
+    /// A node whose content is set later by [`fill`](Self::fill) (NIL until
+    /// then), for a choice that depends on what is built after it. It counts
+    /// as a forced break, so it must only hold docs that end their line.
+    pub(crate) fn slot(&mut self) -> Doc {
+        let start = u32::try_from(self.children.len()).expect("children fit in u32");
+        self.children.push(Doc::NIL);
+        self.push(Kind::Concat(start, 1), BREAKS)
+    }
+
+    /// Sets the content of `slot`, made by [`slot`](Self::slot).
+    pub(crate) fn fill(&mut self, slot: Doc, doc: Doc) {
+        let Kind::Concat(start, 1) = self.kind(slot) else {
+            unreachable!("not a slot");
+        };
+        self.children[start as usize] = doc;
     }
 
     /// Flat if the contents fit, else broken. Contents without a line of
@@ -461,54 +520,141 @@ pub(crate) type CommentLine<'t> = [&'t str; 3];
 /// The output lines of a block comment: a multi-line doc comment (`/**`) is
 /// a star block whose opener text moves to its own line; a multi-line block
 /// comment whose continuation starts with `*` is a star block that keeps its
-/// opener text; any other comment keeps its continuation lines' indentation
-/// relative to each other. A star line keeps its text after the `*` and one
-/// space, so `<pre>` code stays indented.
-pub(crate) fn comment_lines(text: &str) -> impl Iterator<Item = CommentLine<'_>> {
+/// opener text. A star line keeps its text after the `*` (all of a doc
+/// comment's leading `*`s, as javadoc reads it) and one space, so `<pre>`
+/// code stays indented.
+///
+/// A doc comment that [`keeps_lines`] keeps its lines as written: each loses
+/// `indentation`, the indentation of the source line the comment starts on,
+/// when it starts with it. Any other comment keeps its continuation lines'
+/// indentation relative to each other.
+///
+/// A doc comment keeps the trailing whitespace of its lines, and of the
+/// blank lines between its text: javadoc reads it inside `<pre>`, code and
+/// tag bodies, which a comment that isn't laid out was not read for. Its
+/// whitespace is Java's (space, tab, form feed), so U+00A0 is text there.
+/// Other comments lose it.
+///
+/// The caller says whether the doc comment is kept as written (`as_written`),
+/// or finds out while laying it out as a star block: `kept` is set when a
+/// continuation line without `*` or a ruler turns up, and the caller lays
+/// the comment out again as written. Such comments are rare, so most doc
+/// comments are scanned once.
+pub(crate) fn comment_lines<'t>(
+    text: &'t str,
+    indentation: &'t str,
+    as_written: bool,
+    kept: &'t Cell<bool>,
+) -> impl Iterator<Item = CommentLine<'t>> {
     let doc = text.starts_with("/**") && !text.starts_with("/**/");
+    // A doc comment's whitespace, as javadoc reads it, and its trailing
+    // whitespace, which it keeps.
+    let ws: fn(char) -> bool = if doc { is_blank } else { char::is_whitespace };
+    let trim_end = move |line: &'t str| if doc { line } else { line.trim_end() };
     let content = strip_delimiters(text);
     let multiline = has_line_break(content);
-    let star_block = (doc && multiline) || is_star_block(content);
+    let as_written = doc && multiline && (as_written || text.starts_with("/***"));
+    let star_block = (doc && multiline && !as_written) || (!doc && is_star_block(content));
     // Exactly one of the two layouts is `Some`.
     let plain = (!star_block).then(|| {
         let mut lines = lines(text.trim());
-        let first = lines.next().unwrap_or("").trim();
-        let shared = shared_indentation(lines.clone());
-        let rest = lines.map(move |line| [line.trim_end().get(shared..).unwrap_or(""), "", ""]);
+        let first = trim_end(lines.next().unwrap_or("").trim_start());
+        let shared = (!as_written).then(|| shared_indentation(lines.clone()));
+        let rest = lines.map(move |line| {
+            let line = trim_end(line);
+            let line = match shared {
+                Some(shared) => line.get(shared..).unwrap_or(""),
+                None => line.strip_prefix(indentation).unwrap_or(line),
+            };
+            [line, "", ""]
+        });
         std::iter::once([first, "", ""]).chain(rest)
     });
     let star = star_block.then(|| {
         let mut lines = lines(content);
         let mut first = [if doc { "/**" } else { "/*" }, "", ""];
         let mut has_content = false;
-        if !doc && multiline {
-            let opener = lines.next().unwrap_or("").trim();
-            if !opener.is_empty() {
+        if multiline {
+            // The opener's text stays on its line. A doc comment's first line
+            // has no indentation as javadoc reads it, so moving its text to a
+            // line of its own would change the indentation all lines share,
+            // which javadoc removes (inside `<pre>` and code too).
+            let opener = lines.next().unwrap_or("");
+            let opener = if doc {
+                trim_end(opener.trim_start_matches(ws))
+            } else {
+                opener.trim()
+            };
+            if !opener.trim_matches(ws).is_empty() {
                 has_content = true;
                 first[1] = " ";
                 first[2] = opener;
             }
         }
-        let mut blank_lines = 0;
+        // The blank lines since the last line with text, as their text.
+        let mut blank_lines = Vec::new();
+        let mut continuation = true;
         let body = lines
             .filter_map(move |line| {
-                let line = match line.trim_start().strip_prefix('*') {
+                let (star, line) = match line.trim_start_matches(ws).strip_prefix('*') {
+                    // A doc comment line loses its whole run of `*`s, as
+                    // javadoc reads it, and keeps the text after them
+                    // exactly (javadoc keeps it inside `<pre>`); a ruler
+                    // keeps the comment as written.
+                    Some(rest) if multiline && doc => {
+                        if rest.starts_with('*') && is_ruler(rest) {
+                            kept.set(true);
+                        }
+                        (" *", trim_end(rest.trim_start_matches('*')))
+                    }
                     Some(rest) if multiline => {
                         let rest = rest.trim_end();
-                        rest.strip_prefix(' ').unwrap_or(rest)
+                        (" * ", rest.strip_prefix(' ').unwrap_or(rest))
                     }
-                    _ => line.trim(),
+                    _ => {
+                        let line = trim_end(line.trim_start_matches(ws));
+                        if doc && continuation && !line.is_empty() {
+                            kept.set(true);
+                        }
+                        (" * ", line)
+                    }
                 };
-                if line.is_empty() {
-                    blank_lines += usize::from(has_content);
+                continuation = true;
+                // javac skips spaces and tabs, but reads a form feed: a line
+                // of one is text.
+                let blank = if doc {
+                    line.trim_start_matches([' ', '\t']).is_empty()
+                } else {
+                    line.trim_start_matches(ws).is_empty()
+                };
+                if blank {
+                    if has_content {
+                        blank_lines.push(line);
+                    }
                     return None;
                 }
                 has_content = true;
-                let blanks = std::iter::repeat_n([" *", "", ""], std::mem::take(&mut blank_lines));
-                Some(blanks.chain([[" * ", line, ""]]))
+                let blanks = std::mem::take(&mut blank_lines)
+                    .into_iter()
+                    .map(|line| [" *", line, ""]);
+                Some(blanks.chain([[star, line, ""]]))
             })
             .flatten();
-        std::iter::once(first).chain(body).chain([[" */", "", ""]])
+        // `*/` stays after the text of a last line that has some: a line
+        // break there is one javadoc reads (it ends an unclosed `<pre>` with
+        // one, and makes `{@snippet :` start a body).
+        let close_after = doc && closes_after_text(content);
+        let mut body = body.peekable();
+        let body = std::iter::from_fn(move || {
+            let mut line = body.next()?;
+            if close_after && body.peek().is_none() {
+                line[2] = "*/";
+            }
+            Some(line)
+        });
+        std::iter::once(first)
+            .chain(body)
+            .chain((!close_after).then_some([" */", "", ""]))
     });
     plain
         .into_iter()
@@ -540,6 +686,85 @@ fn strip_delimiters(text: &str) -> &str {
     body.strip_prefix("/**")
         .or_else(|| body.strip_prefix("/*"))
         .unwrap_or(body)
+}
+
+/// Whether `text` is a multi-line doc comment (`/**`) kept as written (see
+/// [`comment_lines`]) instead of being made a star block:
+///
+/// - a continuation line has text but no leading `*`: javadoc keeps the
+///   indentation of such a line, so a star block could shift a code sample
+///   in `<pre>`;
+/// - it is a banner: it starts with `/***`, or a line is made only of two or
+///   more `*`s (javadoc reads such a ruler as a blank line, which a star
+///   block would print as one).
+///
+/// Most lines start with spaces and a `*`, which a scan for `\n` answers; any
+/// other line is checked as text, only Java's whitespace (space, tab, form
+/// feed) counting as blank.
+pub(crate) fn keeps_lines(text: &str) -> bool {
+    if !text.starts_with("/**") || text.starts_with("/**/") {
+        return false;
+    }
+    let content = strip_delimiters(text);
+    if !has_line_break(content) {
+        return false;
+    }
+    if text.starts_with("/***") {
+        return true;
+    }
+    let star_less = |line: &str| {
+        let text = line.trim_start_matches(is_blank);
+        !text.is_empty() && !text.starts_with('*')
+    };
+    let kept = |(index, line): (usize, &str)| (index > 0 && star_less(line)) || is_ruler(line);
+    if content.as_bytes().contains(&b'\r') {
+        return lines(content).enumerate().any(kept);
+    }
+    content.split('\n').enumerate().any(kept)
+}
+
+/// Whether `text` is a multi-line doc comment printed byte for byte: its
+/// first line has text after `/**`, and a later line has text without a
+/// leading `*`. javac then reads that line's whole indentation as text (the
+/// first line has none, so none is shared), and any change to it, such as a
+/// new indentation of the comment, changes what javadoc reads.
+pub(crate) fn keeps_bytes(text: &str) -> bool {
+    if !text.starts_with("/**") || text.starts_with("/**/") || text.starts_with("/***") {
+        return false;
+    }
+    let content = strip_delimiters(text);
+    let mut lines = lines(content);
+    let opener_text = lines
+        .next()
+        .is_some_and(|first| !first.trim_matches(is_blank).is_empty());
+    opener_text
+        && lines.any(|line| {
+            let text = line.trim_start_matches(is_blank);
+            !text.is_empty() && !text.starts_with('*')
+        })
+}
+
+/// Whether the last line of a doc comment's `content` (between its
+/// delimiters) has text before `*/`.
+fn closes_after_text(content: &str) -> bool {
+    !lines(content)
+        .last()
+        .unwrap_or("")
+        .trim_start_matches(is_blank)
+        .trim_start_matches('*')
+        .trim_matches(is_blank)
+        .is_empty()
+}
+
+/// Java's whitespace in a doc comment: a space, a tab or a form feed.
+const fn is_blank(ch: char) -> bool {
+    matches!(ch, ' ' | '\t' | '\u{c}')
+}
+
+/// Whether a doc comment line is a ruler made only of two or more `*`s.
+fn is_ruler(line: &str) -> bool {
+    let line = line.trim_matches(is_blank);
+    line.len() >= 2 && line.bytes().all(|byte| byte == b'*')
 }
 
 fn is_star_block(content: &str) -> bool {

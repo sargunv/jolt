@@ -13,8 +13,8 @@ use std::ops::ControlFlow;
 use jolt_syntax::{Language, RawSyntaxKind, SyntaxNode, SyntaxToken, TriviaKind};
 
 pub use comments::{
-    Comment, CommentContext, CommentKind, CommentLayout, Placement, is_unclosed, leading_target,
-    trailing_target,
+    Comment, CommentContext, CommentKind, CommentLayout, DocComment, DocCommentSource, Placement,
+    is_unclosed, leading_target, trailing_target,
 };
 pub use doc::{Doc, DocBuilder};
 pub use formatter::{Formatter, ListItem, Separator};
@@ -100,6 +100,30 @@ pub trait FormatLanguage: Sized + 'static {
     /// `EndOfLine`, and a `Trailing` layout is `EndOfLine` or `Inline`
     /// (checked by debug assertions).
     fn place_comment<'a>(context: &CommentContext<'a, '_>) -> Option<Placement<'a>>;
+    /// The opener of a doc line comment (`"///"` for Java), if the language
+    /// has one. Placement groups consecutive doc line comments into runs that
+    /// print as one (see [`DocCommentSource::Lines`]), and the printer keeps
+    /// two runs apart with a blank line when a layout puts one right after
+    /// the other, so they never merge.
+    const DOC_LINE_COMMENT: Option<&'static str>;
+    /// What [`doc_comment`](Self::doc_comment) needs to know about the whole
+    /// file, found once per file by [`doc_file`](Self::doc_file), so that a
+    /// file's many doc comments don't each rescan it.
+    type DocFile: Copy;
+    /// The [`DocFile`](Self::DocFile) of the file whose tree is `root`.
+    fn doc_file(root: SyntaxNode<'_>) -> Self::DocFile;
+    /// Lays out a doc comment (a doc block comment, or a run of doc line
+    /// comments) on a line of its own; `None` prints it as written.
+    /// Called only by the comment chokepoints, for a comment outside every
+    /// formatter-ignore region whose target has no recovery. The layout
+    /// starts at the comment's own column, after a line break. A doc line
+    /// run's layout ends with [`DocBuilder::line_comment`], so that its line
+    /// ends after it.
+    fn doc_comment<'a>(
+        docs: &mut DocBuilder<'a>,
+        comment: &DocComment<'a, '_>,
+        file: Self::DocFile,
+    ) -> Option<Doc>;
     /// The item-list owner a formatter-ignore marker belongs to, given the
     /// deepest node containing the tokens around it: the owner when the
     /// marker sits between, before or after the items of the owner's list,
@@ -131,7 +155,17 @@ pub fn format<L: FormatLanguage, S: Sink + ?Sized>(
         .is_some_and(|last| {
             last.text_range().end().get() == root.source().len() && L::is_open_literal(last)
         });
-    printer::print(&builder, doc, *options, L::joins, !open_end, sink)?;
+    printer::print(
+        &builder,
+        doc,
+        *options,
+        printer::Language {
+            joins: L::joins,
+            doc_line: L::DOC_LINE_COMMENT,
+        },
+        !open_end,
+        sink,
+    )?;
     if let Some(substitute) = special_trivia(root.last_token(), TriviaKind::TrailingSubstitute) {
         sink.write(substitute)?;
     }

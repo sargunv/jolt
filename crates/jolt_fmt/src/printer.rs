@@ -1,11 +1,12 @@
 //! The iterative printer: a command stack, newline coalescing, line suffixes,
 //! and a bounded fit check.
 
+use std::cell::Cell;
 use std::ops::ControlFlow;
 
 use crate::doc::{
-    Kind, LINE_COMMENT, MULTILINE, Reindent, STICKY, Text, VERBATIM_START, comment_lines,
-    display_width, lines,
+    CommentLine, GLUED, Kind, LINE_COMMENT, MULTILINE, RUN_END, Reindent, STICKY, Text,
+    VERBATIM_START, comment_lines, display_width, lines,
 };
 use crate::{Doc, DocBuilder, FormatOptions, Sink};
 
@@ -58,6 +59,14 @@ enum Pending {
     },
 }
 
+/// What the printer needs from the language.
+pub(crate) struct Language<J: Fn(char, char) -> bool> {
+    /// [`FormatLanguage::joins`](crate::FormatLanguage::joins).
+    pub(crate) joins: J,
+    /// [`FormatLanguage::DOC_LINE_COMMENT`](crate::FormatLanguage::DOC_LINE_COMMENT).
+    pub(crate) doc_line: Option<&'static str>,
+}
+
 struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     docs: &'p DocBuilder<'a>,
     options: FormatOptions,
@@ -76,7 +85,11 @@ struct Printer<'p, 'a, S: Sink + ?Sized, J: Fn(char, char) -> bool> {
     line: Line,
     /// The last character written on the current line, if it is not a space.
     last: Option<char>,
-    joins: J,
+    /// The first text of the current output line.
+    line_first: &'a str,
+    /// The last text written ends a doc line comment that starts its line.
+    run_ended: bool,
+    language: Language<J>,
     suffixes: Vec<Command>,
     /// The fit check's stack, kept to reuse its allocation.
     fit_stack: Vec<Fit>,
@@ -87,7 +100,7 @@ pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
     docs: &DocBuilder<'_>,
     root: Doc,
     options: FormatOptions,
-    joins: J,
+    language: Language<J>,
     final_newline: bool,
     sink: &mut S,
 ) -> ControlFlow<()> {
@@ -103,7 +116,9 @@ pub(crate) fn print<S: Sink + ?Sized, J: Fn(char, char) -> bool>(
         pending: Pending::None,
         line: Line::FileStart,
         last: None,
-        joins,
+        line_first: "",
+        run_ended: false,
+        language,
         suffixes: Vec::new(),
         fit_stack: Vec::new(),
         stack: vec![Command {
@@ -263,15 +278,24 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 indent: command.indent,
             };
         }
+        if let Pending::Newlines { count, indent } = self.pending {
+            // A doc line comment right after the end of a run starts another
+            // run: a blank line keeps the two apart.
+            if self.run_ended && count == 1 && self.is_doc_line(text.text) {
+                self.pending = Pending::Newlines { count: 2, indent };
+            }
+            self.line_first = text.text;
+        }
+        self.run_ended = text.flags & RUN_END != 0 && self.is_doc_line(self.line_first);
         self.flush_pending();
         let bytes = text.text.as_bytes();
-        if let Some(last) = self.last {
+        if let Some(last) = self.last.filter(|_| text.flags & GLUED == 0) {
             // Texts start with an ASCII byte in all but rare cases.
             let first = match bytes.first() {
                 Some(&byte) if byte.is_ascii() => Some(char::from(byte)),
                 _ => text.text.chars().next(),
             };
-            if first.is_some_and(|first| (self.joins)(last, first)) {
+            if first.is_some_and(|first| (self.language.joins)(last, first)) {
                 self.out.push(' ');
                 self.column += 1;
             }
@@ -291,6 +315,15 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
             Line::Commented
         };
         ControlFlow::Continue(())
+    }
+
+    /// Whether `text` starts with a line comment that a documentation tool
+    /// reads as part of a run of doc line comments: one that starts with the
+    /// opener (javac reads `////` lines in a run too).
+    fn is_doc_line(&self, text: &str) -> bool {
+        self.language
+            .doc_line
+            .is_some_and(|opener| text.starts_with(opener))
     }
 
     fn flush_pending(&mut self) {
@@ -387,21 +420,34 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 }
                 self.verbatim_base = base;
             }
-            Some(Reindent::Comment) => {
-                for (index, parts) in comment_lines(text.text).enumerate() {
-                    if index > 0 {
-                        self.out.push('\n');
-                        self.column = 0;
-                        if !parts.iter().all(|part| part.is_empty()) {
-                            self.out.push_str(&self.line_ws);
-                            self.column = display_width(&self.line_ws);
-                        }
-                    }
-                    for part in parts {
-                        self.out.push_str(part);
-                        self.column += display_width(part);
-                    }
+            Some(Reindent::Comment(indentation)) => {
+                // Laid out again as written when it is a doc comment with a
+                // line without `*` or a ruler (see `comment_lines`).
+                let (len, column) = (self.out.len(), self.column);
+                let kept = Cell::new(false);
+                self.write_comment(comment_lines(text.text, indentation, false, &kept));
+                if kept.get() {
+                    self.out.truncate(len);
+                    self.column = column;
+                    self.write_comment(comment_lines(text.text, indentation, true, &kept));
                 }
+            }
+        }
+    }
+
+    fn write_comment<'t>(&mut self, lines: impl Iterator<Item = CommentLine<'t>>) {
+        for (index, parts) in lines.enumerate() {
+            if index > 0 {
+                self.out.push('\n');
+                self.column = 0;
+                if !parts.iter().all(|part| part.is_empty()) {
+                    self.out.push_str(&self.line_ws);
+                    self.column = display_width(&self.line_ws);
+                }
+            }
+            for part in parts {
+                self.out.push_str(part);
+                self.column += display_width(part);
             }
         }
     }
@@ -885,7 +931,7 @@ fn leading_ws(line: &str) -> &str {
 
 #[cfg(test)]
 mod tests {
-    use super::{FIT_BUDGET, print};
+    use super::{FIT_BUDGET, Language, print};
     use crate::{DocBuilder, FormatOptions};
 
     /// The fit check is bounded: a group whose flat contents take more than
@@ -900,11 +946,15 @@ mod tests {
             let contents = docs.concat(parts);
             let root = docs.group(contents);
             let mut out = String::new();
+            let language = Language {
+                joins: |_, _| false,
+                doc_line: None,
+            };
             let _ = print(
                 &docs,
                 root,
                 FormatOptions::default(),
-                |_, _| false,
+                language,
                 true,
                 &mut out,
             );

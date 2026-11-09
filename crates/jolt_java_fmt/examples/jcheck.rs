@@ -1,12 +1,15 @@
 //! Replays the sweep for the files on the command line, or one variant with
 //! `<path>:<variant>` (e.g. `Foo.java:ownline12`, `Foo.java:comment3@40`,
-//! `Foo.java:delete7`), printing the variant's source and every failure. Run
-//! with `cargo run --release -p jolt_java_fmt --example jcheck -- <args>`.
+//! `Foo.java:delete7`), printing the variant's source and every failure,
+//! the JDK's reading of its doc comments included. Run with
+//! `cargo run --release -p jolt_java_fmt --example jcheck -- <args>`.
 
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_test_support::{Depth, Variant, catching, sweep_source, sweep_variant, workspace_root};
+use jolt_test_support::{
+    Depth, Variant, catching, doc_oracle, sweep_source, sweep_variant, workspace_root,
+};
 
 #[path = "../tests/common/mod.rs"]
 mod common;
@@ -23,11 +26,15 @@ fn depth_of(path: &Path) -> Depth {
 
 fn main() {
     std::panic::set_hook(Box::new(|_| {}));
+    doc_oracle::enable(&workspace_root(env!("CARGO_MANIFEST_DIR")));
     let mut any = false;
     for arg in std::env::args().skip(1) {
         let replay = arg
             .rsplit_once(':')
             .and_then(|(file, label)| Variant::parse(label).map(|variant| (file, variant)));
+        doc_oracle::set_file(Path::new(
+            arg.rsplit_once(':').map_or(&*arg, |(file, _)| file),
+        ));
         let failures = if let Some((file, variant)) = replay {
             let path = PathBuf::from(file);
             let source = fs::read_to_string(&path).expect("read input");
@@ -50,6 +57,16 @@ fn main() {
             any = true;
             println!("[{}]\n{}\n", failure.category, failure.detail);
         }
+    }
+    for failure in doc_oracle::resolve().failures {
+        any = true;
+        println!(
+            "[{}:{}] {}\n{}\n",
+            failure.label,
+            failure.check,
+            failure.path.display(),
+            failure.detail
+        );
     }
     if !any {
         println!("no failures");

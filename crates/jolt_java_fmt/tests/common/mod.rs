@@ -7,7 +7,8 @@ use jolt_syntax::{Diagnostic, SyntaxNode};
 use jolt_test_support::{CorpusLanguage, Depth, StructurePolicy, Suite};
 
 /// The sweep's suites (`mise run hunt`, replayed by `jcheck`): the repository
-/// fixtures and the small upstream fixture suites exhaustively, Spring
+/// fixtures, the small upstream fixture suites and the Markdown spec examples
+/// (`commonmark-spec`) exhaustively, Spring and the JDK slice (`openjdk`)
 /// sampled.
 pub(crate) const SWEEP_SUITES: &[Suite<'_>] = &[
     Suite {
@@ -27,7 +28,15 @@ pub(crate) const SWEEP_SUITES: &[Suite<'_>] = &[
         depth: Depth::Exhaustive,
     },
     Suite {
+        dir: "tools/import/.imports/commonmark-spec/input",
+        depth: Depth::Exhaustive,
+    },
+    Suite {
         dir: "tools/import/.imports/spring-framework",
+        depth: Depth::Sampled,
+    },
+    Suite {
+        dir: "tools/import/.imports/openjdk",
         depth: Depth::Sampled,
     },
 ];

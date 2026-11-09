@@ -1,0 +1,15 @@
+[package]
+name = "jolt_markup"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+jolt_fmt = { path = "../jolt_fmt" }
+pulldown-cmark = { version = "0.13", default-features = false }
+unicode-general-category = "1.1"
+
+[lints]
+workspace = true

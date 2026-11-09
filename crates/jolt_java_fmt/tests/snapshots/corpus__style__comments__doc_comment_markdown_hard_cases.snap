@@ -1,0 +1,194 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class DocCommentMarkdownHardCases {
+  ///CLOVER:OFF CLOVER:ON
+  void cloverOnADeclaration() {}
+
+  ///*Emphasis* starts a run written without a space after its slashes, which
+  ///keeps none, and a path that wraps to the start of a line gets one:
+  /// /usr/local/share/java/lib, so that the line doesn't start with four
+  ///slashes.
+  void noSpaceAfterTheSlashes() {}
+
+  void cloverInABody() {
+    ///CLOVER:OFF
+    int unused = 1;
+    /// Not documentation: a local variable is not a declaration that javadoc reads, so this line is kept.
+    int other = 2;
+  }
+
+  //////////////
+  /// Property Methods, a banner between lines of four or more slashes, which are not part of a run
+  //////////////
+
+  /// A hard break after this line  
+  /// and a hard break written with a backslash\
+  /// and the end of the paragraph, whose trailing spaces are dropped.
+  ///
+  /// A word that ends in a backslash\ never ends a wrapped line, so it stays
+  /// with the next.
+  void hardBreaks() {}
+
+  /// Example:
+  /// ```
+  /// @Override
+  /// public String toString() {}
+  /// ```
+  ///
+  ///     @Deprecated
+  ///     void old() {}
+  ///
+  /// @return a line-leading `@` in a fence or in indented code starts no block
+  /// tag
+  String lineLeadingAt();
+
+  /// Never starts a list or a heading by wrapping: it costs 2 dollars + 3
+  /// dollars - 1 dollar and 2. the number then # signs and > quotes, |
+  /// pipes, *** stars, === rules and <b>tags</b> and 1) items.
+  void listMarkerWords() {}
+
+  /// A line that starts with a marker the source puts there keeps its line
+  /// break: 2) is not a list item, since an ordered list that interrupts a
+  /// paragraph starts at 1
+  /// #hashtag is not a heading # but a marker indented as code joins the line
+  /// before
+  void keptLineBreaks() {}
+
+  /// A code span `that  keeps   its spaces` and one that spans `lines
+  /// of the source` stay whole, and so do <a href="https://example.com">HTML
+  /// tags</a> and <https://example.com/an/autolink>.
+  void atoms() {}
+
+  /// Text before {@link java.util.Map#put(Object, Object) the label of the
+  /// link, which is filled like other words} and {@code a code tag}.
+  void inlineTags() {}
+
+  /// A snippet keeps its lines, and a line in it that starts with `@` starts no
+  /// block tag:
+  /// {@snippet :
+  /// @Override
+  /// public String toString() {
+  ///   return "example";
+  /// }
+  /// }
+  ///
+  /// {@snippet :
+  /// int first = 1;
+  ///
+  /// int second = 2;
+  /// }
+  ///
+  /// Text with {@code a code tag that runs onto
+  /// @the next line}, where the `@` starts no block tag.
+  void snippetAndInlineTagLines() {}
+
+  /// `Example` {@snippet :
+  /// @Override
+  /// public String toString() {}
+  /// }
+  ///
+  /// ```Three``` backticks with more after them on the line are a code span, not a fence: {@snippet :
+  /// @Override
+  /// int x;
+  /// }
+  void snippetAfterACodeSpan() {}
+
+  /// A code span that runs onto the next line keeps the spaces that start it:
+  /// `a
+  ///   b`.
+  void codeSpanContinuation() {}
+
+  /// A backslash before a hard break is a literal backslash: foo\  
+  /// bar.
+  void backslashBeforeHardBreak() {}
+
+  /// The rest of a closing fence line is text, where an inline tag starts:
+  /// ~~~
+  /// example
+  /// ~~~ {@snippet :
+  /// @Override
+  /// public String toString() {}
+  /// }
+  void snippetAfterAClosingFence() {}
+
+  /// A method.
+  ///
+  /// @return # A heading in the description, with enough words to wrap the line past the width
+  int headingInATag() {
+    return 0;
+  }
+
+  /// A method.
+  ///
+  /// @param x # A heading after the name, with enough words to wrap the line past the width
+  void headingAfterATagName(int x) {}
+
+  /// A method.
+  ///
+  /// @return
+  ///     int answer = 42;
+  int indentedTagContinuation() {
+    return 42;
+  }
+
+  /// A method whose description is reflowed, with enough words to wrap the line
+  /// past the width of the comment.
+  ///
+  /// @see String # A heading after the reference, with enough words to wrap the line past the width
+  void headingAfterASeeReference() {}
+
+  /// A method.
+  ///
+  /// @return [key]: https://example.com
+  /// [key]
+  int linkReferenceInATag() {
+    return 0;
+  }
+
+  /// A method whose block tag is indented, which javadoc still reads as a tag.
+  ///
+  /// @return the value
+  int indentedFirstTag() {
+    return 0;
+  }
+
+  /// A label with a hard break stays as written, with enough words to wrap the
+  /// line past the width: {@link Object the first line  
+  /// and the second} and the words after it are filled.
+  void hardBreakInALabel() {}
+
+  /// A summary with a blank line stays as written, with enough words to wrap
+  /// the line past the width: {@summary first
+  ///
+  /// second} and so does a return with one: {@return first
+  ///
+  /// second}
+  int blankLineInADescription() {
+    return 0;
+  }
+
+  /// - A list item with a code tag whose line ends with a space: {@code alpha 
+  ///   beta}, which stays.
+  void spaceAtTheEndOfACodeTagLine() {}
+
+  /// <textarea>
+  /// a text area keeps the space at the end of its lines 
+  /// </textarea>
+  void textArea() {}
+
+  /// An index term that runs onto the next line keeps its line break:
+  /// {@index "first
+  /// second" description of the term, with enough words to wrap the line past
+  /// the width}
+  void multilineIndexTerm() {}
+
+  /// A paragraph with pipes and a word a table reads as aligned | right
+  /// column :--- | ---:
+  void tableDelimiterInAParagraph() {}
+}
+
+diagnostics:
+(none)

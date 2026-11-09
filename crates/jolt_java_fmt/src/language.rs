@@ -2,8 +2,8 @@
 //! formatter-ignore scopes, and comment hooks H1 to H5.
 
 use jolt_fmt::{
-    CommentContext, CommentKind, CommentLayout, Doc, FormatLanguage, Formatter, Placement,
-    leading_target, trailing_target,
+    CommentContext, CommentKind, CommentLayout, Doc, DocBuilder, DocComment, DocCommentSource,
+    FormatLanguage, Formatter, Placement, leading_target, trailing_target,
 };
 use jolt_java_syntax::{
     IfStatement, JavaLanguage, JavaSyntaxKind as K, Statement, is_assignment_operator,
@@ -12,6 +12,14 @@ use jolt_syntax::{AstNode, RawSyntaxKind, SyntaxElement, SyntaxNode, SyntaxToken
 
 /// The Java formatter language.
 pub struct JavaFormat;
+
+/// What a doc comment's layout needs to know about its file.
+#[derive(Clone, Copy, Debug)]
+pub struct DocFile {
+    /// The file declares a type or a module, so the doc comment before its
+    /// `package` is a file header (see `is_file_header`).
+    declares_type: bool,
+}
 
 fn kind(token: SyntaxToken<'_>) -> K {
     K::from_raw(token.kind())
@@ -31,6 +39,53 @@ fn is_angle_list(token: SyntaxToken<'_>) -> bool {
 
 impl FormatLanguage for JavaFormat {
     type Syntax = JavaLanguage;
+
+    const DOC_LINE_COMMENT: Option<&'static str> = Some("///");
+
+    /// A Javadoc comment (`/**`) is laid out by `jolt_markup`, except a file
+    /// header (see `is_file_header`). A Markdown doc comment (a `///` run) is
+    /// laid out only where JEP 467 makes it documentation: when it prints
+    /// right before a declaration that javadoc documents (see `documents`).
+    type DocFile = DocFile;
+
+    fn doc_file(root: SyntaxNode<'_>) -> DocFile {
+        let declares_type = root
+            .children()
+            .filter_map(SyntaxElement::as_node)
+            .filter(|items| node_kind(*items) == K::CompilationUnitItemList)
+            .flat_map(SyntaxNode::children)
+            .filter_map(SyntaxElement::as_node)
+            .any(|item| {
+                matches!(
+                    node_kind(item),
+                    K::ClassDeclaration
+                        | K::InterfaceDeclaration
+                        | K::EnumDeclaration
+                        | K::RecordDeclaration
+                        | K::AnnotationInterfaceDeclaration
+                        | K::ModuleDeclaration
+                )
+            });
+        DocFile { declares_type }
+    }
+
+    fn doc_comment<'a>(
+        docs: &mut DocBuilder<'a>,
+        comment: &DocComment<'a, '_>,
+        file: DocFile,
+    ) -> Option<Doc> {
+        match comment.source {
+            DocCommentSource::Block(text) if !is_file_header(comment.target, file) => {
+                jolt_markup::javadoc(docs, text)
+            }
+            DocCommentSource::Lines {
+                lines,
+                before,
+                after: Some(after),
+            } if documents(before, after, file) => jolt_markup::markdown(docs, lines),
+            DocCommentSource::Block(_) | DocCommentSource::Lines { .. } => None,
+        }
+    }
 
     fn format_node<'a>(f: &mut Formatter<'a, Self>, node: SyntaxNode<'a>) -> Doc {
         crate::dispatch::format_node(f, node)
@@ -131,6 +186,68 @@ impl FormatLanguage for JavaFormat {
     }
 }
 
+/// Whether a doc comment attached to `target` is a file header: it leads an
+/// import, or the package declaration of a file that declares a type or a
+/// module. javac doesn't read it as documentation, and it is usually a
+/// licence, which a header check compares as written. (In `package-info.java`
+/// the comment before `package` documents the package.)
+fn is_file_header(target: SyntaxElement<'_>, file: DocFile) -> bool {
+    let node = match target {
+        SyntaxElement::Node(node) => node,
+        SyntaxElement::Token(token) => token.parent(),
+    };
+    match node_kind(node) {
+        K::ImportDeclaration => true,
+        K::PackageDeclaration => file.declares_type,
+        _ => false,
+    }
+}
+
+/// Whether a doc comment printed between the tokens `before` and `after`
+/// documents a declaration: `after` is the first token printed of a
+/// declaration that javadoc documents (a module, a package in a file without
+/// types, a type that is not local, or a member), so that `before` is
+/// outside it. The innermost declaration around `after` is the one: a token
+/// inside a method body belongs to the method, which has printed tokens
+/// before it. The walk up from `after` stops at the first node that holds
+/// `before`, since every declaration from there up holds it too: it visits
+/// only nodes that start after `before`, which start at `after` (or at
+/// tokens a normalization moved), so all runs together visit each node at
+/// most a bounded number of times.
+fn documents(before: Option<SyntaxToken<'_>>, after: SyntaxToken<'_>, file: DocFile) -> bool {
+    let mut node = Some(after.parent());
+    while let Some(declaration) = node {
+        if before
+            .is_some_and(|before| declaration.text_range().start() <= before.text_range().start())
+        {
+            return false;
+        }
+        match node_kind(declaration) {
+            K::ModuleDeclaration
+            | K::PackageDeclaration
+            | K::ClassDeclaration
+            | K::InterfaceDeclaration
+            | K::EnumDeclaration
+            | K::RecordDeclaration
+            | K::AnnotationInterfaceDeclaration
+            | K::FieldDeclaration
+            | K::MethodDeclaration
+            | K::ConstructorDeclaration
+            | K::CompactConstructorDeclaration
+            | K::EnumConstant
+            | K::AnnotationElementDeclaration => {
+                let local = declaration
+                    .parent()
+                    .is_some_and(|parent| node_kind(parent) == K::LocalClassOrInterfaceDeclaration);
+                return !local && !is_file_header(SyntaxElement::Node(declaration), file);
+            }
+            K::LocalClassOrInterfaceDeclaration => return false,
+            _ => node = declaration.parent(),
+        }
+    }
+    false
+}
+
 /// The element after `element` among its parent's children.
 fn next_sibling<'a>(
     parent: SyntaxNode<'a>,
@@ -184,6 +301,20 @@ fn braced_body_comment<'a>(
         .next()
         .filter(|&inner| !(inner.parent() == body && JavaFormat::is_closer(inner)));
     Some(match inner {
+        // Inside a type body, a doc comment would document the first member.
+        Some(_)
+            if context.comment.kind == CommentKind::Doc
+                && matches!(
+                    node_kind(body),
+                    K::ClassBody
+                        | K::InterfaceBody
+                        | K::EnumBody
+                        | K::RecordBody
+                        | K::AnnotationInterfaceBody
+                ) =>
+        {
+            Placement::Leading(leading_target::<JavaLanguage>(open), CommentLayout::Inline)
+        }
         Some(inner) => Placement::Leading(
             leading_target::<JavaLanguage>(inner),
             CommentLayout::OwnLine,

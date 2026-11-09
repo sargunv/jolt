@@ -119,9 +119,7 @@ class GoogleJavaFormatFaqSnippets {
     ).thenReturn(OPERATION);
   }
 
-  /**
-   * Tests for {@link Foo}.
-   */
+  /** Tests for {@link Foo}. */
   static class Block17JavadocInput {}
 
   /** Tests for {@link Foo}. */

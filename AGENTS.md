@@ -29,9 +29,13 @@ Fast, opinionated Java formatter.
   `PROBE_SHAPES` — on the boundary's own line, so it lands in the previous
   token's trailing trivia, and on a line of its own, so it lands in the next
   token's leading trivia — then checks reparse validity, structure, token and
-  comment conservation, and idempotence. The fixtures and the gjf, palantir and
-  prettier inputs up to 4 KiB get every boundary at every width; larger files
-  and Spring are sampled. Every one-token deletion of those small files is
+  comment conservation, and idempotence, and has the JDK read every changed doc
+  comment before and after formatting (`tools/doc-oracle/DocOracle.java`, run by
+  `jolt_test_support`'s `doc_oracle`; it needs the `java` that `mise.toml`
+  pins), so what javadoc reads must not change. The fixtures, the gjf, palantir
+  and prettier inputs up to 4 KiB and the CommonMark spec examples (as `///`
+  comments) get every boundary at every width; larger files, Spring and the
+  OpenJDK slice are sampled. Every one-token deletion of those small files is
   checked too, which stresses parser recovery and the formatting of recovered
   trees (`jolt format --format-with-errors`). Positions inside a string literal
   are excluded, since text there is content rather than trivia. Runs in release

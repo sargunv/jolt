@@ -1,0 +1,109 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+/// Indicates that the annotated class or interface is allowed to
+/// be _AOT-initialized_, because its author considers it safe to execute the
+/// static initializer of the class or interface during the AOT assembly phase.
+///
+/// For a class or interface _X_ annotated with `@AOTSafeClassInitializer`, it
+/// will be initialized in the AOT assembly phase under two circumstances:
+///
+/// 1. If _X_ was initialized during the AOT training run, the JVM will proactively
+///    initialize _X_ in the assembly phase.
+/// 2. If _X_ was not initialized during the AOT training run, the initialization of
+///    _X_ can still be triggered by normal execution of Java code in the assembly
+///    phase.
+///
+/// Currently, this annotation is used mainly for two purposes:
+///
+///  - The value of an environment string (if it may differ in the production run).
+///
+///  - A transient configuration parameter specific to this VM run, such as
+///    wall clock time, process ID, host name, temporary directory names, etc.
+class DocCommentMarkdown {
+  /// Splits the text at each comma and trims each part. Empty parts are
+  /// dropped - except the last one, which is kept.
+  /// - `limit` is the maximum number of parts, or zero for no limit.
+  ///
+  /// ```java
+  ///   split("a, b,", 0); // ["a", "b", ""]
+  /// ```
+  ///
+  /// @param text the text to split, which may be empty or contain only commas
+  /// and spaces
+  String[] split(String text, int limit);
+
+  /// User-defined function to validate a public key.
+  ///
+  /// This method will be called in `newEncapsulator`. This gives the provider a
+  /// chance to reject the key so an `InvalidKeyException` can be thrown
+  /// earlier. An implementation can optionally return a "parsed key" as an
+  /// `Object` value. This object will be passed into the [#implEncapsulate]
+  /// method along with the raw key.
+  ///
+  /// @param pname parameter name
+  /// @param fac the `KeyFactory` used to translate foreign keys and perform key
+  /// validation
+  /// @return the key encapsulation message and the shared key (in this order),
+  /// which is long
+  /// @throws ProviderException if there is an internal error
+  Object implCheckPublicKey(String pname, byte[] pk);
+
+  /// Holds [SimpleMethodHandle] (with no bound value) and [Species_L] (with a
+  /// bound value), see [GenerateJLIClassesHelper] and
+  /// [the guide](https://example.com/a/long/path/to/the/guide.html).
+  int species;
+
+  /// Heading
+  /// =======
+  ///
+  /// # An ATX heading that is long enough to go past the end of the line, kept as written
+  ///
+  /// | Column | Meaning of the column, which is long enough to go past the end of the line |
+  /// |--------|------|
+  /// | a      | b    |
+  ///
+  /// > A quote that is long enough to go past the end of the line, kept as written,
+  /// with a lazy continuation line.
+  ///
+  ///     indented code that is long enough to go past the end of the line, kept as written
+  ///
+  /// <table>
+  ///   <tr><td>An HTML block that is long enough to go past the end of the line</td></tr>
+  /// </table>
+  ///
+  /// [guide]: https://example.com/a/long/path/to/the/guide.html "A title that is long"
+  ///
+  /// ***
+  ///
+  /// A last paragraph, after a thematic break, which is long enough to wrap
+  /// onto the next line.
+  void blocks();
+
+  /// VerifierImpl performs selected checks and verifications of the class file
+  /// format according to {@jvms 4.8 Format Checking},
+  /// {@jvms 4.9 Constraints on Java Virtual Machine code},
+  /// {@jvms 4.10 Verification of class Files} and {@jvms 6.5 Instructions}
+  ///
+  /// From `verifier.cpp`.
+  final class VerifierImpl {}
+
+  /// Short run.
+  enum Kind {
+    /// The first constant, whose description is long enough to wrap onto the
+    /// next line.
+    FIRST,
+  }
+
+  /// Javadoc reads only the last doc comment before a declaration, so this run is
+  /// printed as written.
+
+  /// The method's doc comment, which is long enough to wrap onto the next line
+  /// of the comment.
+  void last();
+}
+
+diagnostics:
+(none)

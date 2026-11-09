@@ -1,0 +1,333 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class DocCommentJavacReading {
+  /**
+   * A no-break space after the star is text to javadoc, so it stays where it
+   * is:  indented by a no-break space, with enough words to wrap the line past
+   * the width.
+   */
+  void noBreakSpace() {}
+
+  /**
+   * {@docRoot}{@docRoot}{@docRoot}{@docRoot}{@docRoot}{@docRoot}{@docRoot}{@docRoot}{@docRoot}
+   * adjacent tags, with enough words to wrap the line past the width.
+   */
+  void adjacentTags() {}
+
+  /// A Markdown paragraph with a <pre>
+  /// keeps   its
+  ///   whitespace</pre> element whole, with enough words to wrap the line past
+  /// the width.
+  void preInAMarkdownParagraph() {}
+
+  /// Only the first sentence of a Markdown comment ends at a line that starts
+  /// with
+  /// -1, so that line keeps its line break.
+  ///
+  /// In a later paragraph, a line that starts with -2 joins the line before it.
+  void firstSentence() {}
+
+  /**
+   * A <a title="unclosed attribute value, which javadoc reads as an erroneous
+   * <, with enough words to wrap the line.
+   */
+  void unclosedAttributeValue() {}
+
+  /**
+   * Summary.
+   *
+   * @param value </p> the separator after a tag's argument stays, with enough
+   *     words to wrap the line
+   * @throws Exception </p> without it, javac reads {@code Exception</p>} as the
+   *     reference
+   * @see Object </li> {@link Object </p> and a link's reference}
+   */
+  void separatorAfterAReference(int value) throws Exception {}
+
+  /**
+   * Summary.<ul>
+   *   <li>item, part of the first sentence because no space follows the
+   *       period</li>
+   * </ul>
+   */
+  void listAfterAPeriod() {}
+
+  /**
+   * Intro<br>
+   * @return value, which javadoc reads as text after the form feed
+   */
+  int formFeedBeforeAnAt() {
+    return 0;
+  }
+
+  /**
+   * {@link
+   *
+   * @return value
+   */
+  int unfinishedLink() {
+    return 0;
+  }
+
+  /**
+   * Summary.
+   *
+   * <pre>code</pre>
+   *
+   * More text after the block, with enough words to wrap the line past the
+   * width.
+   */
+  void preAfterAPeriod() {}
+
+  /**
+   * Summary.
+   *
+   * <h2>Heading</h2>
+   *
+   * More text after the heading, with enough words to wrap the line past the
+   * width.
+   */
+  void headingAfterAPeriod() {}
+
+  /**
+   * Summary.<table><tr><td>cell</td></tr></table>
+   *
+   * More text after the table, with enough words to wrap.
+   */
+  void tableAfterAPeriod() {}
+
+  /**
+   * <ul>
+   *   <li>Item. </li>
+   * </ul>
+   *
+   * After, where the first sentence ends at the item.
+   */
+  void sentenceEndBeforeAClosingItem() {}
+
+  /**
+   * -----
+   * next line
+   */
+  void rulerAfterABlankFirstLine() {}
+
+  /**
+   * <ul>
+   *   <li>First.<li>Second.</ul>
+   *
+   * After, where the first sentence holds both items.
+   */
+  void sentenceAcrossUnclosedItems() {}
+
+  /**
+   * <div>
+   * Summary.</div>
+   *
+   * After, where the first sentence runs past the closing block.
+   */
+  void sentenceEndBeforeAClosingBlock() {}
+
+  /**
+   * @see "A book"
+   *  More text, which makes the tag erroneous, keeps its lines.
+   */
+  void erroneousTagOnTheOpenerLine() {}
+
+  /**
+   * Text.
+   *
+   * @see "A book"
+   * More text, which makes the tag erroneous, keeps its lines.
+   */
+  void erroneousTagOnItsOwnLine() {}
+
+  /**
+   * A<p>Second, where the first sentence runs past the paragraph tag at
+   * offset 1.
+   */
+  void paragraphAfterALoneFirstCharacter() {}
+
+  /**
+   * An index tag with no description keeps its brace:
+   * {@index "a long term" }@return text
+   */
+  void indexTagWithoutADescription() {}
+
+  /**
+   * A </p> Second, where the first sentence ends at the closing tag after a
+   * space.
+   */
+  void closingParagraphAfterALoneFirstCharacter() {}
+
+  /**
+   * {@snippet :<div>
+   * text
+   * </div>
+   *
+   * } where the block after the erroneous colon stays on its line.
+   */
+  void blockAfterAnErroneousSnippet() {}
+
+  /**
+   * A
+   *
+   * <p>Second, where a blank line before the first word puts the paragraph tag
+   * past offset 1.
+   */
+  void paragraphAfterALoneCharacterOnALaterLine() {}
+
+  /**
+   * A </p> Second, where a blank line before the first word puts the closing
+   * tag past offset 1.
+   */
+  void closingParagraphAfterALoneCharacterOnALaterLine() {}
+
+  /**
+   * @return value, which a form feed keeps from being a block tag
+   * @since 1
+   */
+  int formFeedBeforeTheFirstWord() {
+    return 0;
+  }
+
+  /**
+   * @code
+   */
+  void inlineOnlyTagAsABlockTag() {}
+
+  /**
+   * A long enough description of the snippet tag that follows:
+   * {@snippet : <table>text</table>
+   *
+   * }
+   */
+  void tableAfterAnErroneousSnippet() {}
+
+  /**
+   * @code@return value, a tag that javac reads right after an erroneous one
+   */
+  int tagRightAfterAnErroneousTag() {
+    return 0;
+  }
+
+  /**
+   * Text <p>
+   *
+   * @return value, which a form feed keeps from being a block tag
+   */
+  void formFeedBeforeAnAtAfterAParagraph() {}
+
+  /**
+   * A
+   *
+   * <p>Second, where the indentation javadoc keeps puts the paragraph tag past
+   * offset 1. next
+   */
+  void paragraphAfterAnIndentedLoneCharacter() {}
+
+  /**
+   * @@
+   *
+   * @see java.util.List<p> where the escape at the end of a line leaves the
+   *     next line's tag a tag
+   */
+  void escapeAtTheEndOfALine() {}
+
+  /**
+   * <ul>
+   *   <li>Text that is long enough.</ul>@param
+   * {@code a long enough description that wraps
+   *  second line}
+   */
+  void wrapAfterAClosedList() {}
+
+  /** {@link X> */
+  void referenceWithAnUnmatchedCloser() {}
+
+  /**
+   * {@snippet :
+   */
+  void unfinishedSnippetAtTheEnd() {}
+
+  /**
+   * {@snippet : <li>Text that is long enough to wrap
+   *     {@code a long description that wraps
+   *  second line}
+   */
+  void itemPinnedToAnErroneousSnippet() {}
+
+  /**
+   * {@value bad!
+   * {@code good}, where javadoc's reading depends on whether the value's
+   * reference is valid
+   */
+  void unclosedValueTag() {}
+
+  /**
+   * {@value bad!
+   * }@return value, where javadoc's reading depends on whether the value's
+   * reference is valid
+   */
+  void valueTagClosedOnTheNextLine() {}
+
+  /**
+   * {@inheritDoc bad!
+   * }@return value, where javadoc's reading depends on whether the reference is
+   * valid
+   */
+  int inheritDocClosedOnTheNextLine() {
+    return 0;
+  }
+
+  /**
+   * {@inheritDoc bad!
+   * {@snippet : after an unclosed inheritDoc with a reference
+   */
+  void unclosedInheritDocWithAReference() {}
+
+  /**
+   * @see bad! a </p> b, an invalid reference that makes the tag erroneous
+   */
+  void seeWithAnInvalidReference() {}
+
+  /**
+   * Text.
+   *
+   * @throws Bad! when the reference is invalid, which keeps the tag's text as written
+   */
+  void throwsWithAnInvalidReference() {}
+
+  /**
+   * {@link java.util.Map#put(Object, Object) a label} and
+   * {@link Map<String, Integer>#get} stay references.
+   */
+  void validReferences() {}
+
+  /**
+   * @see void[] a </p> b, where void takes no dimensions
+   */
+  void voidArrayReference() {}
+
+  /**
+   * @see nu‌ll a </p> b, a keyword with an ignorable character in it
+   */
+  void keywordWithAnIgnorableCharacter() {}
+
+  /**
+   * {@link bad-name </p> b}, where the space after an invalid reference stays
+   */
+  void closingTagAfterAnInvalidReference() {}
+
+  /**
+   * <li></li> a closed item, then a code tag that wraps onto its next line:
+   * {@code A
+   *  B}
+   */
+  void wrapAfterAClosedItem() {}
+}
+
+diagnostics:
+(none)

@@ -1,0 +1,146 @@
+class DocCommentHtmlBlocks {
+  /**
+   * First paragraph.
+   * <p>
+   * A paragraph whose {@code <p>} is alone on its line.
+   * <p>A paragraph glued to its tag.
+   * </p>
+   *
+   * A blank line without a tag adds no paragraph break and is kept.
+   * <h3>A heading</h3>
+   * Text after the heading.
+   */
+  void paragraphs() {}
+
+  /**
+   * Matches paths. <p>For example: <ul>
+   * <li>{@code com/t?st.jsp} &mdash; matches {@code com/test.jsp} but also
+   * {@code com/tast.jsp} or {@code com/txst.jsp}</li> <li>{@code com/*.jsp} &mdash; matches all
+   * {@code .jsp} files in the {@code com} directory</li> </ul>
+   * Text after the list.
+   */
+  void midLineBlocks() {}
+
+  /**
+   * Lists:
+   * <ul>
+   * <li>first item, which is long enough that it does not fit on one line of the comment</li>
+   * <li>second item, with a nested list:
+   * <ol>
+   * <li>nested one
+   * <li>nested two, unclosed, which is also long enough that it wraps onto the next line
+   * </ol>
+   * </li>
+   * <li>third item, unclosed
+   *
+   * <li>fourth item after a blank line
+   *
+   *
+   * <li>fifth item after two blank lines<p>with a paragraph inside
+   * </ul>
+   * @param mode one of:
+   * <ul><li>{@code A}, the first mode</li><li>{@code B}, the second mode</li></ul>
+   * after the list in the tag.
+   */
+  void lists(int mode) {}
+
+  /**
+   * A definition list, which Jolt keeps as written:
+   * <dl>
+   * <dt>Term</dt>
+   * <dd>The definition, which is long enough that it does not fit on one line.</dd>
+   * </dl>
+   */
+  void definitionList() {}
+
+  /**
+   * Line breaks:<br>
+   * <code>text/html</code> for HTML,<br/>
+   * <code>application/json</code>   for   JSON,<br />and more.
+   */
+  void lineBreaks() {}
+
+  /**
+   * A table:
+   * <table>
+   *   <tr><th>Key</th>   <th>Value</th></tr>
+   *   <tr><td>a</td>     <td>1</td></tr>
+   * </table>
+   * <blockquote>
+   *   A quotation,   kept as   written.
+   * </blockquote>
+   * Text with an <!-- inline comment --> in it, and a comment on lines of its own:
+   * <!--
+   *   hidden   text
+   * -->
+   * The end.
+   */
+  void keptBlocks() {}
+
+  /**
+   * Text. <p
+   * class="note">A paragraph whose tag runs onto the next line.
+   */
+  void tagOnTwoLines() {}
+
+  /** <p title="a > b">An attribute value with a greater-than sign. */
+  void quotedGreaterThan() {}
+
+  /**
+   * Text. <p title="hello
+   * Ġworld">A paragraph whose quoted attribute value runs onto a line that starts with a letter
+   * whose code point ends in the byte of a space. <p
+   * Ġdata="x">So does a paragraph whose tag runs onto such a line outside a quoted value.
+   */
+  void tagLineStartingWithUnicode() {}
+
+  /**
+   * Text. <p title="first
+   * second">A paragraph whose quoted attribute value keeps its line break, and a link whose title
+   * does too: <a href="https://example.com" title="third
+   *   fourth">example</a>.
+   */
+  void lineBreakInQuotedValue() {}
+
+  /**
+   * An image whose tag runs onto the next line, with alt text long enough to cross the line width: <img src="image.png"
+   * alt="The following text describes this graphic." height=600> wraps only between attributes.
+   */
+  void tagWrapsBetweenAttributes() {}
+
+  /**
+   * A snippet keeps its lines, and a line in it that starts with {@code @} starts no block tag:
+   * {@snippet :
+   * @Override
+   * public String toString() {
+   *   return "example";
+   * }
+   * }
+   * Text with {@code a code tag that runs onto
+   * @the next line}, where the {@code @} starts no block tag.
+   */
+  void snippetAndInlineTagLines() {}
+
+  /**
+   * This is value="<a title="alpha  beta"
+   * href="x">link</a>", where only the tag's quotes hold an attribute value.
+   */
+  void quoteBeforeATag() {}
+
+  /**
+   * An attribute value keeps the spaces at the end of its line: <a title="alpha  
+   * beta">link</a>, and so does a code tag: {@code alpha  
+   * beta}, with enough words to wrap the line past the width.
+   */
+  void spacesAtTheEndOfAnAtomsLine() {}
+
+  /**
+   * HTML reads the content of its raw text elements with its whitespace: <script>const label = "first  second";</script>,
+   * <style>p {  color: red;  }</style>, <textarea>first  second</textarea> and <title>first  second</title> stay
+   * as written, with enough words to wrap the line past the width.
+   * <script>
+   *   run(  "first" );   
+   * </script>
+   */
+  void rawTextElements() {}
+}

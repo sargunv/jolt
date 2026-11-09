@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
-"""Import pinned upstream files."""
+"""Import pinned upstream files.
+
+An import copies the files its globs match, or with `files` exactly the paths
+listed in that file (fetched with a shallow, sparse checkout of the pinned
+commit, so a large repository costs only those files). An import with
+`generate` writes the files a generator derives from the matched files
+instead of copying them; that keeps derived files out of the repository when
+their licence asks for attribution or share-alike.
+"""
 
 import contextlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -61,6 +70,30 @@ IMPORTS_CONFIG = [
         "globs": ["**/*.java"],
         "keep_path": True,
     },
+    # The Markdown (`///`) doc comments of the JDK, and a sample of `/**`
+    # comments with `{@snippet}`, `<!-- -->` and content lines without a
+    # leading `*`.
+    {
+        "name": "openjdk",
+        "repo": "openjdk/jdk",
+        "tag": "jdk-27-ga",
+        "commit": "815ff4dc327fe17f2433c7d115a5a503af10f3c4",
+        "path": ".",
+        "files": "tools/import/openjdk-files.txt",
+        "keep_path": True,
+    },
+    # The CommonMark spec's examples, each as a `///` comment on a method.
+    # The spec is CC-BY-SA 4.0, so the derived files are generated here and
+    # never committed.
+    {
+        "name": "commonmark-spec/input",
+        "repo": "commonmark/commonmark-spec",
+        "tag": "0.31.2",
+        "commit": "9103e341a973013013bb1a80e13567007c5cef6f",
+        "path": ".",
+        "globs": ["spec.txt"],
+        "generate": "commonmark_examples",
+    },
 ]
 
 
@@ -85,6 +118,9 @@ def sync_repos(imports: list[dict]) -> None:
     for item in sorted(repos.values(), key=lambda item: item["repo"]):
         destination = repo_dir(item)
         log(f"syncing {item['repo']} {item['tag']} ({item['commit']})")
+        if "files" in item:
+            sync_sparse(item, destination)
+            continue
         if not destination.exists():
             destination.parent.mkdir(parents=True, exist_ok=True)
             run(
@@ -117,6 +153,60 @@ def sync_repos(imports: list[dict]) -> None:
             )
 
 
+def sync_sparse(item: dict, destination: Path) -> None:
+    """Checks out only the listed files of the pinned commit, fetched
+    without history."""
+    if not destination.exists():
+        destination.mkdir(parents=True)
+        run("git", "init", "--quiet", cwd=destination)
+        run(
+            "git",
+            "remote",
+            "add",
+            "origin",
+            f"https://github.com/{item['repo']}.git",
+            cwd=destination,
+        )
+    if not has_commit(destination, item["commit"]):
+        run_with_retries(
+            "git",
+            "fetch",
+            "--depth",
+            "1",
+            "--filter=blob:none",
+            "origin",
+            f"refs/tags/{item['tag']}",
+            cwd=destination,
+        )
+    patterns = "".join(f"/{path}\n" for path in listed_files(item))
+    print("+ git sparse-checkout set --no-cone --stdin", file=sys.stderr)
+    subprocess.run(
+        ["git", "sparse-checkout", "set", "--no-cone", "--stdin"],
+        cwd=destination,
+        input=patterns,
+        text=True,
+        check=True,
+    )
+    run(
+        "git",
+        "checkout",
+        "--quiet",
+        "--detach",
+        item["commit"],
+        cwd=destination,
+    )
+    actual = capture("git", "rev-parse", "HEAD", cwd=destination)
+    if actual != item["commit"]:
+        raise RuntimeError(
+            f"{item['repo']} resolved to {actual}, expected {item['commit']}"
+        )
+
+
+def listed_files(item: dict) -> list[str]:
+    text = (ROOT / item["files"]).read_text()
+    return [line for line in text.splitlines() if line.strip()]
+
+
 def clear_imports(imports: list[dict]) -> None:
     IMPORTS.mkdir(parents=True, exist_ok=True)
     for child in IMPORTS.iterdir():
@@ -135,9 +225,25 @@ def materialize(imports: list[dict]) -> list[dict]:
     manifest = []
     for item in imports:
         source_dir = repo_dir(item) / item["path"]
-        paths = source_paths(source_dir, item["globs"])
+        if "files" in item:
+            paths = [source_dir / path for path in listed_files(item)]
+            missing = [path for path in paths if not path.is_file()]
+            if missing:
+                raise RuntimeError(f"missing listed files: {missing}")
+        else:
+            paths = source_paths(source_dir, item["globs"])
         target_dir = IMPORTS / item["name"]
         seen: set[Path] = set()
+
+        if "generate" in item:
+            for path in paths:
+                for name, content in GENERATORS[item["generate"]](path):
+                    destination = target_dir / name
+                    if destination in seen:
+                        raise RuntimeError(f"duplicate generated path: {name}")
+                    seen.add(destination)
+                    destination.write_text(content)
+            paths = []
 
         for path in paths:
             relative = path.relative_to(source_dir)
@@ -157,7 +263,8 @@ def materialize(imports: list[dict]) -> list[dict]:
                 "tag": item["tag"],
                 "commit": item["commit"],
                 "source_path": item["path"],
-                "globs": item["globs"],
+                "globs": item.get("globs", []),
+                "files": item.get("files"),
                 "file_count": len(seen),
             }
         )
@@ -206,6 +313,46 @@ def output_path(item: dict, relative: Path) -> Path:
     if item.get("keep_path"):
         return relative.parent / name
     return Path(name)
+
+
+def commonmark_examples(spec: Path):
+    """Yields one Java file per example of the CommonMark spec: the example's
+    Markdown as a `///` comment on a method. Examples a `///` comment can't
+    carry unchanged are skipped: a line starting with `/` would make a `////`
+    line, and Java reads `\\u` as a Unicode escape even in a comment."""
+    fence = "`" * 32
+    section = ""
+    number = 0
+    lines = iter(spec.read_text().splitlines())
+    for line in lines:
+        if line.startswith("#"):
+            section = line.lstrip("#").strip()
+        if line != f"{fence} example":
+            continue
+        number += 1
+        markdown = []
+        for line in lines:
+            if line == ".":
+                break
+            markdown.append(line.replace("\u2192", "\t"))
+        for line in lines:
+            if line == fence:
+                break
+        if any(line.startswith("/") for line in markdown) or any(
+            "\\u" in line for line in markdown
+        ):
+            continue
+        slug = re.sub(r"[^a-z0-9]+", "-", section.lower()).strip("-")
+        body = "".join(f"  ///{line}\n" for line in markdown)
+        yield (
+            f"example-{number:03}-{slug}.java",
+            f"// CommonMark spec 0.31.2, example {number} ({section}).\n"
+            "// Copyright (C) 2014-16 John MacFarlane, CC-BY-SA 4.0.\n"
+            f"class Example{number} {{\n{body}  void example() {{}}\n}}\n",
+        )
+
+
+GENERATORS = {"commonmark_examples": commonmark_examples}
 
 
 def repo_dir(item: dict) -> Path:

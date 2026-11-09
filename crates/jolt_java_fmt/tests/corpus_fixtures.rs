@@ -1,4 +1,5 @@
-//! The oracle over the imported upstream formatter fixture suites.
+//! The oracle over the imported upstream formatter fixture suites and the
+//! Markdown spec examples as `///` comments (`commonmark-spec`).
 
 use jolt_test_support::{collect_java_files, oracle_over_files, workspace_root};
 
@@ -12,6 +13,7 @@ fn imported_fixture_suites_pass_the_oracle() {
         "google-java-format",
         "palantir-java-format",
         "prettier-java",
+        "commonmark-spec",
     ] {
         let root = imports.join(suite).join("input");
         let files = collect_java_files(&root);
