@@ -61,4 +61,14 @@ class DocCommentJavacReading {
 
   /** Summary.<table><tr><td>cell</td></tr></table> More text after the table, with enough words to wrap. */
   void tableAfterAPeriod() {}
+
+  /** <ul><li>Item. </li></ul> After, where the first sentence ends at the item. */
+  void sentenceEndBeforeAClosingItem() {}
+
+  /**
+   *
+   * -----
+   * next line
+   */
+  void rulerAfterABlankFirstLine() {}
 }

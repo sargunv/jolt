@@ -86,3 +86,14 @@ fn many_text_nodes_after_a_long_indentation() {
     let formatted = format_in_time(&comment);
     assert!(formatted.contains("{@code x}"));
 }
+
+/// Many tables, each holding an unclosed `<pre>`: the search for each
+/// `</pre>` stays inside its table.
+#[test]
+fn unclosed_pre_in_many_tables() {
+    let formatted = format_in_time(&format!(
+        "    /** {} */",
+        "<table><pre></table> ".repeat(80_000)
+    ));
+    assert!(formatted.contains("<table><pre></table>"));
+}

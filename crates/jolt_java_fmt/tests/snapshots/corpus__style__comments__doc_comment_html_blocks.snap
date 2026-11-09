@@ -9,7 +9,7 @@ class DocCommentHtmlBlocks {
    *
    * <p>A paragraph whose {@code <p>} is alone on its line.
    *
-   * <p>A paragraph glued to its tag.</p>
+   * <p>A paragraph glued to its tag. </p>
    *
    * A blank line without a tag adds no paragraph break and is kept.
    *

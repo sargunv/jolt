@@ -396,7 +396,7 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
             index += 1;
             continue;
         };
-        let end = element_end(pieces, index, name);
+        let end = element_end(pieces, index, name, pieces.len() - 1);
         let span = Span {
             start: piece.span.start,
             end: pieces[end].span.end,
@@ -414,7 +414,7 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
                     match opens_region(piece) {
                         Some(name @ (Name::Pre | Name::Raw(_))) => {
                             // The table's end tag closes what it holds.
-                            let last = element_end(pieces, inner, name).min(end);
+                            let last = element_end(pieces, inner, name, end);
                             kept.push(Span {
                                 start: piece.span.start,
                                 end: pieces[last].span.end,
@@ -456,12 +456,15 @@ const fn opens_region(piece: Piece) -> Option<Name> {
 /// `pieces[open]`: the end tag that closes it (counting nested elements of
 /// the same name, except for a raw text element, which holds no elements),
 /// or the last piece. A raw text element inside it is skipped to its own end
-/// tag, since HTML reads what it holds as text.
-fn element_end(pieces: &[Piece], open: usize, name: Name) -> usize {
+/// tag, since HTML reads what it holds as text. The search goes no further
+/// than `pieces[last]`, which it returns when no end tag comes first: an
+/// element inside a table ends with the table at the latest, so its search
+/// stays inside the table.
+fn element_end(pieces: &[Piece], open: usize, name: Name, last: usize) -> usize {
     let raw = matches!(name, Name::Raw(_));
     let mut depth = 1usize;
     let mut at = open + 1;
-    while at < pieces.len() {
+    while at <= last {
         if let PieceKind::Element {
             name: Some(found),
             closing,
@@ -477,12 +480,12 @@ fn element_end(pieces: &[Piece], open: usize, name: Name) -> usize {
                     depth += 1;
                 }
             } else if !raw && !closing && matches!(found, Name::Raw(_)) {
-                at = element_end(pieces, at, found);
+                at = element_end(pieces, at, found, last);
             }
         }
         at += 1;
     }
-    pieces.len() - 1
+    last
 }
 
 #[allow(
@@ -603,7 +606,6 @@ impl Tokens<'_, '_> {
             let segment = &text[from..to];
             let ruler = from == 0
                 && to == text.len()
-                && line > 0
                 && words::is_ruler(segment)
                 && span.start <= (Pos { line, off: 0 });
             if ruler {
@@ -1107,6 +1109,9 @@ impl Html<'_, '_, '_, '_> {
             }
         } else {
             let join = match token.sep {
+                // A space after a sentence's end stays: it ends javadoc's
+                // first sentence there.
+                Sep::Space | Sep::Line if self.attach && self.ends_sentence => Join::Space,
                 _ if self.attach && !token.after_head => Join::None,
                 Sep::None => Join::None,
                 Sep::Space | Sep::Line if glue => Join::Space,
