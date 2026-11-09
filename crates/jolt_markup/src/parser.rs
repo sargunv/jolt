@@ -407,12 +407,13 @@ impl Parser<'_, '_> {
     /// printed as written. That is an escape (`@@`, `@*`) that doesn't
     /// start its line, which javac reads as one only after a line break
     /// before a tag's argument that the layout joins; an inline tag nested
-    /// too deeply; and a
-    /// `{@value}` whose reference no `}` follows on its line: javac stops at
-    /// an invalid reference, which `ReferenceParser` (not read by this port)
-    /// decides, and for a valid one reads one more character, which can be
-    /// the `{` of the next inline tag, or the `}`, after which a line break
-    /// before it still makes an `@` start a block tag.
+    /// too deeply; a `{@value}` reference that no `}` follows on its line;
+    /// and an `{@inheritDoc}` reference whose `}` is on a later line. javac
+    /// stops at an invalid reference, which `ReferenceParser` (not read by
+    /// this port) decides, and after a valid one reads on: through a `}`
+    /// after which the line break before it still makes an `@` start a
+    /// block tag, and for `{@value}` one more character, which can be the
+    /// `{` of the next inline tag.
     fn give_up(&mut self) {
         self.charge(self.budget + 1);
     }
@@ -1075,9 +1076,13 @@ impl Parser<'_, '_> {
                 Ok(self.rich(brace, name, Some(term), content))
             }
             Tag::InheritDoc => {
-                self.reference()?;
+                let reference = self.reference()?;
                 self.skip_whitespace();
                 if self.cur.ch == '}' {
+                    if self.newline && reference.is_some() {
+                        self.give_up();
+                        return Err(ParseError);
+                    }
                     self.next_char();
                     return Ok(self.atomic(brace, name));
                 }
@@ -1128,9 +1133,9 @@ impl Parser<'_, '_> {
                     }
                     _ => {}
                 }
-                self.reference()?;
+                let reference = self.reference()?;
                 self.skip_whitespace();
-                if self.cur.ch == '}' && !self.newline {
+                if self.cur.ch == '}' && !(self.newline && reference.is_some()) {
                     self.next_char();
                     Ok(self.atomic(brace, name))
                 } else {
@@ -1279,7 +1284,9 @@ impl Parser<'_, '_> {
             }
             self.next_char();
         }
-        if depth > 0 {
+        // javac leaves a negative depth to `ReferenceParser`, which always
+        // rejects it.
+        if depth != 0 {
             return Err(ParseError);
         }
         Ok(Some(self.span(start)))

@@ -105,4 +105,10 @@ class DocCommentKeptAsWritten {
   /** @param
    * x @@ text, an escape that the line break before the tag's argument makes */
   void escapeAfterAnArgumentOnTheNextLine(int x) {}
+
+  /** {@inheritDoc bad!
+   * }@return value, where javadoc's reading depends on whether the reference is valid */
+  int inheritDocClosedOnTheNextLine() {
+    return 0;
+  }
 }

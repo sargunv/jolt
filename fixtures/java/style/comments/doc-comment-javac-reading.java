@@ -154,4 +154,7 @@ class DocCommentJavacReading {
   /** <ul><li>Text that is long enough.</ul>@param {@code a long enough description that wraps
    * second line} */
   void wrapAfterAClosedList() {}
+
+  /** {@link X> */
+  void referenceWithAnUnmatchedCloser() {}
 }

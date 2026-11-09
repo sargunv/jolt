@@ -242,6 +242,9 @@ class DocCommentJavacReading {
    *  second line}
    */
   void wrapAfterAClosedList() {}
+
+  /** {@link X> */
+  void referenceWithAnUnmatchedCloser() {}
 }
 
 diagnostics:
