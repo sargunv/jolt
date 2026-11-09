@@ -74,6 +74,17 @@ class DocCommentMarkdownHardCases {
   /// @the next line}, where the `@` starts no block tag.
   void snippetAndInlineTagLines() {}
 
+  /// `Example` {@snippet :
+  /// @Override
+  /// public String toString() {}
+  /// }
+  ///
+  /// ```Three``` backticks with more after them on the line are a code span, not a fence: {@snippet :
+  /// @Override
+  /// int x;
+  /// }
+  void snippetAfterACodeSpan() {}
+
   /// A code span that runs onto the next line keeps the spaces that start it: `a
   ///   b`.
   void codeSpanContinuation() {}

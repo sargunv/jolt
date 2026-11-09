@@ -1297,22 +1297,25 @@ break that depends on the source's lines is one the output reproduces.
 
 The Markdown parser splits the run at block tags as the oracle does (a line that
 starts with `@` and a letter outside a fence and outside an inline tag, which
-are found outside fences) and reads each part with CommonMark's block algorithm:
-a stack of open block quotes and list items (matched at the start of each line,
-a list item by its content column, with tabs at stops of 4), the open leaf block
-(paragraph, fence, indented code, HTML block of type 1 to 7 with its end
-condition, table), lazy continuation lines (which belong to the open item or
-quote), and which blocks may interrupt a paragraph. Only a paragraph outside
-every container is filled: the description's and the text of block tags, with
-continuation lines flush at the frame, since an indented line can be code or
-list text. Every other line, blank lines included, is a verbatim line from its
-`///`. One line of lookahead keeps a paragraph as written when the line after it
-makes it a heading (a setext underline) or a table header (a delimiter row, read
-loosely), and a paragraph that may start with a link reference definition or
-that a `{@snippet}` covers a part of is kept too (a snippet with a blank line in
-it covers two paragraphs). Only one blank line is added, before the first block
-tag: Markdown blank lines change the page (a blank line in a list item makes the
-list loose).
+are found outside fences). As javadoc reads fences there, a line that starts
+with three or more `` ` `` (with no `` ` `` after them) or `~` opens one, and a
+line that starts with at least as many of the same character closes it; any
+other line is scanned for inline tags. Then it reads each part with CommonMark's
+block algorithm: a stack of open block quotes and list items (matched at the
+start of each line, a list item by its content column, with tabs at stops of 4),
+the open leaf block (paragraph, fence, indented code, HTML block of type 1 to 7
+with its end condition, table), lazy continuation lines (which belong to the
+open item or quote), and which blocks may interrupt a paragraph. Only a
+paragraph outside every container is filled: the description's and the text of
+block tags, with continuation lines flush at the frame, since an indented line
+can be code or list text. Every other line, blank lines included, is a verbatim
+line from its `///`. One line of lookahead keeps a paragraph as written when the
+line after it makes it a heading (a setext underline) or a table header (a
+delimiter row, read loosely), and a paragraph that may start with a link
+reference definition or that a `{@snippet}` covers a part of is kept too (a
+snippet with a blank line in it covers two paragraphs). Only one blank line is
+added, before the first block tag: Markdown blank lines change the page (a blank
+line in a list item makes the list loose).
 
 Inside a paragraph, atoms keep their words together: code spans (a backtick run
 is closed by the next run of the same length, found through a table of the next

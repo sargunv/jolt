@@ -287,7 +287,10 @@ fn find_ascii_ci(text: &str, needle: &str) -> Option<usize> {
 /// `///` included), as JEP 467 reads it: the text after `///` without the
 /// indentation all non-blank lines share, split at block tags (lines that
 /// start with `@` and a letter, outside fenced code blocks and inline tags),
-/// each part as its Markdown events ([`markdown_events`]).
+/// each part as its Markdown events ([`markdown_events`]). As javadoc reads
+/// fences, a line that starts with three or more `` ` `` (with no `` ` ``
+/// after them) or `~` opens one, and a line that starts with at least as
+/// many of the same character closes it.
 ///
 /// A run that is `documentation` (the doc comment of a declaration, in a
 /// source without syntax errors) is read as `CommonMark` reads it, hard
@@ -331,18 +334,18 @@ pub(crate) fn markdown(run: &[&str], documentation: bool) -> String {
             // Inside an inline tag: no fence or block tag starts here.
         } else {
             let trimmed = line.trim_start();
-            let marker = trimmed.as_bytes().first().copied();
-            if let Some(byte @ (b'`' | b'~')) = marker {
-                let len = trimmed.bytes().take_while(|&b| b == byte).count();
-                match fence {
-                    None if len >= 3 => fence = Some((byte, len)),
-                    Some((open, open_len)) if open == byte && len >= open_len => fence = None,
-                    _ => {}
+            if let Some((marker, len)) = fence {
+                if trimmed.bytes().take_while(|&b| b == marker).count() >= len {
+                    fence = None;
                 }
                 continue;
             }
-            if fence.is_some() {
-                continue;
+            if let Some(marker @ (b'`' | b'~')) = trimmed.bytes().next() {
+                let len = trimmed.bytes().take_while(|&b| b == marker).count();
+                if len >= 3 && !(marker == b'`' && trimmed[len..].contains('`')) {
+                    fence = Some((marker, len));
+                    continue;
+                }
             }
             if trimmed.starts_with('@')
                 && trimmed[1..].starts_with(|ch: char| ch.is_ascii_alphabetic())

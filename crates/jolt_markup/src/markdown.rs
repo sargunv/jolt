@@ -25,10 +25,11 @@ use crate::tags::{self, Arg, InlineTags, is_space};
 
 /// Lays out the content lines of a `///` run: the description and each
 /// block tag. A block tag starts at a line that starts with `@` and a letter,
-/// outside a fence (any line that starts with three or more `` ` `` or `~`
-/// opens one, and one of the same character and at least the same length
-/// closes it) and outside an inline tag, as `jolt_test_support`'s doc
-/// comment oracle reads it. Inline tags are found outside fences.
+/// outside a fence (a line that starts with three or more `` ` ``, with no
+/// `` ` `` after them, or `~` opens one, and a line that starts with at least
+/// as many of the same character closes it, as javadoc reads it) and outside
+/// an inline tag, as `jolt_test_support`'s doc comment oracle reads it.
+/// Inline tags are found outside fences.
 pub(crate) fn parse<'a>(lines: &[Line<'a>], layout: &mut Layout<'_, 'a>) {
     let mut tags = InlineTags::new(lines);
     let mut parser = Parser {
@@ -45,27 +46,23 @@ pub(crate) fn parse<'a>(lines: &[Line<'a>], layout: &mut Layout<'_, 'a>) {
     for (index, line) in lines.iter().enumerate() {
         if line.offset >= tag_end {
             let trimmed = line.text.trim_start();
-            match trimmed.as_bytes().first() {
-                Some(&marker @ (b'`' | b'~')) => {
-                    let len = trimmed.bytes().take_while(|&byte| byte == marker).count();
-                    match fence {
-                        None if len >= 3 => fence = Some((marker, len)),
-                        Some((open, open_len)) if open == marker && len >= open_len => {
-                            fence = None;
-                        }
-                        _ => {}
-                    }
-                    continue;
+            if let Some((marker, len)) = fence {
+                let run = trimmed.bytes().take_while(|&byte| byte == marker).count();
+                if run >= len {
+                    fence = None;
                 }
-                _ if fence.is_some() => continue,
-                _ if tags::is_block_tag(trimmed) => {
-                    if index > start {
-                        parser.part(&lines[start..index], tag);
-                    }
-                    start = index;
-                    tag = true;
+                continue;
+            }
+            if let Some(opened) = opens_fence(trimmed.as_bytes()) {
+                fence = Some(opened);
+                continue;
+            }
+            if tags::is_block_tag(trimmed) {
+                if index > start {
+                    parser.part(&lines[start..index], tag);
                 }
-                _ => {}
+                start = index;
+                tag = true;
             }
         }
         let text = line.text;
