@@ -148,4 +148,8 @@ class DocCommentTrailingWhitespace {
   /// a 
   /// -->
   void commentAcrossLines() {}
+
+  /** <table><tr><td>{@code first  
+   * second} in a table without its end tag */
+  void codeAtTheEndOfAnUnclosedTable() {}
 }

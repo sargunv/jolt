@@ -1352,6 +1352,15 @@ flattened, an inline tag's rich text in line between its head and its `}`. Then:
   columns or more is printed as written.
 - A word that starts a source line and is a list marker keeps the line break
   before it, and a line made only of punctuation keeps its own line.
+- A tag written right after the word before it stays on that word's line when a
+  line break would move the end of javadoc's first sentence: after a sentence's
+  end (`.`, `!`, `?`), a tag that doesn't end the sentence itself (`</div>`,
+  `<li>`), since whitespace would end it there; and after a lone first
+  character, `<p>` or another tag that ends the sentence, which
+  `DocTreeMaker.isSentenceBreak` reads as no break at offset 1.
+- The `}` of an inline tag with nothing after its head (`{@index term }`) stays
+  on the head's line: javac reads a `}` at a line start without ending its
+  `newline` state, so an `@` right after it would start a block tag.
 
 The tokens are placed by a stack of open blocks: block tag text (indent 4),
 lists (their items at 2 more) and list items (their other lines at 4 more). A

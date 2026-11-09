@@ -274,6 +274,7 @@ pub(crate) fn lay_out<'a>(
         gap: Gap::None,
         attach: false,
         ends_sentence: false,
+        lone_first: false,
     };
     for token in &tokens {
         html.token(token);
@@ -357,10 +358,14 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
                     }
                     flatten(&rich.content, lines, pieces);
                     if let Some(close) = rich.close {
+                        // After a head with no text, javac reads the `}` at
+                        // a line start and keeps reading the line as just
+                        // started, so an `@` right after it would start a
+                        // block tag: the `}` stays on the head's line.
                         pieces.push(Piece {
                             kind: PieceKind::Atom,
                             span: close,
-                            glue: false,
+                            glue: rich.content.is_empty(),
                             head: false,
                         });
                     }
@@ -408,8 +413,18 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
                 PieceKind::Region
             }
             _ => {
+                // Without its end tag, the table ends at the last piece,
+                // which it holds.
+                let closed = matches!(
+                    pieces[end].kind,
+                    PieceKind::Element {
+                        name: Some(Name::Table),
+                        closing: true,
+                    }
+                );
+                let stop = if closed { end } else { end + 1 };
                 let mut inner = index + 1;
-                while inner < end {
+                while inner < stop {
                     let piece = pieces[inner];
                     match opens_region(piece) {
                         Some(name @ (Name::Pre | Name::Raw(_))) => {
@@ -1017,6 +1032,10 @@ fn breaks_sentence(text: &str) -> bool {
 /// lists nest (HTML ignores the indentation).
 const MAX_INDENT: u16 = 24;
 
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "the independent states of the layout"
+)]
 struct Html<'p, 'd, 'l, 'a> {
     layout: &'p mut Layout<'d, 'l, 'a>,
     frames: Vec<Frame>,
@@ -1032,6 +1051,9 @@ struct Html<'p, 'd, 'l, 'a> {
     /// The last word ends a sentence (`.`, `!`, `?`): javadoc's first
     /// sentence ends there if whitespace follows.
     ends_sentence: bool,
+    /// The last word is the comment's first, one character long: javadoc
+    /// reads a `<p>` right after it (at offset 1) as no sentence break.
+    lone_first: bool,
 }
 
 impl Html<'_, '_, '_, '_> {
@@ -1089,31 +1111,31 @@ impl Html<'_, '_, '_, '_> {
         self.layout.line(blank, indent, hang);
     }
 
-    /// Whether a line break before `token`, a tag written right after a
-    /// sentence's end that doesn't end the sentence itself, would end
-    /// javadoc's first sentence there; `emit` then keeps it on the line (see
-    /// the block case there).
+    /// Whether a line break before `token`, a tag written right after the
+    /// word before it, would change where javadoc's first sentence ends;
+    /// `emit` then keeps it on the line (see the block case there). After a
+    /// sentence's end, whitespace would end the sentence there, unless the
+    /// tag ends it itself; and a tag that ends it (`<p>`) doesn't when it
+    /// follows a lone first character, at offset 1, where whitespace would
+    /// move it.
     fn keeps_sentence(&self, token: &Token) -> bool {
         token.sep == Sep::None
-            && self.ends_sentence
             && !self.layout.at_start()
-            && !breaks_sentence(self.layout.text_at(token.span.start))
+            && if breaks_sentence(self.layout.text_at(token.span.start)) {
+                self.lone_first
+            } else {
+                self.ends_sentence
+            }
     }
 
     /// Adds a word. `glue` keeps it on the line of the word before.
     fn emit(&mut self, token: &Token, glue: bool) {
+        let first = self.layout.at_start();
         let text = self
             .layout
             .segment(token.span.start.line, token.span.start.off, None);
         if let Some(why) = self.next_line.take() {
-            if why == Why::Block
-                && token.sep == Sep::None
-                && self.ends_sentence
-                && !breaks_sentence(text)
-            {
-                // A block written right after a sentence's end belongs to
-                // that sentence in javadoc's first sentence, unless it ends
-                // the sentence itself; whitespace there would end it.
+            if why == Why::Block && self.keeps_sentence(token) {
                 self.layout.word(token.span, Join::None, token.sticky);
             } else if !self.layout.at_start()
                 && token.sticky
@@ -1148,6 +1170,9 @@ impl Html<'_, '_, '_, '_> {
                 .segment(token.span.end.line, 0, Some(token.span.end.off))
         };
         self.ends_sentence = last.ends_with(['.', '!', '?']);
+        self.lone_first = first
+            && token.span.end.line == token.span.start.line
+            && last.encode_utf16().count() == 1;
         self.attach = false;
         self.gap = Gap::None;
     }
