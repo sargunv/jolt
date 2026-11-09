@@ -31,6 +31,11 @@ fn is_letter(category: G) -> bool {
 }
 
 /// `Character.isIdentifierIgnorable`.
+pub(crate) fn is_identifier_ignorable(ch: char) -> bool {
+    is_ignorable(ch, get_general_category(ch))
+}
+
+/// `Character.isIdentifierIgnorable`, given the character's category.
 fn is_ignorable(ch: char, category: G) -> bool {
     matches!(ch, '\0'..='\u{8}' | '\u{e}'..='\u{1b}' | '\u{7f}'..='\u{9f}') || category == G::Format
 }

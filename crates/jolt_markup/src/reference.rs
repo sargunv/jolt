@@ -371,6 +371,27 @@ impl<'s> Part<'s> {
     }
 }
 
+/// The token of a name. javac's scanner drops the identifier-ignorable
+/// characters from a name (`nu\u{200c}ll` is `null`), so a keyword or a
+/// restricted name is found without them.
+fn name(word: &str) -> Token<'_> {
+    let bare: std::borrow::Cow<'_, str> = if word.chars().any(java::is_identifier_ignorable) {
+        word.chars()
+            .filter(|&ch| !java::is_identifier_ignorable(ch))
+            .collect::<String>()
+            .into()
+    } else {
+        word.into()
+    };
+    if let Some(&keyword) = KEYWORDS.iter().find(|&&keyword| keyword == bare) {
+        Token::Keyword(keyword)
+    } else if let Some(&restricted) = RESTRICTED.iter().find(|&&name| name == bare) {
+        Token::Ident(restricted)
+    } else {
+        Token::Ident(word)
+    }
+}
+
 /// javac's scanner over `text`, as far as a type tells tokens apart.
 fn tokens(text: &str) -> Vec<Token<'_>> {
     let mut tokens = Vec::new();
@@ -400,12 +421,7 @@ fn tokens(text: &str) -> Vec<Token<'_>> {
                     end = at + part.len_utf8();
                     chars.next();
                 }
-                let word = &text[start..end];
-                if KEYWORDS.contains(&word) {
-                    Token::Keyword(word)
-                } else {
-                    Token::Ident(word)
-                }
+                name(&text[start..end])
             }
             _ => Token::Other,
         };

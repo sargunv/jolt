@@ -199,4 +199,7 @@ class DocCommentJavacReading {
 
   /** @see void[] a </p> b, where void takes no dimensions */
   void voidArrayReference() {}
+
+  /** @see nu‌ll a </p> b, a keyword with an ignorable character in it */
+  void keywordWithAnIgnorableCharacter() {}
 }
