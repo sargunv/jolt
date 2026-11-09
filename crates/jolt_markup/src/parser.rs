@@ -9,20 +9,9 @@
 //! no tags. Erroneous constructs become erroneous nodes, never failures.
 //!
 //! The tree keeps only what the layout needs: each node's span, and for HTML
-//! elements and tags their names and parts. Deviations from javac:
-//!
-//! - A reference (`{@link Map#get}`, `@throws IOException`) is not parsed:
-//!   javac's `ReferenceParser` runs the Java parser on it and turns a tag with
-//!   a malformed reference into an erroneous node. Here it is always a
-//!   reference. The layout prints references, labels and erroneous nodes with
-//!   the same rules (a reference is an atom, label text is filled, and every
-//!   word that starts with `@` keeps whether it starts a line), so both
-//!   readings stay the same.
-//! - `<pre>` content is not normalized (`normalizePreContent`): the layout
-//!   prints a `<pre>` region as written.
-//! - Where javac's Markdown scanner would index past a line (a list marker
-//!   followed by a tab at the end of a line), this reads the rest of the line
-//!   as empty.
+//! elements and tags their names and parts. One deviation from javac:
+//! `<pre>` content is not normalized (`normalizePreContent`), since the
+//! layout prints a `<pre>` region as written.
 
 use std::cell::OnceCell;
 
@@ -146,13 +135,14 @@ pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
     };
     (parser.cur.ch, parser.cur.width) = parser.decode(parser.cur.pos);
     let (body, _) = parser.content(Phase::Body);
-    if !markdown
-        && let Some(&Node::Text(span)) = body.first()
+    if let Some(&Node::Text(span)) = body.first()
         && parser.starts_with_whitespace(span.start)
     {
         // Text that starts with whitespace javac doesn't skip at the start
-        // (U+2003) can't be laid out: it would start the layout's first line,
-        // which javac strips as indentation when it is the only one.
+        // (U+2003, or in Markdown any whitespace after the frame) can't be
+        // laid out: it would start the layout's first line, which javac
+        // strips as indentation when it is the only one, and javadoc reads
+        // a `{@summary}` or `{@return}` after it as no first sentence.
         parser.give_up();
     }
     let mut tags = Vec::new();
@@ -456,6 +446,39 @@ impl Parser<'_, '_> {
             .is_some_and(java::is_whitespace)
     }
 
+    /// The `\\` case of javac's `content` in Markdown: the `\\`, the
+    /// character it escapes and the one after, read as text. False when the
+    /// reading gives up instead: where whitespace a layout removes or
+    /// collapses would change what javac reads with the escape.
+    fn markdown_escape(&mut self) -> bool {
+        self.default_content();
+        if self.only_trailing_whitespace() {
+            // The escaped character is trailing whitespace.
+            self.give_up();
+            return false;
+        }
+        let escaped_space = matches!(self.cur.ch, ' ' | '\t');
+        self.next_char();
+        if escaped_space && matches!(self.cur.ch, ' ' | '\t') || self.only_trailing_whitespace() {
+            // Whitespace after escaped whitespace, which a layout collapses,
+            // or trailing whitespace, which it removes: javac would read
+            // the next character with the escape instead, the line break
+            // after it (and no block tag on the next line), or its
+            // end-of-input character.
+            self.give_up();
+            return false;
+        }
+        self.default_content();
+        true
+    }
+
+    /// Whether the reader's line has only whitespace from the reader on: its
+    /// trailing whitespace, or a blank line's, which a layout removes.
+    fn only_trailing_whitespace(&self) -> bool {
+        let rest = &self.lines[self.cur.pos.line as usize].text[self.cur.pos.off as usize..];
+        !rest.is_empty() && rest.bytes().all(|byte| matches!(byte, b' ' | b'\t' | 0x0c))
+    }
+
     /// Whether only spaces and tabs come before `pos` on its line.
     fn starts_line(&self, pos: Pos) -> bool {
         self.lines[pos.line as usize].text[..pos.off as usize]
@@ -732,9 +755,9 @@ impl Parser<'_, '_> {
                     self.default_content();
                 }
                 '\\' if markdown => {
-                    self.default_content();
-                    self.next_char();
-                    self.default_content();
+                    if !self.markdown_escape() {
+                        break 'read;
+                    }
                 }
                 '`' | '~' if markdown => self.markdown_code(),
                 _ => self.plain_run(),
@@ -1661,12 +1684,44 @@ impl Parser<'_, '_> {
                 if self.charge(cost) {
                     return;
                 }
+                if scan.past_end {
+                    // javac reads past the line (a list marker and a tab at
+                    // its end) and throws.
+                    self.give_up();
+                    return;
+                }
                 match kind {
                     LineKind::BulletedListItem | LineKind::OrderedListItem => {
+                        if self.lines[self.cur.pos.line as usize]
+                            .text
+                            .ends_with([' ', '\t', '\u{c}'])
+                        {
+                            // javac reads a list item's markers with
+                            // character counts into its line and a loop that
+                            // runs on to the next space: whitespace at the
+                            // line's end, which a layout removes, can decide
+                            // what it reads.
+                            self.give_up();
+                            return;
+                        }
                         let mut count = indent;
-                        while self.cur.ch != ' ' && self.cur.ch != '\t' && !self.at_end() {
+                        let line = self.cur.pos.line;
+                        while self.cur.ch != ' ' && self.cur.ch != '\t' {
+                            if self.at_end() || self.cur.pos.line != line {
+                                // javac's loop reads no character at the end
+                                // of the comment, and never ends; past the
+                                // line's end, it runs on to a space on a later
+                                // line, which may be whitespace a layout
+                                // removes.
+                                self.give_up();
+                                return;
+                            }
                             count += 1;
                             self.next_char();
+                        }
+                        if self.cur.pos.line != line {
+                            self.give_up();
+                            return;
                         }
                         let item_indent = self.read_indent(count);
                         let state = self.markdown_state();
@@ -1712,6 +1767,12 @@ impl Parser<'_, '_> {
                 let block = self.markdown_state().containers[index];
                 let (kind, cost) = scan.kind(peek);
                 if self.charge(cost) {
+                    return;
+                }
+                if scan.past_end {
+                    // javac reads past the line (a list marker and a tab at
+                    // its end) and throws.
+                    self.give_up();
                     return;
                 }
                 match block.kind {
@@ -1880,6 +1941,9 @@ struct LineScan<'t> {
     terminator: OnceCell<Option<usize>>,
     /// The offset of the line's last `` ` ``, once looked for.
     backtick: OnceCell<Option<usize>>,
+    /// A suffix past the line's end was asked for, where javac's
+    /// `line.substring` throws.
+    past_end: bool,
 }
 
 impl<'t> LineScan<'t> {
@@ -1890,6 +1954,7 @@ impl<'t> LineScan<'t> {
             byte: 0,
             terminator: OnceCell::new(),
             backtick: OnceCell::new(),
+            past_end: false,
         }
     }
 
@@ -1901,11 +1966,13 @@ impl<'t> LineScan<'t> {
             (self.chars, self.byte) = (0, 0);
         }
         let skip = index - self.chars;
-        let walked: usize = self.text[self.byte..]
-            .chars()
-            .take(skip)
-            .map(char::len_utf8)
-            .sum();
+        let mut walked = 0;
+        let mut count = 0;
+        for ch in self.text[self.byte..].chars().take(skip) {
+            walked += ch.len_utf8();
+            count += 1;
+        }
+        self.past_end |= count < skip;
         self.byte += walked;
         self.chars = index;
         (self.byte, skip)

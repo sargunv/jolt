@@ -104,6 +104,25 @@ pub(crate) fn starts_structure(word: &str, markdown: bool) -> bool {
     }
 }
 
+/// Whether a Markdown word that starts a line keeps starting one: one where
+/// Markdown readers don't all agree on what the line is, a word made only of
+/// the characters of a setext underline or a thematic break (`Foo` and
+/// `=-`) or a table's delimiter row (with fewer cells than its header), or one
+/// that starts like a fence, which javac reads as one after a paragraph
+/// however indented.
+pub(crate) fn keeps_line_start(word: &str) -> bool {
+    word.bytes().all(|byte| b"*-_=+".contains(&byte))
+        || is_delimiter_row(word)
+        || word.starts_with("```")
+        || word.starts_with("~~~")
+}
+
+/// Whether a word is made only of `-`, `:` and `|`, with a `-`, like a
+/// table's delimiter row (`|---|:--:|`).
+pub(crate) fn is_delimiter_row(word: &str) -> bool {
+    word.contains('-') && word.bytes().all(|byte| b"-:|".contains(&byte))
+}
+
 /// Whether a Markdown line that starts with `word` ends javadoc's first
 /// sentence there (`DocTreeMaker`'s `endPara`: a line that starts with
 /// `-`, `+`, `*`, `#`, `=`, `_` or `>`).

@@ -808,18 +808,20 @@ whatever separator the rule itself put at that position: `a /* c */ + b`,
   leading `*` is not a star block: javadoc keeps the indentation of such a line
   (a code sample in `<pre>` relies on it), so each continuation line only loses
   the indentation of the source line the comment starts on, when it starts with
-  it, as a verbatim node's lines do; when the opener's line has text too, none
-  of that indentation is shared, so the comment is written byte for byte
-  (`keeps_bytes`). A banner (`/***`, or a line made only of two or more `*`s,
-  which javadoc reads as blank) is kept as written the same way. Such comments
-  are rare, so the printer lays a doc comment out as a star block and starts
-  again as written only when it meets such a line; other doc comments are
-  scanned once. A doc comment printed here keeps the whitespace (Java's: space,
-  tab, form feed) at the end of its lines and of the blank lines between its
-  text: javadoc reads it in `<pre>`, code and tag bodies, and a comment that
-  isn't laid out was not read for where those are. Other multi-line block
-  comments lose only the indentation their continuation lines share, and their
-  trailing whitespace.
+  it, as a verbatim node's lines do. javac removes the indentation that all
+  lines with text share, counting the whole indentation of a line without `*`
+  and only what follows the `*`s on a line with one: when the opener's line or a
+  line with a `*` has text too, a new indentation would move only some of those
+  lines, so the comment is written byte for byte (`keeps_bytes`). A banner
+  (`/***`, or a line made only of two or more `*`s, which javadoc reads as
+  blank) is kept as written the same way. Such comments are rare, so the printer
+  lays a doc comment out as a star block and starts again as written only when
+  it meets such a line; other doc comments are scanned once. A doc comment
+  printed here keeps the whitespace (Java's: space, tab, form feed) at the end
+  of its lines and of the blank lines between its text: javadoc reads it in
+  `<pre>`, code and tag bodies, and a comment that isn't laid out was not read
+  for where those are. Other multi-line block comments lose only the indentation
+  their continuation lines share, and their trailing whitespace.
 - An unterminated comment: its text, written raw.
 - Any other single-line comment: its text as written.
 - The head of a doc line run: the run's lines, each a line comment, one per
@@ -1318,10 +1320,8 @@ text, an atom or structure is javadoc's own:
    reference erroneous, and so does the port. A reference with what that subset
    doesn't read (an annotation outside the parameters, a comment) gives up the
    reading. Deviation: `normalizePreContent` is not applied, since a `<pre>`
-   region prints as written. Where javac's Markdown scanner loops forever (a
-   last line of list markers with a space after them, `/// + +`: it pushes a
-   list item without reading a character, a JDK bug that the hunt's oracle hit),
-   the port's reading fails, and the comment prints as written.
+   region prints as written. Where javac's Markdown scanner fails (see the list
+   below), the port's reading fails, and the comment prints as written.
 3. **Layout** (`html` for `/**`, `markdown` for `///`, then `layout`).
 
 A comment is printed as written (N9) when:
@@ -1338,14 +1338,32 @@ A comment is printed as written (N9) when:
 - an escape (`@@`, `@*`) doesn't start its line: javac reads it as one only when
   a line break came before a tag's argument on its line, which the layout joins
   onto the tag's line;
-- its description starts with whitespace javac doesn't skip (U+2003): it would
-  start the layout's first line, which javac strips as indentation when it is
-  the only one;
+- its description starts with whitespace javac doesn't skip (U+2003, or in
+  Markdown any whitespace after the frame): it would start the layout's first
+  line, which javac strips as indentation when it is the only one, and javadoc
+  reads a `{@summary}` or `{@return}` after it as no first sentence;
+- javac's Markdown scanner fails on it, or reads whitespace that a layout
+  removes. `Markdown.update` skips a list marker with a loop that runs to the
+  next space or tab: at the end of the comment it never ends (`/// + +`, a JDK
+  bug that the hunt's oracle hit), and past the end of its line it runs on into
+  the next. It looks at the rest of the line at a character count that it
+  doesn't add up across nested markers, so it may look past the line's end and
+  throw. A list item's line with trailing whitespace gives up too, since the
+  whitespace decides where those counts land. A Markdown `\` reads the next two
+  characters with it: when one of them is whitespace that ends its line, or both
+  are whitespace, a layout that removes or collapses it changes what javac reads
+  after the escape;
 - an erroneous node or a `{` reaches `*/` with nothing between (`{@index x*/`),
   where a layout puts a space or a line break that can change the error;
 - the comment's end follows a `{@snippet :` on its line: javac reads an error
   there, but the snippet's body after a line break, which a layout on more than
-  one line puts before `*/`.
+  one line puts before `*/`;
+- in Markdown, a part that a block tag follows ends in an unclosed fenced code
+  block (javadoc renders each part as a document of its own, so the block holds
+  the part's last lines up to the tag, with the whitespace before the tag on its
+  line and the blank line that the layout puts before the first tag), or an HTML
+  block ends inside a tag (at a blank line), which javadoc's HTML reads on into
+  the paragraph after it.
 
 The Java hook also keeps file headers, and `jolt_fmt` keeps comments that share
 a line with code, lie in a formatter-ignore region, or have a target with
@@ -1437,29 +1455,72 @@ builds the same text for each part, copying its lines into one `String` and
 keeping where each piece comes from, and parses it with pulldown-cmark (tables
 on). Each top-level block maps to its source lines. A paragraph whose lines hold
 no other block is filled, with its atoms (code spans, links, autolinks, inline
-HTML, a `<pre>` element to its `</pre>`, inline tags) whole and its hard breaks
-kept; every other block, every line no block covers (a blank line, a link
-reference definition), and lines that two blocks share are printed as written
-from their `///`, with trailing whitespace dropped except two or more spaces
-after text before a line with text, and except at the end of a line inside a
-code block, an inline tag, an escape, an erroneous node, a rich tag's head, or a
-`<pre>` or raw text element. The `<pre>` and raw text elements are found by
-reading the part's HTML pieces as HTML does (`markdown::Reader`, which keeps its
-state across pieces, since a line of an HTML block may end inside a tag): a tag
-ends at the first `>` outside a quoted attribute value, a comment at `-->`, and
-a raw text element's content at its own end tag only. An inline tag's label (or
+HTML, a `<pre>` or `<code>` element to its end tag, inline tags) whole and its
+hard breaks kept; every other block, every line no block covers (a blank line, a
+link reference definition), and lines that two blocks share are printed as
+written from their `///`. The `<pre>`, `<code>` and raw text elements are found
+by reading the part's HTML pieces as HTML does (`markdown::Reader`, which keeps
+its state across pieces and reads each piece line by line, since a line of an
+HTML block may end inside a tag): a tag ends at the first `>` outside a quoted
+attribute value, a comment at `-->` (`<!-->` and `<!--->` at once), and a raw
+text element's content at its own end tag only. An inline tag's label (or
 description) is filled only when it is plain words: one with Markdown that a
 line break could change (a code span, a link, HTML, an escape, a line that ends
 in two spaces or a blank line) makes the tag one atom. A block tag's head is
 joined with single spaces, and its text starts on the tag's line, flush with the
-frame on later lines. Besides the words that start Markdown blocks, two of
-javadoc's own rules shape the filling: in the description's first block, up to
-its first word that ends in `.`, a word that starts with one of `-+*#=_>` at a
-line start would end javadoc's first sentence there (`DocTreeMaker`'s
-`endPara`), so such a word keeps the line break the source gives it and is never
-put at a line start; and a word that ends in `\` never ends a wrapped line. A
-run with a block tag that doesn't start its line (javac reads `- @param` as a
-list marker and a tag) is printed as written.
+frame on later lines; one blank line goes before the first block tag, except
+before an erroneous tag printed as written with code's indentation, which javac
+reads as a tag only when no blank line comes before it.
+
+pulldown-cmark and the commonmark-java that javadoc renders with don't agree on
+every malformed input (a title line that starts with `\"`, a closing tag split
+across lines, a delimiter row with fewer cells than its header), and javac's own
+scanner reads some lines its own way. So the filling keeps the source's choices
+wherever a reader could tell them apart:
+
+- A span that this reader didn't take for a link, a tag or a code span but
+  another reader may (a `[` or `](` not closed yet, a `<` and a letter, `/`, `!`
+  or `?` up to its `>`, a run of backticks up to a run as long) is one atom up
+  to where it closes, with its whitespace and line breaks; one still open at the
+  paragraph's end keeps the whitespace at the end of its last line.
+- A word that starts a source line keeps its line break when it is a block tag
+  or an escape (`@`), follows a word that ends in `\` (javac reads the line
+  break with the escape), is made only of `*`, `-`, `_`, `=` and `+` or only of
+  `-`, `:` and `|` with a `-`, or starts like a fence, which javac reads as one
+  after a paragraph however indented. A word after a kept line break (and after
+  a hard break) keeps its source indentation, which may keep it from starting a
+  block (`***`). The output line of a word that could start a block takes no
+  word from a later source line (`*` alone can't interrupt a paragraph, but
+  `* foo` can, and javac's reading of list markers can run away on it).
+- javadoc's first sentence ends at a blank line or at a later line that starts
+  with up to three spaces and one of `-+*#=_>` (`DocTreeMaker`'s `endPara`,
+  which reads the text, not its blocks, so a heading on the first line doesn't
+  end it), or with a `.` that `normalizeMarkdown` turns into a `-` inside `<…>`,
+  `[…]`, `(…)` or a code span. In the description, before such a line, a word
+  that starts with one of those at a line start keeps the line break the source
+  gives it (and indentation deeper than three, which keeps it from ending the
+  sentence), and is never put at a line start. That sentence ends at a
+  paragraph's end after an inline tag or a reference link only when whitespace
+  comes between, so a paragraph that ends with one there keeps its trailing
+  whitespace, and so do lines printed as written in that sentence.
+- A paragraph is printed as written when it starts like a link reference
+  definition (a line break after its destination or title could make it one),
+  has a hard break and an entity (after a hard break, javadoc reads the line
+  break after an entity that ends its line as another), has a hard break before
+  a word that could start a block, starts with a word made only of `*`, `-` or
+  `_` (its first line could fill with such words alone, a thematic break), or
+  has a line that starts like a table's delimiter row.
+- Trailing whitespace is dropped from lines printed as written and at the end of
+  a filled line, except two or more spaces after text before a line with text
+  that starts no block tag (a hard break), whitespace after a `\` (without it,
+  the `\` would end the line, a hard break), and the whitespace at the end of a
+  line inside a code block or code span, an inline tag, an escape, an erroneous
+  node, a rich tag's head, a tag, a declaration, a `<pre>`, `<code>` or raw text
+  element, or a link reference definition (whose title may span lines).
+
+A word that ends in `\` never ends a wrapped line. A run with a block tag that
+doesn't start its line (javac reads `- @param` as a list marker and a tag) is
+printed as written.
 
 **Rules about the output.** Both layouts share these, and they make the layout
 idempotent: every line break that depends on the source is one the output
@@ -1644,9 +1705,21 @@ only in `mise run hunt`, because it is too slow for the normal suite.
   oracle reads the doc comments of every clean variant whose doc comments
   changed with the JDK (see [Doc comment oracle](#doc-comment-oracle)), which
   covers the fixtures and every file of Spring and the OpenJDK slice at three
-  widths. Reports land in `target/hunt/`. `KNOWN_OPEN` must be empty.
+  widths. Reports land in `target/hunt/`. `KNOWN_OPEN` must be empty. A nightly
+  workflow (`.github/workflows/hunt.yml`) runs it on main.
+- Doc comment edits: the sweep also edits the doc comments of each file, one
+  edit per variant (`docedit<n>`): it picks a position inside a `/**` comment or
+  a `///` line by a hash of the edit's index and the file's length, and inserts
+  a piece of javadoc's or Markdown's syntax there (`JAVADOC_FRAGMENTS`,
+  `MARKDOWN_FRAGMENTS`: tags, references, HTML, entities, escapes, list markers,
+  fences, line breaks with and without the frame, whitespace that javac doesn't
+  skip) or deletes the character there. Real comments edited this way give the
+  malformed shapes that javac and Markdown readers read in their own ways, which
+  the doc oracle then checks. 2048 edits for a file of an exhaustive suite, 8
+  for the others, at the probes' widths; an edit that makes clean source dirty
+  is skipped.
 - `examples/jcheck.rs`: replays one file or one variant (`File.java:ownline12`,
-  `File.java:comment3@40`, `File.java:delete7`).
+  `File.java:comment3@40`, `File.java:delete7`, `File.java:docedit42@40`).
 - `examples/jref.rs`: `jref <dir>` checks `format(F) == F` for every `.java`
   file (or the `formatted:` section of every `.snap`) under `<dir>`;
   `jref --input <in> --expected <out> [--line-width N]` checks

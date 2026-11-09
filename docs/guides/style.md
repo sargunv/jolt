@@ -982,6 +982,11 @@ of their lines, since Jolt didn't read where it is content:
     javadoc would remove as indentation if it started the comment's only line;
   - `{@snippet :` followed on its line by only the comment's end, which javadoc
     reads differently from a line break there;
+  - in a Markdown comment: text that starts with whitespace after the frame; a
+    list item whose line ends with whitespace, or whose markers javadoc reads
+    past the line's end; a `\` before whitespace that ends its line, or before
+    two whitespace characters; a part that ends in an unclosed fenced code block
+    before a block tag; and an HTML block that ends inside a tag;
   - an error or a `{` right before `*/`, with no space between (`{@index x*/`,
     `{*/`).
 
@@ -1156,10 +1161,16 @@ document of its own. Jolt reads them the same way and fills their paragraphs;
 every other block keeps its lines exactly as written: lists, headings, code
 blocks, block quotes, tables, HTML blocks, link reference definitions and
 thematic breaks. So do lines that two blocks share, and a run with a block tag
-that doesn't start its line. Lines printed as written lose their trailing
-whitespace, except two or more spaces after text before a line with text, which
-may be a hard break, and the whitespace at the end of a line inside a code
-block, an inline tag, or a `<pre>`, `<script>`, `<style>`, `<textarea>` or
+that doesn't start its line. A few malformed paragraphs, which Markdown readers
+don't all read the same way, stay as written too: one that starts like a link
+reference definition, has a hard break and an entity, has a hard break before a
+word that could start a block, starts with a word made only of `*`, `-` or `_`,
+or has a line that starts like a table's delimiter row. Lines printed as written
+lose their trailing whitespace, except two or more spaces after text before a
+line with text, which may be a hard break, whitespace after a `\` (which would
+otherwise end the line, a hard break), and the whitespace at the end of a line
+inside a code block or code span, an inline tag, a tag, a link reference
+definition, or a `<pre>`, `<code>`, `<script>`, `<style>`, `<textarea>` or
 `<title>` element, which javadoc reads (see [Doc comments](#doc-comments)).
 
 A Markdown doc comment gets this style:
@@ -1184,7 +1195,9 @@ A Markdown doc comment gets this style:
   a link and the text of `{@return …}`, `{@summary …}` and `{@index …}` are
   filled when they are plain words; one with Markdown that a line break could
   change (a code span, a link, HTML, an escape, a hard break or a blank line)
-  keeps the whole tag as written.
+  keeps the whole tag as written. A link, tag or code span that isn't closed
+  where it should be (`[text`, `](url`, `<a`, `` `code ``) stays whole up to
+  where it closes, with its line breaks and spaces.
 - **No new structure.** Besides the words listed for Javadoc comments, a wrapped
   line never starts with a word that could start a Markdown block: one that is
   `#` to `######`, starts with `>`, `|`, three or more `` ` `` or `~`, or `<`
@@ -1192,9 +1205,13 @@ A Markdown doc comment gets this style:
   is made only of `-`, `:` and `|` with a `-`, like a table's `:---`. A word
   that ends in `\` never ends a wrapped line, since a line break after it is a
   hard break. In the first sentence, which javadoc ends at a line that starts
-  with `-`, `+`, `*`, `#`, `=`, `_` or `>`, a word that starts with one of those
-  never starts a wrapped line, and one that starts a source line keeps starting
-  its line.
+  with `-`, `+`, `*`, `#`, `=`, `_`, `>` or (inside brackets) `.`, a word that
+  starts with one of those never starts a wrapped line, and one that starts a
+  source line keeps starting its line. So does a word after a `\` that ends a
+  line, a word made only of `*`, `-`, `_`, `=` and `+` or of `-`, `:` and `|`,
+  and a word that starts like a fence. A word that keeps starting its line keeps
+  its indentation, and a line that starts with a word that could start a block
+  takes no words from the lines after it.
 
 ::: code-group
 

@@ -1,0 +1,40 @@
+name: Hunt
+
+# The corpus sweep (`mise run hunt`): too slow for every pull request, so it
+# runs each night on main, and on demand.
+on:
+  schedule:
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hunt:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+        with:
+          cache: true
+          cache_key_prefix: mise-v1
+      # The mise action may restore Rust install metadata without the rustup
+      # toolchain, components, or cross targets from mise.toml. Reinstall rust
+      # from mise config before any task can invoke cargo through mise.
+      - name: Ensure Rust toolchain
+        run: MISE_NO_HOOKS=1 mise install --force rust
+      - run: mise run hunt
+      - name: Upload the report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hunt-report
+          path: target/hunt/

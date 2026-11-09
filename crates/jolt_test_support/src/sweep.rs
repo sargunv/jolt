@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use jolt_fmt::FormatOptions;
+use jolt_syntax::TriviaKind;
 
 use crate::doc_oracle;
 use crate::oracle::{CorpusLanguage, check_source, parse_facts};
@@ -61,6 +62,246 @@ pub const PROBE_SHAPES: &[ProbeShape] = &[
         seed: 3_266_489_917,
     },
 ];
+
+/// What a doc comment edit inserts into a `/**` comment: the pieces of
+/// javadoc's grammar (tags, references, HTML, entities, escapes, line
+/// breaks with and without `*`, whitespace javadoc doesn't skip), so that the
+/// edits of real comments make the malformed shapes that javac reads in its
+/// own ways.
+const JAVADOC_FRAGMENTS: &[&str] = &[
+    "{",
+    "}",
+    "@",
+    "<",
+    ">",
+    "{@",
+    "{@code ",
+    "{@link ",
+    "{@link #m(",
+    "{@inheritDoc}",
+    "{@value ",
+    "{@snippet :",
+    "{@index ",
+    "{@return ",
+    "{@summary ",
+    "@param ",
+    "@return ",
+    "@throws ",
+    "@see ",
+    "@serialField ",
+    "@@",
+    "@*",
+    "@/",
+    "<p>",
+    "</p>",
+    "<pre>",
+    "</pre>",
+    "<table>",
+    "</table>",
+    "<ul>",
+    "<li>",
+    "</li>",
+    "<!--",
+    "-->",
+    "<a href=\"",
+    "<b ",
+    "&amp;",
+    "&",
+    "&#",
+    "#",
+    "(",
+    ")",
+    ",",
+    "\"",
+    "'",
+    "=",
+    ".",
+    ". ",
+    " ",
+    "  ",
+    "\t",
+    "\u{2003}",
+    "\u{a0}",
+    "\n",
+    "\n * ",
+    "\n *\n * ",
+    "\n * @param x ",
+    "\n *   ",
+    "\n * {@",
+    "*",
+    "**",
+    "\\",
+    "`",
+    "x",
+];
+
+/// What a doc comment edit inserts into a `///` line: Markdown's block and
+/// inline syntax, javadoc's tags, and line breaks that continue the run.
+const MARKDOWN_FRAGMENTS: &[&str] = &[
+    "`",
+    "``",
+    "```",
+    "~~~",
+    "[",
+    "]",
+    "](",
+    "[x]",
+    "[x]: ",
+    "*",
+    "_",
+    "- ",
+    "+ ",
+    "1. ",
+    "1) ",
+    "> ",
+    "# ",
+    "|",
+    "---",
+    "<",
+    ">",
+    "<p>",
+    "<pre>",
+    "</pre>",
+    "<!--",
+    "-->",
+    "&amp;",
+    "{@",
+    "{@code ",
+    "{@link ",
+    "{@inheritDoc}",
+    "@param ",
+    "@return ",
+    "@throws ",
+    "\\",
+    " ",
+    "  ",
+    "\t",
+    "\u{2003}",
+    "\n///",
+    "\n/// ",
+    "\n///\n/// ",
+    "\n/// - ",
+    "\n///     ",
+    "\n/// @param x ",
+    "\n/// ```",
+    "\n/// > ",
+    "x",
+];
+
+/// Edits an exhaustive file gets, and a sampled one.
+const EDITS_EXHAUSTIVE: usize = 2048;
+const EDITS_SAMPLED: usize = 8;
+
+/// One edit inside a doc comment: `delete` bytes at `at` replaced by
+/// `insert`.
+#[derive(Clone, Copy)]
+struct Edit {
+    at: usize,
+    delete: usize,
+    insert: &'static str,
+}
+
+impl Edit {
+    fn apply(self, source: &str) -> String {
+        let mut edited = String::with_capacity(source.len() + self.insert.len());
+        edited.push_str(&source[..self.at]);
+        edited.push_str(self.insert);
+        edited.push_str(&source[self.at + self.delete..]);
+        edited
+    }
+}
+
+/// The text inside each doc comment where an edit may land: a `/**`
+/// comment between its delimiters, a `///` line after its `///`, with
+/// whether it is Markdown.
+fn doc_interiors<C: CorpusLanguage>(language: &C, source: &str) -> Vec<(usize, usize, bool)> {
+    language.with_parse(source, |root, _| {
+        let mut interiors = Vec::new();
+        for token in root.tokens() {
+            for piece in token.leading().chain(token.trailing()) {
+                let start = piece.range.start().get();
+                let end = piece.range.end().get();
+                match piece.kind {
+                    TriviaKind::DocComment if piece.text.ends_with("*/") && end - start >= 5 => {
+                        interiors.push((start + 3, end - 2, false));
+                    }
+                    TriviaKind::LineComment if piece.text.starts_with("///") => {
+                        interiors.push((start + 3, end, true));
+                    }
+                    _ => {}
+                }
+            }
+        }
+        interiors
+    })
+}
+
+/// A mixing hash (splitmix64's finalizer), so that consecutive edit indices
+/// land far apart.
+const fn mix(mut x: u64) -> u64 {
+    x = (x ^ (x >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    x = (x ^ (x >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+    x ^ (x >> 31)
+}
+
+/// The doc comment edits the sweep checks in `source`: each a position
+/// inside a doc comment, picked by a hash of the edit's index and the
+/// source's length, and an insertion of a fragment or the deletion of the
+/// character there.
+fn doc_edits<C: CorpusLanguage>(language: &C, source: &str, depth: Depth) -> Vec<Edit> {
+    let interiors = doc_interiors(language, source);
+    // Positions: every byte from an interior's start to its end, inclusive.
+    let positions: usize = interiors
+        .iter()
+        .map(|&(start, end, _)| end - start + 1)
+        .sum();
+    if positions == 0 {
+        return Vec::new();
+    }
+    let count = match depth.for_source(source) {
+        Depth::Exhaustive => EDITS_EXHAUSTIVE,
+        Depth::Sampled => EDITS_SAMPLED,
+    };
+    (0..count)
+        .filter_map(|index| {
+            let hash = mix((index as u64) << 32 ^ source.len() as u64);
+            #[expect(clippy::cast_possible_truncation, reason = "taken modulo a usize")]
+            let mut pick = (hash % positions as u64) as usize;
+            let &(start, end, markdown) = interiors.iter().find(|&&(start, end, _)| {
+                let size = end - start + 1;
+                if pick < size {
+                    true
+                } else {
+                    pick -= size;
+                    false
+                }
+            })?;
+            let mut at = start + pick;
+            while !source.is_char_boundary(at) {
+                at += 1;
+            }
+            let fragments = if markdown {
+                MARKDOWN_FRAGMENTS
+            } else {
+                JAVADOC_FRAGMENTS
+            };
+            let op = ((hash >> 40) % (fragments.len() as u64 + 1)) as usize;
+            match fragments.get(op) {
+                Some(&insert) => Some(Edit {
+                    at,
+                    delete: 0,
+                    insert,
+                }),
+                None if at < end => Some(Edit {
+                    at,
+                    delete: source[at..].chars().next()?.len_utf8(),
+                    insert: "",
+                }),
+                None => None,
+            }
+        })
+        .collect()
+}
 
 /// Boundary count up to which a sampled suite probes every boundary.
 const EXHAUSTIVE_BOUNDARY_LIMIT: usize = 120;
@@ -128,7 +369,8 @@ fn probe_boundaries(
 
 /// One checked variant of a file, as `jcheck` replays it: `<shape><n>`, or
 /// `<shape><n>@<width>` at a width other than `PROBE_WIDTH`, or
-/// `delete<n>` (the `n`th non-empty token removed).
+/// `delete<n>` (the `n`th non-empty token removed), or `docedit<n>` (the
+/// `n`th doc comment edit, with `@<width>` as for a probe).
 #[derive(Clone, Copy)]
 pub enum Variant {
     Probe {
@@ -138,6 +380,10 @@ pub enum Variant {
     },
     Delete {
         index: usize,
+    },
+    DocEdit {
+        index: usize,
+        width: u16,
     },
 }
 
@@ -154,6 +400,12 @@ impl Variant {
             Some((probe, width)) => (probe, width.parse().ok()?),
             None => (label, PROBE_WIDTH),
         };
+        if let Some(index) = probe.strip_prefix("docedit") {
+            return Some(Self::DocEdit {
+                index: index.parse().ok()?,
+                width,
+            });
+        }
         let mut shapes: Vec<&'static ProbeShape> = PROBE_SHAPES.iter().collect();
         shapes.sort_by_key(|shape| std::cmp::Reverse(shape.name.len()));
         shapes.into_iter().find_map(|shape| {
@@ -180,6 +432,8 @@ impl Variant {
                 width,
             } => format!("{}{index}@{width}", shape.name),
             Self::Delete { index } => format!("delete{index}"),
+            Self::DocEdit { index, width } if width == PROBE_WIDTH => format!("docedit{index}"),
+            Self::DocEdit { index, width } => format!("docedit{index}@{width}"),
         }
     }
 
@@ -187,7 +441,7 @@ impl Variant {
     #[must_use]
     pub fn options(self) -> FormatOptions {
         match self {
-            Self::Probe { width, .. } => options(width),
+            Self::Probe { width, .. } | Self::DocEdit { width, .. } => options(width),
             Self::Delete { .. } => options(PROBE_WIDTH),
         }
     }
@@ -210,6 +464,9 @@ impl Variant {
             Self::Delete { index } => {
                 let (start, end) = *language.token_ranges(source).get(index)?;
                 Some(format!("{}{}", &source[..start], &source[end..]))
+            }
+            Self::DocEdit { index, .. } => {
+                Some(doc_edits(language, source, depth).get(index)?.apply(source))
             }
         }
     }
@@ -265,7 +522,8 @@ pub fn sweep_variant<C: CorpusLanguage>(
 }
 
 /// Every sweep check for one file: each width, then each probe shape, then
-/// (in an exhaustive suite) each one-token deletion. A probe that makes clean
+/// each doc comment edit, then (in an exhaustive suite) each one-token
+/// deletion. A probe that makes clean
 /// source dirty is skipped (it landed in something other than trivia).
 #[must_use]
 pub fn sweep_source<C: CorpusLanguage>(
@@ -309,6 +567,20 @@ pub fn sweep_source<C: CorpusLanguage>(
                     &variant.label(),
                 ));
             }
+        }
+    }
+    for (index, edit) in doc_edits(language, source, depth).into_iter().enumerate() {
+        let edited = edit.apply(source);
+        if clean && !parse_facts(language, &edited).diagnostics.is_empty() {
+            continue;
+        }
+        for &width in widths {
+            failures.extend(sweep_variant(
+                language,
+                &edited,
+                &options(width),
+                &Variant::DocEdit { index, width }.label(),
+            ));
         }
     }
     if depth == Depth::Exhaustive {
