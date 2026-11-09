@@ -159,6 +159,15 @@ class DocCommentJavacReading {
    * space.
    */
   void closingParagraphAfterALoneFirstCharacter() {}
+
+  /**
+   * {@snippet :<div>
+   * text
+   * </div>
+   *
+   * } where the block after the erroneous colon stays on its line.
+   */
+  void blockAfterAnErroneousSnippet() {}
 }
 
 diagnostics:

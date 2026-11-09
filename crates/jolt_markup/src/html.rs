@@ -188,6 +188,10 @@ struct Token {
     /// Follows a tag's name or argument after whitespace, which stays: a
     /// reference ends at whitespace.
     after_head: bool,
+    /// Follows an erroneous node on its line, after a space or nothing,
+    /// which stays: what follows the node decided that javac reads it as an
+    /// error, and a line break there could make it valid.
+    pinned: bool,
 }
 
 /// A piece of a section (the description, a block tag), with the nodes of
@@ -551,6 +555,7 @@ impl Tokens<'_, '_> {
             sticky: false,
             plain: false,
             after_head: false,
+            pinned: false,
         });
         self.last_end = Some(tag.span.start);
         self.head_last = false;
@@ -721,6 +726,7 @@ impl Tokens<'_, '_> {
                 sticky: false,
                 plain: false,
                 after_head: false,
+                pinned: false,
             });
         }
     }
@@ -739,6 +745,7 @@ impl Tokens<'_, '_> {
                 sticky: false,
                 plain: false,
                 after_head: false,
+                pinned: false,
             });
         }
     }
@@ -767,7 +774,9 @@ impl Tokens<'_, '_> {
             Some(_) => Sep::Space,
         };
         let mut glue = glue || std::mem::take(&mut self.glue_next) && kind == Kind::Word;
-        if std::mem::take(&mut self.after_error) {
+        let after_error = std::mem::take(&mut self.after_error);
+        let pinned = after_error && sep != Sep::Line;
+        if after_error {
             match sep {
                 Sep::Line => self.push_break(),
                 Sep::Space => glue = true,
@@ -790,6 +799,7 @@ impl Tokens<'_, '_> {
                 sticky: true,
                 plain: false,
                 after_head: false,
+                pinned: false,
             });
         }
         if matches!(kind, Kind::Word | Kind::Element { .. })
@@ -806,6 +816,7 @@ impl Tokens<'_, '_> {
             sticky,
             plain,
             after_head,
+            pinned,
         });
         self.head_last = std::mem::take(&mut self.head_next);
         self.last_end = Some(span.end);
@@ -965,6 +976,7 @@ fn keep_lines(tokens: &mut Vec<Token>, lines: &[Line<'_>], kept: &[bool]) {
             sticky: false,
             plain: false,
             after_head: false,
+            pinned: false,
         });
     }
     *tokens = out;
@@ -1111,31 +1123,36 @@ impl Html<'_, '_, '_, '_> {
         self.layout.line(blank, indent, hang);
     }
 
-    /// Whether a line break before `token`, a tag written right after the
-    /// word before it, would change where javadoc's first sentence ends;
-    /// `emit` then keeps it on the line (see the block case there). After a
-    /// sentence's end, whitespace would end the sentence there, unless the
-    /// tag ends it itself; and a tag that ends it (`<p>`) doesn't when it
-    /// follows a lone first character, at offset 1, where whitespace would
-    /// move it.
-    fn keeps_sentence(&self, token: &Token) -> bool {
-        token.sep == Sep::None
-            && !self.layout.at_start()
-            && if breaks_sentence(self.layout.text_at(token.span.start)) {
-                self.lone_first
-            } else {
-                self.ends_sentence
-            }
+    /// Whether a line break before `token`, a tag that would start a line,
+    /// would change javadoc's reading; `emit` then keeps it on the line. That
+    /// is a `pinned` token, after an erroneous node; and a tag written right
+    /// after the word before it, where the break would move the end of the
+    /// first sentence: after a sentence's end, whitespace would end the
+    /// sentence there, unless the tag ends it itself; and a tag that ends it
+    /// (`<p>`) doesn't when it follows a lone first character, at offset 1,
+    /// where whitespace would move it.
+    fn keeps_line(&self, token: &Token) -> bool {
+        token.pinned
+            || token.sep == Sep::None
+                && !self.layout.at_start()
+                && if breaks_sentence(self.layout.text_at(token.span.start)) {
+                    self.lone_first
+                } else {
+                    self.ends_sentence
+                }
     }
 
     /// Adds a word. `glue` keeps it on the line of the word before.
     fn emit(&mut self, token: &Token, glue: bool) {
         let first = self.layout.at_start();
+        if token.pinned {
+            self.next_line = None;
+        }
         let text = self
             .layout
             .segment(token.span.start.line, token.span.start.off, None);
         if let Some(why) = self.next_line.take() {
-            if why == Why::Block && self.keeps_sentence(token) {
+            if why == Why::Block && self.keeps_line(token) {
                 self.layout.word(token.span, Join::None, token.sticky);
             } else if !self.layout.at_start()
                 && token.sticky
@@ -1240,7 +1257,7 @@ impl Html<'_, '_, '_, '_> {
                     unreachable!("a list frame");
                 };
                 self.frames.truncate(list);
-                if self.keeps_sentence(token) {
+                if self.keeps_line(token) {
                     self.next_line = Some(Why::Block);
                 } else {
                     self.next_line = None;
@@ -1256,7 +1273,7 @@ impl Html<'_, '_, '_, '_> {
                 }
                 let line = self.column();
                 let column = (line + 4).min(MAX_INDENT);
-                if self.keeps_sentence(token) {
+                if self.keeps_line(token) {
                     self.next_line = Some(Why::Block);
                 } else {
                     self.next_line = None;
@@ -1291,7 +1308,7 @@ impl Html<'_, '_, '_, '_> {
                 self.request(Why::Text);
             }
             (Name::Block | Name::Pre | Name::Table, true) => {
-                if self.keeps_sentence(token) {
+                if self.keeps_line(token) {
                     self.next_line = Some(Why::Block);
                 } else {
                     self.request(Why::Break);

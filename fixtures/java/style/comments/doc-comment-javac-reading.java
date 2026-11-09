@@ -99,4 +99,7 @@ class DocCommentJavacReading {
 
   /** A </p> Second, where the first sentence ends at the closing tag after a space. */
   void closingParagraphAfterALoneFirstCharacter() {}
+
+  /** {@snippet :<div>text</div>} where the block after the erroneous colon stays on its line. */
+  void blockAfterAnErroneousSnippet() {}
 }
