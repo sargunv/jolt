@@ -680,17 +680,17 @@ impl Markdown<'_, '_, '_, '_> {
 
     /// Whether the label (or description) of an inline tag is filled: plain
     /// text, without the Markdown that could change when its line breaks
-    /// move (code spans, links, HTML, escapes) and without a line that
-    /// starts with a word that starts structure.
+    /// move (code spans, links, HTML, escapes, a hard break, a blank line)
+    /// and without a line that starts with a word that starts structure.
     fn fills_label(&self, inline: &Inline) -> bool {
         let Some(rich) = &inline.rich else {
             return false;
         };
         rich.close.is_some()
-            && rich
-                .content
-                .iter()
-                .all(|node| matches!(node, Node::Text(_)))
+            && rich.content.iter().all(|node| match node {
+                Node::Text(span) => !self.breaks_lines(*span),
+                _ => false,
+            })
             && self
                 .label_words(&rich.content)
                 .iter()
@@ -703,6 +703,22 @@ impl Markdown<'_, '_, '_, '_> {
                                 || words::ends_first_paragraph(word)
                                 || word.starts_with('@')))
                 })
+    }
+
+    /// Whether Markdown text has a line break that a fill would lose: a
+    /// line that ends with two spaces (a hard break) or a blank line (which
+    /// ends a paragraph) before its last line.
+    fn breaks_lines(&self, span: Span) -> bool {
+        (span.start.line..span.end.line).any(|line| {
+            let text = self.lines[line as usize].text;
+            let from = if line == span.start.line {
+                span.start.off as usize
+            } else {
+                0
+            };
+            let part = &text[from..];
+            part.ends_with("  ") || line > span.start.line && part.trim().is_empty()
+        })
     }
 
     /// Lays out an inline tag whose label is filled: its name and head

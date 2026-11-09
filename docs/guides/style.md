@@ -1143,7 +1143,11 @@ A Markdown doc comment gets this style:
 - **Words stay whole.** Jolt doesn't break a line inside a code span
   (`` `a b` ``), a link (`[text](url)`, `[text][ref]`,
   `[Map#put(Object, Object)]`), an autolink or HTML tag (`<…>`), a `<pre>`
-  element, or an inline tag that javadoc keeps whole (`{@code …}`).
+  element, or an inline tag that javadoc keeps whole (`{@code …}`). The label of
+  a link and the text of `{@return …}`, `{@summary …}` and `{@index …}` are
+  filled when they are plain words; one with Markdown that a line break could
+  change (a code span, a link, HTML, an escape, a hard break or a blank line)
+  keeps the whole tag as written.
 - **No new structure.** Besides the words listed for Javadoc comments, a wrapped
   line never starts with a word that could start a Markdown block: one that is
   `#` to `######`, starts with `>`, `|`, three or more `` ` `` or `~`, or `<`

@@ -154,6 +154,21 @@ class DocCommentMarkdownHardCases {
   int indentedFirstTag() {
     return 0;
   }
+
+  /// A label with a hard break stays as written, with enough words to wrap the
+  /// line past the width: {@link Object the first line  
+  /// and the second} and the words after it are filled.
+  void hardBreakInALabel() {}
+
+  /// A summary with a blank line stays as written, with enough words to wrap
+  /// the line past the width: {@summary first
+  ///
+  /// second} and so does a return with one: {@return first
+  ///
+  /// second}
+  int blankLineInADescription() {
+    return 0;
+  }
 }
 
 diagnostics:
