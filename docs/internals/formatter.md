@@ -1324,23 +1324,29 @@ text, an atom or structure is javadoc's own:
    the port's reading fails, and the comment prints as written.
 3. **Layout** (`html` for `/**`, `markdown` for `///`, then `layout`).
 
-A comment is printed as written (N9) when javac doesn't read its text from the
-source as written (it has a Unicode escape), when it holds a form feed (javac
-skips one as whitespace in some places and reads it as text in others, so where
-it stands decides what javadoc reads, and no corpus comment holds one), when it
-is a banner (`/***`, or a line made only of two or more `*`s), `/**/`, and when
-its reading would take more than [linear time](#doc-comment-cost) or nest inline
-tags more than 32 deep (below), or hold a reference that the port's
-`ReferenceParser` doesn't read (see above). An escape (`@@`, `@*`) that doesn't
-start its line gives up the reading too: javac reads it as one only when a line
-break came before a tag's argument on its line, which the layout joins onto the
-tag's line. So does a description that starts with whitespace javac doesn't skip
-(U+2003): it would start the layout's first line, which javac strips as
-indentation when it is the only one. So does an erroneous node or a `{` that
-reaches `*/` with nothing between (`{@index x*/`), where a layout puts a space
-or a line break that can change the error, and a `{@snippet :` that the
-comment's end follows on its line: javac reads an error there, but the snippet's
-body after a line break, which a layout on more than one line puts before `*/`.
+A comment is printed as written (N9) when:
+
+- javac doesn't read its text from the source as written: it has a Unicode
+  escape;
+- it holds a form feed: javac skips one as whitespace in some places and reads
+  it as text in others, so where it stands decides what javadoc reads, and no
+  corpus comment holds one;
+- it is a banner (`/***`, or a line made only of two or more `*`s) or `/**/`;
+- its reading would take more than [linear time](#doc-comment-cost) or nest
+  inline tags more than 32 deep (below), or hold a reference that the port's
+  `ReferenceParser` doesn't read (see above);
+- an escape (`@@`, `@*`) doesn't start its line: javac reads it as one only when
+  a line break came before a tag's argument on its line, which the layout joins
+  onto the tag's line;
+- its description starts with whitespace javac doesn't skip (U+2003): it would
+  start the layout's first line, which javac strips as indentation when it is
+  the only one;
+- an erroneous node or a `{` reaches `*/` with nothing between (`{@index x*/`),
+  where a layout puts a space or a line break that can change the error;
+- the comment's end follows a `{@snippet :` on its line: javac reads an error
+  there, but the snippet's body after a line break, which a layout on more than
+  one line puts before `*/`.
+
 The Java hook also keeps file headers, and `jolt_fmt` keeps comments that share
 a line with code, lie in a formatter-ignore region, or have a target with
 recovery. Such a comment keeps all its trailing whitespace: its `<pre>`

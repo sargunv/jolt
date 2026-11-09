@@ -1,7 +1,10 @@
 //! Fixture collection and snapshot helpers, the formatter oracle, the fixture
 //! corpus drivers, and the corpus sweep.
 
-#![allow(clippy::missing_panics_doc)]
+#![allow(
+    clippy::missing_panics_doc,
+    reason = "test support panics on a broken fixture or environment, so the test fails"
+)]
 
 mod corpus;
 pub mod doc_oracle;

@@ -20,7 +20,7 @@ pub(crate) fn format_node<'a>(f: &mut JavaFormatter<'a>, node: SyntaxNode<'a>) -
 
 /// The rule for a node kind. Each arm is its own small function, so deep
 /// nesting does not pay for one large frame per level (debug builds).
-#[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_lines, reason = "one arm per node kind")]
 fn rule(kind: K) -> Rule {
     match kind {
         K::CompilationUnit => |f, node| declarations::compilation_unit(f, cast(node)),
