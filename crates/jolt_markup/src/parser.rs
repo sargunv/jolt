@@ -147,11 +147,14 @@ pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
     let (body, _) = parser.content(Phase::Body);
     if !markdown
         && let Some(&Node::Text(span)) = body.first()
-        && parser.is_blank(span)
+        && (parser.is_blank(span) || parser.starts_with_indentation(span.start))
     {
         // Text of only whitespace (a form feed, which javac doesn't skip at
         // the start) makes a `<p>` after it a sentence break, which it isn't
-        // as the first tree; the layout drops that text.
+        // as the first tree; the layout drops that text. Text that starts
+        // with whitespace HTML doesn't collapse (U+2003) starts the first
+        // line the layout writes, which javac then strips as indentation when
+        // it is the only one.
         parser.give_up();
     }
     let mut tags = Vec::new();
@@ -414,17 +417,19 @@ impl Parser<'_, '_> {
 
     /// Fails the reading where it can't follow javac's: the comment is
     /// printed as written. That is a description that starts with text of
-    /// only whitespace (see [`parse`]); a `{@snippet :` that the comment's
-    /// end or a form feed follows on its line; an escape (`@@`, `@*`) that doesn't
-    /// start its line, which javac reads as one only after a line break
-    /// before a tag's argument that the layout joins; an inline tag nested
-    /// too deeply; a `{@value}` reference that no `}` follows on its line;
-    /// and an `{@inheritDoc}` reference whose `}` is on a later line. javac
-    /// stops at an invalid reference, which `ReferenceParser` (not read by
-    /// this port) decides, and after a valid one reads on: through a `}`
+    /// only whitespace, or with whitespace HTML doesn't collapse (see
+    /// [`parse`]); a `{@snippet :` that the comment's end or a form feed
+    /// follows on its line; an escape (`@@`, `@*`) that doesn't start its
+    /// line, which javac reads as one only after a line break before a
+    /// tag's argument that the layout joins; an inline tag nested too
+    /// deeply; and a `{@value}` or `{@inheritDoc}` reference that a `}`
+    /// doesn't follow on its line. javac stops at an invalid reference,
+    /// which `ReferenceParser` (not read by this port) decides, and reads
+    /// what follows as content; after a valid one it reads on: through a `}`
     /// after which the line break before it still makes an `@` start a
-    /// block tag, and for `{@value}` one more character, which can be the
-    /// `{` of the next inline tag.
+    /// block tag, past what an unclosed `{@inheritDoc}` holds, and for
+    /// `{@value}` one more character, which can be the `{` of the next
+    /// inline tag.
     fn give_up(&mut self) {
         self.charge(self.budget + 1);
     }
@@ -464,6 +469,15 @@ impl Parser<'_, '_> {
                 .chars()
                 .all(is_ws)
         })
+    }
+
+    /// Whether the text at `pos` starts with whitespace that javac strips as
+    /// indentation but HTML doesn't collapse.
+    fn starts_with_indentation(&self, pos: Pos) -> bool {
+        self.lines[pos.line as usize].text[pos.off as usize..]
+            .chars()
+            .next()
+            .is_some_and(|ch| java::is_whitespace(ch) && !is_ws(ch))
     }
 
     /// Whether only spaces and tabs come before `pos` on its line.
@@ -1105,11 +1119,11 @@ impl Parser<'_, '_> {
             Tag::InheritDoc => {
                 let reference = self.reference()?;
                 self.skip_whitespace();
+                if reference.is_some() && (self.cur.ch != '}' || self.newline) {
+                    self.give_up();
+                    return Err(ParseError);
+                }
                 if self.cur.ch == '}' {
-                    if self.newline && reference.is_some() {
-                        self.give_up();
-                        return Err(ParseError);
-                    }
                     self.next_char();
                     return Ok(self.atomic(brace, name));
                 }

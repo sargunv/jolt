@@ -1311,6 +1311,30 @@ impl Html<'_, '_, '_, '_> {
         self.gap = Gap::None;
     }
 
+    /// Lays out a list item's start tag (`<li>`, `<dt>`, `<dd>`), which
+    /// closes the item before it.
+    fn open_item(&mut self, token: &Token) {
+        if matches!(self.frames.last(), Some(Frame::Item { .. })) {
+            self.frames.pop();
+        }
+        let line = self.column();
+        let column = (line + 4).min(MAX_INDENT);
+        let kept = self.keeps_line(token);
+        if kept {
+            self.next_line = Some(Why::Block);
+        } else {
+            self.next_line = None;
+            self.start(Why::Block, line, column);
+        }
+        self.emit(token, false);
+        self.frames.push(Frame::Item { line, column });
+        if kept {
+            // The item's wraps go to its column, as when it starts a line.
+            self.layout.hang(column);
+        }
+        self.attach = token.span.end.line == token.span.start.line;
+    }
+
     /// Lays out a block-level element's tag.
     fn element(&mut self, token: &Token, name: Name, closing: bool) {
         match (name, closing) {
@@ -1363,22 +1387,7 @@ impl Html<'_, '_, '_, '_> {
                 self.gap = self.gap.max(Gap::Block);
                 self.request(Why::Text);
             }
-            (Name::Item, false) => {
-                if matches!(self.frames.last(), Some(Frame::Item { .. })) {
-                    self.frames.pop();
-                }
-                let line = self.column();
-                let column = (line + 4).min(MAX_INDENT);
-                if self.keeps_line(token) {
-                    self.next_line = Some(Why::Block);
-                } else {
-                    self.next_line = None;
-                    self.start(Why::Block, line, column);
-                }
-                self.emit(token, false);
-                self.frames.push(Frame::Item { line, column });
-                self.attach = token.span.end.line == token.span.start.line;
-            }
+            (Name::Item, false) => self.open_item(token),
             (Name::Item, true) => {
                 if let Some(&Frame::Item { line, .. }) = self.frames.last() {
                     if self.next_line.take().is_some() {

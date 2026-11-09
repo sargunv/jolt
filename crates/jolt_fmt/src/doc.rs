@@ -553,7 +553,8 @@ pub(crate) fn comment_lines<'t>(
     let trim_end = move |line: &'t str| if doc { line } else { line.trim_end() };
     let content = strip_delimiters(text);
     let multiline = has_line_break(content);
-    let as_written = doc && multiline && (as_written || text.starts_with("/***"));
+    let as_written =
+        doc && multiline && (as_written || text.starts_with("/***") || closes_after_text(content));
     let star_block = (doc && multiline && !as_written) || (!doc && is_star_block(content));
     // Exactly one of the two layouts is `Some`.
     let plain = (!star_block).then(|| {
@@ -673,7 +674,10 @@ fn strip_delimiters(text: &str) -> &str {
 ///   in `<pre>`;
 /// - it is a banner: it starts with `/***`, or a line is made only of two or
 ///   more `*`s (javadoc reads such a ruler as a blank line, which a star
-///   block would print as one).
+///   block would print as one);
+/// - its last line has text before `*/`: a star block would put a line break
+///   after that text, which javadoc reads (it ends an unclosed `<pre>` with
+///   one, and makes `{@snippet :` start a body).
 ///
 /// Most lines start with spaces and a `*`, which a scan for `\n` answers; any
 /// other line is checked as text, only Java's whitespace (space, tab, form
@@ -689,6 +693,9 @@ pub(crate) fn keeps_lines(text: &str) -> bool {
     if text.starts_with("/***") {
         return true;
     }
+    if closes_after_text(content) {
+        return true;
+    }
     let star_less = |line: &str| {
         let text = line.trim_start_matches(is_blank);
         !text.is_empty() && !text.starts_with('*')
@@ -698,6 +705,18 @@ pub(crate) fn keeps_lines(text: &str) -> bool {
         return lines(content).enumerate().any(kept);
     }
     content.split('\n').enumerate().any(kept)
+}
+
+/// Whether the last line of a doc comment's `content` (between its
+/// delimiters) has text before `*/`.
+fn closes_after_text(content: &str) -> bool {
+    !lines(content)
+        .last()
+        .unwrap_or("")
+        .trim_start_matches(is_blank)
+        .trim_start_matches('*')
+        .trim_matches(is_blank)
+        .is_empty()
 }
 
 /// Java's whitespace in a doc comment: a space, a tab or a form feed.

@@ -161,4 +161,8 @@ class DocCommentJavacReading {
   /** {@snippet :
    */
   void unfinishedSnippetAtTheEnd() {}
+
+  /** {@snippet : <li>Text that is long enough to wrap {@code a long description that wraps
+   * second line} */
+  void itemPinnedToAnErroneousSnippet() {}
 }

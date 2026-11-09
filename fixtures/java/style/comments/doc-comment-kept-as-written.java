@@ -129,4 +129,14 @@ class DocCommentKeptAsWritten {
     ; /** a doc comment  that the removed empty statements leave on its own line */ ;
     int x;
   }
+
+  /** {@inheritDoc bad!
+   * {@snippet : after an unclosed inheritDoc with a reference */
+  void unclosedInheritDocWithAReference() {}
+
+  /**
+   *  A, which starts with an em space that javadoc would strip as indentation
+   * B
+   */
+  void emSpaceBeforeTheFirstWord() {}
 }
