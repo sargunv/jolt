@@ -249,4 +249,12 @@ class DocCommentMarkdownHardCases {
   /// Foo{@
   ///     ***
   void structureAfterAnError() {}
+
+  /// Intro
+  ///
+  /// <pre>
+  /// </code>
+  /// content keeps its trailing space 
+  /// </pre>
+  void unmatchedCloseInAPre() {}
 }

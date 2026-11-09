@@ -63,6 +63,7 @@ enum Lex {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Element {
     Pre,
+    Code,
     Raw(Raw),
 }
 
@@ -74,6 +75,7 @@ enum Element {
 #[derive(Clone, Copy, Debug)]
 struct Reader {
     pre: u32,
+    code: u32,
     raw: Option<Raw>,
     lex: Lex,
 }
@@ -82,6 +84,7 @@ impl Reader {
     const fn new() -> Self {
         Self {
             pre: 0,
+            code: 0,
             raw: None,
             lex: Lex::Text,
         }
@@ -93,6 +96,7 @@ impl Reader {
     /// attribute value or a comment, wherever they are.
     const fn exact(&self) -> bool {
         self.pre > 0
+            || self.code > 0
             || self.raw.is_some()
             || matches!(
                 self.lex,
@@ -239,12 +243,13 @@ impl Reader {
                     .take_while(|&&byte| byte.is_ascii_alphanumeric() || byte == b'-')
                     .count();
                 let name = &html[from..from + len];
-                let element =
-                    if name.eq_ignore_ascii_case("pre") || name.eq_ignore_ascii_case("code") {
-                        Some(Element::Pre)
-                    } else {
-                        Raw::of(name).map(Element::Raw)
-                    };
+                let element = if name.eq_ignore_ascii_case("pre") {
+                    Some(Element::Pre)
+                } else if name.eq_ignore_ascii_case("code") {
+                    Some(Element::Code)
+                } else {
+                    Raw::of(name).map(Element::Raw)
+                };
                 self.lex = Lex::Tag {
                     element,
                     closing,
@@ -261,6 +266,8 @@ impl Reader {
         match (element, closing) {
             (Some(Element::Pre), false) => self.pre += 1,
             (Some(Element::Pre), true) => self.pre = self.pre.saturating_sub(1),
+            (Some(Element::Code), false) => self.code += 1,
+            (Some(Element::Code), true) => self.code = self.code.saturating_sub(1),
             (Some(Element::Raw(raw)), false) => self.raw = Some(raw),
             (Some(Element::Raw(_)), true) => self.raw = None,
             (None, _) => {}
@@ -1169,6 +1176,8 @@ impl Markdown<'_, '_, '_, '_> {
         let mut after_structure = false;
         // The end of the last word.
         let mut word_end = 0;
+        // The end of the paragraph's last word.
+        let text_end = text.text[..end].trim_end().len();
         while at < end {
             while at < end && matches!(source[at], b' ' | b'\t' | b'\n' | b'\r') {
                 at += 1;
@@ -1197,7 +1206,7 @@ impl Markdown<'_, '_, '_, '_> {
                 breaks.next();
                 hard = true;
             }
-            let last = text.text[at..end].trim().is_empty();
+            let last = at >= text_end;
             if last_on_line && (hard || self.keeps_end(word, span.end.line, last, unclosed)) {
                 span.end.off = to_u32(self.lines[span.end.line as usize].text.len());
             }

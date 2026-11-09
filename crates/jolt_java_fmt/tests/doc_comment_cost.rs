@@ -167,3 +167,13 @@ fn paragraph_line_indented_by_many_tabs() {
     let formatted = format_in_time(&format!("    ///text\n    ///{tabs}more"));
     assert!(formatted.contains("more"), "{formatted}");
 }
+
+/// Many words before a long run of no-break spaces, which are text to
+/// javac: finding the paragraph's last word doesn't rescan the run.
+#[test]
+fn many_words_before_many_no_break_spaces() {
+    let words = "word ".repeat(50_000);
+    let spaces = "\u{a0}".repeat(50_000);
+    let formatted = format_in_time(&format!("    ///{words}{spaces}"));
+    assert!(formatted.contains("word"), "{formatted}");
+}
