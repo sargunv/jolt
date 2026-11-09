@@ -1,6 +1,57 @@
 //! The words a wrapped line must not start with, and the lines whose line
 //! breaks stay: shared by both flavours.
 
+use crate::frame::Line;
+use crate::parser::{Pos, Span, to_u32};
+
+/// The pieces of a reference (or a block tag's other arguments) that spans
+/// lines, to be joined by single spaces on one line: each line's part
+/// without the whitespace around it. Whitespace inside a reference doesn't
+/// change what javadoc reads in it. A reference with a later line that
+/// starts with `@` stays whole: javac ends a reference at an `@` that
+/// starts a line, which a joined line would hide. `None` when the span is
+/// on one line, or must stay whole.
+pub(crate) fn joined_pieces(lines: &[Line<'_>], span: Span) -> Option<Vec<Span>> {
+    if span.end.line == span.start.line {
+        return None;
+    }
+    let spaces = [' ', '\t', '\u{c}'];
+    let mut pieces = Vec::new();
+    for line in span.start.line..=span.end.line {
+        let text = lines[line as usize].text;
+        let from = if line == span.start.line {
+            span.start.off as usize
+        } else {
+            0
+        };
+        let to = if line == span.end.line {
+            span.end.off as usize
+        } else {
+            text.len()
+        };
+        let part = &text[from..to];
+        let trimmed = part.trim_start_matches(spaces);
+        if line > span.start.line && trimmed.starts_with('@') {
+            return None;
+        }
+        let start = from + part.len() - trimmed.len();
+        let trimmed = trimmed.trim_end_matches(spaces);
+        if !trimmed.is_empty() {
+            pieces.push(Span {
+                start: Pos {
+                    line,
+                    off: to_u32(start),
+                },
+                end: Pos {
+                    line,
+                    off: to_u32(start + trimmed.len()),
+                },
+            });
+        }
+    }
+    Some(pieces)
+}
+
 /// Whether `word` is a plain-text list marker: `-`, `*`, `+`, `•`, or a
 /// number and `.` or `)`.
 pub(crate) fn is_list_marker(word: &str) -> bool {

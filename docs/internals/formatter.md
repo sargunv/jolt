@@ -1317,6 +1317,11 @@ flattened, an inline tag's rich text in line between its head and its `}`. Then:
   its source line (after spaces and tabs only, javac's `newline`) keeps the line
   break before it, any other one is never put at a line start. That keeps every
   block tag and escape (`@@`, `@*`) javadoc reads, and adds none.
+- A reference (a link's, or a block tag's argument other than a quoted string)
+  that spans lines is joined onto one line, its pieces glued by single spaces:
+  javac's `ReferenceParser` ignores that whitespace, and the oracle compares
+  references with whitespace collapsed. One with a later line that starts with
+  `@` stays whole, since javac's `reference` stops there.
 - The separator after an erroneous node keeps its kind (a space, a line break or
   nothing): what follows a construct decided that javac reads it as an error
   (`{@snippet :` without a line break after the `:`), and a line break there
@@ -1462,9 +1467,9 @@ sentence, the full body and each block tag:
   element and at the ends of a section;
 - exactly: text inside `<pre>`, `<script>`, `<style>` and `<textarea>`, the
   bodies of `{@code}`, `{@literal}`, `{@snippet}` and unknown inline tags,
-  attribute values and their quotes, `{@value}` formats, references, HTML
-  comments, entities and escapes, all without the spaces at the end of a line,
-  which no browser shows (and which N9 drops);
+  attribute values and their quotes, `{@value}` formats, HTML comments, entities
+  and escapes (references with their whitespace collapsed), all without the
+  spaces at the end of a line, which no browser shows (and which N9 drops);
 - erroneous nodes with their diagnostic code and collapsed text, so a formatted
   comment can't add or lose a javadoc error;
 - for a list of trees with Markdown, the HTML that the doclet renders

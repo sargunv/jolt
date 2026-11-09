@@ -933,10 +933,13 @@ affects only itself:
 - a paragraph of plain text whose lines are indented differently, by two or more
   columns, such as ASCII art, a grammar or aligned text.
 
-Such a part that spans lines keeps its lines: each later line is printed after
-`*` with the indentation that javadoc reads on it (javadoc removes the `*` and
-the indentation that all lines of the comment share). A tab after the `*` stays
-a tab.
+A reference that spans lines (`{@link Map#put(Object,` / `Object)}`) is the
+exception: it is joined onto one line with single spaces, since whitespace
+inside a reference doesn't change what it refers to (unless a later line starts
+with `@`, which ends the reference for javadoc). Any other such part that spans
+lines keeps its lines: each later line is printed after `*` with the indentation
+that javadoc reads on it (javadoc removes the `*` and the indentation that all
+lines of the comment share). A tab after the `*` stays a tab.
 
 Jolt keeps these comments as written, realigning only their `*`s as for any
 other comment (see [Comments](#comments)): a comment that shares its line with
@@ -969,8 +972,9 @@ A comment that Jolt lays out gets this style:
   before the pair when they don't fit. A word that starts with `@` at the start
   of a source line keeps starting its line.
 - **Block tags** (`@param`, `@return`, …) start a line each, with single spaces
-  after the tag and its name. Their wrapped lines are indented by 4. A blank
-  line goes before the first block tag, and none between block tags.
+  after the tag and its name, and the first word of the tag's text on the tag's
+  line. Their wrapped lines are indented by 4. A blank line goes before the
+  first block tag, and none between block tags.
 - **Blank lines.** One blank line goes before `<p>`, a list, `<pre>`, a table
   and a heading, and after a list, a heading, `<pre>` or a table when text
   follows. A blank line of the source between two paragraphs is kept, without

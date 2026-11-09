@@ -237,8 +237,17 @@ impl Markdown<'_, '_, '_, '_> {
         };
         self.layout.line(false, 0, 0);
         for (index, &head) in tag.head.iter().enumerate() {
-            let join = if index == 0 { Join::Wrap } else { Join::Space };
-            self.layout.word(head, join, false);
+            for (part, span) in crate::html::head_parts(self.lines, head)
+                .into_iter()
+                .enumerate()
+            {
+                let join = if index == 0 && part == 0 {
+                    Join::Wrap
+                } else {
+                    Join::Space
+                };
+                self.layout.word(span, join, false);
+            }
         }
         let head_end = tag.head.last().map_or(tag.span.start, |head| head.end);
         self.next = head_end.line + 1;
@@ -683,7 +692,9 @@ impl Markdown<'_, '_, '_, '_> {
         let Some(rich) = &inline.rich else { return };
         self.layout.word(inline.name, join, sticky);
         if let Some(head) = rich.head {
-            self.layout.word(head, Join::Space, false);
+            for span in words::joined_pieces(self.lines, head).unwrap_or_else(|| vec![head]) {
+                self.layout.word(span, Join::Space, false);
+            }
         }
         let words = self.label_words(&rich.content);
         let mut last = rich.head.map_or(inline.name.end, |head| head.end);

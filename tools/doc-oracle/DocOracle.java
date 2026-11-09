@@ -237,20 +237,20 @@ public class DocOracle {
                 }
                 case ThrowsTree t -> {
                     head.append('@').append(t.getTagName()).append(' ')
-                            .append(t.getExceptionName().getSignature());
+                            .append(collapse(t.getExceptionName().getSignature()));
                     description = t.getDescription();
                 }
                 case ProvidesTree t -> {
-                    head.append("@provides ").append(t.getServiceType().getSignature());
+                    head.append("@provides ").append(collapse(t.getServiceType().getSignature()));
                     description = t.getDescription();
                 }
                 case UsesTree t -> {
-                    head.append("@uses ").append(t.getServiceType().getSignature());
+                    head.append("@uses ").append(collapse(t.getServiceType().getSignature()));
                     description = t.getDescription();
                 }
                 case SerialFieldTree t -> {
                     head.append("@serialField ").append(t.getName()).append(' ')
-                            .append(t.getType().getSignature());
+                            .append(collapse(t.getType().getSignature()));
                     description = t.getDescription();
                 }
                 case SpecTree t -> {
@@ -475,7 +475,8 @@ public class DocOracle {
         }
 
         private static String reference(ReferenceTree tree) {
-            return tree == null ? "ref:-" : "ref:" + escape(tree.getSignature());
+            // Whitespace inside a reference doesn't change what it refers to.
+            return tree == null ? "ref:-" : "ref:" + collapse(tree.getSignature());
         }
 
         private String attribute(AttributeTree attribute) {

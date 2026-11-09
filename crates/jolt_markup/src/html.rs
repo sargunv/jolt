@@ -166,6 +166,7 @@ pub(crate) fn lay_out<'a>(
         last_end: None,
         break_next: false,
         after_error: false,
+        glue_next: false,
     };
     let mut pieces = Vec::new();
     flatten(&comment.body, lines, &mut pieces);
@@ -252,11 +253,19 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
                         glue: false,
                     });
                     if let Some(head) = rich.head {
-                        pieces.push(Piece {
-                            kind: PieceKind::Atom,
-                            span: head,
-                            glue: true,
-                        });
+                        let reference = !lines[inline.name.start.line as usize].text
+                            [inline.name.start.off as usize..]
+                            .starts_with("{@index");
+                        let joined = reference
+                            .then(|| words::joined_pieces(lines, head))
+                            .flatten();
+                        for span in joined.unwrap_or_else(|| vec![head]) {
+                            pieces.push(Piece {
+                                kind: PieceKind::Atom,
+                                span,
+                                glue: true,
+                            });
+                        }
                     }
                     flatten(&rich.content, lines, pieces);
                     if let Some(close) = rich.close {
@@ -270,6 +279,16 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
             },
         }
     }
+}
+
+/// A block tag's head piece (its name, or an argument), in pieces joined
+/// on one line (see [`words::joined_pieces`]); a quoted string stays whole.
+pub(crate) fn head_parts(lines: &[Line<'_>], head: Span) -> Vec<Span> {
+    let quoted = lines[head.start.line as usize].text[head.start.off as usize..].starts_with('"');
+    let joined = (!quoted)
+        .then(|| words::joined_pieces(lines, head))
+        .flatten();
+    joined.unwrap_or_else(|| vec![head])
 }
 
 /// Replaces each `<pre>` element (to its `</pre>`, or the section's end) and
@@ -331,6 +350,8 @@ struct Tokens<'l, 'a> {
     /// The last token is an erroneous node: the separator after it keeps its
     /// kind.
     after_error: bool,
+    /// The next token is the first of a block tag's text.
+    glue_next: bool,
 }
 
 impl Tokens<'_, '_> {
@@ -360,8 +381,12 @@ impl Tokens<'_, '_> {
             return;
         };
         for (index, &head) in tag.head.iter().enumerate() {
-            self.push(Kind::Word, head, index > 0, false);
+            for (part, span) in head_parts(self.lines, head).into_iter().enumerate() {
+                self.push(Kind::Word, span, index > 0 || part > 0, false);
+            }
         }
+        // The first word of the tag's text stays on the tag's line.
+        self.glue_next = true;
         pieces.clear();
         flatten(body, self.lines, pieces);
         let pieces = std::mem::take(pieces);
@@ -554,7 +579,7 @@ impl Tokens<'_, '_> {
             Some(end) if end.line < span.start.line => Sep::Line,
             Some(_) => Sep::Space,
         };
-        let mut glue = glue;
+        let mut glue = glue || std::mem::take(&mut self.glue_next) && kind == Kind::Word;
         if std::mem::take(&mut self.after_error) {
             match sep {
                 Sep::Line => self.push_break(),
