@@ -474,9 +474,19 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             });
             // Dangling comments always print on their own lines: the owning
             // rule puts a line break before the first, and a later one that
-            // shares the line of the comment before it starts no line.
-            let starts_line = position == 0 || self.comments.list[index].comment.lines_before != 0;
-            docs.push(self.comment_doc(index, starts_line));
+            // shares the line of the comment before it starts no line. A doc
+            // block comment is laid out when it ends its line, as everywhere
+            // (see `lays_out_doc`), so that one an elided item leaves here
+            // gets the same decision in both passes; a run of doc line
+            // comments, which always ends its line, when it starts one.
+            let lays_out = if self.comments.list[index].comment.kind == CommentKind::Doc {
+                indices
+                    .get(position + 1)
+                    .is_none_or(|&next| self.comments.list[next].comment.lines_before != 0)
+            } else {
+                position == 0 || self.comments.list[index].comment.lines_before != 0
+            };
+            docs.push(self.comment_doc(index, lays_out));
         }
         self.builder.concat(docs)
     }

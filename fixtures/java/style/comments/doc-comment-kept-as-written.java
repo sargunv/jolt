@@ -129,4 +129,6 @@ class DocCommentKeptAsWritten {
   int formFeedBeforeAnAtWithMoreText() {
     return 0;
   }
+
+  ; /** a doc comment  of a removed semicolon, before a line comment */ // a line comment
 }

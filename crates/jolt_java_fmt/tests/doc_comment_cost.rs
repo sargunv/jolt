@@ -144,3 +144,17 @@ fn many_doc_line_comments_in_a_long_expression() {
     let formatted = format_file_in_time(source);
     assert_eq!(formatted.matches("/// text").count(), count);
 }
+
+/// A reference's type arguments nest as deep as the source makes them; the
+/// check reads a bounded depth of them, so it can't run out of stack.
+#[test]
+fn deeply_nested_type_arguments_in_a_reference() {
+    let depth = 100_000;
+    let comment = format!(
+        "    /** @see {}X{} */",
+        "X<".repeat(depth),
+        ">".repeat(depth)
+    );
+    let formatted = format_in_time(&comment);
+    assert!(formatted.contains("@see X<X<"), "{formatted}");
+}

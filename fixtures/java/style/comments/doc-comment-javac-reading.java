@@ -196,4 +196,7 @@ class DocCommentJavacReading {
 
   /** {@link java.util.Map#put(Object, Object) a label} and {@link Map<String, Integer>#get} stay references. */
   void validReferences() {}
+
+  /** @see void[] a </p> b, where void takes no dimensions */
+  void voidArrayReference() {}
 }

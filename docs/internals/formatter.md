@@ -847,13 +847,16 @@ comment, so its layout can't change the code around it:
   comment after an opener followed by a line comment). The line break after it
   breaks the groups around it, and a later pass reads it as a comment on its own
   line, so it is laid out in both passes;
-- the first dangling comment of a node (the owning rule puts a line break before
-  it), and a later one whose `lines_before` is not 0 (`own_lines` puts one with
-  `lines_before == 0` on the line of the comment before it);
+- a dangling doc block comment that ends its line: the last one, or one that a
+  line break in the source follows (`own_lines` puts one with
+  `lines_before == 0` on the line of the comment before it); and a dangling run
+  of doc line comments that starts its line: the first (the owning rule puts a
+  line break before it), or one whose `lines_before` is not 0;
 - the last comment `removed` keeps, which leads on its own line;
 - a doc block comment of an elided list item that ends its output line: the list
   puts the item on lines of its own, and the next pass reads the comment as one
-  that leads the code after it and ends its line.
+  that leads the code after it, or as a dangling one, and both lay out a doc
+  block comment that ends its line.
 
 The comment must also lie outside every formatter-ignore region (the Javadoc of
 an ignored member is printed as written), and its target must be recovery-free

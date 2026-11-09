@@ -183,8 +183,12 @@ const KEYWORDS: &[&str] = &[
 
 /// The primitive types and `void`, which `parseType` accepts.
 const PRIMITIVES: &[&str] = &[
-    "boolean", "byte", "char", "double", "float", "int", "long", "short", "void",
+    "boolean", "byte", "char", "double", "float", "int", "long", "short",
 ];
+
+/// The deepest nesting of type arguments read; a deeper reference is
+/// [`Validity::Unknown`], so the reading stays bounded however deep it nests.
+const MAX_DEPTH: u32 = 32;
 
 /// The names `parseType` rejects as a type of one name
 /// (`restrictedTypeName`).
@@ -196,6 +200,8 @@ struct Part<'s> {
     at: usize,
     /// The part is the parameters, where javac rejects an annotation.
     params: bool,
+    /// The type arguments open around the reader.
+    depth: u32,
 }
 
 impl<'s> Part<'s> {
@@ -204,6 +210,7 @@ impl<'s> Part<'s> {
             tokens: tokens(text),
             at: 0,
             params,
+            depth: 0,
         }
     }
 
@@ -294,6 +301,8 @@ impl<'s> Part<'s> {
     /// One name alone, or with dimensions, mustn't be a restricted name.
     fn ty(&mut self) -> Read {
         match self.bump() {
+            // `void` takes no dimensions: javac's `term3` returns it at once.
+            Token::Keyword("void") => Ok(()),
             Token::Keyword(keyword) if PRIMITIVES.contains(&keyword) => self.dims(),
             Token::Ident(name) => {
                 let mut simple = !self.type_args()?;
@@ -319,7 +328,11 @@ impl<'s> Part<'s> {
         if self.peek() != Token::Lt {
             return Ok(false);
         }
+        if self.depth == MAX_DEPTH {
+            return Err(Validity::Unknown);
+        }
         self.bump();
+        self.depth += 1;
         loop {
             self.type_arg()?;
             if self.peek() != Token::Comma {
@@ -328,6 +341,7 @@ impl<'s> Part<'s> {
             self.bump();
         }
         self.expect(Token::Gt)?;
+        self.depth -= 1;
         Ok(true)
     }
 
