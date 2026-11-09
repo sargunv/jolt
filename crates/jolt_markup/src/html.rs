@@ -745,20 +745,9 @@ impl Tokens<'_, '_> {
     fn word(&mut self, span: Span, glue: bool, plain: bool) {
         let text = &self.lines[span.start.line as usize].text[span.start.off as usize..];
         if text.starts_with('@') {
-            let (tabs, feeds) = self.indents[span.start.line as usize];
             if span.start.line > 0 && self.at_line_start(span.start) {
                 self.push_break();
                 self.push_token(Kind::Word, span, glue, false, plain);
-            } else if self.last_end.is_none() && span.start.off > tabs && span.start.off <= feeds {
-                // A form feed before it on its line keeps javadoc from
-                // reading it as a block tag. The comment's first word starts
-                // a line, with no word before it to stay on the line of, so
-                // it keeps the form feed.
-                let start = Pos {
-                    line: span.start.line,
-                    off: tabs,
-                };
-                self.push_token(Kind::Word, Span { start, ..span }, glue, true, plain);
             } else {
                 self.push_token(Kind::Word, span, glue, true, plain);
             }

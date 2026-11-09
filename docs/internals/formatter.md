@@ -1327,15 +1327,14 @@ after which an `@` still starts a block tag; an `{@inheritDoc}` reference whose
 `}` is on a later line does the same. An escape (`@@`, `@*`) that doesn't start
 its line gives up the reading too: javac reads it as one only when a line break
 came before a tag's argument on its line, which the layout joins onto the tag's
-line. So does a description that starts with text of only whitespace (a form
-feed, which javac doesn't skip): a `<p>` after it ends the first sentence, which
-as the first tree it doesn't, and the layout drops that text. So does one that
-starts with whitespace HTML doesn't collapse (U+2003): it would start the
-layout's first line, which javac strips as indentation when it is the only one.
-So does a `{@snippet :` that the comment's end or a form feed follows on its
-line: javac reads an error there, but the snippet's body after a line break,
-which a layout on more than one line puts before `*/` and which stays where the
-layout drops the form feed. The Java hook also keeps file headers, and
+line. So does a description that starts with whitespace javac doesn't skip (a
+form feed, U+2003): a `<p>` after it ends the first sentence, which as the first
+tree it doesn't, and the layout drops what HTML collapses; and the rest would
+start the layout's first line, which javac strips as indentation when it is the
+only one. So does a `{@snippet :` that the comment's end or a form feed follows
+on its line: javac reads an error there, but the snippet's body after a line
+break, which a layout on more than one line puts before `*/` and which stays
+where the layout drops the form feed. The Java hook also keeps file headers, and
 `jolt_fmt` keeps comments that share a line with code, lie in a formatter-ignore
 region, or have a target with recovery. Such a comment keeps all its trailing
 whitespace: its `<pre>` elements, code and tag bodies, where that whitespace is

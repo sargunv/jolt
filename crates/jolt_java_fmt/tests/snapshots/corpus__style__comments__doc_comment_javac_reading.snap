@@ -185,7 +185,6 @@ class DocCommentJavacReading {
 
   /**
    * @return value, which a form feed keeps from being a block tag
-   *
    * @since 1
    */
   int formFeedBeforeTheFirstWord() {

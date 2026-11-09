@@ -147,14 +147,14 @@ pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
     let (body, _) = parser.content(Phase::Body);
     if !markdown
         && let Some(&Node::Text(span)) = body.first()
-        && (parser.is_blank(span) || parser.starts_with_indentation(span.start))
+        && parser.starts_with_whitespace(span.start)
     {
-        // Text of only whitespace (a form feed, which javac doesn't skip at
-        // the start) makes a `<p>` after it a sentence break, which it isn't
-        // as the first tree; the layout drops that text. Text that starts
-        // with whitespace HTML doesn't collapse (U+2003) starts the first
-        // line the layout writes, which javac then strips as indentation when
-        // it is the only one.
+        // Text that starts with whitespace javac doesn't skip at the start (a
+        // form feed, U+2003) can't be laid out: the layout drops what HTML
+        // collapses, which can be all of the text, and a `<p>` after such
+        // text ends the first sentence, as the first tree it doesn't; and the
+        // rest starts the layout's first line, which javac strips as
+        // indentation when it is the only one.
         parser.give_up();
     }
     let mut tags = Vec::new();
@@ -416,9 +416,8 @@ impl Parser<'_, '_> {
     }
 
     /// Fails the reading where it can't follow javac's: the comment is
-    /// printed as written. That is a description that starts with text of
-    /// only whitespace, or with whitespace HTML doesn't collapse (see
-    /// [`parse`]); a `{@snippet :` that the comment's end or a form feed
+    /// printed as written. That is a description that starts with
+    /// whitespace (see [`parse`]); a `{@snippet :` that the comment's end or a form feed
     /// follows on its line; an escape (`@@`, `@*`) that doesn't start its
     /// line, which javac reads as one only after a line break before a
     /// tag's argument that the layout joins; an inline tag nested too
@@ -455,29 +454,13 @@ impl Parser<'_, '_> {
         true
     }
 
-    /// Whether `span` holds only whitespace.
-    fn is_blank(&self, span: Span) -> bool {
-        (span.start.line..=span.end.line).all(|line| {
-            let from = if line == span.start.line {
-                span.start.off
-            } else {
-                0
-            };
-            let to = (line == span.end.line).then_some(span.end.off);
-            let text = self.lines[line as usize].text;
-            text[from as usize..to.map_or(text.len(), |to| to as usize)]
-                .chars()
-                .all(is_ws)
-        })
-    }
-
-    /// Whether the text at `pos` starts with whitespace that javac strips as
-    /// indentation but HTML doesn't collapse.
-    fn starts_with_indentation(&self, pos: Pos) -> bool {
+    /// Whether the text at `pos` starts with whitespace (Java's, which
+    /// javac strips as indentation).
+    fn starts_with_whitespace(&self, pos: Pos) -> bool {
         self.lines[pos.line as usize].text[pos.off as usize..]
             .chars()
             .next()
-            .is_some_and(|ch| java::is_whitespace(ch) && !is_ws(ch))
+            .is_some_and(java::is_whitespace)
     }
 
     /// Whether only spaces and tabs come before `pos` on its line.

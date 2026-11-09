@@ -139,4 +139,12 @@ class DocCommentKeptAsWritten {
    * B
    */
   void emSpaceBeforeTheFirstWord() {}
+
+  /**
+   * @return value, after a form feed that javadoc would strip as indentation
+   * more
+   */
+  int formFeedBeforeAnAtWithMoreText() {
+    return 0;
+  }
 }
