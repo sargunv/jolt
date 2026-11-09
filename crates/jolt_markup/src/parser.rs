@@ -115,9 +115,11 @@ pub(crate) struct Comment {
 
 /// Reads a comment's lines as javadoc does; `markdown` for a `///` comment.
 /// `None` when the reading takes more than [`STEPS_PER_BYTE`] steps per
-/// byte: javac rescans text after a malformed construct (an HTML tag with an
-/// unclosed quote, an unclosed Markdown code span), which some inputs make
-/// quadratic, and such a comment is printed as written.
+/// byte, or nests inline tags deeper than [`MAX_INLINE_DEPTH`]: javac
+/// rescans text after a malformed construct (an HTML tag with an unclosed
+/// quote, an unclosed Markdown code span), which some inputs make quadratic,
+/// and its Markdown scanner never ends on some last lines; such a comment is
+/// printed as written.
 pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
     let size: usize = lines.iter().map(|line| line.text.len() + 1).sum();
     let mut parser = Parser {
@@ -138,6 +140,7 @@ pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
             line: to_u32(lines.len() - 1),
             off: to_u32(lines[lines.len() - 1].text.len()),
         },
+        inline_depth: 0,
     };
     (parser.cur.ch, parser.cur.width) = parser.decode(parser.cur.pos);
     let (body, _) = parser.content(Phase::Body);
@@ -155,6 +158,11 @@ pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
 /// The reading's step budget per byte of the comment. A comment is read in
 /// about one step per character, a few for the lines of a Markdown comment.
 const STEPS_PER_BYTE: usize = 8;
+
+/// The deepest nesting of inline tags that a comment is read with (`{@link
+/// A {@code b}}` nests one in another); a deeper comment is printed as
+/// written.
+const MAX_INLINE_DEPTH: u32 = 32;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
@@ -193,6 +201,8 @@ struct Parser<'l, 'a> {
     markdown: Option<Markdown>,
     /// The end of the comment.
     end: Pos,
+    /// The inline tags the reader is in.
+    inline_depth: u32,
 }
 
 /// The kinds of tag that javac knows.
@@ -893,8 +903,21 @@ impl Parser<'_, '_> {
         false
     }
 
-    /// javac's `inlineTag()`, at the `@` after the `{` at `brace`.
+    /// javac's `inlineTag()`, at the `@` after the `{` at `brace`. An inline
+    /// tag nested in more than [`MAX_INLINE_DEPTH`] others fails the reading
+    /// (javac reads it by recursion, as this does).
     fn inline_tag_tree(&mut self, brace: Pos) -> Node {
+        if self.inline_depth == MAX_INLINE_DEPTH {
+            self.charge(self.budget + 1);
+            return self.erroneous(brace);
+        }
+        self.inline_depth += 1;
+        let node = self.inline_tag_tree_at(brace);
+        self.inline_depth -= 1;
+        node
+    }
+
+    fn inline_tag_tree_at(&mut self, brace: Pos) -> Node {
         self.next_char();
         if !self.is_identifier_start() {
             return self.erroneous(brace);

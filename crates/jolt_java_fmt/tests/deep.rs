@@ -43,10 +43,16 @@ fn deep_spines_format_on_a_small_stack() {
         "class C {{ void m() {{ if (a) {{}}{} }} int following; }}",
         " else if (b) {}".repeat(depth)
     );
+    // javac reads nested inline tags by recursion; the formatter prints a
+    // comment that nests them this deep as written.
+    let tags = format!("{}text{}", "{@summary ".repeat(depth), "}".repeat(depth));
     on_stack(
         256 * 1024,
         vec![
             chain,
+            format!("class C {{\n  /** {tags} */\n  int following;\n}}"),
+            format!("class C {{\n  /// {tags}\n  int following;\n}}"),
+            format!("class C {{\n  /** <a title=\"{tags}\">link</a> */\n  int following;\n}}"),
             field(" + value"),
             field(".method()"),
             field("[0]"),

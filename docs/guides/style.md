@@ -946,9 +946,12 @@ other comment (see [Comments](#comments)): a comment that shares its line with
 code; a comment that starts with `/***` or has a line of only `*`s, which is a
 banner; `/**/`; a comment before `package` or an import in a file that declares
 a type, which is a file header such as a licence; the Javadoc of a member that
-formatting is turned off for (see [Formatter-ignore](#formatter-ignore)); and a
+formatting is turned off for (see [Formatter-ignore](#formatter-ignore)); a
 comment with a Unicode escape (`@`), which javac decodes before javadoc reads
-the comment.
+the comment; and a comment that javac's reader can't read in bounded time or
+depth: one that nests inline tags more than 32 deep, one that it reads in more
+than linear time (it rescans some malformed text), and a Markdown comment whose
+last line it never finishes reading (such as `/// + +`).
 
 A comment that Jolt lays out gets this style:
 

@@ -1300,9 +1300,10 @@ text, an atom or structure is javadoc's own:
 A comment is printed as written (N9) when javac doesn't read its text from the
 source as written (it has a Unicode escape), when it is a banner (`/***`, or a
 line made only of two or more `*`s), `/**/`, and when its reading would take
-more than [linear time](#doc-comment-cost) (below). The Java hook also keeps
-file headers, and `jolt_fmt` keeps comments that share a line with code, lie in
-a formatter-ignore region, or have a target with recovery.
+more than [linear time](#doc-comment-cost) or nest inline tags more than 32 deep
+(below). The Java hook also keeps file headers, and `jolt_fmt` keeps comments
+that share a line with code, lie in a formatter-ignore region, or have a target
+with recovery.
 
 **HTML layout.** The tree of each part (the description, each block tag) is
 flattened, an inline tag's rich text in line between its head and its `}`. Then:
