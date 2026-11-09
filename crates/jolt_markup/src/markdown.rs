@@ -629,7 +629,13 @@ impl<'p, 'a> Fill<'p, 'a> {
             let bytes = text.as_bytes();
             // A `<` that may start an HTML tag and is in no atom.
             let mut open_tag = false;
-            let mut pos = bytes.iter().take_while(|&&byte| is_space(byte)).count();
+            // The whitespace that starts a line is the paragraph's
+            // indentation, except inside an atom, whose text it is.
+            let mut pos = if carry.is_some() {
+                0
+            } else {
+                bytes.iter().take_while(|&&byte| is_space(byte)).count()
+            };
             let indent = columns(&bytes[..pos]);
             let mut first = true;
             while pos < bytes.len() {

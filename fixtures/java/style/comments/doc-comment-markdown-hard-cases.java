@@ -73,4 +73,8 @@ class DocCommentMarkdownHardCases {
   /// Text with {@code a code tag that runs onto
   /// @the next line}, where the `@` starts no block tag.
   void snippetAndInlineTagLines() {}
+
+  /// A code span that runs onto the next line keeps the spaces that start it: `a
+  ///   b`.
+  void codeSpanContinuation() {}
 }

@@ -1321,11 +1321,12 @@ breaks, since a line break and a space differ inside raw HTML and a link title.
 parsed: a space and a line break are the same to it. A source line that starts
 with a word that could start a block keeps its line break, unless it is indented
 as code (four columns or more), where its word joins the line before; a line
-that must start a line in the output and has such a word (after a hard break, or
-inside an atom) keeps its indentation. A two-space hard break becomes a `\`
-glued to its word (`DocBuilder::glued`, since Java's `joins` would put a space
-before a `\` after a word), and a line that ends in an odd run of `\` keeps its
-line break. The layout never wraps after a word that ends in `\`.
+after a hard break that has such a word keeps its indentation. A line that
+starts inside an atom keeps its leading whitespace, which is the atom's text (a
+code span keeps its spaces). A two-space hard break becomes a `\` glued to its
+word (`DocBuilder::glued`, since Java's `joins` would put a space before a `\`
+after a word), and a line that ends in an odd run of `\` keeps its line break.
+The layout never wraps after a word that ends in `\`.
 
 The docs:
 
