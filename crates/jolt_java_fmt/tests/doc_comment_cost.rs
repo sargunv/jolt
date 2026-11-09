@@ -97,3 +97,18 @@ fn unclosed_pre_in_many_tables() {
     ));
     assert!(formatted.contains("<table><pre></table>"));
 }
+
+/// Text after malformed HTML that used most of the reading's budget: the
+/// plain text scan fails the reading instead of scanning the same text again
+/// for each character.
+#[test]
+fn plain_text_after_a_spent_budget() {
+    let n = 256_000;
+    let formatted = format_in_time(&format!(
+        "    /** {}{}{} */",
+        "a".repeat(n / 14),
+        "<!--".repeat(8),
+        "b".repeat(n)
+    ));
+    assert!(formatted.contains("<!--"));
+}

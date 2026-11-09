@@ -522,7 +522,13 @@ impl Parser<'_, '_> {
             end += 1;
         }
         let count = end - start;
-        if count == 0 || self.steps + count > self.budget {
+        if count == 0 {
+            return;
+        }
+        if self.steps + count > self.budget {
+            // Past the budget: the reading fails here rather than reading
+            // the same run again one character at a time.
+            self.charge(count);
             return;
         }
         self.steps += count;

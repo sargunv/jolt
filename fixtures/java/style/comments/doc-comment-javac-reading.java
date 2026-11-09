@@ -71,4 +71,7 @@ class DocCommentJavacReading {
    * next line
    */
   void rulerAfterABlankFirstLine() {}
+
+  /** <ul><li>First.<li>Second.</ul> After, where the first sentence holds both items. */
+  void sentenceAcrossUnclosedItems() {}
 }

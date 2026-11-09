@@ -1078,6 +1078,13 @@ impl Html<'_, '_, '_, '_> {
         self.layout.line(blank, indent, hang);
     }
 
+    /// Whether a line break before `token`, a tag written right after a
+    /// sentence's end, would end javadoc's first sentence there; `emit` then
+    /// keeps it on the line (see the block case there).
+    fn keeps_sentence(&self, token: &Token) -> bool {
+        token.sep == Sep::None && self.ends_sentence && !self.layout.at_start()
+    }
+
     /// Adds a word. `glue` keeps it on the line of the word before.
     fn emit(&mut self, token: &Token, glue: bool) {
         let text = self
@@ -1186,8 +1193,12 @@ impl Html<'_, '_, '_, '_> {
                     unreachable!("a list frame");
                 };
                 self.frames.truncate(list);
-                self.next_line = None;
-                self.layout.line(self.gap == Gap::Blank, open, open);
+                if self.keeps_sentence(token) {
+                    self.next_line = Some(Why::Block);
+                } else {
+                    self.next_line = None;
+                    self.layout.line(self.gap == Gap::Blank, open, open);
+                }
                 self.emit(token, false);
                 self.gap = self.gap.max(Gap::Block);
                 self.request(Why::Text);
@@ -1198,8 +1209,12 @@ impl Html<'_, '_, '_, '_> {
                 }
                 let line = self.column();
                 let column = (line + 4).min(MAX_INDENT);
-                self.next_line = None;
-                self.start(Why::Block, line, column);
+                if self.keeps_sentence(token) {
+                    self.next_line = Some(Why::Block);
+                } else {
+                    self.next_line = None;
+                    self.start(Why::Block, line, column);
+                }
                 self.emit(token, false);
                 self.frames.push(Frame::Item { line, column });
                 self.attach = token.span.end.line == token.span.start.line;
