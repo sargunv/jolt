@@ -133,4 +133,10 @@ class DocCommentMarkdownHardCases {
   int linkReferenceInATag() {
     return 0;
   }
+
+  /// A method whose block tag is indented, which javadoc still reads as a tag.
+  ///     @return the value
+  int indentedFirstTag() {
+    return 0;
+  }
 }

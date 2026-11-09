@@ -149,7 +149,6 @@ impl<'p, 'a> Paragraph<'p, 'a> {
                 if line.offset < self.tag_end {
                     return None;
                 }
-                tokens.push(Token::new(Kind::BlockTag, "", Sep::Line));
                 for line in &self.lines[index..] {
                     tokens.push(Token::new(Kind::Verbatim, line.raw, Sep::Line));
                 }
@@ -315,36 +314,17 @@ fn is_delimiter_row(rest: &[u8]) -> bool {
 
 /// Lays out a `///` run's tokens.
 pub(crate) fn lay_out<'a>(tokens: &[Token<'a>], layout: &mut Layout<'_, 'a>) {
-    // A blank line goes before the next line (the first block tag's).
-    let mut blank = false;
-    // The last line printed is blank.
-    let mut last_blank = false;
-    let mut tagged = false;
     let mut in_paragraph = false;
     for token in tokens {
-        match token.kind {
-            Kind::BlockTag => {
-                if !std::mem::replace(&mut tagged, true) {
-                    blank = !layout.at_start() && !last_blank;
-                }
-                in_paragraph = false;
+        if token.kind == Kind::Word {
+            if !std::mem::replace(&mut in_paragraph, true) {
+                layout.line(false, 0, 0);
             }
-            Kind::Word => {
-                if !std::mem::replace(&mut in_paragraph, true) {
-                    last_blank = false;
-                    layout.line(std::mem::take(&mut blank), 0, 0);
-                }
-                let join = if token.glue { Join::Space } else { Join::Wrap };
-                layout.word(token.text, join, token.sticky);
-            }
-            _ => {
-                if std::mem::take(&mut blank) {
-                    layout.line(true, 0, 0);
-                }
-                layout.verbatim(token.text);
-                last_blank = token.kind == Kind::Blank;
-                in_paragraph = false;
-            }
+            let join = if token.glue { Join::Space } else { Join::Wrap };
+            layout.word(token.text, join, token.sticky);
+        } else {
+            layout.verbatim(token.text);
+            in_paragraph = false;
         }
     }
 }

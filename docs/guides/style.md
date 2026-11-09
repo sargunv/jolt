@@ -1096,8 +1096,7 @@ A Markdown doc comment that Jolt lays out gets this style:
 - **Paragraphs** of the description are filled as in a Javadoc comment. The line
   width counts the comment's indentation and the frame.
 - **Code blocks** keep their lines exactly.
-- **Blank lines** are kept as written. Jolt adds one only before the first block
-  tag.
+- **Blank lines** are kept as written.
 - **Block tags** and everything after the first one are kept as written: javadoc
   reads the text of each block tag as Markdown of its own, so a rewrapped line
   there could start a heading, a list or code.
@@ -1144,7 +1143,6 @@ class Splitter {
   /// ```java
   ///   split("a, b,", 0); // ["a", "b", ""]
   /// ```
-  ///
   /// @param text the text to split, which may be empty or contain only commas and spaces
   /// @return the parts,
   ///     in order
