@@ -21,6 +21,9 @@ const BLANK: [char; 3] = [' ', '\t', '\x0c'];
 /// compares (check mode) can stop the printer soon after a difference.
 const CHUNK: usize = 1024;
 
+/// The documents [`Printer::line_ends_after`] reads at most.
+const LOOKAHEAD: u32 = 256;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Mode {
     Flat,
@@ -185,6 +188,10 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                     mode,
                     doc: if mode == Mode::Break { broken } else { flat },
                 }),
+                Kind::DocComment(laid_out, as_written) => {
+                    let doc = self.doc_comment(laid_out, as_written);
+                    self.stack.push(Command { indent, mode, doc });
+                }
                 Kind::LineSuffix(child) => self.suffixes.push(Command {
                     indent,
                     mode,
@@ -226,6 +233,86 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
             if self.out.len() >= CHUNK {
                 self.sink.write(&self.out)?;
                 self.out.clear();
+            }
+        }
+    }
+
+    /// A doc comment laid out where it starts its output line and the line
+    /// ends after it, else as written (see [`DocBuilder::doc_comment`]).
+    fn doc_comment(&self, laid_out: Doc, as_written: Doc) -> Doc {
+        if self.at_line_start() && self.line_ends_after() {
+            laid_out
+        } else {
+            as_written
+        }
+    }
+
+    /// Whether the next text starts an output line: newlines are pending,
+    /// nothing is written yet, the line ends with a line comment, or an
+    /// end-of-line comment waits to end it.
+    fn at_line_start(&self) -> bool {
+        matches!(self.pending, Pending::Newlines { .. })
+            || matches!(self.line, Line::FileStart | Line::Commented)
+            || !self.suffixes.is_empty()
+    }
+
+    /// Whether the line ends after the current command: what is left on the
+    /// stack, read in order, writes a line break (or nothing more) before
+    /// any text. A choice the printer makes later (a group not reached yet,
+    /// and the hangs, hugs and if-breaks in it) counts as no line break, as
+    /// does an end-of-line comment, which ends the line after its own text.
+    /// The read stops after `LOOKAHEAD` documents, as no line break.
+    fn line_ends_after(&self) -> bool {
+        let mut stack: Vec<(Doc, Option<Mode>)> = Vec::new();
+        let mut rest = self.stack.len();
+        let mut budget = LOOKAHEAD;
+        loop {
+            let (doc, mode) = match stack.pop() {
+                Some(entry) => entry,
+                None if rest == 0 => return true,
+                None => {
+                    rest -= 1;
+                    let command = self.stack[rest];
+                    (command.doc, Some(command.mode))
+                }
+            };
+            if budget == 0 {
+                return false;
+            }
+            budget -= 1;
+            match self.docs.kind(doc) {
+                Kind::Nil | Kind::BreakParent | Kind::Space => {}
+                Kind::Text(index) => {
+                    if !self.docs.texts[index as usize].text.is_empty() {
+                        return false;
+                    }
+                }
+                Kind::HardLine | Kind::EmptyLine => return true,
+                Kind::Line | Kind::SoftLine => match mode {
+                    Some(Mode::Break) => return true,
+                    Some(Mode::Flat) => {}
+                    None => return false,
+                },
+                Kind::Concat(start, len) => {
+                    let children = &self.docs.children[start as usize..(start + len) as usize];
+                    stack.extend(children.iter().rev().map(|&child| (child, mode)));
+                }
+                Kind::Indent(child) => stack.push((child, mode)),
+                Kind::Group(child) => {
+                    let mode = if self.docs.breaks(doc) {
+                        Some(Mode::Break)
+                    } else {
+                        mode.filter(|&mode| mode == Mode::Flat)
+                    };
+                    stack.push((child, mode));
+                }
+                Kind::IfBreak(broken, flat) => match mode {
+                    Some(Mode::Break) => stack.push((broken, mode)),
+                    Some(Mode::Flat) => stack.push((flat, mode)),
+                    None => return false,
+                },
+                Kind::DocComment(_, as_written) => stack.push((as_written, mode)),
+                Kind::LineSuffix(_) | Kind::Hang(..) | Kind::Hug(..) => return false,
             }
         }
     }
@@ -725,6 +812,10 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
                 }
                 Kind::IfBreak(broken, flat) => stack.push(Fit {
                     doc: if mode == Mode::Break { broken } else { flat },
+                    ..entry
+                }),
+                Kind::DocComment(_, as_written) => stack.push(Fit {
+                    doc: as_written,
                     ..entry
                 }),
                 // The suffix (an end-of-line comment) counts toward the width
