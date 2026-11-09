@@ -763,15 +763,15 @@ depth and is large only at the head of a deep left-nested spine.
 The formatter, not the rules, prints leading and trailing comments, from the
 effective layout only:
 
-| Attachment | Layout                              | Printed as                                                                                                          |
-| ---------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Leading    | `OwnLine`                           | `hard_line, C, (empty_line if lines_after ≥ 2 else hard_line)`                                                      |
-| Leading    | `StartOfLine`                       | `hard_line, C`, then `space` unless `next` is a closer or separator                                                 |
-| Leading    | `Inline`                            | `space` unless `L::hugs_next(prev)`, then `C`, then `space` unless `next` is a closer or separator                  |
-| Leading    | `EndOfLine`                         | `space` unless `L::hugs_next(prev)`, then `C, (empty_line if lines_after ≥ 2 else hard_line)` (Runs)                |
-| Trailing   | `EndOfLine`, line comment           | `line_suffix(space, C), break_parent`                                                                               |
-| Trailing   | `EndOfLine` block comment, `Inline` | `space` unless `L::hugs_next(prev)`, then `C`, then `space` unless `next` is a closer or separator                  |
-| Dangling   | any                                 | by the owning rule via `Formatter::dangling`: one per line, except that comments that shared a source line share it |
+| Attachment | Layout                              | Printed as                                                                                                                                                              |
+| ---------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Leading    | `OwnLine`                           | `hard_line, C, (empty_line if lines_after ≥ 2 else hard_line)`                                                                                                          |
+| Leading    | `StartOfLine`                       | `hard_line, C`, then `space` unless `next` is a closer or separator                                                                                                     |
+| Leading    | `Inline`                            | `space` unless `L::hugs_next(prev)`, then `C`, then `space` unless `next` is a closer or separator                                                                      |
+| Leading    | `EndOfLine`                         | `space` unless `L::hugs_next(prev)`, then `C, (empty_line if lines_after ≥ 2 else hard_line)`, or `C, space` when the next comment of its target shares its line (Runs) |
+| Trailing   | `EndOfLine`, line comment           | `line_suffix(space, C), break_parent`                                                                                                                                   |
+| Trailing   | `EndOfLine` block comment, `Inline` | `space` unless `L::hugs_next(prev)`, then `C`, then `space` unless `next` is a closer or separator                                                                      |
+| Dangling   | any                                 | by the owning rule via `Formatter::dangling`: one per line, except that comments that shared a source line share it                                                     |
 
 So an inline comment gets one space on each side, none after a `hugs_next`
 token, and none before a closer or separator: `this /* c */.x` prints as
@@ -1332,15 +1332,18 @@ on its line, which the layout joins onto the tag's line. So does a description
 that starts with whitespace javac doesn't skip (a form feed, U+2003): a `<p>`
 after it ends the first sentence, which as the first tree it doesn't, and the
 layout drops what HTML collapses; and the rest would start the layout's first
-line, which javac strips as indentation when it is the only one. So does a
-`{@snippet :` that the comment's end or a form feed follows on its line: javac
-reads an error there, but the snippet's body after a line break, which a layout
-on more than one line puts before `*/` and which stays where the layout drops
-the form feed. The Java hook also keeps file headers, and `jolt_fmt` keeps
-comments that share a line with code, lie in a formatter-ignore region, or have
-a target with recovery. Such a comment keeps all its trailing whitespace: its
-`<pre>` elements, code and tag bodies, where that whitespace is content, were
-not read.
+line, which javac strips as indentation when it is the only one. So does an
+erroneous node that reaches `*/` with nothing between (`{@index x*/`), where a
+layout puts a space or a line break that can change the error, and a form feed
+at javac's line start right before an `@`, which makes the `@` text and which
+the layout drops. So does a `{@snippet :` that the comment's end or a form feed
+follows on its line: javac reads an error there, but the snippet's body after a
+line break, which a layout on more than one line puts before `*/` and which
+stays where the layout drops the form feed. The Java hook also keeps file
+headers, and `jolt_fmt` keeps comments that share a line with code, lie in a
+formatter-ignore region, or have a target with recovery. Such a comment keeps
+all its trailing whitespace: its `<pre>` elements, code and tag bodies, where
+that whitespace is content, were not read.
 
 **HTML layout.** The tree of each part (the description, each block tag) is
 flattened, an inline tag's rich text in line between its head and its `}`. Then:

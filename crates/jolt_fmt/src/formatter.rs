@@ -743,7 +743,11 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             }
             (Side::Leading, CommentLayout::EndOfLine) => {
                 let before = self.space_before(index);
-                let after = self.line_break(blank_after);
+                let after = if self.shares_line_with_next(end) {
+                    Doc::SPACE
+                } else {
+                    self.line_break(blank_after)
+                };
                 cat![self; before, text, after]
             }
             // A block comment at the end of a line trails its code like an
@@ -776,12 +780,25 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         )
     }
 
+    /// Whether a comment that ends its line in the source has the next
+    /// comment of its target on that line (`/* a */ // b`): it ends no line
+    /// then, and the next one ends it.
+    fn shares_line_with_next(&self, index: usize) -> bool {
+        let placed = self.comments.list[index];
+        self.comments.list.get(index + 1).is_some_and(|next| {
+            next.comment.lines_before == 0
+                && next.side == placed.side
+                && next.target == placed.target
+        })
+    }
+
     /// Whether [`attached_comment`](Self::attached_comment) breaks the line
     /// after the comment.
     fn breaks_after(&self, index: usize) -> bool {
         let placed = self.comments.list[index];
         match (placed.side, placed.layout) {
-            (_, CommentLayout::OwnLine) | (Side::Leading, CommentLayout::EndOfLine) => true,
+            (_, CommentLayout::OwnLine) => true,
+            (Side::Leading, CommentLayout::EndOfLine) => !self.shares_line_with_next(index),
             (_, CommentLayout::EndOfLine) => placed.comment.kind == CommentKind::Line,
             _ => false,
         }
@@ -795,7 +812,8 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     fn lays_out_doc(&self, index: usize) -> bool {
         let placed = self.comments.list[index];
         match (placed.side, placed.layout) {
-            (_, CommentLayout::OwnLine) | (Side::Leading, CommentLayout::EndOfLine) => true,
+            (_, CommentLayout::OwnLine) => true,
+            (Side::Leading, CommentLayout::EndOfLine) => !self.shares_line_with_next(index),
             (Side::Leading, CommentLayout::Inline) => {
                 self.comments.list.get(index + 1).is_some_and(|next| {
                     next.side == Side::Leading

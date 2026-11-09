@@ -1273,6 +1273,8 @@ impl Html<'_, '_, '_, '_> {
             // A tag that ends the sentence after a lone first character keeps
             // it ending there (or not).
             _ if self.offset_one(token) == Some(false) => Join::Space,
+            // After an erroneous node, the separator stays.
+            Sep::Space | Sep::Line if token.pinned => Join::Space,
             // A space after a sentence's end stays: it ends javadoc's first
             // sentence there.
             Sep::Space | Sep::Line if self.attach && self.ends_sentence => Join::Space,

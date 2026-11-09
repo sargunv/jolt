@@ -161,6 +161,15 @@ class DocCommentKeptAsWritten {
   }
 
   /** a doc comment  of a removed semicolon, before a line comment */ // a line comment
+
+  /** An unfinished index term right before the end: {@index x*/
+  void unfinishedIndexTermBeforeTheEnd() {}
+
+  /** <!--
+   * -->@return value, after a form feed that keeps it from being a block tag */
+  int formFeedAfterAMultilineHtmlComment() {
+    return 0;
+  }
 }
 
 diagnostics:

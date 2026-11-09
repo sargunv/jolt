@@ -418,7 +418,8 @@ impl Parser<'_, '_> {
 
     /// Fails the reading where it can't follow javac's: the comment is
     /// printed as written. That is a description that starts with
-    /// whitespace (see [`parse`]); a `{@snippet :` that the comment's end or
+    /// whitespace (see [`parse`]); an erroneous node that reaches `*/`; a
+    /// form feed before an `@` at javac's line start; a `{@snippet :` that the comment's end or
     /// a form feed follows on its line; an escape (`@@`, `@*`) that doesn't
     /// start its line, which javac reads as one only after a line break
     /// before a tag's argument that the layout joins; an inline tag nested
@@ -456,6 +457,15 @@ impl Parser<'_, '_> {
             .chars()
             .next()
             .is_some_and(java::is_whitespace)
+    }
+
+    /// Whether an `@` follows the reader's character on its line, after
+    /// spaces and tabs only.
+    fn at_after_blanks(&self) -> bool {
+        let pos = self.after_cur();
+        self.lines[pos.line as usize].text[pos.off as usize..]
+            .trim_start_matches([' ', '\t'])
+            .starts_with('@')
     }
 
     /// Whether only spaces and tabs come before `pos` on its line.
@@ -642,6 +652,12 @@ impl Parser<'_, '_> {
         if end <= start {
             end = self.after(start);
         }
+        if end == self.end && self.markdown.is_none() {
+            // Nothing between it and `*/`, which a layout can't keep: it puts
+            // a space or a line break there, and what follows an erroneous
+            // node decided its error (`{@index x*/`).
+            self.give_up();
+        }
         self.text_start = None;
         Node::Erroneous(Span { start, end })
     }
@@ -733,6 +749,12 @@ impl Parser<'_, '_> {
                     self.default_content();
                 }
                 '`' | '~' if markdown => self.markdown_code(),
+                '\u{c}' if self.newline && self.at_after_blanks() => {
+                    // The form feed ends javac's line start, so the `@` is
+                    // text; the layout drops the form feed.
+                    self.give_up();
+                    break 'read;
+                }
                 _ => self.plain_run(),
             }
         }

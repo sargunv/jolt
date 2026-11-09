@@ -971,9 +971,11 @@ because of a line break before a tag's argument (`@param` with `x @@` on the
 next line); a comment whose text starts with whitespace that javadoc reads, such
 as a form feed or U+2003, which makes a `<p>` after it end the first sentence,
 and which javadoc would remove as indentation if it started the comment's only
-line; and a comment with `{@snippet :` followed on its line by only the
-comment's end or a form feed, which javadoc reads differently from a line break
-there.
+line; a comment with `{@snippet :` followed on its line by only the comment's
+end or a form feed, which javadoc reads differently from a line break there; a
+comment that ends right after an error, with no space before `*/`
+(`{@index x*/`), which Jolt can't keep; and a comment where a form feed comes
+right before an `@` that javadoc would otherwise read as a block tag.
 
 A comment that Jolt lays out gets this style:
 

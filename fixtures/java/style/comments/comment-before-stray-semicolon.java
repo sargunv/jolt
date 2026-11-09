@@ -24,3 +24,11 @@ class CommentBeforeStraySemicolon {
 class A {} // about A
 ;
 class B {}
+
+class C {
+  int x;
+  ; /* a block comment */ // and a line comment on the line of a stray semicolon
+
+  /** Next. */
+  void f() {}
+}

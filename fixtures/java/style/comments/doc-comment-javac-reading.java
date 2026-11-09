@@ -202,4 +202,7 @@ class DocCommentJavacReading {
 
   /** @see nu‌ll a </p> b, a keyword with an ignorable character in it */
   void keywordWithAnIgnorableCharacter() {}
+
+  /** {@link bad-name </p> b}, where the space after an invalid reference stays */
+  void closingTagAfterAnInvalidReference() {}
 }

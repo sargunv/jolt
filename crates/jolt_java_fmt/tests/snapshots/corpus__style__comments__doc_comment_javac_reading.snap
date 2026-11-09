@@ -56,7 +56,8 @@ class DocCommentJavacReading {
   void listAfterAPeriod() {}
 
   /**
-   * Intro<br> @return value, which javadoc reads as text after the form feed
+   * Intro<br>
+   * @return value, which javadoc reads as text after the form feed
    */
   int formFeedBeforeAnAt() {
     return 0;
@@ -213,9 +214,9 @@ class DocCommentJavacReading {
   }
 
   /**
-   * Text
+   * Text <p>
    *
-   * <p>@return value, which a form feed keeps from being a block tag
+   * @return value, which a form feed keeps from being a block tag
    */
   void formFeedBeforeAnAtAfterAParagraph() {}
 
@@ -314,6 +315,11 @@ class DocCommentJavacReading {
    * @see nu‌ll a </p> b, a keyword with an ignorable character in it
    */
   void keywordWithAnIgnorableCharacter() {}
+
+  /**
+   * {@link bad-name </p> b}, where the space after an invalid reference stays
+   */
+  void closingTagAfterAnInvalidReference() {}
 }
 
 diagnostics:
