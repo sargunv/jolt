@@ -1308,10 +1308,14 @@ A comment is printed as written (N9) when javac doesn't read its text from the
 source as written (it has a Unicode escape), when it is a banner (`/***`, or a
 line made only of two or more `*`s), `/**/`, and when its reading would take
 more than [linear time](#doc-comment-cost) or nest inline tags more than 32 deep
-(below). The Java hook also keeps file headers, and `jolt_fmt` keeps comments
-that share a line with code, lie in a formatter-ignore region, or have a target
-with recovery. Such a comment keeps all its trailing whitespace: its `<pre>`
-elements, code and tag bodies, where that whitespace is content, were not read.
+(below), or would depend on whether javac's `ReferenceParser` accepts a
+reference, which the port doesn't read: after a `{@value}` reference that no `}`
+follows, javac reads one more character only for a valid reference, and that
+character can be the `{` of the next tag. The Java hook also keeps file headers,
+and `jolt_fmt` keeps comments that share a line with code, lie in a
+formatter-ignore region, or have a target with recovery. Such a comment keeps
+all its trailing whitespace: its `<pre>` elements, code and tag bodies, where
+that whitespace is content, were not read.
 
 **HTML layout.** The tree of each part (the description, each block tag) is
 flattened, an inline tag's rich text in line between its head and its `}`. Then:

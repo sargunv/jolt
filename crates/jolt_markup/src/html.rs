@@ -1154,8 +1154,15 @@ impl Html<'_, '_, '_, '_> {
         } else {
             let join = match token.sep {
                 // A space after a sentence's end stays: it ends javadoc's
-                // first sentence there.
-                Sep::Space | Sep::Line if self.attach && self.ends_sentence => Join::Space,
+                // first sentence there. So does one between a lone first
+                // character and a tag that ends the sentence (`A </p>`),
+                // which javadoc reads as no break at offset 1.
+                Sep::Space | Sep::Line
+                    if self.attach
+                        && (self.ends_sentence || self.lone_first && breaks_sentence(text)) =>
+                {
+                    Join::Space
+                }
                 _ if self.attach && !token.after_head => Join::None,
                 Sep::None => Join::None,
                 Sep::Space | Sep::Line if glue => Join::Space,

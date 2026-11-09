@@ -96,4 +96,7 @@ class DocCommentJavacReading {
 
   /** An index tag with no description keeps its brace: {@index "a long term" }@return text */
   void indexTagWithoutADescription() {}
+
+  /** A </p> Second, where the first sentence ends at the closing tag after a space. */
+  void closingParagraphAfterALoneFirstCharacter() {}
 }

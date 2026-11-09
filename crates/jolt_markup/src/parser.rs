@@ -115,11 +115,12 @@ pub(crate) struct Comment {
 
 /// Reads a comment's lines as javadoc does; `markdown` for a `///` comment.
 /// `None` when the reading takes more than [`STEPS_PER_BYTE`] steps per
-/// byte, or nests inline tags deeper than [`MAX_INLINE_DEPTH`]: javac
-/// rescans text after a malformed construct (an HTML tag with an unclosed
-/// quote, an unclosed Markdown code span), which some inputs make quadratic,
-/// and its Markdown scanner never ends on some last lines; such a comment is
-/// printed as written.
+/// byte, nests inline tags deeper than [`MAX_INLINE_DEPTH`], or depends on
+/// whether javac's `ReferenceParser` accepts a reference (see
+/// [`Parser::give_up`]): javac rescans text after a malformed construct (an
+/// HTML tag with an unclosed quote, an unclosed Markdown code span), which
+/// some inputs make quadratic, and its Markdown scanner never ends on some
+/// last lines; such a comment is printed as written.
 pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
     let size: usize = lines.iter().map(|line| line.text.len() + 1).sum();
     let mut parser = Parser {
@@ -389,6 +390,16 @@ impl Parser<'_, '_> {
         } else {
             None
         }
+    }
+
+    /// Fails the reading where it can't follow javac's: the comment is
+    /// printed as written. That is an inline tag nested too deeply, and an
+    /// unclosed `{@value}`, where javac reads one more character only when
+    /// `ReferenceParser`, which this port doesn't read, accepts the
+    /// reference (javac stops at an invalid one); that character can be the
+    /// `{` of the next inline tag.
+    fn give_up(&mut self) {
+        self.charge(self.budget + 1);
     }
 
     /// Counts `count` steps of the reading. Past the budget the reading
@@ -914,7 +925,7 @@ impl Parser<'_, '_> {
     /// (javac reads it by recursion, as this does).
     fn inline_tag_tree(&mut self, brace: Pos) -> Node {
         if self.inline_depth == MAX_INLINE_DEPTH {
-            self.charge(self.budget + 1);
+            self.give_up();
             return self.erroneous(brace);
         }
         self.inline_depth += 1;
@@ -1080,11 +1091,11 @@ impl Parser<'_, '_> {
                 }
                 self.reference()?;
                 self.skip_whitespace();
-                let closed = self.cur.ch == '}';
-                self.next_char();
-                if closed {
+                if self.cur.ch == '}' {
+                    self.next_char();
                     Ok(self.atomic(brace, name))
                 } else {
+                    self.give_up();
                     Err(ParseError)
                 }
             }

@@ -153,6 +153,12 @@ class DocCommentJavacReading {
    * {@index "a long term" }@return text
    */
   void indexTagWithoutADescription() {}
+
+  /**
+   * A </p> Second, where the first sentence ends at the closing tag after a
+   * space.
+   */
+  void closingParagraphAfterALoneFirstCharacter() {}
 }
 
 diagnostics:

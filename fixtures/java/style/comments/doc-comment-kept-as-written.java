@@ -83,4 +83,8 @@ class DocCommentKeptAsWritten {
   int leadingStarOnOneLine() {
     return 0;
   }
+
+  /** {@value bad!
+   * {@code good}, where javadoc's reading depends on whether the value's reference is valid */
+  void unclosedValueTag() {}
 }
