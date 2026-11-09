@@ -56,3 +56,18 @@ fn long_markdown_line() {
     let formatted = format_in_time(&format!("    /// {}", "word ".repeat(400_000)));
     assert!(formatted.lines().count() > 10_000);
 }
+
+/// Each nested HTML list indents its items further; the indentation stops
+/// growing at a bound, so the output stays linear in the input and the
+/// indentation never overflows.
+#[test]
+fn deeply_nested_html_lists() {
+    let depth = 11_000;
+    let comment = format!(
+        "    /** {}item{} */",
+        "<ul><li>".repeat(depth),
+        "</li></ul>".repeat(depth)
+    );
+    let formatted = format_in_time(&comment);
+    assert!(formatted.len() < comment.len() * 30, "{}", formatted.len());
+}

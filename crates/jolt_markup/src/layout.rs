@@ -159,7 +159,7 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
 
     /// The text of line `line` from byte `from` of its text, to byte `to`
     /// (or its end), as javadoc reads it.
-    fn segment(&self, line: u32, from: u32, to: Option<u32>) -> &'a str {
+    pub(crate) fn segment(&self, line: u32, from: u32, to: Option<u32>) -> &'a str {
         let text = self.lines[line as usize].text;
         let to = to.map_or(text.len(), |to| to as usize);
         &text[from as usize..to]

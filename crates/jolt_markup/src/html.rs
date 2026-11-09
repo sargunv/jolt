@@ -264,6 +264,7 @@ pub(crate) fn lay_out<'a>(
         next_line: None,
         gap: Gap::None,
         attach: false,
+        ends_sentence: false,
     };
     for token in &tokens {
         html.token(token);
@@ -330,7 +331,13 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
                         let joined = reference
                             .then(|| words::joined_pieces(lines, head))
                             .flatten();
-                        for span in joined.unwrap_or_else(|| vec![head]) {
+                        // An unfinished reference can be empty; an empty word
+                        // would start a line of its own.
+                        for span in joined
+                            .unwrap_or_else(|| vec![head])
+                            .into_iter()
+                            .filter(|span| span.start != span.end)
+                        {
                             pieces.push(Piece {
                                 kind: PieceKind::Atom,
                                 span,
@@ -973,6 +980,26 @@ impl Frame {
     }
 }
 
+/// Whether the HTML start tag at the start of `text` ends javadoc's first
+/// sentence by itself, as `<p>`, `<pre>` and the headings do (javadoc's
+/// `DocTreeMaker` sentence break tags).
+fn breaks_sentence(text: &str) -> bool {
+    let name = text
+        .strip_prefix('<')
+        .unwrap_or("")
+        .split(|ch: char| !ch.is_ascii_alphanumeric())
+        .next()
+        .unwrap_or("");
+    ["p", "pre", "h1", "h2", "h3", "h4", "h5", "h6"]
+        .iter()
+        .any(|tag| name.eq_ignore_ascii_case(tag))
+}
+
+/// The deepest indentation nested lists get, in columns after the frame:
+/// deeper lists keep it, so output stays linear in the input however deeply
+/// lists nest (HTML ignores the indentation).
+const MAX_INDENT: u16 = 24;
+
 struct Html<'p, 'd, 'l, 'a> {
     layout: &'p mut Layout<'d, 'l, 'a>,
     frames: Vec<Frame>,
@@ -985,6 +1012,9 @@ struct Html<'p, 'd, 'l, 'a> {
     /// The next word follows the last with nothing between (after `<p>` or
     /// `<li>`).
     attach: bool,
+    /// The last word ends a sentence (`.`, `!`, `?`): javadoc's first
+    /// sentence ends there if whitespace follows.
+    ends_sentence: bool,
 }
 
 impl Html<'_, '_, '_, '_> {
@@ -1044,10 +1074,27 @@ impl Html<'_, '_, '_, '_> {
 
     /// Adds a word. `glue` keeps it on the line of the word before.
     fn emit(&mut self, token: &Token, glue: bool) {
+        let text = self
+            .layout
+            .segment(token.span.start.line, token.span.start.off, None);
         if let Some(why) = self.next_line.take() {
-            // A word that a line break would turn into structure stays on
-            // the line where the source has it.
-            if token.sep != Sep::Line && !self.layout.at_start() && token.sticky {
+            if why == Why::Block
+                && token.sep == Sep::None
+                && self.ends_sentence
+                && !breaks_sentence(text)
+            {
+                // A block written right after a sentence's end belongs to
+                // that sentence in javadoc's first sentence, unless it ends
+                // the sentence itself; whitespace there would end it.
+                self.layout.word(token.span, Join::None, token.sticky);
+            } else if !self.layout.at_start()
+                && token.sticky
+                && (token.sep != Sep::Line || text.starts_with('@'))
+            {
+                // A word that a line break would turn into structure stays on
+                // the line of the word before: always for `@`, which would
+                // become a block tag; for the other words, unless the source
+                // starts a line with it.
                 self.layout.word(token.span, Join::Space, true);
             } else {
                 let column = self.column();
@@ -1063,6 +1110,13 @@ impl Html<'_, '_, '_, '_> {
             };
             self.layout.word(token.span, join, token.sticky);
         }
+        let last = if token.span.end.line == token.span.start.line {
+            &text[..(token.span.end.off - token.span.start.off) as usize]
+        } else {
+            self.layout
+                .segment(token.span.end.line, 0, Some(token.span.end.off))
+        };
+        self.ends_sentence = last.ends_with(['.', '!', '?']);
         self.attach = false;
         self.gap = Gap::None;
     }
@@ -1106,7 +1160,7 @@ impl Html<'_, '_, '_, '_> {
                 self.emit(token, false);
                 self.frames.push(Frame::List {
                     open,
-                    column: open + 2,
+                    column: (open + 2).min(MAX_INDENT),
                 });
                 self.request(Why::Text);
             }
@@ -1134,13 +1188,11 @@ impl Html<'_, '_, '_, '_> {
                     self.frames.pop();
                 }
                 let line = self.column();
+                let column = (line + 4).min(MAX_INDENT);
                 self.next_line = None;
-                self.start(Why::Block, line, line + 4);
+                self.start(Why::Block, line, column);
                 self.emit(token, false);
-                self.frames.push(Frame::Item {
-                    line,
-                    column: line + 4,
-                });
+                self.frames.push(Frame::Item { line, column });
                 self.attach = token.span.end.line == token.span.start.line;
             }
             (Name::Item, true) => {

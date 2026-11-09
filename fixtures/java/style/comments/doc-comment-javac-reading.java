@@ -33,4 +33,32 @@ class DocCommentJavacReading {
    * @see Object </li> {@link Object </p> and a link's reference}
    */
   void separatorAfterAReference(int value) throws Exception {}
+
+  /** Summary.<ul><li>item, part of the first sentence because no space follows the period</li></ul> */
+  void listAfterAPeriod() {}
+
+  /**
+   * Intro<br>
+   * @return value, which javadoc reads as text after the form feed
+   */
+  int formFeedBeforeAnAt() {
+    return 0;
+  }
+
+  /**
+   * {@link
+   * @return value
+   */
+  int unfinishedLink() {
+    return 0;
+  }
+
+  /** Summary.<pre>code</pre> More text after the block, with enough words to wrap the line past the width. */
+  void preAfterAPeriod() {}
+
+  /** Summary.<h2>Heading</h2> More text after the heading, with enough words to wrap the line past the width. */
+  void headingAfterAPeriod() {}
+
+  /** Summary.<table><tr><td>cell</td></tr></table> More text after the table, with enough words to wrap. */
+  void tableAfterAPeriod() {}
 }
