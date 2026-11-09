@@ -49,3 +49,10 @@ fn many_markers_on_a_line() {
         assert!(formatted.contains("text"), "{marker}");
     }
 }
+
+/// A Markdown paragraph on one long line is filled one word at a time.
+#[test]
+fn long_markdown_line() {
+    let formatted = format_in_time(&format!("    /// {}", "word ".repeat(400_000)));
+    assert!(formatted.lines().count() > 10_000);
+}

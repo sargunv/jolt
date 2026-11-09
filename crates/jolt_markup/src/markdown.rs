@@ -112,10 +112,13 @@ enum Segment<'n> {
 
 /// One part's Markdown text, as javadoc builds it, and where each piece
 /// comes from.
+#[allow(clippy::struct_field_names, reason = "a part's text and its pieces")]
 struct Text<'n> {
     text: String,
     /// The start of each piece in `text`, in order.
     segments: Vec<(usize, Segment<'n>)>,
+    /// The offset of each `\n` in `text`, in order.
+    newlines: Vec<usize>,
 }
 
 impl<'n> Text<'n> {
@@ -154,6 +157,18 @@ impl<'n> Text<'n> {
                 (start, Segment::Placeholder { erroneous: true, .. })
                     if start + PLACEHOLDER.len_utf8() == offset
             )
+    }
+
+    /// The offset of the last `\n` before byte `offset`.
+    fn newline_before(&self, offset: usize) -> Option<usize> {
+        let index = self.newlines.partition_point(|&found| found < offset);
+        index.checked_sub(1).map(|index| self.newlines[index])
+    }
+
+    /// The offset of the first `\n` at or after byte `offset`.
+    fn newline_after(&self, offset: usize) -> Option<usize> {
+        let index = self.newlines.partition_point(|&found| found < offset);
+        self.newlines.get(index).copied()
     }
 
     /// The end position of a range that ends at `offset`.
@@ -327,6 +342,7 @@ impl Markdown<'_, '_, '_, '_> {
         let mut text = Text {
             text: String::new(),
             segments: Vec::new(),
+            newlines: Vec::new(),
         };
         for node in nodes {
             match node {
@@ -354,6 +370,7 @@ impl Markdown<'_, '_, '_, '_> {
                         ));
                         text.text.push_str(&source[from..to]);
                         if line < span.end.line {
+                            text.newlines.push(text.text.len());
                             text.text.push('\n');
                         }
                     }
@@ -384,6 +401,7 @@ impl Markdown<'_, '_, '_, '_> {
                     if name == "{@snippet" {
                         // A block placeholder (`<!--￼-->`), on a line of its own.
                         if !text.text.is_empty() && !text.text.ends_with('\n') {
+                            text.newlines.push(text.text.len());
                             text.text.push('\n');
                         }
                         text.text.push_str("<!--\u{fffc}-->");
@@ -512,6 +530,8 @@ impl Markdown<'_, '_, '_, '_> {
         let mut breaks = paragraph.breaks.iter().copied().peekable();
         let mut break_pending = false;
         let mut after_error = false;
+        // The end of the last word.
+        let mut word_end = 0;
         while at < end {
             while at < end && matches!(source[at], b' ' | b'\t' | b'\n' | b'\r') {
                 at += 1;
@@ -544,7 +564,7 @@ impl Markdown<'_, '_, '_, '_> {
             while breaks.peek().is_some_and(|&found| found < start) {
                 breaks.next();
             }
-            let line_end = text.text[at..].find('\n').map_or(end, |found| at + found);
+            let line_end = text.newline_after(at).unwrap_or(end);
             let last_on_line = text.text[at..line_end]
                 .bytes()
                 .all(|byte| byte == b' ' || byte == b'\t');
@@ -554,18 +574,16 @@ impl Markdown<'_, '_, '_, '_> {
                 let line = self.lines[span.end.line as usize].text;
                 span.end.off = to_u32(line.len());
             }
-            // The spaces before the word on its line, when it starts one.
-            let line_start =
-                text.text[..start]
-                    .rfind('\n')
-                    .map_or(start == paragraph.range.start, |found| {
-                        text.text[found + 1..start]
-                            .bytes()
-                            .all(|byte| byte == b' ' || byte == b'\t')
-                    });
-            let indent = text.text[..start]
-                .rfind('\n')
-                .map_or(0, |found| start - found - 1);
+            // The spaces before the word on its line, when it starts one (no
+            // word since the line's start, and only spaces and tabs).
+            let newline = text.newline_before(start);
+            let line_start = newline.map_or(start == paragraph.range.start, |found| {
+                word_end <= found
+                    && text.text[found + 1..start]
+                        .bytes()
+                        .all(|byte| byte == b' ' || byte == b'\t')
+            });
+            let indent = newline.map_or(0, |found| start - found - 1);
             // In the first sentence, javadoc ends the sentence at a line that
             // starts with one of these; an `@` that starts a line is a block
             // tag or an escape: such a word keeps the line break before it.
@@ -602,6 +620,7 @@ impl Markdown<'_, '_, '_, '_> {
                 _ => self.layout.word(span, join, sticky),
             }
             after_error = text.erroneous_before(at);
+            word_end = at;
             break_pending = hard;
             first = false;
             previous_backslash = word.ends_with('\\');

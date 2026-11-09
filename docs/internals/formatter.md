@@ -1390,11 +1390,18 @@ Markdown after an unclosed code span it goes back to the character after the
 opening backtick, which some inputs make quadratic (an unclosed run of k
 backticks is tried k times, each time to the end of its paragraph). The port
 counts its steps and stops at 8 per byte of the comment, and the comment is then
-printed as written; real comments take one to two. Tokenizing and laying out
-visit each node, word and token once (the `<table>` region scan counts depth in
-one pass). For Markdown, building the text copies the run once, pulldown-cmark
-is linear, and mapping an offset to its source line is a binary search over the
-pieces.
+printed as written; real comments take one to two. A step is a character read,
+and also each pass of `Markdown.update`'s loop over a line's containers (which
+may read no character: at the end of the comment javac's loop never ends) and
+each character a line pattern looks at (a line of many `>` or list markers is
+matched once per marker); the patterns' `.*` and fence checks look for the
+line's last terminator and backtick once per line. The parser recurses once per
+nested inline tag, at most 32 deep (`MAX_INLINE_DEPTH`); a deeper comment is
+printed as written, so the layouts' recursion over rich text is bounded too.
+Tokenizing and laying out visit each node, word and token once (the `<table>`
+region scan counts depth in one pass). For Markdown, building the text copies
+the run once and records its line breaks, pulldown-cmark is linear, and mapping
+an offset to its source line or to the line breaks around it is a binary search.
 
 The docs:
 
