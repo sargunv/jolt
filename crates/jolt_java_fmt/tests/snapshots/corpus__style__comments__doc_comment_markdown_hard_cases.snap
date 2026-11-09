@@ -127,6 +127,20 @@ class DocCommentMarkdownHardCases {
   int indentedTagContinuation() {
     return 42;
   }
+
+  /// A method whose description is reflowed, with enough words to wrap the line
+  /// past the width of the comment.
+  ///
+  /// @see String # A heading after the reference, with enough words to wrap the line past the width
+  void headingAfterASeeReference() {}
+
+  /// A method.
+  ///
+  /// @return [key]: https://example.com
+  /// [key]
+  int linkReferenceInATag() {
+    return 0;
+  }
 }
 
 diagnostics:

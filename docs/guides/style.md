@@ -1093,15 +1093,14 @@ A Markdown doc comment that Jolt lays out gets this style:
 - **The frame** is `///` and the indentation that every line of the run shares,
   usually one space. A run written without a space, such as `///CLOVER:OFF`,
   keeps having none.
-- **Paragraphs** are filled as in a Javadoc comment: the description's, and the
-  text of block tags. The line width counts the comment's indentation and the
-  frame.
+- **Paragraphs** of the description are filled as in a Javadoc comment. The line
+  width counts the comment's indentation and the frame.
 - **Code blocks** keep their lines exactly.
 - **Blank lines** are kept as written. Jolt adds one only before the first block
   tag.
-- **Block tags** start a line each, with single spaces after the tag and its
-  name. Their wrapped lines start at the frame, not indented: an indented line
-  can become a code block or the text of a list item.
+- **Block tags** and everything after the first one are kept as written: javadoc
+  reads the text of each block tag as Markdown of its own, so a rewrapped line
+  there could start a heading, a list or code.
 - **Words stay whole.** Jolt doesn't break a line inside a code span
   (`` `a b` ``), a link (`[text](url)`, `[text][ref]`,
   `[Map#put(Object, Object)]`), an autolink or HTML tag (`<…>`), or between an
@@ -1146,9 +1145,9 @@ class Splitter {
   ///   split("a, b,", 0); // ["a", "b", ""]
   /// ```
   ///
-  /// @param text the text to split, which may be empty or contain only commas
-  /// and spaces
-  /// @return the parts, in order
+  /// @param text the text to split, which may be empty or contain only commas and spaces
+  /// @return the parts,
+  ///     in order
   String[] split(String text, int limit);
 
   /// Joins the parts:

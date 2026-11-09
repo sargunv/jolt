@@ -23,9 +23,12 @@ impl InlineTags {
     /// Matches every brace of `lines` in one pass with a stack.
     pub(crate) fn new(lines: &[Line<'_>]) -> Self {
         let mut tags = Vec::new();
-        // A brace's offset, whether it opens a tag, and whether that tag's
-        // opening already keeps whitespace as content.
-        let mut open: Vec<(usize, bool, bool)> = Vec::new();
+        // A brace's offset, whether it opens a tag, whether that tag already
+        // keeps whitespace (or holds another tag), and the index in `open`
+        // of the tag around it.
+        let mut open: Vec<(usize, bool, bool, Option<usize>)> = Vec::new();
+        // The index in `open` of the innermost open tag.
+        let mut innermost: Option<usize> = None;
         for line in lines {
             let bytes = line.text.as_bytes();
             if !bytes.contains(&b'{') && (open.is_empty() || !bytes.contains(&b'}')) {
@@ -35,14 +38,22 @@ impl InlineTags {
                 match byte {
                     b'{' => {
                         let tag = bytes.get(index + 1) == Some(&b'@');
-                        let content = tag && literal_content_starts_with_space(&bytes[index..]);
-                        open.push((line.offset + index, tag, content));
+                        let mut keeps = tag && literal_content_starts_with_space(&bytes[index..]);
+                        if tag && let Some(outer) = innermost {
+                            // A tag inside a tag: both are kept as written.
+                            open[outer].2 = true;
+                            keeps = true;
+                        }
+                        open.push((line.offset + index, tag, keeps, innermost));
+                        if tag {
+                            innermost = Some(open.len() - 1);
+                        }
                     }
                     b'}' => {
-                        if let Some((start, true, content)) = open.pop() {
+                        if let Some((start, true, keeps, outer)) = open.pop() {
+                            innermost = outer;
                             let before = index.checked_sub(1).map(|before| bytes[before]);
-                            let keeps =
-                                content || before.is_none_or(|byte| byte == b' ' || byte == b'\t');
+                            let keeps = keeps || before.is_none_or(is_space);
                             tags.push((start, line.offset + index + 1, keeps));
                         }
                     }
@@ -102,10 +113,7 @@ fn literal_content_starts_with_space(tag: &[u8]) -> bool {
         return false;
     }
     let rest = &tag[2 + name_len..];
-    rest.is_empty()
-        || rest
-            .get(1)
-            .is_some_and(|&byte| byte == b' ' || byte == b'\t')
+    rest.is_empty() || rest.get(1).copied().is_some_and(is_space)
 }
 
 /// The name of an inline tag whose text starts at `text` (`{@name`).

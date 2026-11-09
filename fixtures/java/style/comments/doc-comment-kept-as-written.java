@@ -47,4 +47,10 @@ class DocCommentKeptAsWritten {
 
   /** A {@code value } whose content ends in a space, with enough words to wrap the line. */
   void codeTrailingSpace() {}
+
+  /** A{@literal b}C, whose form feed is text javadoc keeps, with enough words to wrap the line. */
+  void literalFormFeed() {}
+
+  /** A{@link String {@code  label}}C, a tag inside a tag, with enough words to wrap the line past the width. */
+  void nestedInlineTag() {}
 }

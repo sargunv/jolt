@@ -53,34 +53,23 @@ pub(crate) fn tokenize<'a>(lines: &[Line<'a>]) -> Option<Vec<Token<'a>>> {
                 text.is_empty() || opens_fence(text.trim_start().as_bytes()).is_some()
             })
             .unwrap_or(lines.len());
-        Paragraph::new(&lines[index..end]).run(&mut tokens)?;
+        if Paragraph::new(&lines[index..end]).run(&mut tokens)? {
+            // From the first block tag on, the run is printed as written:
+            // javadoc reads each tag's text as Markdown of its own, which a
+            // reflow could restructure.
+            for line in &lines[end..] {
+                let kind = if line.text.is_empty() {
+                    Kind::Blank
+                } else {
+                    Kind::Verbatim
+                };
+                tokens.push(Token::new(kind, line.raw, Sep::Line));
+            }
+            break;
+        }
         index = end;
     }
     Some(tokens)
-}
-
-/// Whether the description of the block tag on a line whose text is
-/// `trimmed` starts with a word that starts a block: javadoc reads a block
-/// tag's description as Markdown of its own, so `@return # Title` is a
-/// heading. The description follows the tag, and the name for tags that
-/// have one.
-fn description_starts_structure(trimmed: &str) -> bool {
-    description(trimmed).is_some_and(|word| tags::starts_structure(word, true))
-}
-
-/// The first word of the description of the block tag on a line whose text
-/// is `trimmed`, if the line has one.
-fn description(trimmed: &str) -> Option<&str> {
-    let mut words = trimmed
-        .split([' ', '\t', '\x0c'])
-        .filter(|word| !word.is_empty());
-    let named = words
-        .next()
-        .is_some_and(|tag| matches!(tag, "@param" | "@throws" | "@exception"));
-    if named {
-        words.next();
-    }
-    words.next()
 }
 
 /// Whether line `index` ends in a hard break: it has text that ends in two
@@ -129,7 +118,6 @@ struct Paragraph<'p, 'a> {
     /// The end of the inline tag being read, or 0.
     tag_end: usize,
     inline_arg: Arg,
-    block_arg: Arg,
     /// The last word ends in `\`.
     escape: bool,
 }
@@ -141,16 +129,14 @@ impl<'p, 'a> Paragraph<'p, 'a> {
             tags: InlineTags::new(lines),
             tag_end: 0,
             inline_arg: Arg::None,
-            block_arg: Arg::None,
             escape: false,
         }
     }
 
-    fn run(mut self, tokens: &mut Vec<Token<'a>>) -> Option<()> {
-        // After a block tag's line with no description on it: an indented
-        // line there starts code in javadoc's reading.
-        let mut awaiting_description = false;
-        for &line in self.lines {
+    /// Adds the paragraph's tokens; `Some(true)` when it reaches a block tag,
+    /// which it and the rest of the paragraph are printed as written from.
+    fn run(mut self, tokens: &mut Vec<Token<'a>>) -> Option<bool> {
+        for (index, &line) in self.lines.iter().enumerate() {
             let text = line.text;
             let trimmed = text.trim_start_matches([' ', '\t']);
             let first = trimmed.split([' ', '\t', '\x0c']).next();
@@ -160,17 +146,15 @@ impl<'p, 'a> Paragraph<'p, 'a> {
                 return None;
             }
             if tags::is_block_tag(trimmed) {
-                if line.offset < self.tag_end || description_starts_structure(trimmed) {
+                if line.offset < self.tag_end {
                     return None;
                 }
                 tokens.push(Token::new(Kind::BlockTag, "", Sep::Line));
-                self.block_arg = Arg::Name;
-                awaiting_description = description(trimmed).is_none();
-            } else if first.is_some_and(|word| tags::starts_structure(word, true))
-                || (std::mem::take(&mut awaiting_description)
-                    && line.offset >= self.tag_end
-                    && columns(text) >= 4)
-            {
+                for line in &self.lines[index..] {
+                    tokens.push(Token::new(Kind::Verbatim, line.raw, Sep::Line));
+                }
+                return Some(true);
+            } else if first.is_some_and(|word| tags::starts_structure(word, true)) {
                 return None;
             }
             let bytes = text.as_bytes();
@@ -180,11 +164,7 @@ impl<'p, 'a> Paragraph<'p, 'a> {
                 let in_tag = line.offset + pos < self.tag_end;
                 let end = self.word_end(line, pos)?;
                 let word = &text[pos..end];
-                let glue = if in_tag {
-                    self.inline_arg.glue(word)
-                } else {
-                    self.block_arg.glue(word)
-                };
+                let glue = in_tag && self.inline_arg.glue(word);
                 tokens.push(Token {
                     glue,
                     sticky: tags::starts_structure(word, true) || self.escape,
@@ -202,7 +182,7 @@ impl<'p, 'a> Paragraph<'p, 'a> {
                 sep = Sep::Space;
             }
         }
-        (self.tag_end == 0).then_some(())
+        (self.tag_end == 0).then_some(false)
     }
 
     /// The end of the word at `pos` on `line`: at whitespace outside atoms

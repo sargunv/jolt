@@ -41,10 +41,9 @@ class DocCommentMarkdown {
   /// method along with the raw key.
   ///
   /// @param pname parameter name
-  /// @param fac the `KeyFactory` used to translate foreign keys and perform key
-  /// validation
-  /// @return the key encapsulation message and the shared key (in this order),
-  /// which is long
+  /// @param fac the `KeyFactory` used to translate foreign keys and
+  ///         perform key validation
+  /// @return the key encapsulation message and the shared key (in this order), which is long
   /// @throws ProviderException if there is an internal error
   Object implCheckPublicKey(String pname, byte[] pk);
 
