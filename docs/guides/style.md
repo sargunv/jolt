@@ -973,8 +973,8 @@ because of a line break before a tag's argument (`@param` with `x @@` on the
 next line); text that starts with whitespace javadoc reads, such as U+2003,
 which javadoc would remove as indentation if it started the comment's only line;
 `{@snippet :` followed on its line by only the comment's end, which javadoc
-reads differently from a line break there; and an error right before `*/`, with
-no space between (`{@index x*/`).
+reads differently from a line break there; and an error or a `{` right before
+`*/`, with no space between (`{@index x*/`, `{*/`).
 
 A comment that Jolt lays out gets this style:
 

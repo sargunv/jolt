@@ -180,6 +180,9 @@ class DocCommentKeptAsWritten {
       run();
     }
   }
+
+  /** A brace right before the end: {*/
+  void braceBeforeTheEnd() {}
 }
 
 diagnostics:

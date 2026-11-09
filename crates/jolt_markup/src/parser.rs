@@ -415,7 +415,8 @@ impl Parser<'_, '_> {
 
     /// Fails the reading where it can't follow javac's: the comment is
     /// printed as written. That is a description that starts with
-    /// whitespace (see [`parse`]); an erroneous node that reaches `*/`; a
+    /// whitespace (see [`parse`]); an erroneous node or a `{` that reaches
+    /// `*/`; a
     /// `{@snippet :` that the comment's end follows on its line; an escape
     /// (`@@`, `@*`) that doesn't start its line, which javac reads as one
     /// only after a line break before a tag's argument that the layout
@@ -974,6 +975,12 @@ impl Parser<'_, '_> {
                 return true;
             }
         } else {
+            if self.at_end() && self.markdown.is_none() {
+                // At `*/`, javac reads its end-of-input character as text
+                // after the `{`, which a space or a line break before `*/`
+                // ends.
+                self.give_up();
+            }
             if self.text_start.is_none() {
                 self.text_start = Some(brace);
             }

@@ -205,4 +205,8 @@ class DocCommentJavacReading {
 
   /** {@link bad-name </p> b}, where the space after an invalid reference stays */
   void closingTagAfterAnInvalidReference() {}
+
+  /** <li></li> a closed item, then a code tag that wraps onto its next line: {@code A
+   * B} */
+  void wrapAfterAClosedItem() {}
 }

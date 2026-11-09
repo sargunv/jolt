@@ -1388,6 +1388,8 @@ impl Html<'_, '_, '_, '_> {
                     }
                     self.emit(token, true);
                     self.frames.pop();
+                    // Wraps after the item go to the column around it.
+                    self.layout.hang(self.column());
                 } else {
                     self.emit(token, true);
                 }

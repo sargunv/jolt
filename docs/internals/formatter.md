@@ -1336,15 +1336,15 @@ start its line gives up the reading too: javac reads it as one only when a line
 break came before a tag's argument on its line, which the layout joins onto the
 tag's line. So does a description that starts with whitespace javac doesn't skip
 (U+2003): it would start the layout's first line, which javac strips as
-indentation when it is the only one. So does an erroneous node that reaches `*/`
-with nothing between (`{@index x*/`), where a layout puts a space or a line
-break that can change the error, and a `{@snippet :` that the comment's end
-follows on its line: javac reads an error there, but the snippet's body after a
-line break, which a layout on more than one line puts before `*/`. The Java hook
-also keeps file headers, and `jolt_fmt` keeps comments that share a line with
-code, lie in a formatter-ignore region, or have a target with recovery. Such a
-comment keeps all its trailing whitespace: its `<pre>` elements, code and tag
-bodies, where that whitespace is content, were not read.
+indentation when it is the only one. So does an erroneous node or a `{` that
+reaches `*/` with nothing between (`{@index x*/`), where a layout puts a space
+or a line break that can change the error, and a `{@snippet :` that the
+comment's end follows on its line: javac reads an error there, but the snippet's
+body after a line break, which a layout on more than one line puts before `*/`.
+The Java hook also keeps file headers, and `jolt_fmt` keeps comments that share
+a line with code, lie in a formatter-ignore region, or have a target with
+recovery. Such a comment keeps all its trailing whitespace: its `<pre>`
+elements, code and tag bodies, where that whitespace is content, were not read.
 
 **HTML layout.** The tree of each part (the description, each block tag) is
 flattened, an inline tag's rich text in line between its head and its `}`. Then:

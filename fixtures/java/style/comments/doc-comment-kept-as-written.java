@@ -149,4 +149,7 @@ class DocCommentKeptAsWritten {
     /** a doc comment  before a line comment in a body that gets braces */ // a line comment
     run();
   }
+
+  /** A brace right before the end: {*/
+  void braceBeforeTheEnd() {}
 }
