@@ -37,6 +37,8 @@ struct Element {
     /// The line and byte after the tag's `>`, which may be on a later line;
     /// the end of the tag's line when a verbatim region's tag has no `>`.
     end: (usize, usize),
+    /// A quoted attribute value holds a line break of the tag.
+    literal: bool,
 }
 
 /// The block-level element name at the start of `name`, and its length.
@@ -261,22 +263,28 @@ impl<'a> Parser<'_, '_, 'a> {
         let start = 1 + usize::from(closing);
         let (name, len) = element_name(&text[start..])?;
         let region = matches!(name, Name::Pre | Name::Table | Name::Blockquote) && !closing;
-        let end = match self.tag_end(index, at + start + len) {
+        let (end, literal) = match self.tag_end(index, at + start + len) {
             Some(end) => end,
-            None if region => (index, self.lines[index].text.len()),
+            None if region => ((index, self.lines[index].text.len()), false),
             None => return None,
         };
-        Some(Element { name, closing, end })
+        Some(Element {
+            name,
+            closing,
+            end,
+            literal,
+        })
     }
 
     /// The end of the HTML tag whose name ends at byte `at` of line `index`:
-    /// the line and byte after its `>`. A line break inside the tag is
-    /// whitespace, and a quoted attribute value (a `"` or `'` after `=`) may
-    /// hold `>`. `None` when an unquoted `<` or the comment's end comes
-    /// first.
-    fn tag_end(&self, mut index: usize, mut at: usize) -> Option<(usize, usize)> {
+    /// the line and byte after its `>`, and whether a quoted attribute value
+    /// (a `"` or `'` after `=`) holds a line break. A quoted value may hold
+    /// `>`; any other line break inside the tag is whitespace. `None` when an
+    /// unquoted `<` or the comment's end comes first.
+    fn tag_end(&self, mut index: usize, mut at: usize) -> Option<((usize, usize), bool)> {
         // After `=`, where a quote starts a value.
         let mut value = false;
+        let mut literal = false;
         loop {
             let text = self.lines.get(index)?.text.as_bytes();
             let Some(&byte) = text.get(at) else {
@@ -284,11 +292,13 @@ impl<'a> Parser<'_, '_, 'a> {
                 continue;
             };
             match byte {
-                b'>' => return Some((index, at + 1)),
+                b'>' => return Some(((index, at + 1), literal)),
                 b'<' => return None,
                 b'=' => value = true,
                 quote @ (b'"' | b'\'') if value => {
+                    let open = index;
                     (index, at) = self.closing_quote(quote, index, at + 1)?;
+                    literal |= index != open;
                     value = false;
                 }
                 byte if is_space(byte) => {}
@@ -560,12 +570,7 @@ impl<'a> Parser<'_, '_, 'a> {
                     }
                     let (end_line, end) = element.end;
                     if end_line != index {
-                        // Go on after the tag, on its last line.
-                        return if end >= self.lines[end_line].text.len() {
-                            (end_line + 1, 0, false)
-                        } else {
-                            (end_line, end, false)
-                        };
+                        return self.after(end_line, end);
                     }
                     pos = end;
                     sep = Sep::None;
@@ -584,7 +589,12 @@ impl<'a> Parser<'_, '_, 'a> {
                     }
                 }
             }
-            let end = self.word_end(index, pos);
+            let ((end_line, end), literal) = self.word_end(index, pos);
+            if end_line != index {
+                let glue = self.block_arg.glue(&text[pos..]);
+                self.emit_lines(index, pos, (end_line, end), literal, sep, glue);
+                return self.after(end_line, end);
+            }
             let piece = &text[pos..end];
             let glue = self.block_arg.glue(piece);
             self.emit(piece, sep, glue);
@@ -593,10 +603,22 @@ impl<'a> Parser<'_, '_, 'a> {
         }
     }
 
-    /// The end of the word at `pos`: at a space, or where a block element or
-    /// an inline tag starts. An inline HTML tag (`<a href="…">`) is part of
-    /// the word with the spaces inside it.
-    fn word_end(&mut self, index: usize, pos: usize) -> usize {
+    /// Where to go on after a word or tag that ends at byte `end` of line
+    /// `index`, a later line than the one it starts on.
+    fn after(&self, index: usize, end: usize) -> (usize, usize, bool) {
+        if end >= self.lines[index].text.len() {
+            (index + 1, 0, false)
+        } else {
+            (index, end, false)
+        }
+    }
+
+    /// The line and byte where the word at `pos` on line `index` ends: at a
+    /// space, or where a block element or an inline tag starts. An inline
+    /// HTML tag (`<a href="…">`) is part of the word with the spaces and line
+    /// breaks inside it; the flag tells whether a quoted attribute value
+    /// holds a line break, as [`tag_end`](Self::tag_end) does.
+    fn word_end(&mut self, index: usize, pos: usize) -> ((usize, usize), bool) {
         let Line { text, offset, .. } = self.lines[index];
         let bytes = text.as_bytes();
         let mut at = pos;
@@ -615,14 +637,15 @@ impl<'a> Parser<'_, '_, 'a> {
                     .is_some_and(|&next| next.is_ascii_alphabetic() || next == b'/') =>
                 {
                     match self.tag_end(index, at + 1) {
-                        Some((line, end)) if line == index => at = end,
-                        _ => at += 1,
+                        Some(((line, end), _)) if line == index => at = end,
+                        Some(end) => return end,
+                        None => at += 1,
                     }
                 }
                 _ => at += 1,
             }
         }
-        at
+        ((index, at), false)
     }
 
     /// Lays out the block-level element at `pos` on line `index`. Returns
@@ -728,25 +751,86 @@ impl<'a> Parser<'_, '_, 'a> {
     }
 
     /// Adds the tag of `element`, which starts at `pos` on line `index`, as
-    /// [`emit`](Self::emit) adds a word. A tag that runs onto later lines
-    /// adds a word for each, glued with a space: whitespace inside a tag
-    /// renders nothing.
+    /// [`emit`](Self::emit) adds a word.
     fn emit_tag(&mut self, index: usize, pos: usize, element: Element, sep: Sep, glue: bool) {
         let (end_line, end) = element.end;
-        let first = self.lines[index].text;
         if end_line == index {
-            self.emit(&first[pos..end], sep, glue);
+            self.emit(&self.lines[index].text[pos..end], sep, glue);
+        } else {
+            self.emit_lines(index, pos, element.end, element.literal, sep, glue);
+        }
+    }
+
+    /// Adds the text from `pos` on line `index` to `end` on a later line,
+    /// which ends an HTML tag that runs onto later lines, as words: the tag
+    /// may wrap at its whitespace outside quoted attribute values, where a
+    /// line break renders nothing, but not inside one, where javadoc would
+    /// keep it. When a quoted attribute value holds a line break of the
+    /// source (`literal`), the lines after the first are printed as written.
+    fn emit_lines(
+        &mut self,
+        index: usize,
+        pos: usize,
+        end: (usize, usize),
+        literal: bool,
+        sep: Sep,
+        glue: bool,
+    ) {
+        let first = &self.lines[index].text[pos..];
+        if literal {
+            self.emit(first, sep, glue);
+            self.as_written_to(index, end);
             return;
         }
-        self.emit(&first[pos..], sep, glue);
-        for line in index + 1..=end_line {
+        let (end_line, end) = end;
+        // After `=`, where a quote starts a value.
+        let mut value = false;
+        let mut started = false;
+        for line in index..=end_line {
             let text = self.lines[line].text;
             let text = if line == end_line { &text[..end] } else { text };
-            let text = text.trim_start_matches(SPACES);
-            if !text.is_empty() {
-                self.layout.word(text, Join::Space);
+            let text = if line == index { first } else { text };
+            let bytes = text.as_bytes();
+            let mut start = None;
+            let mut at = 0;
+            while at <= bytes.len() {
+                let byte = bytes.get(at).copied();
+                if byte.is_none_or(is_space) {
+                    if let Some(from) = start.take() {
+                        if std::mem::replace(&mut started, true) {
+                            self.layout.word(&text[from..at], Join::Wrap);
+                        } else {
+                            self.emit(&text[from..at], sep, glue);
+                        }
+                    }
+                    at += 1;
+                    continue;
+                }
+                start.get_or_insert(at);
+                match byte {
+                    Some(b'=') => value = true,
+                    Some(quote @ (b'"' | b'\'')) if value => {
+                        at = text[at + 1..]
+                            .find(char::from(quote))
+                            .map_or(bytes.len() - 1, |len| at + 1 + len);
+                        value = false;
+                    }
+                    _ => value = false,
+                }
+                at += 1;
             }
         }
+    }
+
+    /// Prints the lines after line `index` up to byte `end` of line
+    /// `end_line` as written.
+    fn as_written_to(&mut self, index: usize, (end_line, end): (usize, usize)) {
+        for line in &self.lines[index + 1..end_line] {
+            self.layout.verbatim(line.raw);
+        }
+        let last = self.lines[end_line];
+        let frame = last.raw.len() - last.text.len();
+        self.layout.verbatim(&last.raw[..frame + end]);
     }
 
     /// A verbatim region from `pos` on line `index` to its closer: its first
@@ -775,12 +859,7 @@ impl<'a> Parser<'_, '_, 'a> {
             self.emit(&first[pos..end_pos], sep, false);
         } else {
             self.emit(&first[pos..], sep, false);
-            for line in &self.lines[index + 1..end_line] {
-                self.layout.verbatim(line.raw);
-            }
-            let last = self.lines[end_line];
-            let frame = last.raw.len() - last.text.len();
-            self.layout.verbatim(&last.raw[..frame + end_pos]);
+            self.as_written_to(index, (end_line, end_pos));
         }
         let text = self.lines[end_line].text;
         if block {

@@ -922,11 +922,11 @@ other lines as written (see [Markdown doc comments](#markdown-doc-comments)).
 - **One line.** A comment that is one paragraph with no block tags prints as
   `/** Text. */` when that fits, else on separate lines. An empty comment prints
   as `/** */`.
-- **Words stay whole.** Jolt doesn't break a line inside an HTML tag
-  (`<a href="…">`), between an inline tag and its reference (`{@link Map#get}`),
-  inside the parentheses of a reference (`{@link #put(Object, Object)}`), or
-  inside `{@code …}` and `{@literal …}`. The label of a link is filled like
-  other words.
+- **Words stay whole.** Jolt doesn't break a line inside an HTML tag written on
+  one line (`<a href="…">`) or inside a quoted attribute value, between an
+  inline tag and its reference (`{@link Map#get}`), inside the parentheses of a
+  reference (`{@link #put(Object, Object)}`), or inside `{@code …}` and
+  `{@literal …}`. The label of a link is filled like other words.
 - **No new structure.** A wrapped line never starts with a word that javadoc or
   Jolt would read as new structure: a word that starts with `@` (a block tag),
   or a plain-text list marker (`-`, `*`, `+`, `•`, or a number and `.` or `)`).
@@ -949,12 +949,13 @@ other lines as written (see [Markdown doc comments](#markdown-doc-comments)).
 - **Line breaks.** A line break follows `<br>`. The source's line break stays
   before a line that starts with a list marker, and around a line made only of
   punctuation, such as `-------`. Each such line is filled on its own.
-- **Kept as written.** `<pre>`, `<table>`, `<blockquote>`, `{@snippet …}` and an
-  HTML comment that spans lines keep their lines exactly: each line is printed
-  from its `*` on, so tabs and spaces after the `*` stay. A paragraph whose
-  lines are indented differently, by two or more columns, as ASCII art, a
-  grammar or aligned text is, keeps its lines too. Only the comment's
-  indentation changes.
+- **Kept as written.** `<pre>`, `<table>`, `<blockquote>`, `{@snippet …}`, an
+  HTML comment that spans lines and an HTML tag with a quoted attribute value
+  that spans lines (`title="first` and `second">` on the next line) keep their
+  lines exactly: each line is printed from its `*` on, so tabs and spaces after
+  the `*` stay. A paragraph whose lines are indented differently, by two or more
+  columns, as ASCII art, a grammar or aligned text is, keeps its lines too. Only
+  the comment's indentation changes.
 - **Not laid out.** Jolt keeps these Javadoc comments as written, realigning
   only their `*`s: a comment that shares its line with code; a comment that
   starts with `/***` or has a line of only `*`s, which is a banner (these keep

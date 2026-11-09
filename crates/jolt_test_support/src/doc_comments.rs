@@ -46,7 +46,8 @@ const VERBATIM_ELEMENTS: &[&str] = &["pre", "table"];
 /// whitespace around its text. Then the form is, in order:
 ///
 /// - the whitespace-separated words of the description, with block-level
-///   HTML tags split off as words of their own;
+///   HTML tags split off as words of their own, and the whitespace inside an
+///   HTML tag's quoted attribute value kept, as javadoc keeps it;
 /// - each block tag (a line that starts with `@` and a letter) on a line of
 ///   its own, with its words;
 /// - each verbatim region (`<pre>`, `<table>`, `{@snippet}`) as its exact
@@ -153,11 +154,16 @@ fn javadoc_form(content: &str) -> String {
                 continue;
             }
             form.boundary();
-            for word in rest[..len].split_whitespace() {
-                form.boundary();
-                form.word.push_str(word);
-            }
+            form.tag(&rest[..len]);
             form.boundary();
+            index += len;
+            continue;
+        }
+        if byte == b'<'
+            && rest[1..].starts_with(|ch: char| ch.is_ascii_alphabetic() || ch == '/')
+            && let Some(len) = tag_len(rest)
+        {
+            form.tag(&rest[..len]);
             index += len;
             continue;
         }
@@ -194,6 +200,34 @@ impl Form {
             self.boundary();
         } else {
             self.word.push(ch);
+        }
+    }
+
+    /// An HTML tag: its whitespace separates words, except inside a quoted
+    /// attribute value (a `"` or `'` after `=`), which javadoc keeps as
+    /// written.
+    fn tag(&mut self, tag: &str) {
+        let mut value = false;
+        let mut at = 0;
+        while let Some(ch) = tag[at..].chars().next() {
+            let mut len = ch.len_utf8();
+            match ch {
+                '"' | '\'' if value => {
+                    len = tag[at + 1..].find(ch).map_or(tag.len() - at, |end| end + 2);
+                    self.word.push_str(&tag[at..at + len]);
+                    value = false;
+                }
+                '=' => {
+                    value = true;
+                    self.char(ch);
+                }
+                ch if ch.is_whitespace() => self.boundary(),
+                ch => {
+                    value = false;
+                    self.char(ch);
+                }
+            }
+            at += len;
         }
     }
 

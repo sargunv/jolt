@@ -90,6 +90,20 @@ class DocCommentHtmlBlocks {
   void tagLineStartingWithUnicode() {}
 
   /**
+   * Text. <p title="first
+   * second">A paragraph whose quoted attribute value keeps its line break, and a link whose title
+   * does too: <a href="https://example.com" title="third
+   *   fourth">example</a>.
+   */
+  void lineBreakInQuotedValue() {}
+
+  /**
+   * An image whose tag runs onto the next line, with alt text long enough to cross the line width: <img src="image.png"
+   * alt="The following text describes this graphic." height=600> wraps only between attributes.
+   */
+  void tagWrapsBetweenAttributes() {}
+
+  /**
    * A snippet keeps its lines, and a line in it that starts with {@code @} starts no block tag:
    * {@snippet :
    * @Override
