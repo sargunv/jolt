@@ -148,6 +148,7 @@ struct Piece {
 enum PieceKind {
     Text,
     Atom,
+    Erroneous,
     Element { name: Option<Name>, closing: bool },
     Region,
 }
@@ -164,6 +165,7 @@ pub(crate) fn lay_out<'a>(
         list: Vec::with_capacity(lines.len() * 8),
         last_end: None,
         break_next: false,
+        after_error: false,
     };
     let mut pieces = Vec::new();
     flatten(&comment.body, lines, &mut pieces);
@@ -213,6 +215,11 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
             }),
             Node::Atom(span) => pieces.push(Piece {
                 kind: PieceKind::Atom,
+                span: *span,
+                glue: false,
+            }),
+            Node::Erroneous(span) => pieces.push(Piece {
+                kind: PieceKind::Erroneous,
                 span: *span,
                 glue: false,
             }),
@@ -321,6 +328,9 @@ struct Tokens<'l, 'a> {
     last_end: Option<Pos>,
     /// The next token starts a line: an atom on lines of its own ended.
     break_next: bool,
+    /// The last token is an erroneous node: the separator after it keeps its
+    /// kind.
+    after_error: bool,
 }
 
 impl Tokens<'_, '_> {
@@ -362,6 +372,10 @@ impl Tokens<'_, '_> {
         match piece.kind {
             PieceKind::Text => self.text(piece.span),
             PieceKind::Atom => self.word(piece.span, piece.glue, false),
+            PieceKind::Erroneous => {
+                self.word(piece.span, piece.glue, false);
+                self.after_error = true;
+            }
             PieceKind::Element {
                 name: Some(name),
                 closing,
@@ -540,6 +554,14 @@ impl Tokens<'_, '_> {
             Some(end) if end.line < span.start.line => Sep::Line,
             Some(_) => Sep::Space,
         };
+        let mut glue = glue;
+        if std::mem::take(&mut self.after_error) {
+            match sep {
+                Sep::Line => self.push_break(),
+                Sep::Space => glue = true,
+                Sep::None => {}
+            }
+        }
         self.push_gap_blank(span.start);
         // Text between two tokens is whitespace; anything else is printed as
         // a word, so that no character is lost.

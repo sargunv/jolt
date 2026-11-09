@@ -106,6 +106,7 @@ enum Segment<'n> {
     Placeholder {
         span: Span,
         inline: Option<&'n Inline>,
+        erroneous: bool,
     },
 }
 
@@ -142,6 +143,17 @@ impl<'n> Text<'n> {
             Some(&(start, Segment::Placeholder { inline, .. })) if start == offset => inline,
             _ => None,
         }
+    }
+
+    /// Whether the text before byte `offset` ends with an erroneous node.
+    fn erroneous_before(&self, offset: usize) -> bool {
+        let index = self.segments.partition_point(|&(start, _)| start < offset);
+        index > 0
+            && matches!(
+                self.segments[index - 1],
+                (start, Segment::Placeholder { erroneous: true, .. })
+                    if start + PLACEHOLDER.len_utf8() == offset
+            )
     }
 
     /// The end position of a range that ends at `offset`.
@@ -337,12 +349,13 @@ impl Markdown<'_, '_, '_, '_> {
                         }
                     }
                 }
-                Node::Atom(span) | Node::Element { span, .. } => {
+                Node::Atom(span) | Node::Erroneous(span) | Node::Element { span, .. } => {
                     text.segments.push((
                         text.text.len(),
                         Segment::Placeholder {
                             span: *span,
                             inline: None,
+                            erroneous: matches!(node, Node::Erroneous(_)),
                         },
                     ));
                     text.text.push(PLACEHOLDER);
@@ -356,6 +369,7 @@ impl Markdown<'_, '_, '_, '_> {
                         Segment::Placeholder {
                             span: inline.span,
                             inline: Some(inline),
+                            erroneous: false,
                         },
                     ));
                     if name == "{@snippet" {
@@ -488,6 +502,7 @@ impl Markdown<'_, '_, '_, '_> {
         let mut previous_backslash = false;
         let mut breaks = paragraph.breaks.iter().copied().peekable();
         let mut break_pending = false;
+        let mut after_error = false;
         while at < end {
             while at < end && matches!(source[at], b' ' | b'\t' | b'\n' | b'\r') {
                 at += 1;
@@ -545,16 +560,21 @@ impl Markdown<'_, '_, '_, '_> {
             // In the first sentence, javadoc ends the sentence at a line that
             // starts with one of these; an `@` that starts a line is a block
             // tag or an escape: such a word keeps the line break before it.
-            let at = self.layout.text_at(span.start).starts_with('@');
+            let at_sign = self.layout.text_at(span.start).starts_with('@');
             let ends_sentence = self.first_sentence && words::ends_first_paragraph(word);
             let keeps_break = !first
                 && line_start
                 && (ends_sentence
                     && indent <= 3
                     && !text.text[start - indent..start].contains('\t')
-                    || at);
-            let sticky =
-                previous_backslash || at || ends_sentence || words::starts_structure(word, true);
+                    || at_sign);
+            let sticky = previous_backslash
+                || at_sign
+                || ends_sentence
+                || words::starts_structure(word, true);
+            // The separator after an erroneous node keeps its kind.
+            let keeps_break = keeps_break || after_error && line_start;
+            let sticky = sticky || after_error;
             let (join, sticky) = if first {
                 if on_tag_line {
                     (Join::Space, false)
@@ -572,6 +592,7 @@ impl Markdown<'_, '_, '_, '_> {
                 Some(inline) if self.fills_label(inline) => self.label(inline, join, sticky),
                 _ => self.layout.word(span, join, sticky),
             }
+            after_error = text.erroneous_before(at);
             break_pending = hard;
             first = false;
             previous_backslash = word.ends_with('\\');

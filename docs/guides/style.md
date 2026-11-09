@@ -929,7 +929,7 @@ affects only itself:
 - references (`{@link Map#put(Object, Object)}`, `@throws IOException`), HTML
   tags with their attribute values, HTML comments (`<!-- … -->`) and entities;
 - what javadoc reads as an error, such as an `<` that starts no tag or an
-  unclosed `{@code`;
+  unclosed `{@code`, and whether a space or a line break follows it;
 - a paragraph of plain text whose lines are indented differently, by two or more
   columns, such as ASCII art, a grammar or aligned text.
 

@@ -1317,6 +1317,11 @@ flattened, an inline tag's rich text in line between its head and its `}`. Then:
   its source line (after spaces and tabs only, javac's `newline`) keeps the line
   break before it, any other one is never put at a line start. That keeps every
   block tag and escape (`@@`, `@*`) javadoc reads, and adds none.
+- The separator after an erroneous node keeps its kind (a space, a line break or
+  nothing): what follows a construct decided that javac reads it as an error
+  (`{@snippet :` without a line break after the `:`), and a line break there
+  could make it valid. An atom that starts and ends its source lines keeps the
+  line breaks around it.
 - A run of two or more lines of plain words whose indentation differs by two
   columns or more is printed as written.
 - A word that starts a source line and is a list marker keeps the line break

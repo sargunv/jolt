@@ -56,8 +56,12 @@ pub(crate) enum Node {
     /// Text (`/**`) or Markdown text (`///`).
     Text(Span),
     /// A node printed as written: an entity, an escape (`@@`, `@*`, `@/`),
-    /// an HTML comment, a doctype, CDATA, or an erroneous node.
+    /// an HTML comment, a doctype or CDATA.
     Atom(Span),
+    /// An erroneous node, printed as written. What follows it decided that
+    /// it is erroneous (`{@snippet :` needs a line break after `:`), so the
+    /// separator after it keeps its kind.
+    Erroneous(Span),
     /// An HTML start or end tag. `name` is the element's name.
     Element {
         span: Span,
@@ -477,7 +481,7 @@ impl Parser<'_, '_> {
             end = self.after(start);
         }
         self.text_start = None;
-        Node::Atom(Span { start, end })
+        Node::Erroneous(Span { start, end })
     }
 
     /// javac's `content`: rich text up to a block tag (`Body`) or the `}`
@@ -1231,8 +1235,8 @@ impl Parser<'_, '_> {
     }
 
     fn erroneous_tag(&mut self, start: Pos) -> BlockTag {
-        let Node::Atom(span) = self.erroneous(start) else {
-            unreachable!("an erroneous node is an atom");
+        let Node::Erroneous(span) = self.erroneous(start) else {
+            unreachable!("an erroneous node");
         };
         BlockTag {
             span,
