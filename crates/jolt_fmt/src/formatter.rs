@@ -838,8 +838,16 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     }
 
     /// The run of doc line comments from `head` to `end` as written, one line
-    /// each. Its last text ends the run (see [`DocBuilder::line_comment`]).
+    /// each, without trailing whitespace except the two or more spaces that
+    /// end a line with text before a line with text: in a Markdown doc
+    /// comment that is a hard break. Its last text ends the run (see
+    /// [`DocBuilder::line_comment`]).
     fn written_run(&mut self, head: usize, end: usize) -> Doc {
+        let has_text = |text: &str| {
+            L::DOC_LINE_COMMENT
+                .and_then(|opener| text.strip_prefix(opener))
+                .is_some_and(|rest| !rest.trim().is_empty())
+        };
         let mut docs = Vec::with_capacity((end - head + 1) * 2);
         for index in head..=end {
             if index > head {
@@ -851,7 +859,12 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 LINE_COMMENT
             };
             let text = self.comments.list[index].comment.text;
-            docs.push(self.builder.comment_text(text.trim_end(), flags));
+            let hard_break = index < end
+                && text.ends_with("  ")
+                && has_text(text)
+                && has_text(self.comments.list[index + 1].comment.text);
+            let text = if hard_break { text } else { text.trim_end() };
+            docs.push(self.builder.comment_text(text, flags));
         }
         self.builder.concat(docs)
     }

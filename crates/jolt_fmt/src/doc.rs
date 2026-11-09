@@ -576,27 +576,27 @@ pub(crate) fn comment_lines<'t>(
         let mut continuation = !doc;
         let body = lines
             .filter_map(move |line| {
-                let line = match line.trim_start().strip_prefix('*') {
+                let (star, line) = match line.trim_start().strip_prefix('*') {
                     // A doc comment line loses its whole run of `*`s, as
-                    // javadoc reads it; a ruler keeps the comment as
-                    // written.
+                    // javadoc reads it, and keeps the text after them
+                    // exactly (javadoc keeps it inside `<pre>`); a ruler
+                    // keeps the comment as written.
                     Some(rest) if multiline && doc => {
                         if rest.starts_with('*') && is_ruler(rest) {
                             kept.set(true);
                         }
-                        let rest = rest.trim_start_matches('*').trim_end();
-                        rest.strip_prefix(' ').unwrap_or(rest)
+                        (" *", rest.trim_start_matches('*').trim_end())
                     }
                     Some(rest) if multiline => {
                         let rest = rest.trim_end();
-                        rest.strip_prefix(' ').unwrap_or(rest)
+                        (" * ", rest.strip_prefix(' ').unwrap_or(rest))
                     }
                     _ => {
                         let line = line.trim();
                         if doc && continuation && !line.is_empty() {
                             kept.set(true);
                         }
-                        line
+                        (" * ", line)
                     }
                 };
                 continuation = true;
@@ -606,7 +606,7 @@ pub(crate) fn comment_lines<'t>(
                 }
                 has_content = true;
                 let blanks = std::iter::repeat_n([" *", "", ""], std::mem::take(&mut blank_lines));
-                Some(blanks.chain([[" * ", line, ""]]))
+                Some(blanks.chain([[star, line, ""]]))
             })
             .flatten();
         std::iter::once(first).chain(body).chain([[" */", "", ""]])
