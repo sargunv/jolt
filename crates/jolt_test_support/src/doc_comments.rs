@@ -364,17 +364,22 @@ pub(crate) fn markdown(run: &[&str], documentation: bool) -> String {
     for line in text.split_inclusive('\n') {
         let line_start = start;
         start += line.len();
+        // Where the inline-tag scan of this line starts.
+        let mut from = tag_end.max(line_start) - line_start;
         if line_start < tag_end {
             // Inside an inline tag: no fence or block tag starts here.
         } else {
             let trimmed = line.trim_start();
             if let Some((marker, len)) = fence {
-                if trimmed.bytes().take_while(|&b| b == marker).count() >= len {
-                    fence = None;
+                let run = trimmed.bytes().take_while(|&b| b == marker).count();
+                if run < len {
+                    continue;
                 }
-                continue;
-            }
-            if let Some(marker @ (b'`' | b'~')) = trimmed.bytes().next() {
+                // javadoc reads the rest of a closing line as text, where an
+                // inline tag may start.
+                fence = None;
+                from = line.len() - trimmed.len() + run;
+            } else if let Some(marker @ (b'`' | b'~')) = trimmed.bytes().next() {
                 let len = trimmed.bytes().take_while(|&b| b == marker).count();
                 if len >= 3 && !(marker == b'`' && trimmed[len..].contains('`')) {
                     fence = Some((marker, len));
@@ -390,7 +395,6 @@ pub(crate) fn markdown(run: &[&str], documentation: bool) -> String {
                 parts.push((String::new(), Vec::new()));
             }
         }
-        let mut from = tag_end.max(line_start) - line_start;
         while let Some(found) = line.get(from..).and_then(|rest| rest.find("{@")) {
             let at = line_start + from + found;
             let Some(len) = inline_tag_len(&text[at..]) else {

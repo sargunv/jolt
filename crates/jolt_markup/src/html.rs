@@ -783,7 +783,10 @@ impl<'a> Parser<'_, '_, 'a> {
             return;
         }
         let (end_line, end) = end;
-        // After `=`, where a quote starts a value.
+        // Inside a tag, between its `<` and `>`: only there do quotes hold an
+        // attribute value. The prose a word joins to the tag has none.
+        let mut in_tag = false;
+        // After `=` inside a tag, where a quote starts a value.
         let mut value = false;
         let mut started = false;
         for line in index..=end_line {
@@ -808,7 +811,19 @@ impl<'a> Parser<'_, '_, 'a> {
                 }
                 start.get_or_insert(at);
                 match byte {
-                    Some(b'=') => value = true,
+                    Some(b'<')
+                        if bytes
+                            .get(at + 1)
+                            .is_some_and(|&next| next.is_ascii_alphabetic() || next == b'/') =>
+                    {
+                        in_tag = true;
+                        value = false;
+                    }
+                    Some(b'>') => {
+                        in_tag = false;
+                        value = false;
+                    }
+                    Some(b'=') => value = in_tag,
                     Some(quote @ (b'"' | b'\'')) if value => {
                         at = text[at + 1..]
                             .find(char::from(quote))

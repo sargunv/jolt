@@ -92,4 +92,13 @@ class DocCommentMarkdownHardCases {
   /// A backslash before a hard break is a literal backslash: foo\  
   /// bar.
   void backslashBeforeHardBreak() {}
+
+  /// The rest of a closing fence line is text, where an inline tag starts:
+  /// ~~~
+  /// example
+  /// ~~~ {@snippet :
+  /// @Override
+  /// public String toString() {}
+  /// }
+  void snippetAfterAClosingFence() {}
 }

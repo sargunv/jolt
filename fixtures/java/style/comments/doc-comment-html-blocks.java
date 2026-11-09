@@ -115,4 +115,10 @@ class DocCommentHtmlBlocks {
    * @the next line}, where the {@code @} starts no block tag.
    */
   void snippetAndInlineTagLines() {}
+
+  /**
+   * This is value="<a title="alpha  beta"
+   * href="x">link</a>", where only the tag's quotes hold an attribute value.
+   */
+  void quoteBeforeATag() {}
 }

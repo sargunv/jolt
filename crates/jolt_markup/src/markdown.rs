@@ -40,24 +40,27 @@ pub(crate) fn parse<'a>(lines: &[Line<'a>], layout: &mut Layout<'_, 'a>) {
         snippets: Vec::new(),
     };
     let mut fence: Option<(u8, usize)> = None;
-    let mut tag_end = 0;
+    let mut tag_end: usize = 0;
     let mut start = 0;
     let mut tag = false;
     for (index, line) in lines.iter().enumerate() {
+        // Where the inline-tag scan of this line starts.
+        let mut from = tag_end.saturating_sub(line.offset);
         if line.offset >= tag_end {
             let trimmed = line.text.trim_start();
             if let Some((marker, len)) = fence {
                 let run = trimmed.bytes().take_while(|&byte| byte == marker).count();
-                if run >= len {
-                    fence = None;
+                if run < len {
+                    continue;
                 }
-                continue;
-            }
-            if let Some(opened) = opens_fence(trimmed.as_bytes()) {
+                // javadoc reads the rest of a closing line as text, where an
+                // inline tag may start.
+                fence = None;
+                from = line.text.len() - trimmed.len() + run;
+            } else if let Some(opened) = opens_fence(trimmed.as_bytes()) {
                 fence = Some(opened);
                 continue;
-            }
-            if tags::is_block_tag(trimmed) {
+            } else if tags::is_block_tag(trimmed) {
                 if index > start {
                     parser.part(&lines[start..index], tag);
                 }
@@ -66,7 +69,6 @@ pub(crate) fn parse<'a>(lines: &[Line<'a>], layout: &mut Layout<'_, 'a>) {
             }
         }
         let text = line.text;
-        let mut from = tag_end.saturating_sub(line.offset);
         while let Some(found) = text.get(from..).and_then(|rest| rest.find("{@")) {
             let at = from + found;
             from = at + 2;
