@@ -4,7 +4,6 @@
 use std::cell::Cell;
 use std::ops::ControlFlow;
 
-use crate::comments::is_doc_line;
 use crate::doc::{
     CommentLine, GLUED, Kind, LINE_COMMENT, MULTILINE, RUN_END, Reindent, STICKY, Text,
     VERBATIM_START, comment_lines, display_width, lines,
@@ -318,11 +317,13 @@ impl<S: Sink + ?Sized, J: Fn(char, char) -> bool> Printer<'_, '_, S, J> {
         ControlFlow::Continue(())
     }
 
-    /// Whether `text` starts with a doc line comment.
+    /// Whether `text` starts with a line comment that a documentation tool
+    /// reads as part of a run of doc line comments: one that starts with the
+    /// opener (javac reads `////` lines in a run too).
     fn is_doc_line(&self, text: &str) -> bool {
         self.language
             .doc_line
-            .is_some_and(|opener| is_doc_line(text, opener))
+            .is_some_and(|opener| text.starts_with(opener))
     }
 
     fn flush_pending(&mut self) {

@@ -340,7 +340,10 @@ pub(crate) fn is_doc_line(text: &str, opener: &str) -> bool {
     })
 }
 
-/// Groups the doc line comments of `list` into runs, in one pass.
+/// Groups the doc line comments of `list` into runs, in one pass. A run's
+/// later lines are on lines of their own in the source; its first line may
+/// end a line of code there, when placement moves it to a line of its own
+/// (javac reads it as the first line of the run too).
 fn group_runs(list: &mut [PlacedComment<'_>], opener: Option<&str>) {
     let Some(opener) = opener else {
         return;
@@ -349,7 +352,8 @@ fn group_runs(list: &mut [PlacedComment<'_>], opener: Option<&str>) {
     for index in 0..list.len() {
         let placed = list[index];
         let doc_line = placed.comment.kind == CommentKind::Line
-            && placed.comment.source_layout == CommentLayout::OwnLine
+            && (placed.comment.source_layout == CommentLayout::OwnLine
+                || placed.layout == CommentLayout::OwnLine)
             && is_doc_line(placed.comment.text, opener);
         if !doc_line {
             head = None;
@@ -613,6 +617,17 @@ pub(crate) fn place<'a, L: FormatLanguage>(root: SyntaxNode<'a>) -> Comments<'a>
         // one leads the next element (or dangles), the rest follow it.
         if let (Placement::Trailing(..), Some(earlier)) = (placement, earlier) {
             placement = match earlier {
+                // A doc line comment after one that leads on its own line
+                // starts its line too; as such it may head a run of doc line
+                // comments (see `group_runs`), as it does on the next pass.
+                Placement::Leading(element, CommentLayout::OwnLine)
+                    if source_layout == CommentLayout::EndOfLine
+                        && comment.kind == CommentKind::Line
+                        && L::DOC_LINE_COMMENT
+                            .is_some_and(|opener| is_doc_line(comment.text, opener)) =>
+                {
+                    Placement::Leading(element, CommentLayout::OwnLine)
+                }
                 Placement::Leading(element, _) => Placement::Leading(element, source_layout),
                 Placement::Dangling(node) => Placement::Dangling(node),
                 Placement::Trailing(..) => placement,

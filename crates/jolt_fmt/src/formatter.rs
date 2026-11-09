@@ -781,8 +781,13 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         if comment.kind == CommentKind::Line {
             // A doc line comment that is in no run (it ends a line of code in
             // the source) may still start its output line, as one that S1's
-            // neighbour forces onto its own line does; it ends a run there.
-            let flags = if doc_line {
+            // neighbour forces onto its own line does; it ends a run there,
+            // unless the source's next line continues it (see
+            // `continues_line_run`). So does a line of more slashes (`////`),
+            // which javac reads as a line of a run.
+            let run_line =
+                L::DOC_LINE_COMMENT.is_some_and(|opener| comment.text.starts_with(opener));
+            let flags = if run_line && !self.continues_line_run(index) {
                 LINE_COMMENT | RUN_END
             } else {
                 LINE_COMMENT
@@ -814,6 +819,33 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         self.builder.comment_text(comment.text, 0)
     }
 
+    /// Whether the comment after `index` continues, in the source, a run of
+    /// doc line comments that the comment at `index` ends: a doc line comment
+    /// that starts the next line, after only spaces and tabs. javac reads
+    /// such lines as one doc comment (one that starts after code too), so
+    /// the printer must not keep them apart.
+    fn continues_line_run(&self, index: usize) -> bool {
+        let Some(opener) = L::DOC_LINE_COMMENT else {
+            return false;
+        };
+        let (Some(this), Some(next)) = (
+            self.comments.list.get(index),
+            self.comments.list.get(index + 1),
+        ) else {
+            return false;
+        };
+        let between =
+            &self.source[this.comment.range.end().get()..next.comment.range.start().get()];
+        let rest = between
+            .strip_prefix("\r\n")
+            .or_else(|| between.strip_prefix(['\n', '\r']));
+        this.comment.kind == CommentKind::Line
+            && this.comment.text.starts_with(opener)
+            && next.comment.kind == CommentKind::Line
+            && next.comment.text.starts_with(opener)
+            && rest.is_some_and(|rest| rest.bytes().all(|byte| matches!(byte, b' ' | b'\t' | 0x0c)))
+    }
+
     /// The run of doc line comments from `head` to `end`. When it leads its
     /// target, starts its line and may be laid out (see
     /// [`formats_doc`](Self::formats_doc)), a slot that the language's layout
@@ -824,7 +856,11 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// node's dangling comments after its closing token.
     fn doc_line_run(&mut self, head: usize, end: usize, starts_line: bool) -> Doc {
         let placed = self.comments.list[head];
-        if starts_line && placed.side == Side::Leading && self.formats_doc(placed) {
+        // A run that javac reads as part of a longer one (with a line of more
+        // slashes, `////`) is not a doc comment of its own to lay out.
+        let whole =
+            !self.continues_line_run(end) && (head == 0 || !self.continues_line_run(head - 1));
+        if starts_line && whole && placed.side == Side::Leading && self.formats_doc(placed) {
             let slot = self.builder.slot();
             self.pending = Some(PendingRun {
                 slot,
@@ -853,7 +889,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             if index > head {
                 docs.push(Doc::HARD_LINE);
             }
-            let flags = if index == end {
+            let flags = if index == end && !self.continues_line_run(end) {
                 LINE_COMMENT | RUN_END
             } else {
                 LINE_COMMENT
