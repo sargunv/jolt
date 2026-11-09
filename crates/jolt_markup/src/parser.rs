@@ -414,7 +414,8 @@ impl Parser<'_, '_> {
 
     /// Fails the reading where it can't follow javac's: the comment is
     /// printed as written. That is a description that starts with text of
-    /// only whitespace (see [`parse`]); an escape (`@@`, `@*`) that doesn't
+    /// only whitespace (see [`parse`]); a `{@snippet :` that the comment's
+    /// end follows on its line; an escape (`@@`, `@*`) that doesn't
     /// start its line, which javac reads as one only after a line break
     /// before a tag's argument that the layout joins; an inline tag nested
     /// too deeply; a `{@value}` reference that no `}` follows on its line;
@@ -1187,6 +1188,12 @@ impl Parser<'_, '_> {
                 self.next_char();
             }
             if !self.newline {
+                if self.at_end() {
+                    // Without a line break before the comment's end, javac
+                    // reads no content; with one, an unterminated tag. A
+                    // layout on more than one line adds it before `*/`.
+                    self.give_up();
+                }
                 return Err(ParseError);
             }
             self.next_char();
