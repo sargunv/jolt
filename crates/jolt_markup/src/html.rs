@@ -132,6 +132,10 @@ enum Kind {
 }
 
 #[derive(Clone, Copy, Debug)]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "independent properties of a token"
+)]
 struct Token {
     kind: Kind,
     span: Span,
@@ -144,6 +148,9 @@ struct Token {
     sticky: bool,
     /// A word of text (not an atom).
     plain: bool,
+    /// Follows a tag's name or argument after whitespace, which stays: a
+    /// reference ends at whitespace.
+    after_head: bool,
 }
 
 /// A piece of a section (the description, a block tag), with the nodes of
@@ -153,6 +160,9 @@ struct Piece {
     kind: PieceKind,
     span: Span,
     glue: bool,
+    /// An inline tag's name or head (its reference, its index term): the
+    /// separator after it stays.
+    head: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -178,6 +188,8 @@ pub(crate) fn lay_out<'a>(
         break_next: false,
         after_error: false,
         glue_next: false,
+        head_next: false,
+        head_last: false,
         kept: Vec::new(),
     };
     let mut pieces = Vec::new();
@@ -191,6 +203,7 @@ pub(crate) fn lay_out<'a>(
             kind: PieceKind::Atom,
             span: tail,
             glue: false,
+            head: false,
         });
     }
     for &span in &tokens.kept {
@@ -228,16 +241,19 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
                 kind: PieceKind::Text,
                 span: *span,
                 glue: false,
+                head: false,
             }),
             Node::Atom(span) => pieces.push(Piece {
                 kind: PieceKind::Atom,
                 span: *span,
                 glue: false,
+                head: false,
             }),
             Node::Erroneous(span) => pieces.push(Piece {
                 kind: PieceKind::Erroneous,
                 span: *span,
                 glue: false,
+                head: false,
             }),
             Node::Element {
                 span,
@@ -253,6 +269,7 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
                     },
                     span: *span,
                     glue: false,
+                    head: false,
                 });
             }
             Node::Inline(inline) => match &inline.rich {
@@ -260,12 +277,14 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
                     kind: PieceKind::Atom,
                     span: inline.span,
                     glue: false,
+                    head: false,
                 }),
                 Some(rich) => {
                     pieces.push(Piece {
                         kind: PieceKind::Atom,
                         span: inline.name,
                         glue: false,
+                        head: true,
                     });
                     if let Some(head) = rich.head {
                         let reference = !lines[inline.name.start.line as usize].text
@@ -279,6 +298,7 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
                                 kind: PieceKind::Atom,
                                 span,
                                 glue: true,
+                                head: true,
                             });
                         }
                     }
@@ -288,6 +308,7 @@ fn flatten(nodes: &[Node], lines: &[Line<'_>], pieces: &mut Vec<Piece>) {
                             kind: PieceKind::Atom,
                             span: close,
                             glue: false,
+                            head: false,
                         });
                     }
                 }
@@ -364,12 +385,17 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
                 end: pieces[end].span.end,
             },
             glue: false,
+            head: false,
         });
         index = end + 1;
     }
     *pieces = out;
 }
 
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "the independent states of the tokenizer"
+)]
 struct Tokens<'l, 'a> {
     lines: &'l [Line<'a>],
     list: Vec<Token>,
@@ -382,6 +408,9 @@ struct Tokens<'l, 'a> {
     after_error: bool,
     /// The next token is the first of a block tag's text.
     glue_next: bool,
+    /// The next token is a tag's name or argument, and the last one was.
+    head_next: bool,
+    head_last: bool,
     /// The atoms that span lines, whose line ends keep their whitespace.
     kept: Vec<Span>,
 }
@@ -406,14 +435,17 @@ impl Tokens<'_, '_> {
             glue: false,
             sticky: false,
             plain: false,
+            after_head: false,
         });
         self.last_end = Some(tag.span.start);
+        self.head_last = false;
         let Some(body) = &tag.body else {
             self.push(Kind::Word, tag.span, false, false);
             return;
         };
         for (index, &head) in tag.head.iter().enumerate() {
             for (part, span) in head_parts(self.lines, head).into_iter().enumerate() {
+                self.head_next = true;
                 self.push(Kind::Word, span, index > 0 || part > 0, false);
             }
         }
@@ -426,6 +458,7 @@ impl Tokens<'_, '_> {
     }
 
     fn piece(&mut self, piece: Piece) {
+        self.head_next = piece.head;
         match piece.kind {
             PieceKind::Text => self.text(piece.span),
             PieceKind::Atom => self.word(piece.span, piece.glue, false),
@@ -570,6 +603,7 @@ impl Tokens<'_, '_> {
                 glue: false,
                 sticky: false,
                 plain: false,
+                after_head: false,
             });
         }
     }
@@ -587,6 +621,7 @@ impl Tokens<'_, '_> {
                 glue: false,
                 sticky: false,
                 plain: false,
+                after_head: false,
             });
         }
     }
@@ -623,6 +658,7 @@ impl Tokens<'_, '_> {
             }
         }
         self.push_gap_blank(span.start);
+        let after_head = std::mem::replace(&mut self.head_last, false) && sep != Sep::None;
         // Text between two tokens is whitespace; anything else is printed as
         // a word, so that no character is lost.
         if let Some(end) = self.last_end
@@ -636,6 +672,7 @@ impl Tokens<'_, '_> {
                 glue: false,
                 sticky: true,
                 plain: false,
+                after_head: false,
             });
         }
         if matches!(kind, Kind::Word | Kind::Element { .. })
@@ -651,7 +688,9 @@ impl Tokens<'_, '_> {
             glue,
             sticky,
             plain,
+            after_head,
         });
+        self.head_last = std::mem::take(&mut self.head_next);
         self.last_end = Some(span.end);
     }
 
@@ -808,6 +847,7 @@ fn keep_lines(tokens: &mut Vec<Token>, lines: &[Line<'_>], kept: &[bool]) {
             glue: false,
             sticky: false,
             plain: false,
+            after_head: false,
         });
     }
     *tokens = out;
@@ -937,7 +977,7 @@ impl Html<'_, '_, '_, '_> {
             }
         } else {
             let join = match token.sep {
-                _ if self.attach => Join::None,
+                _ if self.attach && !token.after_head => Join::None,
                 Sep::None => Join::None,
                 Sep::Space | Sep::Line if glue => Join::Space,
                 Sep::Space | Sep::Line => Join::Wrap,

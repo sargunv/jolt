@@ -24,4 +24,13 @@ class DocCommentJavacReading {
    * A <a title="unclosed attribute value, which javadoc reads as an erroneous <, with enough words to wrap the line.
    */
   void unclosedAttributeValue() {}
+
+  /**
+   * Summary.
+   *
+   * @param value </p> the separator after a tag's argument stays, with enough words to wrap the line
+   * @throws Exception </p> without it, javac reads {@code Exception</p>} as the reference
+   * @see Object </li> {@link Object </p> and a link's reference}
+   */
+  void separatorAfterAReference(int value) throws Exception {}
 }

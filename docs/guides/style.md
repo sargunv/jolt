@@ -987,7 +987,9 @@ A comment that Jolt lays out gets this style:
   follows. A blank line of the source between two paragraphs is kept, without
   adding a `<p>`. Inside a list and in block tag text, Jolt adds no blank lines
   and keeps at most one.
-- **`<p>`** is joined to the text after it, and `</p>` to the text before it.
+- **`<p>`** is joined to the text after it, and `</p>` to the text before it,
+  except after a tag's name or argument: the space after `@throws Exception`
+  stays, since javadoc would read `Exception</p>` as the reference.
 - **Lists.** `<ul>`, `<ol>` and `<dl>` and their closing tags start a line. Each
   item (`<li>`, `<dt>`, `<dd>`) starts a line indented by 2, and its wrapped
   lines are indented 4 more. `</li>` is joined to the text before it. A block
