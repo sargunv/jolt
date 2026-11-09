@@ -1,0 +1,150 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class DocCommentTrailingWhitespace {
+  /** <script>const s = "</style>"; const t = "a   b";</script> */
+  void rawEndTagOfAnotherElement() {}
+
+  /// Text <script>const s = "</style>"; const t = "a   b";</script>
+  void markdownRawEndTagOfAnotherElement() {}
+
+  /// Text <textarea title="</textarea>">a   b
+  /// c   d</textarea>
+  void markdownEndTagInAttribute() {}
+
+  /**
+   * <pre><textarea>a   
+   * b</textarea></pre>
+   */
+  void rawInsidePre() {}
+
+  /**
+   * <table><tr><td><textarea>a   
+   * b</textarea></td></tr></table>
+   */
+  void rawInsideTable() {}
+
+  /**
+   * <table><tr><td><pre>a   
+   * b</pre></td></tr></table>
+   */
+  void preInsideTable() {}
+
+  /**
+   * {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@code a   
+   * b}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+   */
+  void depthFallback() {}
+
+  /// {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@summary {@code a   
+  /// b}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+  void markdownDepthFallback() {}
+
+  /**
+   * \u0041 {@code a   
+   * b}
+   */
+  void unicodeEscapeFallback() {}
+
+  /**
+   * <pre>
+   * a   
+   * b
+   * </pre>
+   */
+  void preTrailingSpaces() {}
+
+  /// ```
+  /// a   
+  /// b
+  /// ```
+  void fencedTrailingSpaces() {}
+
+  /// Text.
+  ///
+  ///     a   
+  ///     b
+  void indentedCodeTrailingSpaces() {}
+
+  /**
+   * <pre>
+   * a 
+   * b
+   * </pre>
+   */
+  void noBreakSpaceInPre() {}
+
+  /**
+   * <table> a 
+   * b</table>
+   */
+  void noBreakSpaceInTable() {}
+
+  /**
+   * Art:
+   *
+   *   a 
+   *     b
+   */
+  void noBreakSpaceInAsciiArt() {}
+
+  /// ```
+  /// a 
+  /// b
+  /// ```
+  void fencedOneTrailingSpace() {}
+
+  /// <pre>
+  /// a 
+  /// b
+  /// </pre>
+  void markdownPreBlock() {}
+
+  /// Text <pre>a 
+  /// b</pre> text.
+  void markdownInlinePre() {}
+
+  /**
+   * <pre>
+   * a
+   *    
+   * b
+   * </pre>
+   */
+  void whitespaceOnlyLineInPre() {}
+
+  /**
+   * <pre><pre>a</pre>  b   c
+   * d   </pre>
+   *
+   * e f
+   */
+  void nestedPre() {}
+
+  /**
+   * <pre><textarea></pre>   a  
+   * </textarea></pre>
+   *
+   * b c
+   */
+  void preEndTagInRawText() {}
+
+  /**
+   * \u0041 text   
+   *   
+   * <pre>a   
+   * b</pre>
+   */
+  void unicodeEscapeBlankLines() {}
+
+  /// Text <!-- <pre> --> a b c d
+  void markdownCommentHidesPre() {}
+
+  /// Text <script>a   b</SCRIPT > c d e f
+  void markdownRawEndTagCase() {}
+}
+
+diagnostics:
+(none)

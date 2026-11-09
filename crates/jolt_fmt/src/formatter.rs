@@ -792,7 +792,14 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             } else {
                 LINE_COMMENT
             };
-            return self.builder.comment_text(comment.text.trim_end(), flags);
+            // A doc line comment keeps its trailing whitespace (see
+            // `written_run`).
+            let text = if run_line {
+                comment.text
+            } else {
+                comment.text.trim_end()
+            };
+            return self.builder.comment_text(text, flags);
         }
         if comment.raw {
             return self.builder.text(comment.text.trim_end());
@@ -874,16 +881,11 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     }
 
     /// The run of doc line comments from `head` to `end` as written, one line
-    /// each, without trailing whitespace except the two or more spaces that
-    /// end a line with text before a line with text: in a Markdown doc
-    /// comment that is a hard break. Its last text ends the run (see
-    /// [`DocBuilder::line_comment`]).
+    /// each, trailing whitespace included: javadoc reads it in Markdown code,
+    /// `<pre>` and tag bodies, and two spaces after text are a hard break,
+    /// and a run that isn't laid out was not read for them. Its last text
+    /// ends the run (see [`DocBuilder::line_comment`]).
     fn written_run(&mut self, head: usize, end: usize) -> Doc {
-        let has_text = |text: &str| {
-            L::DOC_LINE_COMMENT
-                .and_then(|opener| text.strip_prefix(opener))
-                .is_some_and(|rest| !rest.trim().is_empty())
-        };
         let mut docs = Vec::with_capacity((end - head + 1) * 2);
         for index in head..=end {
             if index > head {
@@ -895,11 +897,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 LINE_COMMENT
             };
             let text = self.comments.list[index].comment.text;
-            let hard_break = index < end
-                && text.ends_with("  ")
-                && has_text(text)
-                && has_text(self.comments.list[index + 1].comment.text);
-            let text = if hard_break { text } else { text.trim_end() };
             docs.push(self.builder.comment_text(text, flags));
         }
         self.builder.concat(docs)
