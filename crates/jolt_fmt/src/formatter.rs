@@ -700,7 +700,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             Run::None => index,
         };
         let blank_after = self.comments.list[end].comment.lines_after >= 2;
-        let text = self.comment_doc(index, placed.layout == CommentLayout::OwnLine);
+        let text = self.comment_doc(index, self.lays_out_doc(index));
         match (placed.side, placed.layout) {
             (Side::Leading, CommentLayout::OwnLine) => {
                 let after = self.line_break(blank_after);
@@ -737,6 +737,29 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
     }
 
+    /// Whether an attached comment is laid out as a doc comment: on its own
+    /// line, or leading its target and ending its output line. A leading
+    /// comment's line can start wherever the layout breaks before it, and the
+    /// next pass reads one that also ends its line as a comment on its own
+    /// line; whether a comment ends its output line is what each pass keeps.
+    fn lays_out_doc(&self, index: usize) -> bool {
+        let placed = self.comments.list[index];
+        match (placed.side, placed.layout) {
+            (_, CommentLayout::OwnLine) | (Side::Leading, CommentLayout::EndOfLine) => true,
+            (Side::Leading, CommentLayout::Inline) => {
+                self.comments.list.get(index + 1).is_some_and(|next| {
+                    next.side == Side::Leading
+                        && next.target == placed.target
+                        && matches!(
+                            next.layout,
+                            CommentLayout::OwnLine | CommentLayout::StartOfLine
+                        )
+                })
+            }
+            _ => false,
+        }
+    }
+
     /// No space after a token that hugs what follows, unless another comment
     /// of the same gap precedes this one.
     fn space_before(&self, index: usize) -> Doc {
@@ -761,8 +784,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     }
 
     /// The comment's doc, counted as emitted: the whole run for the head of
-    /// a run of doc line comments. A doc comment that starts its output line
-    /// (`starts_line`) goes to [`FormatLanguage::doc_comment`] when it lies
+    /// a run of doc line comments. A doc comment on a line of its own
+    /// (`starts_line`, see [`lays_out_doc`](Self::lays_out_doc)) goes to
+    /// [`FormatLanguage::doc_comment`] when it lies
     /// outside the formatter-ignore regions and its target has no recovery
     /// (a normalization applies only to recovery-free nodes).
     fn comment_doc(&mut self, index: usize, starts_line: bool) -> Doc {

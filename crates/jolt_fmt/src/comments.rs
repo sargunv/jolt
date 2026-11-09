@@ -55,7 +55,7 @@ pub struct Comment<'a> {
     pub(crate) raw: bool,
 }
 
-/// A doc comment that starts its output line, as
+/// A doc comment on a line of its own, as
 /// [`FormatLanguage::doc_comment`] sees it.
 #[derive(Clone, Copy, Debug)]
 pub struct DocComment<'a, 'r> {

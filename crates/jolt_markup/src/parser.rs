@@ -149,9 +149,20 @@ pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
     while !parser.at_end() && parser.cur.ch == '@' {
         tags.push(parser.block_tag());
     }
-    let tail = (!parser.at_end()).then(|| Span {
-        start: parser.cur.pos,
-        end: parser.end(),
+    // The whitespace around the tail is the frame's, not text.
+    parser.skip_whitespace();
+    let tail = (!parser.at_end()).then(|| {
+        let mut end = parser.end();
+        while let Some((pos, ch)) = parser.before(end)
+            && is_ws(ch)
+            && pos > parser.cur.pos
+        {
+            end = pos;
+        }
+        Span {
+            start: parser.cur.pos,
+            end,
+        }
     });
     (parser.steps <= parser.budget).then_some(Comment { body, tags, tail })
 }

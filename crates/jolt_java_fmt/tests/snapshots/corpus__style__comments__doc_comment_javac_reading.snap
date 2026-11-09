@@ -176,6 +176,34 @@ class DocCommentJavacReading {
    * past offset 1.
    */
   void paragraphAfterALoneCharacterOnALaterLine() {}
+
+  /**
+   * A </p> Second, where a blank line before the first word puts the closing
+   * tag past offset 1.
+   */
+  void closingParagraphAfterALoneCharacterOnALaterLine() {}
+
+  /**
+   * @return value, which a form feed keeps from being a block tag
+   *
+   * @since 1
+   */
+  int formFeedBeforeTheFirstWord() {
+    return 0;
+  }
+
+  /**
+   * @code
+   */
+  void inlineOnlyTagAsABlockTag() {}
+
+  /**
+   * A long enough description of the snippet tag that follows:
+   * {@snippet : <table>text</table>
+   *
+   * }
+   */
+  void tableAfterAnErroneousSnippet() {}
 }
 
 diagnostics:

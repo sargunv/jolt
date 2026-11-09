@@ -113,7 +113,7 @@ pub trait FormatLanguage: Sized + 'static {
     /// The [`DocFile`](Self::DocFile) of the file whose tree is `root`.
     fn doc_file(root: SyntaxNode<'_>) -> Self::DocFile;
     /// Lays out a doc comment (a doc block comment, or a run of doc line
-    /// comments) that starts its output line; `None` prints it as written.
+    /// comments) on a line of its own; `None` prints it as written.
     /// Called only by the comment chokepoints, for a comment outside every
     /// formatter-ignore region whose target has no recovery. The layout
     /// starts at the comment's own column, after a line break. A doc line

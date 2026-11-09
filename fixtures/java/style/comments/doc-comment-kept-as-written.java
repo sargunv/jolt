@@ -87,4 +87,10 @@ class DocCommentKeptAsWritten {
   /** {@value bad!
    * {@code good}, where javadoc's reading depends on whether the value's reference is valid */
   void unclosedValueTag() {}
+
+  void docCommentThatTheLayoutPutsOnItsOwnLine() {
+    if (/** a doc comment  after an opener, which the line comment after it puts on its own line */
+    // a line comment
+    true) {}
+  }
 }

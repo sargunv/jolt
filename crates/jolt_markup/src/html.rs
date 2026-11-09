@@ -278,7 +278,7 @@ pub(crate) fn lay_out<'a>(
         gap: Gap::None,
         attach: false,
         ends_sentence: false,
-        lone_first: false,
+        lone_first: None,
     };
     for token in &tokens {
         html.token(token);
@@ -698,9 +698,20 @@ impl Tokens<'_, '_> {
     fn word(&mut self, span: Span, glue: bool, plain: bool) {
         let text = &self.lines[span.start.line as usize].text[span.start.off as usize..];
         if text.starts_with('@') {
+            let (tabs, feeds) = self.indents[span.start.line as usize];
             if span.start.line > 0 && self.at_line_start(span.start) {
                 self.push_break();
                 self.push_token(Kind::Word, span, glue, false, plain);
+            } else if self.last_end.is_none() && span.start.off > tabs && span.start.off <= feeds {
+                // A form feed before it on its line keeps javadoc from
+                // reading it as a block tag. The comment's first word starts
+                // a line, with no word before it to stay on the line of, so
+                // it keeps the form feed.
+                let start = Pos {
+                    line: span.start.line,
+                    off: tabs,
+                };
+                self.push_token(Kind::Word, Span { start, ..span }, glue, true, plain);
             } else {
                 self.push_token(Kind::Word, span, glue, true, plain);
             }
@@ -1071,9 +1082,9 @@ struct Html<'p, 'd, 'l, 'a> {
     /// The last word ends a sentence (`.`, `!`, `?`): javadoc's first
     /// sentence ends there if whitespace follows.
     ends_sentence: bool,
-    /// The last word is the comment's first, one character long: javadoc
-    /// reads a `<p>` right after it (at offset 1) as no sentence break.
-    lone_first: bool,
+    /// The source line of the last word, when it is the comment's first
+    /// and one character long (see [`offset_one`](Self::offset_one)).
+    lone_first: Option<u32>,
 }
 
 impl Html<'_, '_, '_, '_> {
@@ -1143,16 +1154,34 @@ impl Html<'_, '_, '_, '_> {
         token.pinned
             || token.sep == Sep::None
                 && !self.layout.at_start()
-                && if breaks_sentence(self.layout.text_at(token.span.start)) {
-                    self.lone_first
-                } else {
-                    self.ends_sentence
-                }
+                && self
+                    .offset_one(token)
+                    .unwrap_or_else(|| self.ends_sentence && !self.breaks_sentence(token))
+    }
+
+    /// Whether `token` is a tag that ends javadoc's first sentence.
+    fn breaks_sentence(&self, token: &Token) -> bool {
+        breaks_sentence(self.layout.text_at(token.span.start))
+    }
+
+    /// For a tag that ends the first sentence (`<p>`, `</p>`) right after
+    /// the comment's lone first character: whether it is at offset 1 of
+    /// what javadoc reads, where `DocTreeMaker.isSentenceBreak` reads it as
+    /// no break. The output puts the character at offset 0, so the tag must
+    /// follow it with nothing between exactly when this holds. javadoc
+    /// counts each line before the first word (line 0 is the first it
+    /// reads), and the separator.
+    fn offset_one(&self, token: &Token) -> Option<bool> {
+        let line = self.lone_first.filter(|_| self.breaks_sentence(token))?;
+        Some(line == 0 && token.sep == Sep::None)
     }
 
     /// Adds a word. `glue` keeps it on the line of the word before.
     fn emit(&mut self, token: &Token, glue: bool) {
         let first = self.layout.at_start();
+        // A pinned token keeps the separator before it: no line break, and
+        // no wrap point.
+        let glue = glue || token.pinned;
         if token.pinned {
             self.next_line = None;
         }
@@ -1178,16 +1207,12 @@ impl Html<'_, '_, '_, '_> {
             }
         } else {
             let join = match token.sep {
+                // A tag that ends the sentence after a lone first character
+                // keeps it ending there (or not).
+                _ if self.offset_one(token) == Some(false) => Join::Space,
                 // A space after a sentence's end stays: it ends javadoc's
-                // first sentence there. So does one between a lone first
-                // character and a tag that ends the sentence (`A </p>`),
-                // which javadoc reads as no break at offset 1.
-                Sep::Space | Sep::Line
-                    if self.attach
-                        && (self.ends_sentence || self.lone_first && breaks_sentence(text)) =>
-                {
-                    Join::Space
-                }
+                // first sentence there.
+                Sep::Space | Sep::Line if self.attach && self.ends_sentence => Join::Space,
                 _ if self.attach && !token.after_head => Join::None,
                 Sep::None => Join::None,
                 Sep::Space | Sep::Line if glue => Join::Space,
@@ -1202,12 +1227,10 @@ impl Html<'_, '_, '_, '_> {
                 .segment(token.span.end.line, 0, Some(token.span.end.off))
         };
         self.ends_sentence = last.ends_with(['.', '!', '?']);
-        // javadoc counts each line before the first word (line 0 is the
-        // first line it reads).
-        self.lone_first = first
-            && token.span.start.line == 0
+        self.lone_first = (first
             && token.span.end.line == token.span.start.line
-            && last.encode_utf16().count() == 1;
+            && last.encode_utf16().count() == 1)
+            .then_some(token.span.start.line);
         self.attach = false;
         self.gap = Gap::None;
     }

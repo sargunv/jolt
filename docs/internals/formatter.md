@@ -828,17 +828,22 @@ See [Java style](../guides/style.md) for the resulting output.
 
 #### Doc comments
 
-A doc comment that starts its output line is laid out by the language's
+A doc comment on a line of its own is laid out by the language's
 `FormatLanguage::doc_comment` hook when it returns a doc; `None` prints the
 comment as in the list above. A doc comment is a doc block comment
 (`DocCommentSource::Block`, `/** … */`) or a doc line run
 (`DocCommentSource::Lines`, one text per `///` line, trailing whitespace kept,
 with the source tokens printed around the run), with its placement target. The
-chokepoints call the hook only for a comment that starts its output line, since
-only there no group's fit check measures past the line break before it into the
+chokepoints call the hook only for a comment on a line of its own, since only
+there no group's fit check measures past the line break before it into the
 comment, so its layout can't change the code around it:
 
 - a comment printed `OwnLine` (leading, trailing or dangling);
+- a leading doc block comment that ends its output line: printed `EndOfLine`, or
+  `Inline` before a comment of the same target that starts a line (a block
+  comment after an opener followed by a line comment). The line break after it
+  breaks the groups around it, and a later pass reads it as a comment on its own
+  line, so it is laid out in both passes;
 - the first dangling comment of a node (the owning rule puts a line break before
   it), and a later one whose `lines_before` is not 0 (`own_lines` puts one with
   `lines_before == 0` on the line of the comment before it);

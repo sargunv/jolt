@@ -910,8 +910,8 @@ int run() {
 
 ## Doc comments
 
-Jolt lays out the text of each Javadoc comment (`/** … */`) that starts its own
-line, and of each Markdown doc comment (`///`, see
+Jolt lays out the text of each Javadoc comment (`/** … */`) on a line of its own
+in the output, and of each Markdown doc comment (`///`, see
 [Markdown doc comments](#markdown-doc-comments)): it fills paragraphs to the
 line width and puts lists, block tags and code in one fixed style. What javadoc
 reads in a comment stays the same, and every character it reads is kept. Jolt
