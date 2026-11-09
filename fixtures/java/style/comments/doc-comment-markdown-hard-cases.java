@@ -168,4 +168,85 @@ class DocCommentMarkdownHardCases {
 
   /// A paragraph with pipes and a word a table reads as aligned | right column :--- | ---:
   void tableDelimiterInAParagraph() {}
+
+  /// - a
+  /// - ```
+  ///  @return a fence that the item's end closes, open in the description
+  ///
+  ///   ```
+  /// - c
+  int openFenceBeforeATag() {
+    return 0;
+  }
+
+  /// A paragraph that ends in an unclosed pre<pre>
+  ///
+  /// b
+  void unclosedPreAtAParagraphEnd() {}
+
+  ///
+  /// @param x - - foo
+  void listMarkersThatReachTheEnd(int x) {}
+
+  /// * a
+  /// @param x 	*	
+  void listMarkerAndTabAtALineEnd(int x) {}
+
+  /// Foo  
+  ///     ***
+  void hardBreakBeforeAThematicBreak() {}
+
+  /// Text that ends with spaces before a tag  
+  /// @param x the value
+  void spacesBeforeATagLine(int x) {}
+
+  /// ---
+  /// Foo
+  /// -bar ends the first sentence, though the line after a thematic break holds it
+  void firstSentenceAfterAThematicBreak() {}
+
+  /// Raw code HTML keeps its lines, with enough words to wrap the line: <code>a
+  /// b</code> and more words after it
+  void rawCodeElement() {}
+
+  /// <pre 
+  ///  lang="java">code
+  /// </pre>
+  void tagThatEndsALine() {}
+
+  /// An escaped star before trailing whitespace at the end \*	
+  void escapeBeforeTrailingWhitespace() {}
+
+  /// - A list item with a space at the end of its line 
+  ///   and more
+  void listItemWithTrailingSpace() {}
+
+  /// [foo]: /url "title" and more words after the title, enough to wrap the line past the width
+  void linkDefinitionLikeParagraph() {}
+
+  /// Hard break  
+  /// x &frac34;
+  /// c
+  void hardBreakAndEntity() {}
+
+  ///  {@summary a summary after a space}
+  ///b
+  void spaceBeforeASummary() {}
+
+  /// ```
+  /// code
+  /// @param x y
+  void unclosedFenceBeforeATag(int x) {}
+
+  /// **
+  ///     *
+  void starsThatWouldJoinIntoABreak() {}
+
+  /// Foo
+  ///     @param ***
+  void indentedErroneousTag() {}
+
+  /// Foo{@
+  ///     ***
+  void structureAfterAnError() {}
 }

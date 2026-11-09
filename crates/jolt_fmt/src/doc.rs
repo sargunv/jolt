@@ -605,7 +605,7 @@ pub(crate) fn comment_lines<'t>(
                     // exactly (javadoc keeps it inside `<pre>`); a ruler
                     // keeps the comment as written.
                     Some(rest) if multiline && doc => {
-                        if rest.starts_with('*') && is_ruler(rest) {
+                        if is_ruler(line) {
                             kept.set(true);
                         }
                         (" *", trim_end(rest.trim_start_matches('*')))
@@ -726,25 +726,40 @@ pub(crate) fn keeps_lines(text: &str) -> bool {
     content.split('\n').enumerate().any(kept)
 }
 
-/// Whether `text` is a multi-line doc comment printed byte for byte: its
-/// first line has text after `/**`, and a later line has text without a
-/// leading `*`. javac then reads that line's whole indentation as text (the
-/// first line has none, so none is shared), and any change to it, such as a
-/// new indentation of the comment, changes what javadoc reads.
+/// Whether `text` is a multi-line doc comment printed byte for byte: a later
+/// line has text without a leading `*`, and another line has text, after
+/// `/**` or after a leading `*`. javac removes the indentation that all of a
+/// comment's lines with text share, counting a line's whole indentation when
+/// it has no `*` and the indentation after the `*`s otherwise, so a new
+/// indentation of the comment, which moves only the lines without `*`,
+/// changes what javadoc reads. (When those are all the lines with text, they
+/// move together and keep what javac reads.)
 pub(crate) fn keeps_bytes(text: &str) -> bool {
     if !text.starts_with("/**") || text.starts_with("/**/") || text.starts_with("/***") {
         return false;
     }
     let content = strip_delimiters(text);
     let mut lines = lines(content);
-    let opener_text = lines
+    let mut starred_text = lines
         .next()
         .is_some_and(|first| !first.trim_matches(is_blank).is_empty());
-    opener_text
-        && lines.any(|line| {
-            let text = line.trim_start_matches(is_blank);
-            !text.is_empty() && !text.starts_with('*')
-        })
+    let mut star_less_text = false;
+    for line in lines {
+        let text = line.trim_start_matches(is_blank);
+        match text.strip_prefix('*') {
+            Some(rest) => {
+                starred_text |= !rest
+                    .trim_start_matches('*')
+                    .trim_matches(is_blank)
+                    .is_empty();
+            }
+            None => star_less_text |= !text.is_empty(),
+        }
+        if starred_text && star_less_text {
+            return true;
+        }
+    }
+    false
 }
 
 /// Whether the last line of a doc comment's `content` (between its

@@ -82,6 +82,8 @@ pub(crate) struct Layout<'d, 'l, 'a> {
     /// The lines whose trailing whitespace stays, by index (empty when
     /// none): their ends lie inside a node whose whitespace javadoc reads.
     kept_ends: Vec<bool>,
+    /// The lines a Markdown block tag starts, in order.
+    tag_lines: Vec<u32>,
 }
 
 impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
@@ -103,6 +105,7 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
             wraps: Vec::new(),
             last: None,
             kept_ends: Vec::new(),
+            tag_lines: Vec::new(),
         }
     }
 
@@ -126,6 +129,17 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
         for line in lines {
             self.kept_ends[line as usize] = true;
         }
+    }
+
+    /// Notes that a Markdown block tag starts on `line`, after the lines of
+    /// the tags before it.
+    pub(crate) fn tag_line(&mut self, line: u32) {
+        self.tag_lines.push(line);
+    }
+
+    /// Whether a Markdown block tag starts on `line`.
+    pub(crate) fn is_tag_line(&self, line: u32) -> bool {
+        self.tag_lines.binary_search(&line).is_ok()
     }
 
     /// Whether line `line` keeps its trailing whitespace.
@@ -305,9 +319,10 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
     }
 
     /// Prints one whole line as written. A Markdown line keeps two or more
-    /// trailing spaces after text before a line with text (a hard break, in
-    /// a paragraph of a list or a quote), and a line that [keeps its
-    /// end](Self::keep_ends) all of them.
+    /// trailing spaces after text before a line with text that starts no
+    /// block tag (a hard break, in a paragraph of a list or a quote; before
+    /// a tag, the part ends there), and a line whose text ends with `\` or
+    /// that [keeps its end](Self::keep_ends) all of them.
     fn verbatim_line(&mut self, line: u32) {
         if self.markdown() {
             let started = std::mem::replace(&mut self.started, true);
@@ -322,8 +337,11 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
                 && self
                     .lines
                     .get(line as usize + 1)
-                    .is_some_and(|next| !next.is_blank());
-            let kept = hard_break || self.kept_end(line);
+                    .is_some_and(|next| !next.is_blank())
+                && !self.is_tag_line(line + 1);
+            // A `\` before the trailing whitespace would end the line, a
+            // hard break.
+            let kept = hard_break || trimmed.ends_with('\\') || self.kept_end(line);
             self.push_text(if kept { source.raw } else { trimmed });
         } else {
             self.continuation(Pos { line, off: 0 }, None);
@@ -407,12 +425,13 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
         wrap
     }
 
-    /// Adds a hard line break inside a Markdown paragraph after the last word
-    /// (a hard break, kept as written): the next word starts a line at the
-    /// paragraph's indentation.
-    pub(crate) fn hard_break(&mut self) {
-        let indent = self.hang;
-        self.line(false, indent, indent);
+    /// Adds a line break inside a Markdown paragraph after the last word (a
+    /// hard break, or another line break kept as written): the next word
+    /// starts a line at `indent`, its source indentation, or the paragraph's
+    /// when that is deeper.
+    pub(crate) fn hard_break(&mut self, indent: u16) {
+        let hang = self.hang;
+        self.line(false, indent.max(hang), hang);
     }
 
     /// The comment. For Javadoc, `/** text */` on one line when it is one

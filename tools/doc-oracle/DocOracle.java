@@ -411,6 +411,14 @@ public class DocOracle {
          * values (after `-->` for a comment), or the end of the text.
          */
         private static int tagEnd(String html, int i) {
+            // HTML closes `<!-->` and `<!--->` at once (an abruptly closed
+            // empty comment), as CommonMark does.
+            if (html.startsWith("<!-->", i)) {
+                return i + 5;
+            }
+            if (html.startsWith("<!--->", i)) {
+                return i + 6;
+            }
             if (html.startsWith("<!--", i)) {
                 int end = html.indexOf("-->", i + 4);
                 return end < 0 ? html.length() : end + 3;

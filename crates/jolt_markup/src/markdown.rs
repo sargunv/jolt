@@ -23,7 +23,7 @@
 
 use std::ops::Range;
 
-use pulldown_cmark::{BrokenLink, CowStr, Event, Options, Parser, Tag, TagEnd};
+use pulldown_cmark::{BrokenLink, CodeBlockKind, CowStr, Event, Options, Parser, Tag, TagEnd};
 
 use crate::frame::Line;
 use crate::html::Raw;
@@ -55,7 +55,11 @@ enum Lex {
     Declaration,
 }
 
-/// An element whose content HTML doesn't collapse.
+/// An element whose content keeps its whitespace: `<pre>`, whose content
+/// HTML doesn't collapse, `<code>`, whose content javadoc's oracle reads
+/// exactly (the HTML that javadoc renders from Markdown holds a code span as
+/// `<code>`, which raw HTML can't be told apart from), and a raw text
+/// element.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Element {
     Pre,
@@ -63,7 +67,7 @@ enum Element {
 }
 
 /// HTML's reading of a part's HTML pieces, as far as whitespace goes: the
-/// open `<pre>` elements and the open raw text element. A raw text
+/// open `<pre>` and `<code>` elements and the open raw text element. A raw text
 /// element's content is text up to its own end tag (`</name` and then
 /// whitespace, `/` or `>`, in any case); elsewhere a tag ends at the first
 /// `>` outside a quoted attribute value.
@@ -84,10 +88,32 @@ impl Reader {
     }
 
     /// Whether the text that follows keeps its whitespace: in an open
-    /// `<pre>` or raw text element, and inside a quoted attribute value or a
-    /// comment, wherever they are.
+    /// `<pre>`, `<code>` or raw text element, and inside a tag or a
+    /// declaration (javadoc's oracle reads them as written), a quoted
+    /// attribute value or a comment, wherever they are.
     const fn exact(&self) -> bool {
-        self.pre > 0 || self.raw.is_some() || matches!(self.lex, Lex::Value { .. } | Lex::Comment)
+        self.pre > 0
+            || self.raw.is_some()
+            || matches!(
+                self.lex,
+                Lex::Tag { .. } | Lex::Value { .. } | Lex::Comment | Lex::Declaration
+            )
+    }
+
+    /// Reads the next piece of HTML, which starts at byte `start` of a
+    /// part's `text`, line by line: a line that ends inside a tag, a comment
+    /// or an element that keeps whitespace keeps its end (in `kept`), though
+    /// the piece closes it on a later line.
+    fn read_lines(&mut self, html: &str, start: usize, text: &Text, kept: &mut Vec<Range<u32>>) {
+        let mut offset = start;
+        for piece in html.split_inclusive('\n') {
+            self.read(piece);
+            offset += piece.len();
+            if piece.ends_with('\n') && self.exact() && offset <= text.text.len() {
+                let line = text.pos(offset - 1).line;
+                kept.push(line..line + 1);
+            }
+        }
     }
 
     /// Reads the next piece of HTML.
@@ -213,11 +239,12 @@ impl Reader {
                     .take_while(|&&byte| byte.is_ascii_alphanumeric() || byte == b'-')
                     .count();
                 let name = &html[from..from + len];
-                let element = if name.eq_ignore_ascii_case("pre") {
-                    Some(Element::Pre)
-                } else {
-                    Raw::of(name).map(Element::Raw)
-                };
+                let element =
+                    if name.eq_ignore_ascii_case("pre") || name.eq_ignore_ascii_case("code") {
+                        Some(Element::Pre)
+                    } else {
+                        Raw::of(name).map(Element::Raw)
+                    };
                 self.lex = Lex::Tag {
                     element,
                     closing,
@@ -286,6 +313,7 @@ pub(crate) fn lay_out<'l, 'a>(
     }
     keep_ends(&comment.body, layout);
     for tag in &comment.tags {
+        layout.tag_line(tag.span.start.line);
         match &tag.body {
             Some(body) => keep_ends(body, layout),
             None => layout.keep_ends(tag.span),
@@ -305,10 +333,14 @@ pub(crate) fn lay_out<'l, 'a>(
                 .unwrap_or(lines.len()),
         ),
         first_sentence: true,
+        kept_as_written: false,
     };
-    markdown.section(&comment.body, None);
+    markdown.section(&comment.body, None, !comment.tags.is_empty());
     for (index, tag) in comment.tags.iter().enumerate() {
-        markdown.block_tag(tag, index == 0);
+        markdown.block_tag(tag, index == 0, index + 1 < comment.tags.len());
+    }
+    if markdown.kept_as_written {
+        return None;
     }
     let last = to_u32(lines.len() - 1);
     if let Some(tail) = comment.tail {
@@ -316,6 +348,153 @@ pub(crate) fn lay_out<'l, 'a>(
     }
     markdown.verbatim_until(last + 1);
     Some(())
+}
+
+/// The end of the word of a paragraph's `text` that starts at byte `at`:
+/// the next whitespace outside an atom, or, while a span of `unclosed` is
+/// open, outside it. A link, a tag or a code span that this reader didn't
+/// take for one (javadoc's may) stays whole, with its whitespace, up to where
+/// it closes: a line break or a run of spaces in it can decide what it is.
+fn end_of_word(
+    text: &Text,
+    mut at: usize,
+    end: usize,
+    atoms: &mut std::iter::Peekable<std::slice::Iter<'_, Range<usize>>>,
+    unclosed: &mut LinkScan,
+) -> usize {
+    let source = text.text.as_bytes();
+    let space = |byte: &u8| matches!(byte, b' ' | b'\t' | b'\n' | b'\r');
+    loop {
+        let run = at;
+        loop {
+            while atoms.peek().is_some_and(|atom| atom.end <= at) {
+                atoms.next();
+            }
+            if let Some(atom) = atoms.peek().filter(|atom| atom.start <= at) {
+                at = atom.end.max(at + 1);
+                continue;
+            }
+            if at >= end || space(&source[at]) {
+                break;
+            }
+            at += text.text[at..].chars().next().map_or(1, char::len_utf8);
+        }
+        unclosed.scan(&text.text[run..at]);
+        let next = at
+            + source[at..end]
+                .iter()
+                .take_while(|byte| space(byte))
+                .count();
+        if !unclosed.open() || next >= end {
+            return at;
+        }
+        at = next;
+    }
+}
+
+/// What a paragraph's words have opened of a link, a tag or a code span,
+/// word by word: the `[`s not closed yet, whether an inline link's
+/// destination is open, in `<…>` or not, whether a tag is (a `<` and a
+/// letter, `/`, `!` or `?`, up to its `>`), and the length of the run of
+/// `` ` `` that opened a code span not closed yet.
+#[derive(Clone, Copy, Default)]
+struct LinkScan {
+    brackets: u32,
+    destination: Option<Destination>,
+    tag: bool,
+    code: usize,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Destination {
+    Angle,
+    Plain,
+}
+
+impl LinkScan {
+    const fn open(self) -> bool {
+        self.brackets > 0 || self.destination.is_some() || self.tag || self.code > 0
+    }
+
+    fn scan(&mut self, word: &str) {
+        let bytes = word.as_bytes();
+        let mut at = 0;
+        while at < bytes.len() {
+            if bytes[at] == b'`' && !self.tag && self.destination.is_none() {
+                let run = bytes[at..].iter().take_while(|&&byte| byte == b'`').count();
+                if self.code == 0 {
+                    self.code = run;
+                } else if self.code == run {
+                    self.code = 0;
+                }
+                at += run;
+                continue;
+            }
+            if self.code > 0 {
+                at += 1;
+                continue;
+            }
+            if self.tag {
+                self.tag = bytes[at] != b'>';
+                at += 1;
+                continue;
+            }
+            match (self.destination, bytes[at]) {
+                (Some(Destination::Angle), b'>') => self.destination = Some(Destination::Plain),
+                (Some(Destination::Plain), b')') => self.destination = None,
+                (None, b'\\') => at += 1,
+                (None, b'<') => {
+                    self.tag = bytes
+                        .get(at + 1)
+                        .is_some_and(|&next| next.is_ascii_alphabetic() || b"/!?".contains(&next));
+                }
+                (None, b'[') => self.brackets += 1,
+                (None, b']') => {
+                    self.brackets = self.brackets.saturating_sub(1);
+                    if bytes.get(at + 1) == Some(&b'(') {
+                        at += 1;
+                        self.destination = Some(if bytes.get(at + 1) == Some(&b'<') {
+                            at += 1;
+                            Destination::Angle
+                        } else {
+                            Destination::Plain
+                        });
+                    }
+                }
+                _ => {}
+            }
+            at += 1;
+        }
+    }
+}
+
+/// The columns of a line's indentation, a tab moving to the next multiple
+/// of four, as Markdown counts them.
+fn columns(indentation: &str) -> u16 {
+    indentation.chars().fold(0, |column, ch| {
+        if ch == '\t' {
+            column + 4 - column % 4
+        } else {
+            column.saturating_add(1)
+        }
+    })
+}
+
+/// Whether a fenced code block's text ends with a line that closes it: as
+/// many of its fence's characters or more, and nothing else but
+/// indentation. One this doesn't recognize (a closing fence in a quote) is
+/// taken for unclosed.
+fn closes_fence(block: &str) -> bool {
+    let mut lines = block.trim_end().lines();
+    let opener = lines.next().unwrap_or("").trim_start();
+    let Some(fence) = opener.chars().next() else {
+        return false;
+    };
+    let length = opener.chars().take_while(|&ch| ch == fence).count();
+    lines.next_back().is_some_and(|last| {
+        let last = last.trim();
+        last.chars().count() >= length && last.chars().all(|ch| ch == fence)
+    })
 }
 
 /// A piece of a part's Markdown text: the text of a source line from `pos`
@@ -342,6 +521,9 @@ struct Text<'n> {
     segments: Vec<(usize, Segment<'n>)>,
     /// The offset of each `\n` in `text`, in order.
     newlines: Vec<usize>,
+    /// The text ends before the end of its last source line: a block tag
+    /// follows it there.
+    ends_mid_line: bool,
 }
 
 impl<'n> Text<'n> {
@@ -410,6 +592,14 @@ impl<'n> Text<'n> {
     }
 }
 
+/// What a part leaves open at its end: a fenced code block that reaches
+/// it unclosed, or a tag that an HTML block ends inside.
+#[derive(Default)]
+struct Open {
+    fence: bool,
+    tag: bool,
+}
+
 /// A top-level block of a part: its range in the part's text, its source
 /// lines, and the paragraph's layout when it is one.
 struct Block {
@@ -433,13 +623,94 @@ struct Markdown<'m, 'd, 'l, 'a> {
     /// The first line with text.
     first_text: u32,
     /// Whether the next word may still be in javadoc's first sentence: in
-    /// the description's first block. (javadoc ends the sentence at a `.` and
-    /// whitespace outside code spans, links and brackets, or at a line that
-    /// starts with one of [`words::ends_first_paragraph`].)
+    /// the description, before a blank line or a later line that starts
+    /// with one of [`words::ends_first_paragraph`] (`DocTreeMaker`'s
+    /// `endPara`, which reads the text, not its blocks: a heading or a
+    /// thematic break on the first line doesn't end the sentence). javadoc
+    /// also ends it at a `.` and whitespace, which this doesn't follow: a
+    /// word it takes for one keeps its line break when it needn't.
     first_sentence: bool,
+    /// The comment can't be laid out: a part that a block tag follows ends
+    /// in an unclosed fenced code block (javadoc renders each part as a
+    /// document of its own, so the block holds the part's last lines up to
+    /// the tag, with the whitespace before the tag on its line and the blank
+    /// line a layout puts there), or an HTML block ends inside a tag.
+    kept_as_written: bool,
 }
 
 impl Markdown<'_, '_, '_, '_> {
+    /// Ends the first sentence at a line from `checked` up to `until` that
+    /// ends javadoc's first paragraph: a blank line, or one that starts with
+    /// up to three spaces and one of [`words::ends_first_paragraph`].
+    fn end_first_sentence(&mut self, checked: &mut u32, until: u32) {
+        let until = until.min(to_u32(self.lines.len()));
+        while *checked < until {
+            let line = self.lines[*checked as usize].text;
+            let text = line.trim_start_matches(' ');
+            if text.trim_start_matches(['\t', ' ']).is_empty()
+                || line.len() - text.len() <= 3 && words::ends_first_paragraph(text)
+            {
+                self.first_sentence = false;
+            }
+            *checked += 1;
+        }
+    }
+
+    /// Starts a paragraph's first word, after the tag's head when
+    /// `on_tag_line`. A word that would end javadoc's first sentence
+    /// (`ends_sentence`) or start a block at the start of a line keeps the
+    /// indentation that keeps it from doing so (after a link reference
+    /// definition, which no paragraph continues).
+    fn first_word(
+        &mut self,
+        word: &str,
+        on_tag_line: bool,
+        ends_sentence: bool,
+        source_indent: u16,
+    ) -> (Join, bool) {
+        if on_tag_line {
+            return (Join::Space, false);
+        }
+        let deep = source_indent > 3;
+        let indent = if deep && (ends_sentence || words::starts_structure(word, true)) {
+            source_indent
+        } else {
+            0
+        };
+        self.layout.line(false, indent, 0);
+        (Join::Wrap, false)
+    }
+
+    /// Whether the whitespace at the end of `line`, after `word` (the
+    /// paragraph's `last` word, or not), stays: after a `\\` it keeps the
+    /// `\\` from ending the line, a hard break; in a link, tag or code span
+    /// still open, javadoc's reader may read it in one. After the paragraph's
+    /// last word, two spaces before a line with text are no hard break in the
+    /// paragraph, but one in javadoc's first sentence, which it reads on past
+    /// the paragraph's end; and that sentence ends at the paragraph's end after
+    /// an inline tag or a reference link (`]`) only when whitespace comes
+    /// between.
+    fn keeps_end(&self, word: &str, line: u32, last: bool, unclosed: LinkScan) -> bool {
+        word.ends_with('\\')
+            || unclosed.open()
+            || last
+                && (self.first_sentence && word.ends_with([PLACEHOLDER, ']'])
+                    || self.hard_break_at_end(line))
+    }
+
+    /// Whether line `line` ends with two or more spaces after text, before a
+    /// line with text that starts no block tag.
+    fn hard_break_at_end(&self, line: u32) -> bool {
+        let source = self.lines[line as usize].text;
+        source.trim_end_matches(['\t', ' ']).len() + 2 <= source.len()
+            && source[source.trim_end_matches(['\t', ' ']).len()..].starts_with("  ")
+            && self
+                .lines
+                .get(line as usize + 1)
+                .is_some_and(|next| !next.is_blank())
+            && !self.layout.is_tag_line(line + 1)
+    }
+
     /// Prints the lines before `line` that are not printed yet, as written.
     fn verbatim_until(&mut self, line: u32) {
         while self.next < line && (self.next as usize) < self.lines.len() {
@@ -455,15 +726,19 @@ impl Markdown<'_, '_, '_, '_> {
         }
     }
 
-    fn block_tag(&mut self, tag: &BlockTag, first: bool) {
+    fn block_tag(&mut self, tag: &BlockTag, first: bool, before_tag: bool) {
         self.first_sentence = false;
         let line = tag.span.start.line;
         if first {
             // One blank line before the first block tag, and the source's
-            // blank lines.
+            // blank lines. Not before a tag printed as written with code's
+            // indentation, which javadoc reads as a tag only when no blank
+            // line comes before it.
             let blank_before = line > 0 && self.lines[line as usize - 1].is_blank();
+            let indented = tag.body.is_none()
+                && columns(&self.lines[line as usize].text[..tag.span.start.off as usize]) >= 4;
             self.verbatim_until(line);
-            if !blank_before {
+            if !blank_before && !indented {
                 self.layout.blank();
             }
         } else {
@@ -489,17 +764,38 @@ impl Markdown<'_, '_, '_, '_> {
         }
         let head_end = tag.head.last().map_or(tag.span.start, |head| head.end);
         self.next = head_end.line + 1;
-        self.section(body, Some(head_end.line));
+        self.section(body, Some(head_end.line), before_tag);
     }
 
     /// Lays out a part: the description (`tag_line` `None`), or a block
-    /// tag's text, whose head is printed on `tag_line`.
-    fn section(&mut self, nodes: &[Node], tag_line: Option<u32>) {
+    /// tag's text, whose head is printed on `tag_line`; `before_tag` when a
+    /// block tag follows it.
+    fn section(&mut self, nodes: &[Node], tag_line: Option<u32>, before_tag: bool) {
         let Some(text) = self.text(nodes) else {
             return;
         };
         let mut kept = Vec::new();
-        let blocks = Self::blocks(&text, &mut kept);
+        let mut open = Open::default();
+        let blocks = Self::blocks(&text, &mut kept, &mut open);
+        // Lines of the part that no block holds (link reference
+        // definitions, whose titles may span lines) keep their ends.
+        let mut gap = text.pos(0).line;
+        let gaps = blocks
+            .iter()
+            .map(|block| block.lines.clone())
+            .chain(std::iter::once({
+                let end = text.end(text.text.len()).line + 1;
+                end..end
+            }));
+        for lines in gaps {
+            for line in gap..lines.start {
+                if !self.lines[line as usize].is_blank() {
+                    kept.push(line..line + 1);
+                }
+            }
+            gap = gap.max(lines.end);
+        }
+        self.kept_as_written |= open.fence && before_tag || open.tag;
         for lines in kept {
             self.layout.keep_line_ends(lines);
         }
@@ -518,6 +814,9 @@ impl Markdown<'_, '_, '_, '_> {
             };
             self.layout.word(Span { start, end }, Join::Space, false);
         }
+        // The lines read for the end of the first sentence: javadoc's
+        // pattern looks for a line break, so not the description's first.
+        let mut checked = start.line + 1;
         let mut index = 0;
         while index < blocks.len() {
             // Blocks that share a line are printed as written together.
@@ -531,10 +830,12 @@ impl Markdown<'_, '_, '_, '_> {
             if !on_tag_line {
                 self.verbatim_until(lines.start);
             }
+            if tag_line.is_none() {
+                self.end_first_sentence(&mut checked, lines.start + 1);
+            }
             match &blocks[index].paragraph {
-                Some(paragraph) if end == index + 1 => {
+                Some(paragraph) if end == index + 1 && Self::fills(&text, paragraph) => {
                     self.paragraph(&text, paragraph, on_tag_line);
-                    self.first_sentence = false;
                 }
                 _ if on_tag_line => {
                     // The tag's text, from its start to the end of its
@@ -555,9 +856,18 @@ impl Markdown<'_, '_, '_, '_> {
                         false,
                     );
                 }
-                _ => self.layout.verbatim_lines(lines.start, lines.end - 1),
+                _ => {
+                    if self.first_sentence {
+                        // javadoc's first sentence ends at the line after
+                        // an inline tag only when whitespace comes between.
+                        self.layout.keep_line_ends(lines.clone());
+                    }
+                    self.layout.verbatim_lines(lines.start, lines.end - 1);
+                }
             }
-            self.first_sentence = false;
+            if tag_line.is_none() {
+                self.end_first_sentence(&mut checked, lines.end);
+            }
             self.next = self.next.max(lines.end);
             index = end;
         }
@@ -570,7 +880,12 @@ impl Markdown<'_, '_, '_, '_> {
             text: String::new(),
             segments: Vec::new(),
             newlines: Vec::new(),
+            ends_mid_line: false,
         };
+        if let Some(Node::Text(span)) = nodes.last() {
+            text.ends_mid_line =
+                (span.end.off as usize) < self.lines[span.end.line as usize].text.len();
+        }
         for node in nodes {
             match node {
                 Node::Text(span) => {
@@ -646,7 +961,7 @@ impl Markdown<'_, '_, '_, '_> {
     /// no paragraph to fill. Adds to `kept` the lines whose trailing
     /// whitespace is content: those that end inside a `<pre>` or raw text
     /// element, and those of a code block.
-    fn blocks(text: &Text, kept: &mut Vec<Range<u32>>) -> Vec<Block> {
+    fn blocks(text: &Text, kept: &mut Vec<Range<u32>>, open: &mut Open) -> Vec<Block> {
         let mut blocks: Vec<Block> = Vec::new();
         let mut depth = 0usize;
         let mut paragraph: Option<Paragraph> = None;
@@ -665,8 +980,11 @@ impl Markdown<'_, '_, '_, '_> {
         for (event, range) in parser {
             match event {
                 Event::Start(tag) => {
-                    if matches!(tag, Tag::CodeBlock(_)) {
+                    if let Tag::CodeBlock(kind) = &tag {
                         kept.push(Self::block(text, &range).lines);
+                        open.fence |= matches!(kind, CodeBlockKind::Fenced(_))
+                            && range.end == text.text.len()
+                            && !closes_fence(&text.text[range.clone()]);
                     }
                     if depth == 0 {
                         if matches!(tag, Tag::Paragraph) && !reader.exact() {
@@ -687,12 +1005,19 @@ impl Markdown<'_, '_, '_, '_> {
                 }
                 Event::End(end) => {
                     depth -= 1;
+                    // An HTML block that ends inside a tag (at a blank line):
+                    // javadoc's HTML reads the tag on into what follows, as
+                    // rendered, which this reading doesn't see.
+                    open.tag |= end == TagEnd::HtmlBlock && !matches!(reader.lex, Lex::Text);
                     if depth == 0
                         && end == TagEnd::Paragraph
                         && let Some(mut done) = paragraph.take()
                     {
                         if let Some(start) = exact_start.take() {
-                            done.atoms.push(start..done.range.end);
+                            // Up to the paragraph's last character: the
+                            // line break after it is no part of a word.
+                            let end = text.text[..done.range.end].trim_end().len();
+                            done.atoms.push(start..end.max(start));
                         }
                         done.atoms.sort_by_key(|atom| atom.start);
                         if let Some(block) = blocks.last_mut() {
@@ -701,6 +1026,9 @@ impl Markdown<'_, '_, '_, '_> {
                     }
                 }
                 Event::Code(_) | Event::InlineMath(_) | Event::DisplayMath(_) => {
+                    // A code span's whitespace is content, at the ends of its
+                    // lines too.
+                    kept.push(text.pos(range.start).line..text.end(range.end).line);
                     if let Some(paragraph) = &mut paragraph
                         && exact_start.is_none()
                     {
@@ -709,7 +1037,7 @@ impl Markdown<'_, '_, '_, '_> {
                 }
                 Event::Html(html) | Event::InlineHtml(html) => {
                     let before = reader.exact();
-                    reader.read(&html);
+                    reader.read_lines(&html, range.start, text, kept);
                     let exact = reader.exact();
                     if !before && exact {
                         kept_start = Some(range.start);
@@ -750,9 +1078,21 @@ impl Markdown<'_, '_, '_, '_> {
         blocks
     }
 
-    /// A block's source lines.
+    /// A block's source lines. The indentation of a block tag that ends the
+    /// part's text, after its last line break, is on the tag's line, which
+    /// is no line of the block.
     fn block(text: &Text, range: &Range<usize>) -> Block {
         let mut end = range.end;
+        if end == text.text.len()
+            && text.ends_mid_line
+            && let Some(newline) = text.newline_before(end)
+            && newline >= range.start
+            && text.text[newline + 1..end]
+                .bytes()
+                .all(|byte| byte == b' ' || byte == b'\t')
+        {
+            end = newline;
+        }
         while end > range.start && text.text.as_bytes()[end - 1] == b'\n' {
             end -= 1;
         }
@@ -762,6 +1102,49 @@ impl Markdown<'_, '_, '_, '_> {
             lines: first..last.max(first) + 1,
             paragraph: None,
         }
+    }
+
+    /// Whether a paragraph can be filled: no hard break comes before a word
+    /// that could start a block. The word after a hard break starts a line,
+    /// where such a word would end the paragraph; its source indentation
+    /// (four spaces before `***`) is what keeps it text.
+    ///
+    /// Nor does a paragraph that starts like a link reference definition
+    /// (`[foo]: /url "title"` with text after the title): a line break
+    /// after its destination or title could make it one. Nor one with a hard
+    /// break and an entity: after a hard break, javadoc reads the line break
+    /// after an entity that ends its line as another hard break. Nor one
+    /// whose first word is made only of `*`, `-` or `_`: its first line
+    /// could fill with such words alone, a thematic break (`** *`). Nor one
+    /// with a line that starts like a table's delimiter row (`|---|---|`),
+    /// which a Markdown reader that doesn't count cells as this one does
+    /// reads as a table.
+    fn fills(text: &Text, paragraph: &Paragraph) -> bool {
+        let body = &text.text[paragraph.range.clone()];
+        let first_word = body.split_whitespace().next().unwrap_or("");
+        let delimiter_row = body
+            .lines()
+            .skip(1)
+            .any(|line| words::is_delimiter_row(line.split_whitespace().next().unwrap_or("")));
+        if body.trim_start().starts_with('[') && body.contains("]:")
+            || !paragraph.breaks.is_empty() && body.contains('&')
+            || first_word.bytes().all(|byte| b"*-_".contains(&byte))
+            || delimiter_row
+        {
+            return false;
+        }
+        paragraph.breaks.iter().all(|&found| {
+            let Some(newline) = text.newline_after(found) else {
+                return true;
+            };
+            let rest = &text.text[newline + 1..paragraph.range.end];
+            let word = rest
+                .trim_start()
+                .split([' ', '\t', '\n', '\r'])
+                .next()
+                .unwrap_or("");
+            !words::starts_structure(word, true)
+        })
     }
 
     /// Fills a paragraph: its words, split at whitespace outside atoms, on
@@ -776,6 +1159,14 @@ impl Markdown<'_, '_, '_, '_> {
         let mut breaks = paragraph.breaks.iter().copied().peekable();
         let mut break_pending = false;
         let mut after_error = false;
+        // A link's text or an inline link's destination and title that a
+        // word opened (a `[` or `](` not closed yet).
+        let mut unclosed = LinkScan::default();
+        // The output line starts with a word that could start a block there
+        // (`*` alone, which can't interrupt the paragraph): a word from a
+        // later source line joined onto it could make it one (`* foo`), or
+        // make javac's reading of its list markers run away.
+        let mut after_structure = false;
         // The end of the last word.
         let mut word_end = 0;
         while at < end {
@@ -786,19 +1177,7 @@ impl Markdown<'_, '_, '_, '_> {
                 break;
             }
             let start = at;
-            loop {
-                while atoms.peek().is_some_and(|atom| atom.end <= at) {
-                    atoms.next();
-                }
-                if let Some(atom) = atoms.peek().filter(|atom| atom.start <= at) {
-                    at = atom.end.max(at + 1);
-                    continue;
-                }
-                if at >= end || matches!(source[at], b' ' | b'\t' | b'\n' | b'\r') {
-                    break;
-                }
-                at += text.text[at..].chars().next().map_or(1, char::len_utf8);
-            }
+            at = end_of_word(text, at, end, &mut atoms, &mut unclosed);
             let word = &text.text[start..at];
             let mut span = Span {
                 start: text.pos(start),
@@ -817,8 +1196,10 @@ impl Markdown<'_, '_, '_, '_> {
             if last_on_line && breaks.peek().is_some_and(|&found| found <= line_end) {
                 breaks.next();
                 hard = true;
-                let line = self.lines[span.end.line as usize].text;
-                span.end.off = to_u32(line.len());
+            }
+            let last = text.text[at..end].trim().is_empty();
+            if last_on_line && (hard || self.keeps_end(word, span.end.line, last, unclosed)) {
+                span.end.off = to_u32(self.lines[span.end.line as usize].text.len());
             }
             // The spaces before the word on its line, when it starts one (no
             // word since the line's start, and only spaces and tabs).
@@ -834,29 +1215,44 @@ impl Markdown<'_, '_, '_, '_> {
             // starts with one of these; an `@` that starts a line is a block
             // tag or an escape: such a word keeps the line break before it.
             let at_sign = self.layout.text_at(span.start).starts_with('@');
-            let ends_sentence = self.first_sentence && words::ends_first_paragraph(word);
+            // javadoc reads a `.` inside `<…>`, `[…]`, `(…)` or a code span
+            // as a `-` when it looks for the sentence's end.
+            let ends_sentence =
+                self.first_sentence && (words::ends_first_paragraph(word) || word.starts_with('.'));
+            // A word that starts a line keeps its line break when it ends
+            // javadoc's first sentence there, is a block tag or an escape
+            // (`@`), follows a `\` (which javac reads with the line break),
+            // or is one that Markdown readers don't agree on there.
             let keeps_break = !first
                 && line_start
                 && (ends_sentence
                     && indent <= 3
                     && !text.text[start - indent..start].contains('\t')
-                    || at_sign);
+                    || at_sign
+                    || previous_backslash
+                    || words::keeps_line_start(word));
             let sticky = previous_backslash
                 || at_sign
                 || ends_sentence
                 || words::starts_structure(word, true);
             // The separator after an erroneous node keeps its kind.
-            let keeps_break = keeps_break || after_error && line_start;
-            let sticky = sticky || after_error;
+            let keeps_break = keeps_break || (after_error || after_structure) && line_start;
+            let sticky = sticky || after_error || after_structure;
+            // The columns of the word's indentation, when it starts a line.
+            let source_indent = if line_start {
+                columns(&text.text[start - indent..start])
+            } else {
+                0
+            };
             let (join, sticky) = if first {
-                if on_tag_line {
-                    (Join::Space, false)
-                } else {
-                    self.layout.line(false, 0, 0);
-                    (Join::Wrap, false)
-                }
+                self.first_word(word, on_tag_line, ends_sentence, source_indent)
             } else if break_pending || keeps_break {
-                self.layout.hard_break();
+                // A line break kept from the source keeps the word's
+                // indentation after it: there it can keep the word from
+                // starting a block (`    ***`) or ending javadoc's first
+                // sentence, and after a `\` that ends a line, javac reads the
+                // next line's first character with the escape.
+                self.layout.hard_break(source_indent);
                 (Join::Wrap, false)
             } else {
                 (Join::Wrap, sticky)
@@ -866,6 +1262,9 @@ impl Markdown<'_, '_, '_, '_> {
                 _ => self.layout.word(span, join, sticky),
             }
             after_error = text.erroneous_before(at);
+            if first || keeps_break || break_pending {
+                after_structure = line_start && words::starts_structure(word, true);
+            }
             word_end = at;
             break_pending = hard;
             first = false;
