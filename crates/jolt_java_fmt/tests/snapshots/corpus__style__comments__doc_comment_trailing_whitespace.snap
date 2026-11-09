@@ -162,9 +162,8 @@ class DocCommentTrailingWhitespace {
    */
   void codeAtTheEndOfAnUnclosedTable() {}
 
-  /**
-   * <pre>
-   *  text in an unclosed pre that ends with a form feed
+  /** <pre>
+   * text in an unclosed pre that ends with a form feed
    */
   void formFeedAtTheEndOfAnUnclosedPre() {}
 }

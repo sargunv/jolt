@@ -794,26 +794,29 @@ whatever separator the rule itself put at that position: `a /* c */ + b`,
 - A single-line block comment: its text.
 - A multi-line block comment: `reindented(text, Reindent::Comment)`, so
   continuation lines follow the indentation of the line the comment starts on. A
-  multi-line doc comment is a star block whose opener text moves to its own `*`
-  line; a block comment whose continuation lines start with `*` is a star block
-  that keeps its opener text. Every star block puts one space before each `*`
-  and ends with `*/` on its own line. A block comment's line keeps its text
-  after the `*` and one space. A doc comment's line keeps its text after its
-  whole run of `*`s exactly, as javadoc reads it (inside `<pre>`, javadoc keeps
-  a tab or a missing space after the `*`). A doc comment with a content line
-  that has no leading `*` is not a star block: javadoc keeps the indentation of
-  such a line (a code sample in `<pre>` relies on it), so each continuation line
-  only loses the indentation of the source line the comment starts on, when it
-  starts with it, as a verbatim node's lines do. A banner (`/***`, or a line
-  made only of two or more `*`s, which javadoc reads as blank) is kept as
-  written the same way, and so is a doc comment whose last line has text before
-  `*/`: a star block would put a line break after that text, which javadoc reads
-  (it ends an unclosed `<pre>` with one, and makes `{@snippet :` start a body).
-  Such comments are rare, so the printer lays a doc comment out as a star block
-  and starts again as written only when it meets such a line; other doc comments
-  are scanned once. A doc comment printed here keeps the whitespace (Java's:
-  space, tab, form feed) at the end of its lines and of the blank lines between
-  its text: javadoc reads it in `<pre>`, code and tag bodies, and a comment that
+  multi-line doc comment and a block comment whose continuation lines start with
+  `*` are star blocks that keep their opener text on the opener's line (a doc
+  comment's first line has no indentation as javadoc reads it, so moving its
+  text would change the indentation all lines share, which javadoc removes).
+  Every star block puts one space before each `*`, and ends with `*/` on its own
+  line, or after the text of a doc comment's last line that has some: a line
+  break there is one javadoc reads (it ends an unclosed `<pre>` with one, and
+  makes `{@snippet :` start a body). A block comment's line keeps its text after
+  the `*` and one space. A doc comment's line keeps its text after its whole run
+  of `*`s exactly, as javadoc reads it (inside `<pre>`, javadoc keeps a tab or a
+  missing space after the `*`). A doc comment with a content line that has no
+  leading `*` is not a star block: javadoc keeps the indentation of such a line
+  (a code sample in `<pre>` relies on it), so each continuation line only loses
+  the indentation of the source line the comment starts on, when it starts with
+  it, as a verbatim node's lines do; when the opener's line has text too, none
+  of that indentation is shared, so the comment is written byte for byte
+  (`keeps_bytes`). A banner (`/***`, or a line made only of two or more `*`s,
+  which javadoc reads as blank) is kept as written the same way. Such comments
+  are rare, so the printer lays a doc comment out as a star block and starts
+  again as written only when it meets such a line; other doc comments are
+  scanned once. A doc comment printed here keeps the whitespace (Java's: space,
+  tab, form feed) at the end of its lines and of the blank lines between its
+  text: javadoc reads it in `<pre>`, code and tag bodies, and a comment that
   isn't laid out was not read for where those are. Other multi-line block
   comments lose only the indentation their continuation lines share, and their
   trailing whitespace.
@@ -1322,28 +1325,26 @@ text, an atom or structure is javadoc's own:
 3. **Layout** (`html` for `/**`, `markdown` for `///`, then `layout`).
 
 A comment is printed as written (N9) when javac doesn't read its text from the
-source as written (it has a Unicode escape), when it is a banner (`/***`, or a
-line made only of two or more `*`s), `/**/`, and when its reading would take
-more than [linear time](#doc-comment-cost) or nest inline tags more than 32 deep
-(below), or hold a reference that the port's `ReferenceParser` doesn't read (see
-above). An escape (`@@`, `@*`) that doesn't start its line gives up the reading
-too: javac reads it as one only when a line break came before a tag's argument
-on its line, which the layout joins onto the tag's line. So does a description
-that starts with whitespace javac doesn't skip (a form feed, U+2003): a `<p>`
-after it ends the first sentence, which as the first tree it doesn't, and the
-layout drops what HTML collapses; and the rest would start the layout's first
-line, which javac strips as indentation when it is the only one. So does an
-erroneous node that reaches `*/` with nothing between (`{@index x*/`), where a
-layout puts a space or a line break that can change the error, and a form feed
-at javac's line start right before an `@`, which makes the `@` text and which
-the layout drops. So does a `{@snippet :` that the comment's end or a form feed
+source as written (it has a Unicode escape), when it holds a form feed (javac
+skips one as whitespace in some places and reads it as text in others, so where
+it stands decides what javadoc reads, and no corpus comment holds one), when it
+is a banner (`/***`, or a line made only of two or more `*`s), `/**/`, and when
+its reading would take more than [linear time](#doc-comment-cost) or nest inline
+tags more than 32 deep (below), or hold a reference that the port's
+`ReferenceParser` doesn't read (see above). An escape (`@@`, `@*`) that doesn't
+start its line gives up the reading too: javac reads it as one only when a line
+break came before a tag's argument on its line, which the layout joins onto the
+tag's line. So does a description that starts with whitespace javac doesn't skip
+(U+2003): it would start the layout's first line, which javac strips as
+indentation when it is the only one. So does an erroneous node that reaches `*/`
+with nothing between (`{@index x*/`), where a layout puts a space or a line
+break that can change the error, and a `{@snippet :` that the comment's end
 follows on its line: javac reads an error there, but the snippet's body after a
-line break, which a layout on more than one line puts before `*/` and which
-stays where the layout drops the form feed. The Java hook also keeps file
-headers, and `jolt_fmt` keeps comments that share a line with code, lie in a
-formatter-ignore region, or have a target with recovery. Such a comment keeps
-all its trailing whitespace: its `<pre>` elements, code and tag bodies, where
-that whitespace is content, were not read.
+line break, which a layout on more than one line puts before `*/`. The Java hook
+also keeps file headers, and `jolt_fmt` keeps comments that share a line with
+code, lie in a formatter-ignore region, or have a target with recovery. Such a
+comment keeps all its trailing whitespace: its `<pre>` elements, code and tag
+bodies, where that whitespace is content, were not read.
 
 **HTML layout.** The tree of each part (the description, each block tag) is
 flattened, an inline tag's rich text in line between its head and its `}`. Then:

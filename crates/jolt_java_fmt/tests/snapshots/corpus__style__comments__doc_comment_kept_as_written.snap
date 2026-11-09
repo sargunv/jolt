@@ -59,10 +59,7 @@ class DocCommentKeptAsWritten {
    */
   void codeTrailingSpace() {}
 
-  /**
-   * A{@literal b}C, whose form feed is text javadoc keeps, with enough words to
-   * wrap the line.
-   */
+  /** A{@literal b}C, whose form feed is text javadoc keeps, with enough words to wrap the line. */
   void literalFormFeed() {}
 
   /**
@@ -169,6 +166,19 @@ class DocCommentKeptAsWritten {
    * -->@return value, after a form feed that keeps it from being a block tag */
   int formFeedAfterAMultilineHtmlComment() {
     return 0;
+  }
+
+  class StarlessLineAfterOpenerText {
+    /** {@code a
+ b} */ int x;
+  }
+
+  void docCommentInAPromotedBody() {
+    if (true) {
+      /** a doc comment before a line comment in a body that gets braces */
+      // a line comment
+      run();
+    }
   }
 }
 

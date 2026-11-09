@@ -960,22 +960,21 @@ only `*`s, which is a banner; `/**/`; a comment before `package` or an import in
 a file that declares a type, which is a file header such as a licence; the
 Javadoc of a member that formatting is turned off for (see
 [Formatter-ignore](#formatter-ignore)); a comment with a Unicode escape (`@`),
-which javac decodes before javadoc reads the comment; and a comment that javac's
-reader can't read in bounded time or depth: one that nests inline tags more than
-32 deep, one that it reads in more than linear time (it rescans some malformed
-text), and a Markdown comment whose last line it never finishes reading (such as
-`/// + +`); a comment with a reference that holds an annotation outside its
-parameters or a comment, which Jolt doesn't read; and a comment with an `@@` or
-`@*` escape that doesn't start its line, which javadoc reads as an escape only
+which javac decodes before javadoc reads the comment; a comment with a form
+feed, which javadoc reads as whitespace in some places and as text in others; a
+comment that javac's reader can't read in bounded time or depth: one that nests
+inline tags more than 32 deep, one that it reads in more than linear time (it
+rescans some malformed text), and a Markdown comment whose last line it never
+finishes reading (such as `/// + +`); and a few malformed comments whose reading
+depends on whitespace a layout can't keep: a reference that holds an annotation
+outside its parameters or a comment, which Jolt doesn't read; an `@@` or `@*`
+escape that doesn't start its line, which javadoc reads as an escape only
 because of a line break before a tag's argument (`@param` with `x @@` on the
-next line); a comment whose text starts with whitespace that javadoc reads, such
-as a form feed or U+2003, which makes a `<p>` after it end the first sentence,
-and which javadoc would remove as indentation if it started the comment's only
-line; a comment with `{@snippet :` followed on its line by only the comment's
-end or a form feed, which javadoc reads differently from a line break there; a
-comment that ends right after an error, with no space before `*/`
-(`{@index x*/`), which Jolt can't keep; and a comment where a form feed comes
-right before an `@` that javadoc would otherwise read as a block tag.
+next line); text that starts with whitespace javadoc reads, such as U+2003,
+which javadoc would remove as indentation if it started the comment's only line;
+`{@snippet :` followed on its line by only the comment's end, which javadoc
+reads differently from a line break there; and an error right before `*/`, with
+no space between (`{@index x*/`).
 
 A comment that Jolt lays out gets this style:
 

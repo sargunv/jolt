@@ -150,12 +150,9 @@ pub(crate) fn parse(lines: &[Line<'_>], markdown: bool) -> Option<Comment> {
         && let Some(&Node::Text(span)) = body.first()
         && parser.starts_with_whitespace(span.start)
     {
-        // Text that starts with whitespace javac doesn't skip at the start (a
-        // form feed, U+2003) can't be laid out: the layout drops what HTML
-        // collapses, which can be all of the text, and a `<p>` after such
-        // text ends the first sentence, as the first tree it doesn't; and the
-        // rest starts the layout's first line, which javac strips as
-        // indentation when it is the only one.
+        // Text that starts with whitespace javac doesn't skip at the start
+        // (U+2003) can't be laid out: it would start the layout's first line,
+        // which javac strips as indentation when it is the only one.
         parser.give_up();
     }
     let mut tags = Vec::new();
@@ -419,12 +416,11 @@ impl Parser<'_, '_> {
     /// Fails the reading where it can't follow javac's: the comment is
     /// printed as written. That is a description that starts with
     /// whitespace (see [`parse`]); an erroneous node that reaches `*/`; a
-    /// form feed before an `@` at javac's line start; a `{@snippet :` that the comment's end or
-    /// a form feed follows on its line; an escape (`@@`, `@*`) that doesn't
-    /// start its line, which javac reads as one only after a line break
-    /// before a tag's argument that the layout joins; an inline tag nested
-    /// too deeply; and a reference that holds what [`reference`](mod@crate::reference) doesn't
-    /// read.
+    /// `{@snippet :` that the comment's end follows on its line; an escape
+    /// (`@@`, `@*`) that doesn't start its line, which javac reads as one
+    /// only after a line break before a tag's argument that the layout
+    /// joins; an inline tag nested too deeply; and a reference that holds
+    /// what [`reference`](mod@crate::reference) doesn't read.
     fn give_up(&mut self) {
         self.charge(self.budget + 1);
     }
@@ -457,15 +453,6 @@ impl Parser<'_, '_> {
             .chars()
             .next()
             .is_some_and(java::is_whitespace)
-    }
-
-    /// Whether an `@` follows the reader's character on its line, after
-    /// spaces and tabs only.
-    fn at_after_blanks(&self) -> bool {
-        let pos = self.after_cur();
-        self.lines[pos.line as usize].text[pos.off as usize..]
-            .trim_start_matches([' ', '\t'])
-            .starts_with('@')
     }
 
     /// Whether only spaces and tabs come before `pos` on its line.
@@ -749,12 +736,6 @@ impl Parser<'_, '_> {
                     self.default_content();
                 }
                 '`' | '~' if markdown => self.markdown_code(),
-                '\u{c}' if self.newline && self.at_after_blanks() => {
-                    // The form feed ends javac's line start, so the `@` is
-                    // text; the layout drops the form feed.
-                    self.give_up();
-                    break 'read;
-                }
                 _ => self.plain_run(),
             }
         }
@@ -1198,11 +1179,10 @@ impl Parser<'_, '_> {
                 self.next_char();
             }
             if !self.newline {
-                if self.at_end() || self.cur.ch == '\u{c}' {
-                    // What makes the tag erroneous is whitespace the layout
-                    // doesn't keep: the comment's end without a line break
-                    // (a layout on more than one line puts one before `*/`),
-                    // or a form feed before the line break.
+                if self.at_end() {
+                    // What makes the tag erroneous is the comment's end
+                    // without a line break, which a layout on more than one
+                    // line puts before `*/`.
                     self.give_up();
                 }
                 return Err(ParseError);

@@ -140,4 +140,13 @@ class DocCommentKeptAsWritten {
   int formFeedAfterAMultilineHtmlComment() {
     return 0;
   }
+
+  class StarlessLineAfterOpenerText { /** {@code a
+ b} */ int x; }
+
+  void docCommentInAPromotedBody() {
+    if (true)
+    /** a doc comment  before a line comment in a body that gets braces */ // a line comment
+    run();
+  }
 }

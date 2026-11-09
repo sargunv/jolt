@@ -553,8 +553,7 @@ pub(crate) fn comment_lines<'t>(
     let trim_end = move |line: &'t str| if doc { line } else { line.trim_end() };
     let content = strip_delimiters(text);
     let multiline = has_line_break(content);
-    let as_written =
-        doc && multiline && (as_written || text.starts_with("/***") || closes_after_text(content));
+    let as_written = doc && multiline && (as_written || text.starts_with("/***"));
     let star_block = (doc && multiline && !as_written) || (!doc && is_star_block(content));
     // Exactly one of the two layouts is `Some`.
     let plain = (!star_block).then(|| {
@@ -575,9 +574,18 @@ pub(crate) fn comment_lines<'t>(
         let mut lines = lines(content);
         let mut first = [if doc { "/**" } else { "/*" }, "", ""];
         let mut has_content = false;
-        if !doc && multiline {
-            let opener = lines.next().unwrap_or("").trim();
-            if !opener.is_empty() {
+        if multiline {
+            // The opener's text stays on its line. A doc comment's first line
+            // has no indentation as javadoc reads it, so moving its text to a
+            // line of its own would change the indentation all lines share,
+            // which javadoc removes (inside `<pre>` and code too).
+            let opener = lines.next().unwrap_or("");
+            let opener = if doc {
+                trim_end(opener.trim_start_matches(ws))
+            } else {
+                opener.trim()
+            };
+            if !opener.trim_matches(ws).is_empty() {
                 has_content = true;
                 first[1] = " ";
                 first[2] = opener;
@@ -585,7 +593,7 @@ pub(crate) fn comment_lines<'t>(
         }
         // The blank lines since the last line with text, as their text.
         let mut blank_lines = Vec::new();
-        let mut continuation = !doc;
+        let mut continuation = true;
         let body = lines
             .filter_map(move |line| {
                 let (star, line) = match line.trim_start_matches(ws).strip_prefix('*') {
@@ -632,7 +640,21 @@ pub(crate) fn comment_lines<'t>(
                 Some(blanks.chain([[star, line, ""]]))
             })
             .flatten();
-        std::iter::once(first).chain(body).chain([[" */", "", ""]])
+        // `*/` stays after the text of a last line that has some: a line
+        // break there is one javadoc reads (it ends an unclosed `<pre>` with
+        // one, and makes `{@snippet :` start a body).
+        let close_after = doc && closes_after_text(content);
+        let mut body = body.peekable();
+        let body = std::iter::from_fn(move || {
+            let mut line = body.next()?;
+            if close_after && body.peek().is_none() {
+                line[2] = "*/";
+            }
+            Some(line)
+        });
+        std::iter::once(first)
+            .chain(body)
+            .chain((!close_after).then_some([" */", "", ""]))
     });
     plain
         .into_iter()
@@ -674,10 +696,7 @@ fn strip_delimiters(text: &str) -> &str {
 ///   in `<pre>`;
 /// - it is a banner: it starts with `/***`, or a line is made only of two or
 ///   more `*`s (javadoc reads such a ruler as a blank line, which a star
-///   block would print as one);
-/// - its last line has text before `*/`: a star block would put a line break
-///   after that text, which javadoc reads (it ends an unclosed `<pre>` with
-///   one, and makes `{@snippet :` start a body).
+///   block would print as one).
 ///
 /// Most lines start with spaces and a `*`, which a scan for `\n` answers; any
 /// other line is checked as text, only Java's whitespace (space, tab, form
@@ -693,9 +712,6 @@ pub(crate) fn keeps_lines(text: &str) -> bool {
     if text.starts_with("/***") {
         return true;
     }
-    if closes_after_text(content) {
-        return true;
-    }
     let star_less = |line: &str| {
         let text = line.trim_start_matches(is_blank);
         !text.is_empty() && !text.starts_with('*')
@@ -705,6 +721,27 @@ pub(crate) fn keeps_lines(text: &str) -> bool {
         return lines(content).enumerate().any(kept);
     }
     content.split('\n').enumerate().any(kept)
+}
+
+/// Whether `text` is a multi-line doc comment printed byte for byte: its
+/// first line has text after `/**`, and a later line has text without a
+/// leading `*`. javac then reads that line's whole indentation as text (the
+/// first line has none, so none is shared), and any change to it, such as a
+/// new indentation of the comment, changes what javadoc reads.
+pub(crate) fn keeps_bytes(text: &str) -> bool {
+    if !text.starts_with("/**") || text.starts_with("/**/") || text.starts_with("/***") {
+        return false;
+    }
+    let content = strip_delimiters(text);
+    let mut lines = lines(content);
+    let opener_text = lines
+        .next()
+        .is_some_and(|first| !first.trim_matches(is_blank).is_empty());
+    opener_text
+        && lines.any(|line| {
+            let text = line.trim_start_matches(is_blank);
+            !text.is_empty() && !text.starts_with('*')
+        })
 }
 
 /// Whether the last line of a doc comment's `content` (between its

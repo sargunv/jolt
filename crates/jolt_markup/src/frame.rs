@@ -55,10 +55,20 @@ pub(crate) fn has_unicode_escape(text: &str) -> bool {
     false
 }
 
+/// Whether `text` holds a form feed. javac skips it as whitespace in some
+/// places and reads it as text in others (after a tag's name, at a line
+/// start, in a description's first text), so where it stands decides what
+/// javadoc reads, and a layout that moves or drops whitespace can't keep
+/// that. No corpus comment holds one.
+fn has_form_feed(text: &str) -> bool {
+    text.contains('\u{c}')
+}
+
 /// The lines of a `/** … */` comment as javac reads them, or `None` when the
 /// comment is printed as written: a banner (`/***`, or a line made only of
 /// two or more `*`s), `/**/`, an unterminated comment, or one with a Unicode
-/// escape. The flag tells whether the first line is on the line of `/**`.
+/// escape or a form feed (see [`has_form_feed`]). The flag tells whether the
+/// first line is on the line of `/**`.
 pub(crate) fn javadoc(text: &str) -> Option<(Vec<Line<'_>>, bool)> {
     if text.starts_with("/***")
         || text.starts_with("/**/")
@@ -66,6 +76,7 @@ pub(crate) fn javadoc(text: &str) -> Option<(Vec<Line<'_>>, bool)> {
         || !text.ends_with("*/")
         || text.len() < "/***/".len()
         || has_unicode_escape(text)
+        || has_form_feed(text)
     {
         return None;
     }
@@ -197,10 +208,13 @@ fn strip_indent(lines: &mut [Line<'_>]) {
 /// The lines of a run of `///` lines (each with its `///` and without its
 /// line break) as javac reads them, and the run's frame (`///` and the
 /// indentation that javac removes, from a line that has it), or `None` when
-/// the run has a Unicode escape.
+/// the run has a Unicode escape or a form feed.
 pub(crate) fn markdown<'a>(run: &[&'a str]) -> Option<(Vec<Line<'a>>, &'a str)> {
     const OPENER: usize = "///".len();
-    if run.iter().any(|line| has_unicode_escape(line)) {
+    if run
+        .iter()
+        .any(|line| has_unicode_escape(line) || has_form_feed(line))
+    {
         return None;
     }
     // `getJavadocLineCommentIndent`: the least whitespace after `///` of a

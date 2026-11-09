@@ -7,7 +7,9 @@ use std::ops::{Deref, DerefMut};
 use jolt_syntax::{SyntaxElement, SyntaxNode, SyntaxToken, TextRange, TextSize, TriviaKind};
 
 use crate::comments::{self, CommentKind, CommentLayout, Comments, PlacedComment, Run, Side};
-use crate::doc::{LINE_COMMENT, RUN_END, Reindent, VERBATIM_START, has_line_break, lines};
+use crate::doc::{
+    LINE_COMMENT, RUN_END, Reindent, VERBATIM_START, has_line_break, keeps_bytes, lines,
+};
 use crate::{Doc, DocBuilder, DocComment, DocCommentSource, FormatLanguage, cat};
 
 /// One item of an [`Formatter::item_list`].
@@ -813,19 +815,25 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         let placed = self.comments.list[index];
         match (placed.side, placed.layout) {
             (_, CommentLayout::OwnLine) => true,
-            (Side::Leading, CommentLayout::EndOfLine) => !self.shares_line_with_next(index),
-            (Side::Leading, CommentLayout::Inline) => {
-                self.comments.list.get(index + 1).is_some_and(|next| {
-                    next.side == Side::Leading
-                        && next.target == placed.target
-                        && matches!(
-                            next.layout,
-                            CommentLayout::OwnLine | CommentLayout::StartOfLine
-                        )
-                })
+            (Side::Leading, CommentLayout::EndOfLine) => {
+                !self.shares_line_with_next(index) || self.next_breaks_before(index)
+            }
+            (Side::Leading, CommentLayout::Inline | CommentLayout::StartOfLine) => {
+                self.next_breaks_before(index)
             }
             _ => false,
         }
+    }
+
+    /// Whether the next comment of the target of the comment at `index`
+    /// starts a line, which ends the comment's line.
+    fn next_breaks_before(&self, index: usize) -> bool {
+        let placed = self.comments.list[index];
+        self.comments.list.get(index + 1).is_some_and(|next| {
+            next.side == placed.side
+                && next.target == placed.target
+                && self.breaks_before(index + 1)
+        })
     }
 
     /// No space after a token that hugs what follows, unless another comment
@@ -911,6 +919,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             )
         {
             return doc;
+        }
+        if comment.kind == CommentKind::Doc && keeps_bytes(comment.text) {
+            return self.builder.text(comment.text);
         }
         if has_line_break(comment.text) {
             let indentation = line_indentation(self.source, comment.range.start());
