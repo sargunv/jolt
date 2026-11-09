@@ -363,7 +363,7 @@ formatted.
 | `text(&'a str)`                 | Literal text. A text containing a line break (a text block literal) is written raw (line breaks as `\n`) and cannot be flat.                                                                                                                                                                                                                                                                                                                                                                           |
 | `sticky(&'a str)`               | A synthesized separator (`,` `;`) that is printed before a pending line suffix instead of flushing it (see printer).                                                                                                                                                                                                                                                                                                                                                                                   |
 | `line_comment(&'a str, bool)`   | The last text of a run of doc line comments, for a `doc_comment` layout: the line ends after it, and a doc line comment that starts the next line gets a blank line first (see printer). The flag glues it as `glued` does.                                                                                                                                                                                                                                                                            |
-| `glued(&'a str)`                | Comment text written right after the text before it, without the space `joins` would add: the `\` of a Markdown hard break after a word, or a word after a `///` frame (`///**`).                                                                                                                                                                                                                                                                                                                      |
+| `glued(&'a str)`                | Comment text written right after the text before it, without the space `joins` would add: the text of a laid-out doc comment, where `&` after `&` (two erroneous entities) must stay `&&` and `///**` is not `/// **`.                                                                                                                                                                                                                                                                                 |
 | `reindented(&'a str, Reindent)` | Inside `jolt_fmt` only (comment printing and verbatim output). A multi-line source slice (a block comment, or verbatim source) whose continuation lines the printer rewrites while writing them: `Reindent::Comment` lays out a block comment's lines (see Printing); `Reindent::Strip(prefix)` removes `prefix` from a line that starts with it. Each continuation line is then written after the indentation of the output line the text started on; blank lines get no indentation. Cannot be flat. |
 | `space()`                       | One space; dropped at line start and before a newline; consecutive spaces collapse into one.                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `line()`                        | Space when flat, newline when broken.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1361,15 +1361,16 @@ HTML, a `<pre>` element to its `</pre>`, inline tags) whole and its hard breaks
 kept; every other block, every line no block covers (a blank line, a link
 reference definition), and lines that two blocks share are printed as written
 from their `///`, with trailing whitespace dropped except two or more spaces
-after text. A block tag's head is joined with single spaces, and its text starts
-on the tag's line, flush with the frame on later lines. Besides the words that
-start Markdown blocks, two of javadoc's own rules shape the filling: in the
-description's first block, up to its first word that ends in `.`, a word that
-starts with one of `-+*#=_>` at a line start would end javadoc's first sentence
-there (`DocTreeMaker`'s `endPara`), so such a word keeps the line break the
-source gives it and is never put at a line start; and a word that ends in `\`
-never ends a wrapped line. A run with a block tag that doesn't start its line
-(javac reads `- @param` as a list marker and a tag) is printed as written.
+after text before a line with text. A block tag's head is joined with single
+spaces, and its text starts on the tag's line, flush with the frame on later
+lines. Besides the words that start Markdown blocks, two of javadoc's own rules
+shape the filling: in the description's first block, up to its first word that
+ends in `.`, a word that starts with one of `-+*#=_>` at a line start would end
+javadoc's first sentence there (`DocTreeMaker`'s `endPara`), so such a word
+keeps the line break the source gives it and is never put at a line start; and a
+word that ends in `\` never ends a wrapped line. A run with a block tag that
+doesn't start its line (javac reads `- @param` as a list marker and a tag) is
+printed as written.
 
 **Rules about the output.** Both layouts share these, and they make the layout
 idempotent: every line break that depends on the source is one the output

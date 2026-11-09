@@ -255,8 +255,9 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
         self.push_text(self.lines[line as usize].raw);
     }
 
-    /// Prints one whole line as written. A Markdown line keeps trailing
-    /// spaces when there are two or more (a hard break in a paragraph).
+    /// Prints one whole line as written. A Markdown line keeps two or more
+    /// trailing spaces after text before a line with text (a hard break, in
+    /// a paragraph of a list or a quote).
     fn verbatim_line(&mut self, line: u32) {
         if self.markdown() {
             let started = std::mem::replace(&mut self.started, true);
@@ -264,16 +265,15 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
             if started {
                 self.parts.push(self.docs.hard_line());
             }
-            let raw = self.lines[line as usize].raw;
-            let trimmed = raw.trim_end();
-            let kept = if raw[trimmed.len()..].starts_with("  ")
-                && !self.lines[line as usize].is_blank()
-            {
-                raw.trim_end_matches(['\r', '\n'])
-            } else {
-                trimmed
-            };
-            self.push_text(kept);
+            let source = self.lines[line as usize];
+            let trimmed = source.raw.trim_end();
+            let hard_break = source.raw[trimmed.len()..].starts_with("  ")
+                && !source.is_blank()
+                && self
+                    .lines
+                    .get(line as usize + 1)
+                    .is_some_and(|next| !next.is_blank());
+            self.push_text(if hard_break { source.raw } else { trimmed });
         } else {
             self.continuation(Pos { line, off: 0 }, None);
         }

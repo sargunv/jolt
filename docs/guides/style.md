@@ -1119,7 +1119,8 @@ every other block keeps its lines exactly as written: lists, headings, code
 blocks, block quotes, tables, HTML blocks, link reference definitions and
 thematic breaks. So do lines that two blocks share, and a run with a block tag
 that doesn't start its line. Lines printed as written lose their trailing
-whitespace, except two or more spaces after text, which may be a hard break.
+whitespace, except two or more spaces after text before a line with text, which
+may be a hard break.
 
 A Markdown doc comment gets this style:
 
