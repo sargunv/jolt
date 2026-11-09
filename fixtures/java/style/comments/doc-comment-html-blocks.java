@@ -71,4 +71,17 @@ class DocCommentHtmlBlocks {
    * The end.
    */
   void keptBlocks() {}
+
+  /**
+   * A snippet keeps its lines, and a line in it that starts with {@code @} starts no block tag:
+   * {@snippet :
+   * @Override
+   * public String toString() {
+   *   return "example";
+   * }
+   * }
+   * Text with {@code a code tag that runs onto
+   * @the next line}, where the {@code @} starts no block tag.
+   */
+  void snippetAndInlineTagLines() {}
 }

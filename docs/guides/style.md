@@ -1067,7 +1067,7 @@ formatting: a run that Jolt moves to just before a declaration counts. Other
   reference definitions and thematic breaks. A paragraph is kept too when the
   line after it makes it a heading (`===` or `---`) or the header of a table (a
   row such as `|---|---|`), when it starts with a link reference definition, or
-  when it has a `{@snippet …}`.
+  when a part of it is in a `{@snippet …}`, whose lines are kept as written.
 - **Blank lines** are kept as written. Jolt adds one only before the first block
   tag. It adds no others: a blank line inside a list item makes the list loose,
   which changes the page.

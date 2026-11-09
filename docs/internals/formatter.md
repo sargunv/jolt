@@ -1290,21 +1290,23 @@ differently. These are the rules that make the layout idempotent: every line
 break that depends on the source's lines is one the output reproduces.
 
 The Markdown parser splits the run at block tags as the oracle does (a line that
-starts with `@` and a letter outside a fence) and reads each part with
-CommonMark's block algorithm: a stack of open block quotes and list items
-(matched at the start of each line, a list item by its content column, with tabs
-at stops of 4), the open leaf block (paragraph, fence, indented code, HTML block
-of type 1 to 7 with its end condition, table), lazy continuation lines (which
-belong to the open item or quote), and which blocks may interrupt a paragraph.
-Only a paragraph outside every container is filled: the description's and the
-text of block tags, with continuation lines flush at the frame, since an
-indented line can be code or list text. Every other line, blank lines included,
-is a verbatim line from its `///`. One line of lookahead keeps a paragraph as
-written when the line after it makes it a heading (a setext underline) or a
-table header (a delimiter row, read loosely), and a paragraph that may start
-with a link reference definition or holds a `{@snippet}` is kept too. Only one
-blank line is added, before the first block tag: Markdown blank lines change the
-page (a blank line in a list item makes the list loose).
+starts with `@` and a letter outside a fence and outside an inline tag, which
+are found outside fences) and reads each part with CommonMark's block algorithm:
+a stack of open block quotes and list items (matched at the start of each line,
+a list item by its content column, with tabs at stops of 4), the open leaf block
+(paragraph, fence, indented code, HTML block of type 1 to 7 with its end
+condition, table), lazy continuation lines (which belong to the open item or
+quote), and which blocks may interrupt a paragraph. Only a paragraph outside
+every container is filled: the description's and the text of block tags, with
+continuation lines flush at the frame, since an indented line can be code or
+list text. Every other line, blank lines included, is a verbatim line from its
+`///`. One line of lookahead keeps a paragraph as written when the line after it
+makes it a heading (a setext underline) or a table header (a delimiter row, read
+loosely), and a paragraph that may start with a link reference definition or
+that a `{@snippet}` covers a part of is kept too (a snippet with a blank line in
+it covers two paragraphs). Only one blank line is added, before the first block
+tag: Markdown blank lines change the page (a blank line in a list item makes the
+list loose).
 
 Inside a paragraph, atoms keep their words together: code spans (a backtick run
 is closed by the next run of the same length, found through a table of the next
@@ -1404,16 +1406,19 @@ For an input `S` and output `F = format(S)`:
    - A run of `///` lines (consecutive lines that start with `///` but not
      `////`, with no blank line between, grouped from the trivia alone, as JEP
      467 reads them): the run loses `///`, the indentation its lines share and
-     trailing whitespace, is split at block tags outside fenced code, and each
-     part is compared by its pulldown-cmark events (tables on). Adjacent texts
-     are joined and their whitespace runs collapse; code is compared exactly. A
-     line break, hard or soft, is a space: Jolt never writes trailing
-     whitespace, so a two-space hard break can only survive in another spelling.
-     A `///` comment after code on its line is no doc comment to javadoc; it is
-     a run of its own, so a layout may move it to a line of its own (placement
-     does, after another trailing line comment) but not into a run.
-     pulldown-cmark is a dependency of `jolt_test_support` only, which every
-     crate uses as a dev-dependency, so it never reaches the CLI or the plugin.
+     trailing whitespace, is split at block tags outside fenced code and inline
+     tags (matched by brace balance outside fenced code), and each part is
+     compared by its pulldown-cmark events (tables on). A `{@snippet}` is
+     replaced by U+FFFC, as javadoc does before it reads the Markdown, and its
+     exact lines are compared after the part's events. Adjacent texts are joined
+     and their whitespace runs collapse; code is compared exactly. A line break,
+     hard or soft, is a space: Jolt never writes trailing whitespace, so a
+     two-space hard break can only survive in another spelling. A `///` comment
+     after code on its line is no doc comment to javadoc; it is a run of its
+     own, so a layout may move it to a line of its own (placement does, after
+     another trailing line comment) but not into a run. pulldown-cmark is a
+     dependency of `jolt_test_support` only, which every crate uses as a
+     dev-dependency, so it never reaches the CLI or the plugin.
 4. **Idempotence.** `format(F) == F`.
 5. **Tokens.** For dirty `S` (whose recovered tree the structure check cannot
    compare), the multiset of token texts of `F` equals that of `S`, ignoring

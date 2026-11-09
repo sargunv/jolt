@@ -27,36 +27,59 @@ use crate::tags::{self, Arg, InlineTags, is_space};
 /// block tag. A block tag starts at a line that starts with `@` and a letter,
 /// outside a fence (any line that starts with three or more `` ` `` or `~`
 /// opens one, and one of the same character and at least the same length
-/// closes it), as `jolt_test_support`'s doc comment oracle reads it.
+/// closes it) and outside an inline tag, as `jolt_test_support`'s doc
+/// comment oracle reads it. Inline tags are found outside fences.
 pub(crate) fn parse<'a>(lines: &[Line<'a>], layout: &mut Layout<'_, 'a>) {
+    let mut tags = InlineTags::new(lines);
     let mut parser = Parser {
         layout,
         blank: false,
         last_blank: false,
         tagged: false,
+        snippets: Vec::new(),
     };
     let mut fence: Option<(u8, usize)> = None;
+    let mut tag_end = 0;
     let mut start = 0;
     let mut tag = false;
     for (index, line) in lines.iter().enumerate() {
-        let trimmed = line.text.trim_start();
-        match trimmed.as_bytes().first() {
-            Some(&marker @ (b'`' | b'~')) => {
-                let len = trimmed.bytes().take_while(|&byte| byte == marker).count();
-                match fence {
-                    None if len >= 3 => fence = Some((marker, len)),
-                    Some((open, open_len)) if open == marker && len >= open_len => fence = None,
-                    _ => {}
+        if line.offset >= tag_end {
+            let trimmed = line.text.trim_start();
+            match trimmed.as_bytes().first() {
+                Some(&marker @ (b'`' | b'~')) => {
+                    let len = trimmed.bytes().take_while(|&byte| byte == marker).count();
+                    match fence {
+                        None if len >= 3 => fence = Some((marker, len)),
+                        Some((open, open_len)) if open == marker && len >= open_len => {
+                            fence = None;
+                        }
+                        _ => {}
+                    }
+                    continue;
                 }
-            }
-            _ if fence.is_none() && tags::is_block_tag(trimmed) => {
-                if index > start {
-                    parser.part(&lines[start..index], tag);
+                _ if fence.is_some() => continue,
+                _ if tags::is_block_tag(trimmed) => {
+                    if index > start {
+                        parser.part(&lines[start..index], tag);
+                    }
+                    start = index;
+                    tag = true;
                 }
-                start = index;
-                tag = true;
+                _ => {}
             }
-            _ => {}
+        }
+        let text = line.text;
+        let mut from = tag_end.saturating_sub(line.offset);
+        while let Some(found) = text.get(from..).and_then(|rest| rest.find("{@")) {
+            let at = from + found;
+            from = at + 2;
+            if let Some(end) = tags.end(line.offset + at) {
+                tag_end = end;
+                if tags::inline_tag_name(&text[at..]) == "snippet" {
+                    parser.snippets.push((line.offset + at, end));
+                }
+                from = end - line.offset;
+            }
         }
     }
     parser.part(&lines[start..], tag);
@@ -70,6 +93,8 @@ struct Parser<'p, 'l, 'a> {
     last_blank: bool,
     /// A block tag has started.
     tagged: bool,
+    /// The `{@snippet}` tags, `(start, end)` offsets sorted by start.
+    snippets: Vec<(usize, usize)>,
 }
 
 impl<'a> Parser<'_, '_, 'a> {
@@ -108,11 +133,19 @@ impl<'a> Parser<'_, '_, 'a> {
     /// A paragraph outside every container: filled, unless the line after it
     /// turns it into a heading or a table (`converted`), it may start with
     /// link reference definitions (which a fill could join to the text after
-    /// them), or it has a `{@snippet}` (whose code keeps its lines).
+    /// them), or a `{@snippet}` (whose code keeps its lines) covers a part of
+    /// it.
     fn paragraph(&mut self, lines: &[Line<'a>], tag: bool, converted: bool) {
         let definitions = lines[0].text.trim_start().starts_with('[')
             && lines.iter().any(|line| line.text.contains("]:"));
-        if converted || definitions || lines.iter().any(|line| line.text.contains("{@snippet")) {
+        let last = lines[lines.len() - 1];
+        let (start, end) = (lines[0].offset, last.offset + last.text.len());
+        let next = self.snippets.partition_point(|snippet| snippet.1 <= start);
+        let snippet = self
+            .snippets
+            .get(next)
+            .is_some_and(|snippet| snippet.0 < end);
+        if converted || definitions || snippet {
             for line in lines {
                 self.verbatim(line);
             }

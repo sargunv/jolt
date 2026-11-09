@@ -55,4 +55,22 @@ class DocCommentMarkdownHardCases {
 
   /// Text before {@link java.util.Map#put(Object, Object) the label of the link, which is filled like other words} and {@code a code tag}.
   void inlineTags() {}
+
+  /// A snippet keeps its lines, and a line in it that starts with `@` starts no block tag:
+  /// {@snippet :
+  /// @Override
+  /// public String toString() {
+  ///   return "example";
+  /// }
+  /// }
+  ///
+  /// {@snippet :
+  /// int first = 1;
+  ///
+  /// int second = 2;
+  /// }
+  ///
+  /// Text with {@code a code tag that runs onto
+  /// @the next line}, where the `@` starts no block tag.
+  void snippetAndInlineTagLines() {}
 }

@@ -264,7 +264,12 @@ fn find_ascii_ci(text: &str, needle: &str) -> Option<usize> {
 /// `///` included), as JEP 467 reads it: the text after `///` without the
 /// indentation all non-blank lines share and without trailing whitespace,
 /// split at block tags (lines that start with `@` and a letter, outside
-/// fenced code blocks), each part as its Markdown events.
+/// fenced code blocks and inline tags), each part as its Markdown events.
+///
+/// Inline tags (`{@…}`, matched by brace balance, outside fenced code
+/// blocks) are lexed before block tags. A `{@snippet}` is replaced by U+FFFC,
+/// as javadoc does before it parses the Markdown, and its exact lines follow
+/// the part's events.
 ///
 /// Adjacent texts are joined and their runs of whitespace collapse, since a
 /// rewrapped paragraph renders the same; code is kept exactly. Line breaks
@@ -281,32 +286,82 @@ pub(crate) fn markdown(run: &[&str]) -> String {
         .map(|line| line.len() - line.trim_start_matches([' ', '\t']).len())
         .min()
         .unwrap_or(0);
-    let mut parts: Vec<String> = vec![String::new()];
-    let mut fence: Option<(u8, usize)> = None;
+    let mut text = String::new();
     for line in &lines {
-        let line = line.get(shared..).unwrap_or("");
-        let trimmed = line.trim_start();
-        let marker = trimmed.as_bytes().first().copied();
-        if let Some(byte @ (b'`' | b'~')) = marker {
-            let len = trimmed.bytes().take_while(|&b| b == byte).count();
-            match fence {
-                None if len >= 3 => fence = Some((byte, len)),
-                Some((open, open_len)) if open == byte && len >= open_len => fence = None,
-                _ => {}
+        text.push_str(line.get(shared..).unwrap_or(""));
+        text.push('\n');
+    }
+    // Each part: its Markdown, and its snippets.
+    let mut parts: Vec<(String, Vec<String>)> = vec![(String::new(), Vec::new())];
+    let mut copied = 0;
+    let mut fence: Option<(u8, usize)> = None;
+    let mut tag_end = 0;
+    let mut start = 0;
+    for line in text.split_inclusive('\n') {
+        let line_start = start;
+        start += line.len();
+        if line_start < tag_end {
+            // Inside an inline tag: no fence or block tag starts here.
+        } else {
+            let trimmed = line.trim_start();
+            let marker = trimmed.as_bytes().first().copied();
+            if let Some(byte @ (b'`' | b'~')) = marker {
+                let len = trimmed.bytes().take_while(|&b| b == byte).count();
+                match fence {
+                    None if len >= 3 => fence = Some((byte, len)),
+                    Some((open, open_len)) if open == byte && len >= open_len => fence = None,
+                    _ => {}
+                }
+                continue;
             }
-        } else if fence.is_none()
-            && trimmed.starts_with('@')
-            && trimmed[1..].starts_with(|ch: char| ch.is_ascii_alphabetic())
-        {
-            parts.push(String::new());
+            if fence.is_some() {
+                continue;
+            }
+            if trimmed.starts_with('@')
+                && trimmed[1..].starts_with(|ch: char| ch.is_ascii_alphabetic())
+            {
+                let part = &mut parts.last_mut().expect("a part").0;
+                part.push_str(&text[copied..line_start]);
+                copied = line_start;
+                parts.push((String::new(), Vec::new()));
+            }
         }
-        let part = parts.last_mut().expect("a part");
-        part.push_str(line);
-        part.push('\n');
+        let mut from = tag_end.max(line_start) - line_start;
+        while let Some(found) = line.get(from..).and_then(|rest| rest.find("{@")) {
+            let at = line_start + from + found;
+            let Some(len) = inline_tag_len(&text[at..]) else {
+                from += found + 2;
+                continue;
+            };
+            tag_end = at + len;
+            if text[at..].starts_with("{@snippet") {
+                let (part, snippets) = parts.last_mut().expect("a part");
+                part.push_str(&text[copied..at]);
+                part.push('\u{fffc}');
+                copied = tag_end;
+                let lines: Vec<&str> = text[at..tag_end].lines().map(str::trim_end).collect();
+                snippets.push(lines.join("\n"));
+            }
+            if tag_end >= start {
+                break;
+            }
+            from = tag_end - line_start;
+        }
     }
     parts
+        .last_mut()
+        .expect("a part")
+        .0
+        .push_str(&text[copied..]);
+    parts
         .iter()
-        .map(|part| markdown_events(part))
+        .map(|(part, snippets)| {
+            let mut form = markdown_events(part);
+            for snippet in snippets {
+                let _ = writeln!(form, "Snippet({snippet:?})");
+            }
+            form
+        })
         .collect::<Vec<_>>()
         .join("\n@@\n")
 }
