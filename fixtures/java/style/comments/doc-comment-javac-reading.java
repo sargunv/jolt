@@ -74,4 +74,20 @@ class DocCommentJavacReading {
 
   /** <ul><li>First.<li>Second.</ul> After, where the first sentence holds both items. */
   void sentenceAcrossUnclosedItems() {}
+
+  /** <div>Summary.</div> After, where the first sentence runs past the closing block. */
+  void sentenceEndBeforeAClosingBlock() {}
+
+  /** @see "A book"
+   * More text, which makes the tag erroneous, keeps its lines.
+   */
+  void erroneousTagOnTheOpenerLine() {}
+
+  /**
+   * Text.
+   *
+   * @see "A book"
+   * More text, which makes the tag erroneous, keeps its lines.
+   */
+  void erroneousTagOnItsOwnLine() {}
 }

@@ -683,8 +683,14 @@ impl Tokens<'_, '_> {
         self.push_token(Kind::Word, span, glue, sticky, plain);
     }
 
+    /// Asks for a line break before the next token, unless it starts the
+    /// comment or a block tag, which start their line already.
     fn push_break(&mut self) {
-        if !self.list.is_empty() {
+        if self
+            .list
+            .last()
+            .is_some_and(|token| token.kind != Kind::BlockTag)
+        {
             self.list.push(Token {
                 kind: Kind::Break,
                 span: Span {
@@ -986,13 +992,14 @@ impl Frame {
     }
 }
 
-/// Whether the HTML start tag at the start of `text` ends javadoc's first
-/// sentence by itself, as `<p>`, `<pre>` and the headings do (javadoc's
-/// `DocTreeMaker` sentence break tags).
+/// Whether the HTML tag at the start of `text` ends javadoc's first
+/// sentence by itself, as `<p>`, `<pre>` and the headings and their end tags
+/// do (javadoc's `DocTreeMaker` sentence break tags).
 fn breaks_sentence(text: &str) -> bool {
-    let name = text
-        .strip_prefix('<')
-        .unwrap_or("")
+    let name = text.strip_prefix('<').unwrap_or("");
+    let name = name
+        .strip_prefix('/')
+        .unwrap_or(name)
         .split(|ch: char| !ch.is_ascii_alphanumeric())
         .next()
         .unwrap_or("");
@@ -1079,10 +1086,14 @@ impl Html<'_, '_, '_, '_> {
     }
 
     /// Whether a line break before `token`, a tag written right after a
-    /// sentence's end, would end javadoc's first sentence there; `emit` then
-    /// keeps it on the line (see the block case there).
+    /// sentence's end that doesn't end the sentence itself, would end
+    /// javadoc's first sentence there; `emit` then keeps it on the line (see
+    /// the block case there).
     fn keeps_sentence(&self, token: &Token) -> bool {
-        token.sep == Sep::None && self.ends_sentence && !self.layout.at_start()
+        token.sep == Sep::None
+            && self.ends_sentence
+            && !self.layout.at_start()
+            && !breaks_sentence(self.layout.text_at(token.span.start))
     }
 
     /// Adds a word. `glue` keeps it on the line of the word before.
@@ -1244,7 +1255,11 @@ impl Html<'_, '_, '_, '_> {
                 self.request(Why::Text);
             }
             (Name::Block | Name::Pre | Name::Table, true) => {
-                self.request(Why::Break);
+                if self.keeps_sentence(token) {
+                    self.next_line = Some(Why::Block);
+                } else {
+                    self.request(Why::Break);
+                }
                 self.emit(token, false);
                 self.gap = self.gap.max(Gap::Block);
                 self.request(Why::Text);

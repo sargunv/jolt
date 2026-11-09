@@ -1169,12 +1169,13 @@ A Markdown doc comment gets this style:
 - **No new structure.** Besides the words listed for Javadoc comments, a wrapped
   line never starts with a word that could start a Markdown block: one that is
   `#` to `######`, starts with `>`, `|`, three or more `` ` `` or `~`, or `<`
-  and a letter, `/`, `!` or `?`, or is made only of `*`, `-`, `_`, `=` and `+`.
-  A word that ends in `\` never ends a wrapped line, since a line break after it
-  is a hard break. In the first sentence, which javadoc ends at a line that
-  starts with `-`, `+`, `*`, `#`, `=`, `_` or `>`, a word that starts with one
-  of those never starts a wrapped line, and one that starts a source line keeps
-  starting its line.
+  and a letter, `/`, `!` or `?`, is made only of `*`, `-`, `_`, `=` and `+`, or
+  is made only of `-`, `:` and `|` with a `-`, like a table's `:---`. A word
+  that ends in `\` never ends a wrapped line, since a line break after it is a
+  hard break. In the first sentence, which javadoc ends at a line that starts
+  with `-`, `+`, `*`, `#`, `=`, `_` or `>`, a word that starts with one of those
+  never starts a wrapped line, and one that starts a source line keeps starting
+  its line.
 
 ::: code-group
 

@@ -1412,10 +1412,10 @@ list marker and a tag) is printed as written.
 idempotent: every line break that depends on the source is one the output
 reproduces. A word that would start new structure at the start of a line (a
 block tag or a plain-text list marker in both flavours, and in Markdown a
-heading, a block quote, a fence, a table row, an HTML block, a thematic break or
-a setext underline) never follows a wrap point; it is glued to the word before
-it. The one-line form, the blank lines and the list and tag indents are chosen
-from the tokens alone.
+heading, a block quote, a fence, a table row or delimiter row, an HTML block, a
+thematic break or a setext underline) never follows a wrap point; it is glued to
+the word before it. The one-line form, the blank lines and the list and tag
+indents are chosen from the tokens alone.
 
 <a id="doc-comment-cost"></a>Cost: the frame visits each character once. The
 parser visits each character a constant number of times, except where javac

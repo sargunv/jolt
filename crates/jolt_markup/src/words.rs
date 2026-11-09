@@ -68,8 +68,10 @@ pub(crate) fn is_list_marker(word: &str) -> bool {
 /// Markdown also a word that could start a block that interrupts a
 /// paragraph or ends it: an ATX heading (`#` to `######`), a block quote
 /// (`>`), a fence, an HTML block (`<` and a letter, `/`, `!` or `?`), a
-/// table row (`|`), or a thematic break or setext underline (a word made
-/// only of `*`, `-`, `_`, `=` or `+`).
+/// table row (`|`), a thematic break or setext underline (a word made only
+/// of `*`, `-`, `_`, `=` or `+`), or a table's delimiter row, which turns the
+/// line before it into a table header (a word made only of `-`, `:` and `|`,
+/// with a `-`).
 pub(crate) fn starts_structure(word: &str, markdown: bool) -> bool {
     if word.starts_with('@') || is_list_marker(word) {
         return true;
@@ -95,7 +97,10 @@ pub(crate) fn starts_structure(word: &str, markdown: bool) -> bool {
                 .count();
             matches!(bytes.get(digits), Some(b'.' | b')'))
         }
-        _ => bytes.iter().all(|byte| b"*-_=+".contains(byte)),
+        _ => {
+            bytes.iter().all(|byte| b"*-_=+".contains(byte))
+                || bytes.contains(&b'-') && bytes.iter().all(|byte| b"-:|".contains(byte))
+        }
     }
 }
 
