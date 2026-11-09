@@ -32,4 +32,13 @@ class DocCommentLineStructure {
    * The end.
    */
   void rulers() {}
+
+  /**
+   * A method.
+   *
+   * @param x a value, one of:
+   * - first item
+   * - second item
+   */
+  void listInATag(int x) {}
 }

@@ -26,7 +26,10 @@ use crate::token::{Kind, Sep, Token};
 /// kept as written.
 pub(crate) fn tokenize<'a>(lines: &[Line<'a>]) -> Option<Vec<Token<'a>>> {
     for (index, line) in lines.iter().enumerate() {
-        if line.text.contains("{@snippet") || hard_break(lines, index) {
+        // Java decodes Unicode escapes before javadoc reads the comment, so
+        // the source text can hide its structure.
+        if line.text.contains("{@snippet") || line.text.contains("\\u") || hard_break(lines, index)
+        {
             return None;
         }
     }

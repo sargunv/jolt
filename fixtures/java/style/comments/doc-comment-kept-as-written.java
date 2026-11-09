@@ -53,4 +53,15 @@ class DocCommentKeptAsWritten {
 
   /** A{@link String {@code  label}}C, a tag inside a tag, with enough words to wrap the line past the width. */
   void nestedInlineTag() {}
+
+  /**
+   * Summary, with enough words to wrap the line past the width of the comment here.
+   * \u0040return the value
+   */
+  int unicodeEscapedTag() {
+    return 0;
+  }
+
+  /** <pre><span title="</pre>">first  second</span></pre> */
+  void preCloserInAnAttribute() {}
 }

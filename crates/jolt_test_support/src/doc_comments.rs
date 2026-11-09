@@ -274,12 +274,27 @@ fn closing_pre(lines: &[Line<'_>], index: usize, from: usize) -> Option<(usize, 
     for (line, text) in lines.iter().enumerate().skip(index) {
         let start = if line == index { from } else { 0 };
         let text = &text.text[start..];
-        for (at, _) in text.match_indices("</") {
-            let rest = &text[at..];
-            if let Some(len) = rest.find('>')
-                && element_name(&rest[..=len]) == Some(("pre", true))
-            {
-                return Some((line, start + at + len + 1));
+        let mut at = 0;
+        while let Some(found) = text[at..].find('<') {
+            at += found;
+            // A tag's end: its `>` outside quotes, on its line.
+            let mut quote = None;
+            let len = text[at + 1..].char_indices().find_map(|(index, ch)| {
+                match (quote, ch) {
+                    (None, '"' | '\'') => quote = Some(ch),
+                    (Some(open), ch) if ch == open => quote = None,
+                    (None, '>') => return Some(index + 2),
+                    _ => {}
+                }
+                None
+            });
+            let tag = text[at + 1..].starts_with(|ch: char| ch.is_ascii_alphabetic() || ch == '/');
+            match len {
+                Some(len) if element_name(&text[at..at + len]) == Some(("pre", true)) => {
+                    return Some((line, start + at + len));
+                }
+                Some(len) if tag => at += len,
+                _ => at += 1,
             }
         }
     }

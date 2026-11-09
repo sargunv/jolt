@@ -24,7 +24,9 @@ use crate::token::{Kind, Name, Sep, Token};
 
 /// The tokens of a `/**` comment, or `None` when it falls back to N9.
 pub(crate) fn tokenize(text: &str) -> Option<Vec<Token<'_>>> {
-    if text.contains("<!--") || text.contains("{@snippet") {
+    // Java decodes Unicode escapes (`\u0040return`) before javadoc reads the
+    // comment, so the source text can hide its structure.
+    if text.contains("<!--") || text.contains("{@snippet") || text.contains("\\u") {
         return None;
     }
     let lines = frame::javadoc(text)?;
@@ -199,7 +201,7 @@ impl<'a> Tokenizer<'_, 'a> {
                 self.push(Kind::Break, "", Sep::Line);
                 return Some(false);
             }
-            let first = text.split(|ch: char| ch.is_ascii_whitespace()).next();
+            let first = rest.split(|ch: char| ch.is_ascii_whitespace()).next();
             if first.is_some_and(tags::is_list_marker) {
                 self.push(Kind::Break, "", Sep::Line);
             }
@@ -345,16 +347,25 @@ impl<'a> Tokenizer<'_, 'a> {
         }
     }
 
-    /// The line and byte of the `</pre>` after byte `from` of line `index`.
+    /// The line and byte of the `</pre>` after byte `from` of line `index`,
+    /// outside the other HTML tags in the region, whose quoted values may hold
+    /// `</pre>`. A `<` that doesn't start a tag closed on its line, as in
+    /// `Map<String, List<Integer>>`, is code.
     fn closing_pre(&self, index: usize, from: usize) -> Option<(usize, usize)> {
         for (line, text) in self.lines[index..].iter().map(|line| line.text).enumerate() {
-            let start = if line == 0 { from } else { 0 };
-            let found = text[start..]
-                .match_indices('<')
-                .map(|(at, _)| start + at)
-                .find(|&at| block_element(&text[at..]) == Some((Some(Name::Pre), true)));
-            if let Some(at) = found {
-                return Some((index + line, at));
+            let mut at = if line == 0 { from } else { 0 };
+            while let Some(found) = text[at..].find('<') {
+                at += found;
+                if block_element(&text[at..]) == Some((Some(Name::Pre), true)) {
+                    return Some((index + line, at));
+                }
+                let starts_tag = text.as_bytes()[at + 1..]
+                    .first()
+                    .is_some_and(|&next| next.is_ascii_alphabetic() || next == b'/');
+                at += starts_tag
+                    .then(|| tags::html_tag_len(&text[at..]))
+                    .flatten()
+                    .unwrap_or(1);
             }
         }
         None
