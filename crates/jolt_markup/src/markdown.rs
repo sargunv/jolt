@@ -83,9 +83,11 @@ impl Reader {
         }
     }
 
-    /// Whether the text that follows keeps its whitespace.
+    /// Whether the text that follows keeps its whitespace: in an open
+    /// `<pre>` or raw text element, and inside a quoted attribute value or a
+    /// comment, wherever they are.
     const fn exact(&self) -> bool {
-        self.pre > 0 || self.raw.is_some()
+        self.pre > 0 || self.raw.is_some() || matches!(self.lex, Lex::Value { .. } | Lex::Comment)
     }
 
     /// Reads the next piece of HTML.
@@ -187,8 +189,16 @@ impl Reader {
                 at += name.len() + 1;
             }
         } else if rest.starts_with(b"!--") {
-            self.lex = Lex::Comment;
-            at += 3;
+            // HTML closes `<!-->` and `<!--->` at once (an abruptly closed
+            // empty comment), as CommonMark does.
+            if rest[3..].starts_with(b">") {
+                at += 4;
+            } else if rest[3..].starts_with(b"->") {
+                at += 5;
+            } else {
+                self.lex = Lex::Comment;
+                at += 3;
+            }
         } else if rest
             .first()
             .is_some_and(|&byte| byte == b'!' || byte == b'?')

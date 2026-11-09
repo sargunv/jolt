@@ -137,4 +137,15 @@ class DocCommentTrailingWhitespace {
   /// Text <script>a   b</SCRIPT >  c   d
   /// e   f
   void markdownRawEndTagCase() {}
+
+  /// <textarea title="a 
+  /// b">
+  /// c 
+  /// </textarea>
+  void quotedValueAcrossLines() {}
+
+  /// <!-- <script>
+  /// a 
+  /// -->
+  void commentAcrossLines() {}
 }
