@@ -78,4 +78,8 @@ class DocCommentVerbatim {
 
   /** <table><pre></table> a  b </pre> where the pre runs past the table's end */
   void preThatRunsPastItsTable() {}
+
+  /** <pre>{@snippet :
+   */
+  void unfinishedSnippetAtTheEndOfAnUnclosedPre() {}
 }

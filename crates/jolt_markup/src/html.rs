@@ -211,8 +211,15 @@ enum PieceKind {
     Text,
     Atom,
     Erroneous,
-    Element { name: Option<Name>, closing: bool },
-    Region,
+    Element {
+        name: Option<Name>,
+        closing: bool,
+    },
+    /// A `<pre>` or `<table>` region; `error` when an erroneous node ends
+    /// it, so the separator after it keeps its kind.
+    Region {
+        error: bool,
+    },
 }
 
 /// Lays out a Javadoc comment read by `parser`.
@@ -417,7 +424,7 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
         let mut end = element_end(pieces, index, name, pieces.len() - 1);
         let kind = match name {
             Name::Raw(_) => PieceKind::Atom,
-            Name::Pre => PieceKind::Region,
+            Name::Pre => PieceKind::Region { error: false },
             _ => {
                 // Without its end tag, the table ends at the last piece,
                 // which it holds.
@@ -454,7 +461,7 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
                     }
                     inner += 1;
                 }
-                PieceKind::Region
+                PieceKind::Region { error: false }
             }
         };
         // An empty piece (an unfinished tag at the comment's end) doesn't
@@ -472,6 +479,14 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
         if name == Name::Pre {
             kept.push(span);
         }
+        // An erroneous node that ends the region (an unclosed `<pre>`) still
+        // keeps the separator after it.
+        let error = [pieces[end].kind, last.kind].contains(&PieceKind::Erroneous);
+        let kind = match kind {
+            PieceKind::Atom if error => PieceKind::Erroneous,
+            PieceKind::Region { .. } => PieceKind::Region { error },
+            kind => kind,
+        };
         out.push(Piece {
             kind,
             span,
@@ -637,7 +652,10 @@ impl Tokens<'_, '_> {
                 self.push(Kind::Element { name, closing }, piece.span, false, false);
             }
             PieceKind::Element { .. } => self.push(Kind::Word, piece.span, false, false),
-            PieceKind::Region => self.push(Kind::Region, piece.span, false, false),
+            PieceKind::Region { error } => {
+                self.push(Kind::Region, piece.span, false, false);
+                self.after_error = error;
+            }
         }
     }
 
