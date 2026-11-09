@@ -128,4 +128,16 @@ class DocCommentJavacReading {
 
   /** A long enough description of the snippet tag that follows: {@snippet : <table>text</table>} */
   void tableAfterAnErroneousSnippet() {}
+
+  /** @code@return value, a tag that javac reads right after an erroneous one */
+  int tagRightAfterAnErroneousTag() {
+    return 0;
+  }
+
+  /**
+   * Text <p>
+   *
+   * @return value, which a form feed keeps from being a block tag
+   */
+  void formFeedBeforeAnAtAfterAParagraph() {}
 }

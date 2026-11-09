@@ -75,4 +75,7 @@ class DocCommentVerbatim {
 
   /** <pre>{@link */
   void unfinishedLinkInAnUnclosedPre() {}
+
+  /** <table><pre></table> a  b </pre> where the pre runs past the table's end */
+  void preThatRunsPastItsTable() {}
 }

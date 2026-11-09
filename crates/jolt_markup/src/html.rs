@@ -405,43 +405,35 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
             index += 1;
             continue;
         };
-        let end = element_end(pieces, index, name, pieces.len() - 1);
-        // An empty piece (an unfinished tag at the comment's end) doesn't
-        // move the region's end past the whitespace before it, which the
-        // frame prints.
-        let last = pieces[index..=end]
-            .iter()
-            .rev()
-            .find(|piece| piece.span.start != piece.span.end)
-            .unwrap_or(&piece);
-        let span = Span {
-            start: piece.span.start,
-            end: last.span.end,
-        };
+        let mut end = element_end(pieces, index, name, pieces.len() - 1);
         let kind = match name {
             Name::Raw(_) => PieceKind::Atom,
-            Name::Pre => {
-                kept.push(span);
-                PieceKind::Region
-            }
+            Name::Pre => PieceKind::Region,
             _ => {
                 // Without its end tag, the table ends at the last piece,
                 // which it holds.
-                let closed = matches!(
-                    pieces[end].kind,
-                    PieceKind::Element {
-                        name: Some(Name::Table),
-                        closing: true,
-                    }
-                );
-                let stop = if closed { end } else { end + 1 };
+                let mut stop = if closes(pieces[end], name) {
+                    end
+                } else {
+                    end + 1
+                };
                 let mut inner = index + 1;
                 while inner < stop {
                     let piece = pieces[inner];
                     match opens_region(piece) {
                         Some(name @ (Name::Pre | Name::Raw(_))) => {
-                            // The table's end tag closes what it holds.
-                            let last = element_end(pieces, inner, name, end);
+                            // A `<pre>` that the table doesn't close runs on
+                            // past its end tag, as javadoc reads it, and the
+                            // region with it. (A raw text element can't: the
+                            // table's end tag was looked for past it.)
+                            let mut last = element_end(pieces, inner, name, end);
+                            if !closes(pieces[last], name) && last < pieces.len() - 1 {
+                                last = element_end(pieces, inner, name, pieces.len() - 1);
+                                if last > end {
+                                    end = last;
+                                    stop = last + 1;
+                                }
+                            }
                             kept.push(Span {
                                 start: piece.span.start,
                                 end: pieces[last].span.end,
@@ -456,6 +448,21 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
                 PieceKind::Region
             }
         };
+        // An empty piece (an unfinished tag at the comment's end) doesn't
+        // move the region's end past the whitespace before it, which the
+        // frame prints.
+        let last = pieces[index..=end]
+            .iter()
+            .rev()
+            .find(|piece| piece.span.start != piece.span.end)
+            .unwrap_or(&piece);
+        let span = Span {
+            start: piece.span.start,
+            end: last.span.end,
+        };
+        if name == Name::Pre {
+            kept.push(span);
+        }
         out.push(Piece {
             kind,
             span,
@@ -465,6 +472,14 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
         index = end + 1;
     }
     *pieces = out;
+}
+
+/// Whether `piece` is the end tag of the element `name`.
+fn closes(piece: Piece, name: Name) -> bool {
+    matches!(
+        piece.kind,
+        PieceKind::Element { name: Some(found), closing: true } if found == name
+    )
 }
 
 /// The element (`<pre>`, `<table>` or a raw text element) that `piece`
@@ -552,6 +567,10 @@ impl Tokens<'_, '_> {
     }
 
     fn block_tag(&mut self, tag: &BlockTag, pieces: &mut Vec<Piece>) {
+        // javac reads a tag written right after an erroneous one (`@code`
+        // used as a block tag) as a tag; after a line break, it reads no
+        // further.
+        let pinned = std::mem::take(&mut self.after_error) && self.last_end == Some(tag.span.start);
         self.list.push(Token {
             kind: Kind::BlockTag,
             span: Span {
@@ -563,12 +582,13 @@ impl Tokens<'_, '_> {
             sticky: false,
             plain: false,
             after_head: false,
-            pinned: false,
+            pinned,
         });
         self.last_end = Some(tag.span.start);
         self.head_last = false;
         let Some(body) = &tag.body else {
             self.push(Kind::Word, tag.span, false, false);
+            self.after_error = true;
             return;
         };
         for (index, &head) in tag.head.iter().enumerate() {
@@ -1094,7 +1114,7 @@ impl Html<'_, '_, '_, '_> {
                 self.request(Why::Text);
                 self.gap = Gap::Blank;
             }
-            Kind::BlockTag => self.start_tag(),
+            Kind::BlockTag => self.start_tag(token.pinned),
             Kind::Break => self.request(Why::Break),
             Kind::Word => self.emit(token, token.glue),
             Kind::Element { name, closing } => self.element(token, name, closing),
@@ -1198,26 +1218,17 @@ impl Html<'_, '_, '_, '_> {
                 // A word that a line break would turn into structure stays on
                 // the line of the word before: always for `@`, which would
                 // become a block tag; for the other words, unless the source
-                // starts a line with it.
-                self.layout.word(token.span, Join::Space, true);
+                // starts a line with it. It joins that word as it would on
+                // the line, without a wrap point.
+                let join = self.join(token, true);
+                self.layout.word(token.span, join, true);
             } else {
                 let column = self.column();
                 self.start(why, column, column);
                 self.layout.word(token.span, Join::Wrap, token.sticky);
             }
         } else {
-            let join = match token.sep {
-                // A tag that ends the sentence after a lone first character
-                // keeps it ending there (or not).
-                _ if self.offset_one(token) == Some(false) => Join::Space,
-                // A space after a sentence's end stays: it ends javadoc's
-                // first sentence there.
-                Sep::Space | Sep::Line if self.attach && self.ends_sentence => Join::Space,
-                _ if self.attach && !token.after_head => Join::None,
-                Sep::None => Join::None,
-                Sep::Space | Sep::Line if glue => Join::Space,
-                Sep::Space | Sep::Line => Join::Wrap,
-            };
+            let join = self.join(token, glue);
             self.layout.word(token.span, join, token.sticky);
         }
         let last = if token.span.end.line == token.span.start.line {
@@ -1235,15 +1246,35 @@ impl Html<'_, '_, '_, '_> {
         self.gap = Gap::None;
     }
 
-    /// A block tag starts on this line: it closes the open blocks, and a
-    /// blank line goes before the first.
-    fn start_tag(&mut self) {
+    /// How `token` joins the word before it on its line; `glue` leaves no
+    /// wrap point.
+    fn join(&self, token: &Token, glue: bool) -> Join {
+        match token.sep {
+            // A tag that ends the sentence after a lone first character keeps
+            // it ending there (or not).
+            _ if self.offset_one(token) == Some(false) => Join::Space,
+            // A space after a sentence's end stays: it ends javadoc's first
+            // sentence there.
+            Sep::Space | Sep::Line if self.attach && self.ends_sentence => Join::Space,
+            _ if self.attach && !token.after_head => Join::None,
+            Sep::None => Join::None,
+            Sep::Space | Sep::Line if glue => Join::Space,
+            Sep::Space | Sep::Line => Join::Wrap,
+        }
+    }
+
+    /// A block tag starts on this line, unless it is `pinned` to the
+    /// erroneous tag before it: it closes the open blocks, and a blank line
+    /// goes before the first.
+    fn start_tag(&mut self, pinned: bool) {
         self.frames.clear();
         let blank = !self.in_tags;
         self.in_tags = true;
         self.layout.multiline();
         self.next_line = None;
-        self.layout.line(blank, 0, Frame::Tag.column());
+        if !pinned {
+            self.layout.line(blank, 0, Frame::Tag.column());
+        }
         self.frames.push(Frame::Tag);
         self.attach = false;
         self.gap = Gap::None;
