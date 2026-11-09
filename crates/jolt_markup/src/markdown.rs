@@ -974,7 +974,16 @@ impl Markdown<'_, '_, '_, '_> {
         let Some(rich) = &inline.rich else { return };
         self.layout.word(inline.name, join, sticky);
         if let Some(head) = rich.head {
-            for span in words::joined_pieces(self.lines, head).unwrap_or_else(|| vec![head]) {
+            // A reference may be joined onto one line; an `{@index}` term is
+            // text that keeps its line breaks, as in the Javadoc layout.
+            let index = self
+                .layout
+                .text_at(inline.name.start)
+                .starts_with("{@index");
+            let joined = (!index)
+                .then(|| words::joined_pieces(self.lines, head))
+                .flatten();
+            for span in joined.unwrap_or_else(|| vec![head]) {
                 self.layout.word(span, Join::Space, false);
             }
         }

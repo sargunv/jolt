@@ -228,6 +228,15 @@ pub(crate) fn lay_out<'a>(
         head_next: false,
         head_last: false,
         kept: Vec::new(),
+        indents: lines
+            .iter()
+            .map(|line| {
+                let text = line.text;
+                let tabs = text.len() - text.trim_start_matches([' ', '\t']).len();
+                let feeds = text.len() - text.trim_start_matches([' ', '\t', '\u{c}']).len();
+                (to_u32(tabs), to_u32(feeds))
+            })
+            .collect(),
     };
     let mut pieces = Vec::new();
     flatten(&comment.body, lines, &mut pieces);
@@ -497,6 +506,10 @@ struct Tokens<'l, 'a> {
     head_last: bool,
     /// The atoms that span lines, whose line ends keep their whitespace.
     kept: Vec<Span>,
+    /// Per line, the length of its leading spaces and tabs, and of its
+    /// leading spaces, tabs and form feeds: found once, so a line's many
+    /// text nodes don't each rescan its indentation.
+    indents: Vec<(u32, u32)>,
 }
 
 impl Tokens<'_, '_> {
@@ -568,16 +581,9 @@ impl Tokens<'_, '_> {
         }
     }
 
-    /// The text of line `line` from byte `from` to byte `to`.
-    fn slice(&self, line: u32, from: u32, to: u32) -> &str {
-        &self.lines[line as usize].text[from as usize..to as usize]
-    }
-
     /// Whether only spaces and tabs come before `pos` on its line.
     fn at_line_start(&self, pos: Pos) -> bool {
-        self.slice(pos.line, 0, pos.off)
-            .bytes()
-            .all(|byte| byte == b' ' || byte == b'\t')
+        pos.off <= self.indents[pos.line as usize].0
     }
 
     /// Splits a text node into words at HTML whitespace and line breaks.
@@ -619,9 +625,7 @@ impl Tokens<'_, '_> {
             let mut at = 0;
             let bytes = segment.as_bytes();
             // Whether the next word is the first on its source line.
-            let mut first_on_line = text[..from]
-                .bytes()
-                .all(|byte| matches!(byte, b' ' | b'\t' | 0x0c));
+            let mut first_on_line = to_u32(from) <= self.indents[line as usize].1;
             while at < bytes.len() {
                 while at < bytes.len() && matches!(bytes[at], b' ' | b'\t' | 0x0c) {
                     at += 1;

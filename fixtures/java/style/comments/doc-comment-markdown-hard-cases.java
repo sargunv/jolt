@@ -161,4 +161,8 @@ class DocCommentMarkdownHardCases {
   /// a text area keeps the space at the end of its lines 
   /// </textarea>
   void textArea() {}
+
+  /// An index term that runs onto the next line keeps its line break: {@index "first
+  /// second" description of the term, with enough words to wrap the line past the width}
+  void multilineIndexTerm() {}
 }

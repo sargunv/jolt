@@ -71,3 +71,18 @@ fn deeply_nested_html_lists() {
     let formatted = format_in_time(&comment);
     assert!(formatted.len() < comment.len() * 30, "{}", formatted.len());
 }
+
+/// A line with a long indentation and many text nodes between inline tags:
+/// each text node asks whether it starts its line, which must not rescan the
+/// indentation.
+#[test]
+fn many_text_nodes_after_a_long_indentation() {
+    let n = 80_000;
+    let comment = format!(
+        "    /**\n     * heading\n     *{}{}\n     */",
+        " ".repeat(n),
+        "a {@code x} ".repeat(n)
+    );
+    let formatted = format_in_time(&comment);
+    assert!(formatted.contains("{@code x}"));
+}
