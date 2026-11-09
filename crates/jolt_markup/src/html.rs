@@ -1102,9 +1102,9 @@ struct Html<'p, 'd, 'l, 'a> {
     /// The last word ends a sentence (`.`, `!`, `?`): javadoc's first
     /// sentence ends there if whitespace follows.
     ends_sentence: bool,
-    /// The source line of the last word, when it is the comment's first
-    /// and one character long (see [`offset_one`](Self::offset_one)).
-    lone_first: Option<u32>,
+    /// The start of the last word, when it is the comment's first and one
+    /// character long (see [`offset_one`](Self::offset_one)).
+    lone_first: Option<Pos>,
 }
 
 impl Html<'_, '_, '_, '_> {
@@ -1190,10 +1190,10 @@ impl Html<'_, '_, '_, '_> {
     /// no break. The output puts the character at offset 0, so the tag must
     /// follow it with nothing between exactly when this holds. javadoc
     /// counts each line before the first word (line 0 is the first it
-    /// reads), and the separator.
+    /// reads), the indentation it keeps before it, and the separator.
     fn offset_one(&self, token: &Token) -> Option<bool> {
-        let line = self.lone_first.filter(|_| self.breaks_sentence(token))?;
-        Some(line == 0 && token.sep == Sep::None)
+        let start = self.lone_first.filter(|_| self.breaks_sentence(token))?;
+        Some(start == Pos { line: 0, off: 0 } && token.sep == Sep::None)
     }
 
     /// Adds a word. `glue` keeps it on the line of the word before.
@@ -1241,7 +1241,7 @@ impl Html<'_, '_, '_, '_> {
         self.lone_first = (first
             && token.span.end.line == token.span.start.line
             && last.encode_utf16().count() == 1)
-            .then_some(token.span.start.line);
+            .then_some(token.span.start);
         self.attach = false;
         self.gap = Gap::None;
     }

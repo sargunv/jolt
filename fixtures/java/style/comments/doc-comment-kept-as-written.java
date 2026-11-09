@@ -93,4 +93,12 @@ class DocCommentKeptAsWritten {
     // a line comment
     true) {}
   }
+
+  /** {@value bad!
+   * }@return value, where javadoc's reading depends on whether the value's reference is valid */
+  void valueTagClosedOnTheNextLine() {}
+
+  /** a doc comment  before an empty declaration */ ;
+
+  int afterTheEmptyDeclaration;
 }

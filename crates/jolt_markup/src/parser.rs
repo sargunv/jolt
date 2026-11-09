@@ -404,11 +404,12 @@ impl Parser<'_, '_> {
     }
 
     /// Fails the reading where it can't follow javac's: the comment is
-    /// printed as written. That is an inline tag nested too deeply, and an
-    /// unclosed `{@value}`, where javac reads one more character only when
-    /// `ReferenceParser`, which this port doesn't read, accepts the
-    /// reference (javac stops at an invalid one); that character can be the
-    /// `{` of the next inline tag.
+    /// printed as written. That is an inline tag nested too deeply, and a
+    /// `{@value}` whose reference no `}` follows on its line: javac stops at
+    /// an invalid reference, which `ReferenceParser` (not read by this port)
+    /// decides, and for a valid one reads one more character, which can be
+    /// the `{` of the next inline tag, or the `}`, after which a line break
+    /// before it still makes an `@` start a block tag.
     fn give_up(&mut self) {
         self.charge(self.budget + 1);
     }
@@ -1102,7 +1103,7 @@ impl Parser<'_, '_> {
                 }
                 self.reference()?;
                 self.skip_whitespace();
-                if self.cur.ch == '}' {
+                if self.cur.ch == '}' && !self.newline {
                     self.next_char();
                     Ok(self.atomic(brace, name))
                 } else {

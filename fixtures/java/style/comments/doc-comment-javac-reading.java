@@ -140,4 +140,10 @@ class DocCommentJavacReading {
    * @return value, which a form feed keeps from being a block tag
    */
   void formFeedBeforeAnAtAfterAParagraph() {}
+
+  /**
+   *  A<p>Second, where the indentation javadoc keeps puts the paragraph tag past offset 1.
+   * next
+   */
+  void paragraphAfterAnIndentedLoneCharacter() {}
 }

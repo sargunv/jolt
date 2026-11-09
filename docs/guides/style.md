@@ -964,9 +964,9 @@ which javac decodes before javadoc reads the comment; and a comment that javac's
 reader can't read in bounded time or depth: one that nests inline tags more than
 32 deep, one that it reads in more than linear time (it rescans some malformed
 text), and a Markdown comment whose last line it never finishes reading (such as
-`/// + +`); and a comment with a `{@value …}` that doesn't end right after its
-reference, where how javadoc reads on depends on whether the reference is valid,
-which Jolt doesn't check.
+`/// + +`); and a comment with a `{@value …}` whose `}` doesn't follow its
+reference on the same line, where how javadoc reads on depends on whether the
+reference is valid, which Jolt doesn't check.
 
 A comment that Jolt lays out gets this style:
 

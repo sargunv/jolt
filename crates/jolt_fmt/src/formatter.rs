@@ -294,8 +294,8 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// `removed`, and whether the source has a blank line after the last
     /// comment. That comment (the head of its run, when it ends a run of doc
     /// line comments) prints no line after itself when it leads the element
-    /// on its own line: with the element gone, the code that follows decides
-    /// the line break.
+    /// and starts its line (alone, or with the element after it): with the
+    /// element gone, the code that follows decides the line break.
     fn removed_comments(&mut self, element: SyntaxElement<'a>) -> (Doc, bool) {
         let mut indices: Vec<usize> = self
             .comments
@@ -316,7 +316,11 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             .map(|index| {
                 let placed = self.comments.list[index];
                 if index == last
-                    && (placed.side, placed.layout) == (Side::Leading, CommentLayout::OwnLine)
+                    && placed.side == Side::Leading
+                    && matches!(
+                        placed.layout,
+                        CommentLayout::OwnLine | CommentLayout::StartOfLine
+                    )
                 {
                     let text = self.comment_doc(index, true);
                     cat![self; Doc::HARD_LINE, text]

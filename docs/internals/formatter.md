@@ -1315,9 +1315,10 @@ line made only of two or more `*`s), `/**/`, and when its reading would take
 more than [linear time](#doc-comment-cost) or nest inline tags more than 32 deep
 (below), or would depend on whether javac's `ReferenceParser` accepts a
 reference, which the port doesn't read: after a `{@value}` reference that no `}`
-follows, javac reads one more character only for a valid reference, and that
-character can be the `{` of the next tag. The Java hook also keeps file headers,
-and `jolt_fmt` keeps comments that share a line with code, lie in a
+follows on its line, javac reads one more character only for a valid reference.
+That character can be the `{` of the next tag, or a `}` after a line break,
+after which an `@` still starts a block tag. The Java hook also keeps file
+headers, and `jolt_fmt` keeps comments that share a line with code, lie in a
 formatter-ignore region, or have a target with recovery. Such a comment keeps
 all its trailing whitespace: its `<pre>` elements, code and tag bodies, where
 that whitespace is content, were not read.
