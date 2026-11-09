@@ -346,11 +346,11 @@ A language provides `jolt_fmt::FormatLanguage`:
   the [item-list owner](#item-lists-blank-lines-formatter-ignore) of a
   formatter-ignore marker.
 - `DOC_LINE_COMMENT`, the opener of a doc line comment (Java: `///`), and
-  `doc_comment`, the layout of a [doc comment](#doc-comments) that starts its
-  output line. `doc_file` finds once per file the facts that `doc_comment` needs
-  about the whole file (Java: whether it declares a type or a module, so that
-  the comment before `package` is a file header), so that no doc comment rescans
-  the file.
+  `doc_comment`, the layout of a [doc comment](#doc-comments), which the printer
+  uses where the comment is alone on its output lines. `doc_file` finds once per
+  file the facts that `doc_comment` needs about the whole file (Java: whether it
+  declares a type or a module, so that the comment before `package` is a file
+  header), so that no doc comment rescans the file.
 
 ### Document IR
 
@@ -836,32 +836,23 @@ See [Java style](../guides/style.md) for the resulting output.
 
 #### Doc comments
 
-A doc comment on a line of its own is laid out by the language's
-`FormatLanguage::doc_comment` hook when it returns a doc; `None` prints the
-comment as in the list above. A doc comment is a doc block comment
-(`DocCommentSource::Block`, `/** … */`) or a doc line run
-(`DocCommentSource::Lines`, one text per `///` line, trailing whitespace kept,
-with the source tokens printed around the run), with its placement target. The
-chokepoints call the hook only for a comment on a line of its own, since only
-there no group's fit check measures past the line break before it into the
-comment, so its layout can't change the code around it:
-
-- a comment printed `OwnLine` (leading, trailing or dangling);
-- a leading doc block comment that ends its output line: printed `EndOfLine`, or
-  `Inline` before a comment of the same target that starts a line (a block
-  comment after an opener followed by a line comment). The line break after it
-  breaks the groups around it, and a later pass reads it as a comment on its own
-  line, so it is laid out in both passes;
-- a dangling doc block comment that ends its line: the last one, or one that a
-  line break in the source follows (`own_lines` puts one with
-  `lines_before == 0` on the line of the comment before it); and a dangling run
-  of doc line comments that starts its line: the first (the owning rule puts a
-  line break before it), or one whose `lines_before` is not 0;
-- the last comment `removed` keeps, which leads on its own line;
-- a doc block comment of an elided list item that ends its output line: the list
-  puts the item on lines of its own, and the next pass reads the comment as one
-  that leads the code after it, or as a dangling one, and both lay out a doc
-  block comment that ends its line.
+A doc comment is laid out by the language's `FormatLanguage::doc_comment` hook
+when it returns a doc; `None` prints the comment as in the list above. A doc
+comment is a doc block comment (`DocCommentSource::Block`, `/** … */`) or a doc
+line run (`DocCommentSource::Lines`, one text per `///` line, trailing
+whitespace kept, with the source tokens printed around the run), with its
+placement target. The chokepoints build both the hook's layout and the comment
+as written, and the printer chooses (`DocBuilder::doc_comment`): it prints the
+layout where the comment starts its output line and the line ends after it,
+which it reads from what is left to print up to the first text or line
+(`Printer::line_ends_after`; a group it hasn't reached yet, an end-of-line
+comment and any later choice count as no line break). Only a comment alone on
+its lines is laid out, since only there no group's fit check measures into it,
+so its layout can't change the code around it; fit checks measure the comment as
+written. The next pass reads each comment where the output put it, so the choice
+repeats: a comment laid out on lines of its own is placed `OwnLine`, and one
+that shares a line with code keeps sharing it. A run of doc line comments is
+laid out only when it leads its target.
 
 The comment must also lie outside every formatter-ignore region (the Javadoc of
 an ignored member is printed as written), and its target must be recovery-free

@@ -231,8 +231,11 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             },
             target: self.comments.list[run.head].target,
         };
-        let doc = L::doc_comment(&mut self.builder, &comment, self.doc_file)
-            .unwrap_or_else(|| self.written_run(run.head, run.end));
+        let as_written = self.written_run(run.head, run.end);
+        let doc = match L::doc_comment(&mut self.builder, &comment, self.doc_file) {
+            Some(laid_out) => self.builder.doc_comment(laid_out, as_written),
+            None => as_written,
+        };
         self.builder.fill(run.slot, doc);
     }
 
@@ -290,19 +293,15 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// their own layouts, without the element's text: what remains of a token
     /// or node that a normalization removes. NIL when there are none.
     pub fn removed(&mut self, element: SyntaxElement<'a>) -> Doc {
-        self.removed_comments(element, false).0
+        self.removed_comments(element).0
     }
 
     /// `removed`, and whether the source has a blank line after the last
     /// comment. That comment (the head of its run, when it ends a run of doc
     /// line comments) prints no line after itself when it leads the element
     /// and starts its line (alone, or with the element after it): with the
-    /// element gone, the code that follows decides the line break. In an
-    /// elided list `item`, which the list puts on lines of its own, any other
-    /// doc comment is laid out when it ends its output line: the next pass
-    /// reads it as a comment that leads the code after it and ends its line
-    /// (see [`lays_out_doc`](Self::lays_out_doc)).
-    fn removed_comments(&mut self, element: SyntaxElement<'a>, item: bool) -> (Doc, bool) {
+    /// element gone, the code that follows decides the line break.
+    fn removed_comments(&mut self, element: SyntaxElement<'a>) -> (Doc, bool) {
         let mut indices: Vec<usize> = self
             .comments
             .attached(element, Side::Leading)
@@ -317,9 +316,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         };
         let blank_after = self.comments.list[last].comment.lines_after >= 2;
         let last = self.run_head(last);
-        let docs: Vec<Doc> = (0..indices.len())
-            .map(|position| {
-                let index = indices[position];
+        let docs: Vec<Doc> = indices
+            .iter()
+            .map(|&index| {
                 let placed = self.comments.list[index];
                 if index == last
                     && placed.side == Side::Leading
@@ -328,13 +327,8 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                         CommentLayout::OwnLine | CommentLayout::StartOfLine
                     )
                 {
-                    let text = self.comment_doc(index, true);
+                    let text = self.comment_doc(index);
                     cat![self; Doc::HARD_LINE, text]
-                } else if item && placed.comment.kind == CommentKind::Doc {
-                    let ends = indices
-                        .get(position + 1)
-                        .is_none_or(|&next| self.breaks_after(index) || self.breaks_before(next));
-                    self.attached_comment_as(index, ends)
                 } else {
                     self.attached_comment(index)
                 }
@@ -476,19 +470,8 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             });
             // Dangling comments always print on their own lines: the owning
             // rule puts a line break before the first, and a later one that
-            // shares the line of the comment before it starts no line. A doc
-            // block comment is laid out when it ends its line, as everywhere
-            // (see `lays_out_doc`), so that one an elided item leaves here
-            // gets the same decision in both passes; a run of doc line
-            // comments, which always ends its line, when it starts one.
-            let lays_out = if self.comments.list[index].comment.kind == CommentKind::Doc {
-                indices
-                    .get(position + 1)
-                    .is_none_or(|&next| self.comments.list[next].comment.lines_before != 0)
-            } else {
-                position == 0 || self.comments.list[index].comment.lines_before != 0
-            };
-            docs.push(self.comment_doc(index, lays_out));
+            // shares the line of the comment before it starts no line.
+            docs.push(self.comment_doc(index));
         }
         self.builder.concat(docs)
     }
@@ -654,7 +637,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 let body = self.verbatim(node);
                 self.with_comments(SyntaxElement::Node(node), body)
             } else if elide {
-                let (doc, blank) = self.removed_comments(SyntaxElement::Node(node), true);
+                let (doc, blank) = self.removed_comments(SyntaxElement::Node(node));
                 if doc.is_nil() {
                     continue;
                 }
@@ -712,12 +695,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// output already printed is skipped (see the formatter design's
     /// "Verbatim edges").
     fn attached_comment(&mut self, index: usize) -> Doc {
-        self.attached_comment_as(index, self.lays_out_doc(index))
-    }
-
-    /// [`attached_comment`](Self::attached_comment), laid out as a doc
-    /// comment when `lays_out`.
-    fn attached_comment_as(&mut self, index: usize, lays_out: bool) -> Doc {
         if self.by_verbatim[index] {
             return Doc::NIL;
         }
@@ -731,7 +708,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             Run::None => index,
         };
         let blank_after = self.comments.list[end].comment.lines_after >= 2;
-        let text = self.comment_doc(index, lays_out);
+        let text = self.comment_doc(index);
         match (placed.side, placed.layout) {
             (Side::Leading, CommentLayout::OwnLine) => {
                 let after = self.line_break(blank_after);
@@ -772,16 +749,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         }
     }
 
-    /// Whether [`attached_comment`](Self::attached_comment) breaks the line
-    /// before the comment.
-    fn breaks_before(&self, index: usize) -> bool {
-        let placed = self.comments.list[index];
-        matches!(
-            (placed.side, placed.layout),
-            (Side::Leading, CommentLayout::StartOfLine) | (_, CommentLayout::OwnLine)
-        )
-    }
-
     /// Whether a comment that ends its line in the source has the next
     /// comment of its target on that line (`/* a */ // b`): it ends no line
     /// then, and the next one ends it.
@@ -791,48 +758,6 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             next.comment.lines_before == 0
                 && next.side == placed.side
                 && next.target == placed.target
-        })
-    }
-
-    /// Whether [`attached_comment`](Self::attached_comment) breaks the line
-    /// after the comment.
-    fn breaks_after(&self, index: usize) -> bool {
-        let placed = self.comments.list[index];
-        match (placed.side, placed.layout) {
-            (_, CommentLayout::OwnLine) => true,
-            (Side::Leading, CommentLayout::EndOfLine) => !self.shares_line_with_next(index),
-            (_, CommentLayout::EndOfLine) => placed.comment.kind == CommentKind::Line,
-            _ => false,
-        }
-    }
-
-    /// Whether an attached comment is laid out as a doc comment: on its own
-    /// line, or leading its target and ending its output line. A leading
-    /// comment's line can start wherever the layout breaks before it, and the
-    /// next pass reads one that also ends its line as a comment on its own
-    /// line; whether a comment ends its output line is what each pass keeps.
-    fn lays_out_doc(&self, index: usize) -> bool {
-        let placed = self.comments.list[index];
-        match (placed.side, placed.layout) {
-            (_, CommentLayout::OwnLine) => true,
-            (Side::Leading, CommentLayout::EndOfLine) => {
-                !self.shares_line_with_next(index) || self.next_breaks_before(index)
-            }
-            (Side::Leading, CommentLayout::Inline | CommentLayout::StartOfLine) => {
-                self.next_breaks_before(index)
-            }
-            _ => false,
-        }
-    }
-
-    /// Whether the next comment of the target of the comment at `index`
-    /// starts a line, which ends the comment's line.
-    fn next_breaks_before(&self, index: usize) -> bool {
-        let placed = self.comments.list[index];
-        self.comments.list.get(index + 1).is_some_and(|next| {
-            next.side == placed.side
-                && next.target == placed.target
-                && self.breaks_before(index + 1)
         })
     }
 
@@ -860,12 +785,13 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     }
 
     /// The comment's doc, counted as emitted: the whole run for the head of
-    /// a run of doc line comments. A doc comment on a line of its own
-    /// (`starts_line`, see [`lays_out_doc`](Self::lays_out_doc)) goes to
-    /// [`FormatLanguage::doc_comment`] when it lies
-    /// outside the formatter-ignore regions and its target has no recovery
-    /// (a normalization applies only to recovery-free nodes).
-    fn comment_doc(&mut self, index: usize, starts_line: bool) -> Doc {
+    /// a run of doc line comments. A doc comment goes to
+    /// [`FormatLanguage::doc_comment`] when it lies outside the
+    /// formatter-ignore regions and its target has no recovery (a
+    /// normalization applies only to recovery-free nodes); the printer lays
+    /// it out where it starts its output line and the line ends after it
+    /// (see [`DocBuilder::doc_comment`]).
+    fn comment_doc(&mut self, index: usize) -> Doc {
         self.emitted[index] += 1;
         let placed = self.comments.list[index];
         let comment = placed.comment;
@@ -878,7 +804,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             self.settle(None);
         }
         if let Run::Head(end) = placed.run {
-            return self.doc_line_run(index, end as usize, starts_line);
+            return self.doc_line_run(index, end as usize);
         }
         if comment.kind == CommentKind::Line {
             // A doc line comment that is in no run (it ends a line of code in
@@ -906,10 +832,18 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         if comment.raw {
             return self.builder.text(comment.text.trim_end());
         }
+        let as_written = if comment.kind == CommentKind::Doc && keeps_bytes(comment.text) {
+            self.builder.text(comment.text)
+        } else if has_line_break(comment.text) {
+            let indentation = line_indentation(self.source, comment.range.start());
+            self.builder
+                .reindented(comment.text, Reindent::Comment(indentation))
+        } else {
+            self.builder.comment_text(comment.text, 0)
+        };
         if comment.kind == CommentKind::Doc
-            && starts_line
             && self.formats_doc(placed)
-            && let Some(doc) = L::doc_comment(
+            && let Some(laid_out) = L::doc_comment(
                 &mut self.builder,
                 &DocComment {
                     source: DocCommentSource::Block(comment.text),
@@ -918,18 +852,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 self.doc_file,
             )
         {
-            return doc;
+            return self.builder.doc_comment(laid_out, as_written);
         }
-        if comment.kind == CommentKind::Doc && keeps_bytes(comment.text) {
-            return self.builder.text(comment.text);
-        }
-        if has_line_break(comment.text) {
-            let indentation = line_indentation(self.source, comment.range.start());
-            return self
-                .builder
-                .reindented(comment.text, Reindent::Comment(indentation));
-        }
-        self.builder.comment_text(comment.text, 0)
+        as_written
     }
 
     /// Whether the comment after `index` continues, in the source, a run of
@@ -967,13 +892,13 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// run waits: its chokepoint emits it right before its target, so the
     /// token emitted after it is the one printed after it. A rule may emit a
     /// node's dangling comments after its closing token.
-    fn doc_line_run(&mut self, head: usize, end: usize, starts_line: bool) -> Doc {
+    fn doc_line_run(&mut self, head: usize, end: usize) -> Doc {
         let placed = self.comments.list[head];
         // A run that javac reads as part of a longer one (with a line of more
         // slashes, `////`) is not a doc comment of its own to lay out.
         let whole =
             !self.continues_line_run(end) && (head == 0 || !self.continues_line_run(head - 1));
-        if starts_line && whole && placed.side == Side::Leading && self.formats_doc(placed) {
+        if whole && placed.side == Side::Leading && self.formats_doc(placed) {
             let slot = self.builder.slot();
             self.pending = Some(PendingRun {
                 slot,

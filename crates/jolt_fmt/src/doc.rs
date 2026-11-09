@@ -61,6 +61,9 @@ pub(crate) enum Kind {
     Hang(Doc, Doc),
     /// The hugged and the broken layout of a list.
     Hug(Doc, Doc),
+    /// A doc comment laid out, and as written (see
+    /// [`DocBuilder::doc_comment`]).
+    DocComment(Doc, Doc),
 }
 
 const _: () = assert!(size_of::<Kind>() == 12);
@@ -395,6 +398,19 @@ impl<'a> DocBuilder<'a> {
         debug_assert!(self.breaks(broken), "a hug whose broken layout can be flat");
         let flags = self.flags(broken) & BREAKS;
         self.push(Kind::Hug(hugged, broken), flags)
+    }
+
+    /// A doc comment that the printer prints `laid_out` when it starts its
+    /// output line and the line ends after it, and `as_written` otherwise.
+    /// The next pass reads the comment where the output puts it, so laying
+    /// it out exactly where it ends up alone on its lines is what keeps the
+    /// output a fixpoint: a laid-out comment there stays there, and one
+    /// that shares a line with code keeps sharing it. A fit check measures
+    /// `as_written`: a comment laid out has lines of its own, which no
+    /// measured line holds.
+    pub(crate) fn doc_comment(&mut self, laid_out: Doc, as_written: Doc) -> Doc {
+        let flags = self.flags(as_written) | LINES;
+        self.push(Kind::DocComment(laid_out, as_written), flags)
     }
 
     /// `broken` or `flat` by the mode of the enclosing group.
