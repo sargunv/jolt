@@ -71,12 +71,12 @@ the differences readers notice first:
   removes the indentation that the lines of `<pre>{@code` share, removes a tab
   after `*` in `<pre>`, breaks a line between `{@link` and its reference, and
   moves a Javadoc comment between code (`foo(/** c */ 1)`) to a line of its own.
-  Jolt keeps every token and the content of `<pre>`, and keeps a comment as
-  written when it holds something Jolt doesn't lay out, such as a table or ASCII
-  art, or shares its line with code. google-java-format wraps a long Markdown
-  doc comment line (`///`) into an ordinary `//` comment line, which javadoc
-  doesn't read; Jolt fills the paragraphs of a Markdown doc comment and keeps
-  every line a `///` line.
+  Jolt keeps every token and what javadoc reads, so `<pre>`, tables, ASCII art
+  and multi-line `{@code …}` keep their lines, and a comment that shares its
+  line with code stays as written. google-java-format wraps a long Markdown doc
+  comment line (`///`) into an ordinary `//` comment line, which javadoc doesn't
+  read; Jolt fills the paragraphs of a Markdown doc comment and keeps every line
+  a `///` line.
 - **Lambdas.** Jolt removes the parentheses around a single untyped lambda
   parameter (`x -> x`). For a lambda with a block body or an anonymous class as
   the last argument, google-java-format puts every argument on a new line when
@@ -864,9 +864,10 @@ log(
 ```
 
 - **Markdown doc comments.** Consecutive `///` lines are one Markdown doc
-  comment. When Jolt moves a `///` comment next to another one, as it moves a
-  comment before a body's `{` into the body, a blank line keeps the two apart,
-  so they don't become one doc comment:
+  comment, and so are a `///` line that ends a line of code and the `///` lines
+  right after it. When Jolt moves a `///` comment next to another one, as it
+  moves a comment before a body's `{` into the body, a blank line keeps the two
+  apart, so they don't become one doc comment:
 
 ::: code-group
 
@@ -910,38 +911,41 @@ int run() {
 ## Doc comments
 
 Jolt lays out the text of each Javadoc comment (`/** … */`) that starts its own
-line: it fills paragraphs to the line width and puts lists, block tags and code
-in one fixed style. It fills the paragraphs of a Markdown doc comment (`///`)
-too (see [Markdown doc comments](#markdown-doc-comments)). What javadoc renders
-stays the same, and every character is kept.
+line, and of each Markdown doc comment (`///`, see
+[Markdown doc comments](#markdown-doc-comments)): it fills paragraphs to the
+line width and puts lists, block tags and code in one fixed style. What javadoc
+reads in a comment stays the same, and every character it reads is kept. Jolt
+reads a comment the way javadoc does (it follows javac's own rules), so it
+changes only whitespace that the rendered page doesn't show: the line breaks and
+spaces between words of text.
 
-Jolt lays out only comments made of the parts listed below. A comment with any
-other part is kept as written, as a whole: Jolt only realigns its `*`s, as for
-any other comment (see [Comments](#comments)). This keeps the rules few, and the
-parts left out are rare.
+Everything else in the comment keeps its exact text, line breaks included, and
+affects only itself:
 
-A Javadoc comment is laid out when it is made of:
+- `<pre>` and `<table>` elements, from their start tag to their end tag;
+- inline tags whose text javadoc keeps as it is: `{@code …}`, `{@literal …}`,
+  `{@snippet …}`, `{@value …}`, `{@index …}`'s term, and tags javadoc doesn't
+  know;
+- references (`{@link Map#put(Object, Object)}`, `@throws IOException`), HTML
+  tags with their attribute values, HTML comments (`<!-- … -->`) and entities;
+- what javadoc reads as an error, such as an `<` that starts no tag or an
+  unclosed `{@code`;
+- a paragraph of plain text whose lines are indented differently, by two or more
+  columns, such as ASCII art, a grammar or aligned text.
 
-- words and entities (`&amp;`);
-- inline tags (`{@link Map#get}`, `{@code …}`), which may span lines, except
-  `{@snippet …}`;
-- block tags (`@param`, `@return`, …) that start a line;
-- HTML tags written on one line (`<a href="…">`, `<b>`), including `<p>`,
-  `<ul>`, `<ol>`, `<li>`, `<br>` and `<h1>` to `<h6>`;
-- `<pre>` blocks closed by `</pre>`.
+Such a part that spans lines keeps its lines: each later line is printed after
+`*` with the indentation that javadoc reads on it (javadoc removes the `*` and
+the indentation that all lines of the comment share). A tab after the `*` stays
+a tab.
 
-So Jolt keeps these Javadoc comments as written: a comment with `<table>`,
-`<blockquote>`, `<dl>`, an HTML comment (`<!--`), `{@snippet …}`, an HTML tag
-that runs onto the next line, or a `<pre>` without `</pre>`; a comment whose
-lines of plain text are indented differently, by two or more columns, as ASCII
-art, a grammar or aligned text is; a comment with a line that doesn't start with
-`*` (Javadoc keeps the indentation of such a line); a comment that starts with
-`/***` or has a line of only `*`s, which is a banner (these keep their lines'
-relative indentation instead); a comment that shares its line with code; a
-comment before `package` or an import in a file that declares a type, which is a
-file header such as a licence; and the Javadoc of a member that formatting is
-turned off for (see [Formatter-ignore](#formatter-ignore)). A `<` that doesn't
-start a tag, as in `a < b`, is ordinary text.
+Jolt keeps these comments as written, realigning only their `*`s as for any
+other comment (see [Comments](#comments)): a comment that shares its line with
+code; a comment that starts with `/***` or has a line of only `*`s, which is a
+banner; `/**/`; a comment before `package` or an import in a file that declares
+a type, which is a file header such as a licence; the Javadoc of a member that
+formatting is turned off for (see [Formatter-ignore](#formatter-ignore)); and a
+comment with a Unicode escape (`@`), which javac decodes before javadoc reads
+the comment.
 
 A comment that Jolt lays out gets this style:
 
@@ -953,34 +957,36 @@ A comment that Jolt lays out gets this style:
 - **One line.** A comment that is one paragraph with no block tags prints as
   `/** Text. */` when that fits, else on separate lines. An empty comment prints
   as `/** */`.
-- **Words stay whole.** Jolt doesn't break a line inside an HTML tag, between an
-  inline tag and its reference (`{@link Map#get}`), inside the parentheses of a
-  reference (`{@link #put(Object, Object)}`), or inside `{@code …}` and
-  `{@literal …}`. The label of a link is filled like other words.
+- **Words stay whole.** Jolt doesn't break a line inside any of the parts listed
+  above, or between an inline tag and its reference (`{@link Map#get}`). The
+  label of a link, and the text of `{@return …}` and `{@summary …}`, are filled
+  like other words. Two parts written without a space between them stay
+  together.
 - **No new structure.** A wrapped line never starts with a word that javadoc or
   Jolt would read as new structure: a word that starts with `@` (a block tag),
   or a plain-text list marker (`-`, `*`, `+`, `•`, or a number and `.` or `)`).
   Such a word stays on the line of the word before it, and the line breaks
-  before the pair when they don't fit.
+  before the pair when they don't fit. A word that starts with `@` at the start
+  of a source line keeps starting its line.
 - **Block tags** (`@param`, `@return`, …) start a line each, with single spaces
   after the tag and its name. Their wrapped lines are indented by 4. A blank
   line goes before the first block tag, and none between block tags.
-- **Blank lines.** One blank line goes before `<p>`, a list, `<pre>` and a
-  heading, and after a list, a heading or `<pre>` when text follows. A blank
-  line of the source between two paragraphs is kept, without adding a `<p>`.
-  Inside a list and in block tag text, Jolt adds no blank lines and keeps at
-  most one.
+- **Blank lines.** One blank line goes before `<p>`, a list, `<pre>`, a table
+  and a heading, and after a list, a heading, `<pre>` or a table when text
+  follows. A blank line of the source between two paragraphs is kept, without
+  adding a `<p>`. Inside a list and in block tag text, Jolt adds no blank lines
+  and keeps at most one.
 - **`<p>`** is joined to the text after it, and `</p>` to the text before it.
-- **Lists.** `<ul>` and `<ol>` and their closing tags start a line. Each item
-  (`<li>`) starts a line indented by 2, and its wrapped lines are indented 4
-  more. `</li>` is joined to the text before it. A block inside an item, such as
-  a nested list, starts a line at the item's wrapped line indentation. Block tag
-  text holds lists the same way, inside its indent.
+- **Lists.** `<ul>`, `<ol>` and `<dl>` and their closing tags start a line. Each
+  item (`<li>`, `<dt>`, `<dd>`) starts a line indented by 2, and its wrapped
+  lines are indented 4 more. `</li>` is joined to the text before it. A block
+  inside an item, such as a nested list, starts a line at the item's wrapped
+  line indentation. Block tag text holds lists the same way, inside its indent.
+- **Other blocks.** The tags of `<blockquote>`, `<div>`, `<hr>` and other
+  block-level elements start a line, and so does the text after them.
 - **Line breaks.** A line break follows `<br>`. The source's line break stays
   before a line that starts with a list marker, and around a line made only of
   punctuation, such as `-------`. Each such line is filled on its own.
-- **`<pre>`** keeps its lines exactly: each line is printed from its `*` on, so
-  tabs and spaces after the `*` stay. Only the comment's indentation changes.
 
 ::: code-group
 
@@ -1044,28 +1050,53 @@ class Resolver {
 
 :::
 
-Lines that start with a list marker keep their line breaks, and a comment with
-ASCII art is kept as written:
+Lines that start with a list marker keep their line breaks, a paragraph of ASCII
+art keeps its lines, and a multi-line `{@code …}` keeps its line breaks while
+the text around it is filled:
 
-```java
+::: code-group
+
+```java [Input]
+class Interceptor {
+  /**
+   * Callbacks, in order:
+   * 1) before, when the task is submitted, which is long enough that it wraps onto a line of its own
+   * 2) after, once the task completes
+   *
+   * The states,   as a graph:
+   *      new
+   *     /   \
+   *   done  failed
+   *
+   * Call {@code
+   * intercept(task)} once, before the task runs, so that the callbacks see every state.
+   */
+  void intercept();
+}
+```
+
+```java [Output]
 class Interceptor {
   /**
    * Callbacks, in order:
    * 1) before, when the task is submitted, which is long enough that it wraps
    * onto a line of its own
    * 2) after, once the task completes
-   */
-  void intercept();
-
-  /**
+   *
    * The states,   as a graph:
    *      new
    *     /   \
    *   done  failed
+   *
+   * Call {@code
+   * intercept(task)} once, before the task runs, so that the callbacks see
+   * every state.
    */
-  State state();
+  void intercept();
 }
 ```
+
+:::
 
 ### Markdown doc comments
 
@@ -1073,43 +1104,47 @@ A run of `///` lines is a Markdown doc comment (JEP 467) when it is the last doc
 comment before a declaration that javadoc documents: a class, interface, enum,
 record, annotation interface, field, method, constructor, enum constant,
 annotation element, module, or the package of a `package-info.java`. A run is a
-group of `///` lines one after the other, with no blank line between them; a
-line of four or more slashes is not part of one. Jolt reads the position after
-formatting: a run that Jolt moves to just before a declaration counts. Other
-`///` lines are ordinary line comments, which Jolt prints as written.
+group of `///` lines one after the other, with no blank line between them; the
+first may end a line of code. Jolt reads the position after formatting: a run
+that Jolt moves to just before a declaration counts. Other `///` lines are
+ordinary line comments, which Jolt prints as written.
 
-Jolt lays out a Markdown doc comment when it is made only of paragraphs, blank
-lines, block tags and fenced code blocks (`` ``` `` or `~~~`) whose closing line
-is only the fence. Any other Markdown keeps the whole run as written: a list, a
-heading, a block quote, a table, an HTML block, a link reference definition, a
-thematic break, indented code, a fence that isn't closed or that has a line
-starting with `@`, `{@snippet …}`, a code span, link or HTML tag that runs onto
-the next line, and a hard break (a line that ends in two spaces or `\` before
-another line of text). A run kept as written loses its trailing whitespace,
-except the two spaces of a hard break, which javadoc renders as a line break.
+javadoc reads the description and the text of each block tag as a Markdown
+document of its own. Jolt reads them the same way and fills their paragraphs;
+every other block keeps its lines exactly as written: lists, headings, code
+blocks, block quotes, tables, HTML blocks, link reference definitions and
+thematic breaks. So do lines that two blocks share, and a run with a block tag
+that doesn't start its line. Lines printed as written lose their trailing
+whitespace, except two or more spaces after text, which may be a hard break.
 
-A Markdown doc comment that Jolt lays out gets this style:
+A Markdown doc comment gets this style:
 
 - **The frame** is `///` and the indentation that every line of the run shares,
   usually one space. A run written without a space, such as `///CLOVER:OFF`,
   keeps having none.
-- **Paragraphs** of the description are filled as in a Javadoc comment. The line
-  width counts the comment's indentation and the frame.
-- **Code blocks** keep their lines exactly.
-- **Blank lines** are kept as written.
-- **Block tags** and everything after the first one are kept as written: javadoc
-  reads the text of each block tag as Markdown of its own, so a rewrapped line
-  there could start a heading, a list or code.
+- **Paragraphs** are filled as in a Javadoc comment. The line width counts the
+  comment's indentation and the frame.
+- **Blank lines** are kept as written. One is added before the first block tag
+  when there is none.
+- **Block tags** start a line each, with single spaces after the tag and its
+  name. The tag's text follows on the tag's line, and its wrapped lines are
+  flush with the frame: in Markdown, an indented line can start code or continue
+  a list.
+- **Hard breaks** stay: a line that ends in two spaces or `\` inside a paragraph
+  keeps its line break and its spaces or `\`.
 - **Words stay whole.** Jolt doesn't break a line inside a code span
   (`` `a b` ``), a link (`[text](url)`, `[text][ref]`,
-  `[Map#put(Object, Object)]`), an autolink or HTML tag (`<…>`), or between an
-  inline tag and its reference.
+  `[Map#put(Object, Object)]`), an autolink or HTML tag (`<…>`), a `<pre>`
+  element, or an inline tag that javadoc keeps whole (`{@code …}`).
 - **No new structure.** Besides the words listed for Javadoc comments, a wrapped
-  line never starts with a word that could start a Markdown block: one that
-  starts with `#`, `>`, `|`, three or more `` ` `` or `~`, or `<` and a letter,
-  `/`, `!` or `?`, or a word made only of `*`, `-`, `_`, `=`, `+` and `:`. A
-  word that ends in `\` never ends a wrapped line, since a line break after it
-  is a hard break.
+  line never starts with a word that could start a Markdown block: one that is
+  `#` to `######`, starts with `>`, `|`, three or more `` ` `` or `~`, or `<`
+  and a letter, `/`, `!` or `?`, or is made only of `*`, `-`, `_`, `=` and `+`.
+  A word that ends in `\` never ends a wrapped line, since a line break after it
+  is a hard break. In the first sentence, which javadoc ends at a line that
+  starts with `-`, `+`, `*`, `#`, `=`, `_` or `>`, a word that starts with one
+  of those never starts a wrapped line, and one that starts a source line keeps
+  starting its line.
 
 ::: code-group
 
@@ -1143,9 +1178,10 @@ class Splitter {
   /// ```java
   ///   split("a, b,", 0); // ["a", "b", ""]
   /// ```
-  /// @param text the text to split, which may be empty or contain only commas and spaces
-  /// @return the parts,
-  ///     in order
+  ///
+  /// @param text the text to split, which may be empty or contain only commas
+  /// and spaces
+  /// @return the parts, in order
   String[] split(String text, int limit);
 
   /// Joins the parts:

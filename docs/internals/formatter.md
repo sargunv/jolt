@@ -56,10 +56,10 @@ brackets answered by a table built once in linear time; see
 | `jolt_fmt`          | agnostic | `FormatOptions`, `Sink`, the document IR, the printer, comment placement and printing, verbatim emission, item lists with formatter-ignore, the `Formatter` context.     |
 | `jolt_java_syntax`  | Java     | Lexer, recursive-descent parser, the Java schema and the code generated from it (kinds, factory, typed nodes, accessors).                                                |
 | `jolt_java_fmt`     | Java     | The Java `FormatLanguage` (tables and comment hooks), node dispatch, helpers, and the layout rules.                                                                      |
-| `jolt_markup`       | agnostic | Doc comment layout: one tokenizer per flavour (Javadoc HTML, Markdown) that decides the supported subset, and the layouts that fill its tokens into docs.                |
+| `jolt_markup`       | agnostic | Doc comment layout: a port of javac's doc comment reader (framing and `DocCommentParser`), and the layouts that fill a comment's text into docs.                         |
 | `jolt_formatter`    | facade   | Language detection and the single API the CLI and dprint plugin call.                                                                                                    |
 | `jolt_config`       | app      | The user-facing format options (`jolt.toml`, CLI flags, dprint config, JSON schemas).                                                                                    |
-| `jolt_test_support` | tests    | Fixture collection, the oracle (structure fingerprint, comment multiset, idempotence, reparse), and the corpus sweep with comment probes.                                |
+| `jolt_test_support` | tests    | Fixture collection, the oracle (structure fingerprint, comment multiset, idempotence, reparse), the JDK doc comment oracle, and the corpus sweep with comment probes.    |
 | `jolt_cli`          | app      | The `jolt` binary.                                                                                                                                                       |
 | `jolt_fmt_dprint`   | app      | The dprint WASM plugin.                                                                                                                                                  |
 
@@ -1213,7 +1213,7 @@ carry a comment. The structure fingerprint (`STRUCTURE_POLICY` in
 | N6  | Redundant parenthesis removal                  | Parenthesized left operand of a same-precedence binary chain; switch guard `when (x)`; single untyped lambda parameter `(x) ->`                                                   | No comment on or inside the parentheses: `has_comments_within` is false for the parenthesized expression, and for a guard or lambda the parentheses carry no comments, it has no dangling comments, and `has_comments_within` is false for the condition or parameter.                                                                                                              |
 | N7  | Readability parentheses                        | Binary operands of `&`, `\|`, `^`, `<<`, `>>`, `>>>` that are themselves binary expressions                                                                                       | —                                                                                                                                                                                                                                                                                                                                                                                   |
 | N8  | Trailing commas                                | Array and annotation array initializers (iff broken); the last enum constant of a body without members                                                                            | —                                                                                                                                                                                                                                                                                                                                                                                   |
-| N9  | Comment text                                   | Trailing whitespace, re-indentation, star alignment; the whitespace and line breaks of a doc comment that starts its line and is in `jolt_markup`'s subset                        | Words, HTML tags, inline tags, block tags and `<pre>` lines unchanged, as the oracle compares them; a doc comment outside the subset keeps its text, and one with a line without `*`, or a banner, keeps its lines as written.                                                                                                                                                      |
+| N9  | Comment text                                   | Trailing whitespace, re-indentation, star alignment; the whitespace and line breaks between words of a doc comment that starts its line, as `jolt_markup` reads it                | What javadoc reads: the JDK's doc comment tree is the same before and after (the hunt's doc oracle), and every character other than whitespace stays in order (the comment inventory); a doc comment that `jolt_markup` doesn't lay out keeps its text, and one with a line without `*`, or a banner, keeps its lines as written.                                                   |
 | N10 | Whitespace                                     | Line endings become `\n`; one final newline; BOM and trailing SUB preserved                                                                                                       | —                                                                                                                                                                                                                                                                                                                                                                                   |
 
 [Java style](../guides/style.md) shows the output of each.
@@ -1243,132 +1243,167 @@ a 1 MiB thread (the WASM stack).
 ## Doc comment layout
 
 The crate `jolt_markup` lays out a doc comment for the language's `doc_comment`
-hook. It depends only on `jolt_fmt`, has no other runtime dependency, and builds
-for wasm32. One entry point per flavour (`javadoc` for `/** … */`, `markdown`
-for a `///` run) returns the comment's doc, or `None` to print it as written.
-Each flavour has two stages:
+hook. It depends on `jolt_fmt`, on `unicode-general-category` (for javac's
+character classes) and on pulldown-cmark (for Markdown), and builds for wasm32.
+One entry point per flavour (`javadoc` for `/** … */`, `markdown` for a `///`
+run) returns the comment's doc, or `None` to print it as written.
 
-1. **Tokenizer** (`javadoc`, `markdown`). The only code that reads the comment's
-   characters. It frames the comment (`frame`): each `/**` line loses its
-   leading whitespace, its run of `*`s and one space, as javadoc reads it, and
-   its trailing whitespace, and keeps its source slice from the `*` on for
-   printing it as written; a `///` run's lines lose `///` and the indentation
-   that all its lines with text share, as JEP 467 reads them, and that prefix is
-   the run's frame (so `///CLOVER:OFF` keeps having no space). Then it reads the
-   content once and returns a flat list of tokens (`token`) that borrow the
-   comment's text: words, block tag starts, block element tags, the lines of a
-   `<pre>` region or a fence, blank lines and kept line breaks. Each word
-   carries how the source separates it from the word before, whether it is glued
-   to that word (a block tag's name and reference, an inline tag's reference,
-   the words of `{@code …}`), and whether it would start new structure at a line
-   start. The tokenizer also decides whether the comment is in the subset below,
-   and returns `None` when it isn't.
-2. **Layout** (`html` for `/**`, `markdown` for `///`, then `layout`). It places
-   the tokens in lines and blocks and builds the docs (below). It never looks at
-   the text again, except to print it.
+A comment is read as javadoc reads it, by a port of javac's reader from the JDK
+that `mise.toml` pins (JDK 25: `openjdk/jdk25u` at `jdk-25.0.3+9`). The port
+follows the JDK sources rule for rule, so that the layout's idea of what is
+text, an atom or structure is javadoc's own:
 
-A comment outside the subset falls back as a whole. A `/**` comment then prints
-as N9 prints any other doc comment: its `*`s realigned and its text kept. A
-`///` run prints its lines as written, without trailing whitespace except the
-two spaces of a hard break (a line with text that ends in two spaces before a
-line with text), which javadoc renders as a line break. The subset is small on
-purpose. Each construct outside it is rare in real comments (in Spring and the
-OpenJDK slice, 40,000 `/**` comments: an HTML tag that spans lines 0.17%,
-`{@snippet}` 0.07%, `<table>` 0.14%, `<blockquote>` 0.06%, `<!--` 0.84%), and
-each needs rules of its own to reflow without changing what javadoc renders.
-Falling back keeps every such comment correct without those rules.
+1. **Frame** (`frame`, from `JavaTokenizer.BasicComment.scanDocComment` and
+   `JavadocTokenizer.StrippedComment`). A `/**` comment's lines lose `/**` and
+   the rest of its line when only whitespace follows, the closer and the run of
+   `*`s before it (`trimEndOfComment`, including its quirk that a `*` followed
+   by whitespace doesn't end a line's "only whitespace"), and on each line the
+   leading spaces, tabs and form feeds and the run of `*`s after them (a line
+   without a `*` keeps its leading whitespace). Then the indentation that every
+   line with text shares is removed, counted in `Character.isWhitespace`
+   characters (so a U+00A0 is text). A `///` run loses `///` and, on every line,
+   as many characters as the least whitespace after `///` on a line with text.
+   The result is a list of borrowed lines: what javadoc reads on each line, and
+   the line before the shared indentation was removed (for printing a line as
+   written).
+2. **Parser** (`parser`, from `DocCommentParser`). The reader's state (`bp`,
+   `ch`, `newline`, `textStart`, `lastNonWhite`, `inPre`'s effect) and every
+   method that a doc comment reaches are ported: `content` with its phases,
+   `blockTag`, `inlineTag` and the tag parsers of `createTagParsers` (`{@code}`
+   and `{@literal}` drop one space, `{@value}` reads a format, `{@snippet}` its
+   attributes and body, `{@index}` a term, `@param` a Java identifier, `@see` a
+   quoted string, HTML or a reference, …), `html` (start and end tags with
+   quoted and unquoted attribute values that may span lines and hold inline
+   tags, comments, doctypes, CDATA, and the erroneous `<`), `entity`,
+   `reference`, `quotedString`, `inlineWord`, `inlineText`, and `erroneous`
+   (including its update of `newline`), and for Markdown the nested `Markdown`
+   class that finds code spans, fenced and indented code blocks, list items and
+   quotes, inside which no tag is read. Positions are a line and an offset into
+   the borrowed lines; the line break between two lines is the offset equal to
+   the line's length. The tree keeps spans only: text, atoms (entities, escapes,
+   comments, erroneous nodes), HTML elements with their names, inline tags with
+   their rich text (a link's label, `{@return}`'s and `{@summary}`'s text,
+   `{@index}`'s description), and block tags with their heads and text.
 
-**The Javadoc subset.** Words and entities; inline tags (`{@…}`, matched first
-by brace balance in one pass with a stack over every brace, which may span
-lines), except `{@snippet`; block tags (a line that starts with `@` and a
-letter, outside inline tags and `<pre>`); HTML tags that open and close on one
-line, with their quoted attribute values (a `"` or `'` after `=`) closed on that
-line, which are atoms with their inner whitespace kept; the block elements
-`<p>`, `<ul>`, `<ol>`, `<li>`, `<br>` and `<h1>`–`<h6>`, matched without regard
-to case; and `<pre>` regions closed by a `</pre>` on a later or the same line,
-which no inline tag crosses. The comment falls back for `<!--`, `{@snippet`,
-`<table>`, `<blockquote>`, `<dl>`, `<dt>` and `<dd>`; a `<` and a letter or `/`
-whose tag doesn't close on its line (a bare `<` before anything else is text);
-an unclosed `<pre>`; a content line without a leading `*` (javadoc keeps the
-indentation of such a line), a `/***` banner, `/**/`, or a line of only `*`s;
-and a unit of plain lines whose indentation differs by two columns or more, as
-in ASCII art, a grammar or aligned text. A unit is a run of non-blank lines from
-a blank line, a block tag or a `<p>` up to the next of those or a line that
-starts with another block element; it is plain when it has no inline tag and no
-block element after its leading `<p>`, and its first line doesn't count when it
-starts with a block tag or `<p>` or starts the comment.
+   Deviations: a reference is not parsed (`ReferenceParser` runs the Java parser
+   on it, and a malformed reference makes the tag erroneous; here it stays a
+   reference). This doesn't change the layout's decisions, because a reference,
+   a label and an erroneous node follow the same rules (an atom, filled text,
+   and the `@` rule below), and the oracle compares erroneous nodes with their
+   whitespace collapsed. `normalizePreContent` is not applied, since a `<pre>`
+   region prints as written. Where javac's Markdown scanner loops forever (a
+   list marker found past the cursor at the end of the comment, a JDK bug that
+   the hunt's oracle hit), the port stops at the end of the comment.
+3. **Layout** (`html` for `/**`, `markdown` for `///`, then `layout`).
 
-The HTML layout keeps a stack of open blocks: block tag text (indent 4), lists
-(their items at 2 more) and list items (their other lines at 4 more). A block
-tag closes every open block. A `<pre>` region's first line, from `<pre`, starts
-a block, and its other lines are printed as written, the last up to `</pre>`. A
-line that starts with a list marker keeps the line break before it, and a ruler
-keeps its own line.
+A comment is printed as written (N9) when javac doesn't read its text from the
+source as written (it has a Unicode escape), when it is a banner (`/***`, or a
+line made only of two or more `*`s), `/**/`, and when its reading would take
+more than [linear time](#doc-comment-cost) (below). The Java hook also keeps
+file headers, and `jolt_fmt` keeps comments that share a line with code, lie in
+a formatter-ignore region, or have a target with recovery.
 
-**The Markdown subset.** Paragraphs, blank lines, block tags (whose text
-continues on lines flush with the frame, since an indented line can be code or
-list text) and fenced code blocks. A fence opens at a line that starts with
-three or more `` ` `` (with no `` ` `` after them) or `~`, and closes at a line
-that is only a run of at least as many of the same character, indented by less
-than four columns: javadoc and CommonMark agree on such a fence. The run is kept
-as written for any other block (a line that starts with a word that could start
-one, by the same rule that keeps a wrap from starting one; a line indented by
-four or more columns that doesn't continue a paragraph; a table delimiter row; a
-line that starts with `[` and has `]:`, which may be a link reference
-definition); a fence that isn't closed, that a line starting with the fence ends
-in javadoc but not in CommonMark, or that holds a line starting with `@`;
-`{@snippet`; an inline tag that doesn't close in its paragraph or holds a line
-that starts with `@`; a code span, link (`[…]`, `[…](…)`, `[…][…]`) or HTML tag
-that doesn't close on its line; and a line with text that ends in two spaces or
-`\` before a line with text, which may be a hard break. Code spans, links and
-HTML tags are atoms with their inner whitespace kept. Emphasis is not parsed: a
-space and a line break are the same to it. The layout fills the paragraphs and
-prints fence lines and blank lines as written, from their `///`. Only one blank
-line is added, before the first block tag: Markdown blank lines change the page
-(a blank line in a list item makes the list loose).
+**HTML layout.** The tree of each part (the description, each block tag) is
+flattened, an inline tag's rich text in line between its head and its `}`. Then:
+
+- A `<pre>` element up to its `</pre>` (or the part's end) and a `<table>`
+  element up to the `</table>` that closes it become one verbatim region.
+- Text is split into words at HTML whitespace (space, tab, form feed and line
+  breaks); other whitespace, such as U+00A0 or U+2003, is part of a word. Every
+  other node is one atom. The gap between two tokens is whitespace by
+  construction; any other character in one is printed as a word, so nothing is
+  lost.
+- A token that starts with `@` keeps whether it starts a line: one that starts
+  its source line (after spaces and tabs only, javac's `newline`) keeps the line
+  break before it, any other one is never put at a line start. That keeps every
+  block tag and escape (`@@`, `@*`) javadoc reads, and adds none.
+- A run of two or more lines of plain words whose indentation differs by two
+  columns or more is printed as written.
+- A word that starts a source line and is a list marker keeps the line break
+  before it, and a line made only of punctuation keeps its own line.
+
+The tokens are placed by a stack of open blocks: block tag text (indent 4),
+lists (their items at 2 more) and list items (their other lines at 4 more). A
+block tag closes every open block. A verbatim region starts a block; its first
+line, from `<pre` or `<table`, is placed like a word, and its later lines are
+printed as written.
+
+A token that spans lines (a region, a multi-line `{@code}`, a reference, an
+attribute value, a comment) prints its first line where the layout places it and
+each later line as written, after a line break: `" * "` and the line's text
+after the shared indentation, or `" *"` and the tab before it when javadoc
+removed a tab of indentation from that line. Every line Jolt writes starts with
+`*` and one whitespace character, and the comment's first line has no other
+indentation, so javadoc removes exactly that character as the shared
+indentation, and reads each line as written exactly as in the source. Trailing
+whitespace is dropped, as N9 drops it. The one-line form is not used when the
+first word starts with `*` or whitespace, which javadoc would strip on the
+opener's line.
+
+**Markdown layout.** javadoc reads the description and each block tag's text as
+a Markdown document of its own, in which each inline tag is U+FFFC (as
+`HtmlDocletWriter.MarkdownHandler` builds it for commonmark-java). `markdown`
+builds the same text for each part, copying its lines into one `String` and
+keeping where each piece comes from, and parses it with pulldown-cmark (tables
+on). Each top-level block maps to its source lines. A paragraph whose lines hold
+no other block is filled, with its atoms (code spans, links, autolinks, inline
+HTML, a `<pre>` element to its `</pre>`, inline tags) whole and its hard breaks
+kept; every other block, every line no block covers (a blank line, a link
+reference definition), and lines that two blocks share are printed as written
+from their `///`, with trailing whitespace dropped except two or more spaces
+after text. A block tag's head is joined with single spaces, and its text starts
+on the tag's line, flush with the frame on later lines. Besides the words that
+start Markdown blocks, two of javadoc's own rules shape the filling: in the
+description's first block, up to its first word that ends in `.`, a word that
+starts with one of `-+*#=_>` at a line start would end javadoc's first sentence
+there (`DocTreeMaker`'s `endPara`), so such a word keeps the line break the
+source gives it and is never put at a line start; and a word that ends in `\`
+never ends a wrapped line. A run with a block tag that doesn't start its line
+(javac reads `- @param` as a list marker and a tag) is printed as written.
 
 **Rules about the output.** Both layouts share these, and they make the layout
-idempotent within the subset: every line break that depends on the source is one
-the output reproduces, and the output is in the subset again. A word that would
-start new structure at the start of a line (`tags::starts_structure`: a block
-tag or a plain-text list marker in both flavours, and in Markdown a heading, a
-block quote, a fence, a table row, an HTML block or a thematic break) never
-follows a wrap point; it is glued to the word before it. So is a Markdown word
-after one that ends in `\`, since a line break after it would be a hard break.
-The one-line form, the blank lines and the list and tag indents are chosen from
-the tokens alone.
+idempotent: every line break that depends on the source is one the output
+reproduces. A word that would start new structure at the start of a line (a
+block tag or a plain-text list marker in both flavours, and in Markdown a
+heading, a block quote, a fence, a table row, an HTML block, a thematic break or
+a setext underline) never follows a wrap point; it is glued to the word before
+it. The one-line form, the blank lines and the list and tag indents are chosen
+from the tokens alone.
 
-Cost: the tokenizer visits each line and character a constant number of times
-(the unit check looks ahead over a unit's lines once; a `<pre>` region's closer
-is searched once), and the layout visits each token once.
+<a id="doc-comment-cost"></a>Cost: the frame visits each character once. The
+parser visits each character a constant number of times, except where javac
+rescans: after an erroneous `<` it goes back to the character after it, and in
+Markdown after an unclosed code span it goes back to the character after the
+opening backtick, which some inputs make quadratic (an unclosed run of k
+backticks is tried k times, each time to the end of its paragraph). The port
+counts its steps and stops at 8 per byte of the comment, and the comment is then
+printed as written; real comments take one to two. Tokenizing and laying out
+visit each node, word and token once (the `<table>` region scan counts depth in
+one pass). For Markdown, building the text copies the run once, pulldown-cmark
+is linear, and mapping an offset to its source line is a binary search over the
+pieces.
 
 The docs:
 
-| Piece         | Doc                                                                                                                        | Fit-check cost                                                                  |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Wrap point    | `group(if_break(cat![soft_line, frame], line))`, one shared doc per indentation                                            | The space, the next word and the words glued to it, up to the next wrap point.  |
-| Glued word    | `space()` before it                                                                                                        | None.                                                                           |
-| Line start    | `hard_line`, then the frame: `" * "` and the indentation's spaces, one `'static` text, or the run's `///` frame (borrowed) | None (forced).                                                                  |
-| Blank line    | `hard_line`, `" *"` or `///`                                                                                               | None. Each blank line has its own text, so newline coalescing can't merge them. |
-| Verbatim      | `hard_line`, `" "`, the source line from its `*`; or the source line from its `///`                                        | None.                                                                           |
-| One-line form | `group(["/**", if_break(soft_line + frame, " "), words, if_break(soft_line + " */", " */")])`                              | Up to the line width; only for a comment that is one line of words.             |
+| Piece           | Doc                                                                                                                        | Fit-check cost                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Wrap point      | `group(if_break(cat![soft_line, frame], line))`, one shared doc per indentation                                            | The space, the next word and the words glued to it, up to the next wrap point.  |
+| Glued word      | `space()` before it                                                                                                        | None.                                                                           |
+| Line start      | `hard_line`, then the frame: `" * "` and the indentation's spaces, one `'static` text, or the run's `///` frame (borrowed) | None (forced).                                                                  |
+| Blank line      | `hard_line`, `" *"` or `///`                                                                                               | None. Each blank line has its own text, so newline coalescing can't merge them. |
+| Line as written | `hard_line`, `" * "` (or `" *"`) and the line's text; or the source line from its `///`                                    | None.                                                                           |
+| One-line form   | `group(["/**", if_break(soft_line + frame, " "), words, if_break(soft_line + " */", " */")])`                              | Up to the line width; only for a comment that is one line of words.             |
 
 The printer writes the command's indentation after a newline, then the frame, so
 a wrap happens at the comment's real column. A Markdown run has no delimiters:
-its first line starts with the frame or a verbatim line, and its last text is a
-`DocBuilder::line_comment`, which ends the line after the run. A verbatim line
-never takes the frame's list or tag indentation, which would change code in a
-`<pre>` inside a list item, and is one text from its `*`, so the printer's join
-check can't add a space inside it (`*` before `=` joins in Java). A comment that
-starts its output line follows a forced line break, which ends every fit check
-that reaches it, so its layout can't change the code around it.
+its first line starts with the frame or a line as written, and its last text is
+a `DocBuilder::line_comment`, which ends the line after the run. A line as
+written never takes the frame's list or tag indentation, which would change code
+in a `<pre>` inside a list item. A comment that starts its output line follows a
+forced line break, which ends every fit check that reaches it, so its layout
+can't change the code around it.
 
-Cost model. Building is one pass over each line and character; each word is one
-token, one text node and two child slots. Measured on Spring (9,122 files,
-37,030 `/**` comments, 1.33M words) with `--threads 1` and a full write, against
-the build without doc comment layout (about 20.0G instructions): tokenizing,
-laying out and printing the comments add about 9% (21.8G;
-`perf stat -e instructions`; see the PR for the numbers).
+Cost model, measured: see the PR for the numbers on Spring.
 
 ## Verification
 
@@ -1388,56 +1423,54 @@ For an input `S` and output `F = format(S)`:
    equals that of `S`. The canonical text of a line or block comment drops blank
    lines and trailing whitespace, strips star prefixes and one space after them,
    and removes the indentation all continuation lines share, so relative
-   indentation inside a comment is compared. A doc comment that Jolt may reflow
-   is compared by what javadoc reads in it (`jolt_test_support`'s
-   `doc_comments`), so that a layout may rewrap its text but not change it.
-   These rules are deliberately simpler than `jolt_markup`'s tokenizers and
-   share no code with them, so that the oracle doesn't share the tokenizers'
-   assumptions. Each applies only when the comment passes a coarse precondition
-   of the oracle's own; any other comment is compared exactly, like every other
-   comment. A comment that Jolt doesn't reflow keeps its text, so it has the
-   same form either way, and a precondition that a reflow would break makes the
-   forms differ.
-   - A `/**` comment, when it is a terminated `/**` (not `/***`) without `<!--`
-     or `{@snippet`, its content lines after the first start with `*`, each
-     `<pre>` is closed, and each HTML tag outside inline tags and `<pre>`
-     regions closes on its line. Each line first loses its leading whitespace,
-     its run of `*`s and one space, as javadoc reads it. The form is the
-     sequence of words split at whitespace, where an HTML tag (from `<` and a
-     letter or `/` to the next `>` on its line) is kept exactly and an inline
-     tag (`{@…}`, matched by brace balance and read first) with its whitespace
-     collapsed, both as part of the word around them; a block-level element's
-     tag (`<p>`, `<li>`, `</ul>`, …) is a word of its own, so gluing `<p>` to
-     the next word doesn't change the form. Each block tag (a line that starts
-     with `@` and a letter, outside inline tags and `<pre>`) is marked, and a
-     `<pre>` region is compared exactly: its first line from `<pre`, and the
-     others after their run of `*`s, as javadoc reads them. HTML collapses
-     whitespace outside `<pre>`, so equal forms render the same. A `/**` comment
-     with a content line that has no leading `*` is compared line by line, each
-     line without the indentation of the source line the comment starts on.
-   - A run of `///` lines (consecutive lines that start with `///` but not
-     `////`, with no blank line between, grouped from the trivia alone, as JEP
-     467 reads them), when it has no `{@snippet` and no line with text that ends
-     in two spaces or `\` before a line with text (a possible hard break; in a
-     source with syntax errors, where javadoc reads no doc comment and a
-     malformed node prints its comments without trailing whitespace, only `\`
-     counts). The run loses `///`, the indentation its lines share and trailing
-     whitespace, is split at block tags (lines that start with `@` and a
-     letter), and each part is compared by its pulldown-cmark events (tables
-     on). Adjacent texts are joined and their whitespace runs collapse; code is
-     compared exactly. A soft line break is a space. Javadoc's dialect of
-     Markdown (inline tags read first, its reading of fences) doesn't matter
-     here, because `jolt_markup` keeps a run as written wherever it would. Any
-     other run is compared line by line, as line comments. A `///` comment after
-     code on its line is no doc comment to javadoc; it is a run of its own, so a
-     layout may move it to a line of its own (placement does, after another
-     trailing line comment) but not into a run. pulldown-cmark is a dependency
-     of `jolt_test_support` only, which every crate uses as a dev-dependency, so
-     it never reaches the CLI or the plugin.
+   indentation inside a comment is compared. A doc comment, which a layout may
+   reflow, is compared by its characters other than whitespace, after the frame
+   javac strips (the delimiters, each line's leading `*`s, or `///`): a layout
+   may change whitespace but not lose, add or reorder a character. `///` lines
+   are grouped into runs as javac groups them: lines that start with `///`
+   (`////` too), one after the other with only whitespace before each on its
+   line, the first possibly after code. In a source with syntax errors, whose
+   malformed nodes may put a blank line inside a run, all `///` text of the file
+   is one form. What javadoc reads is checked by the doc oracle (below), in the
+   hunt.
 4. **Idempotence.** `format(F) == F`.
 5. **Tokens.** For dirty `S` (whose recovered tree the structure check cannot
    compare), the multiset of token texts of `F` equals that of `S`, ignoring
    `, ; { } ( )` and counting the `>` family by character.
+
+### Doc comment oracle
+
+`mise run hunt` and `jcheck` also check, for every clean variant, that the JDK
+reads each doc comment of `F` as it reads the one of `S` (`jolt_test_support`'s
+`doc_oracle`). The doc comments are the `/**` comments and the `///` runs,
+grouped as javac groups them, compared as multisets of javadoc readings;
+comments whose canonical text (each line without the whitespace before its `*`
+or `///`) is unchanged need no JVM. Comparisons are recorded while the sweep
+runs and read at its end, each distinct comment once, by a few JVMs at once
+running `tools/doc-oracle/DocOracle.java` (requests of 256 comments on stdin,
+parsed as one compilation unit with each comment before a method of its own).
+The tool reads each comment with `DocTrees.getDocCommentTree` (javac's
+`DocCommentParser` and the JDK's Markdown transformer), and dumps the first
+sentence, the full body and each block tag:
+
+- text with its HTML whitespace collapsed, and dropped next to a block-level
+  element and at the ends of a section;
+- exactly: text inside `<pre>`, `<script>`, `<style>` and `<textarea>`, the
+  bodies of `{@code}`, `{@literal}`, `{@snippet}` and unknown inline tags,
+  attribute values and their quotes, `{@value}` formats, references, HTML
+  comments, entities and escapes, all without the spaces at the end of a line,
+  which no browser shows (and which N9 drops);
+- erroneous nodes with their diagnostic code and collapsed text, so a formatted
+  comment can't add or lose a javadoc error;
+- for a list of trees with Markdown, the HTML that the doclet renders
+  (commonmark-java with the tables extension, U+FFFC for each embedded tree,
+  `<!--U+FFFC-->` for a snippet), dumped the same way, with code spans exact.
+
+A comment that javac's reader fails on or doesn't finish within 10 seconds dumps
+as `CRASH` or `HANG`, and the JVM is restarted. Sources with syntax errors are
+not checked: javadoc reads no such file. The hunt needs the JDK that `mise.toml`
+pins (`java`, with the module `jdk.internal.md`); `mise run test` never starts a
+JVM.
 
 ### Tests
 
@@ -1495,8 +1528,11 @@ only in `mise run hunt`, because it is too slow for the normal suite.
   inputs up to 4 KiB and the CommonMark examples; sampled boundaries at width 80
   for larger files, Spring and the OpenJDK slice. It also deletes each token of
   those small files in turn (the oracle's token check catches code loss), which
-  stresses parser recovery and the formatting of recovered trees. Reports land
-  in `target/hunt/`. `KNOWN_OPEN` must be empty.
+  stresses parser recovery and the formatting of recovered trees. Then the doc
+  oracle reads the doc comments of every clean variant whose doc comments
+  changed with the JDK (see [Doc comment oracle](#doc-comment-oracle)), which
+  covers the fixtures and every file of Spring and the OpenJDK slice at three
+  widths. Reports land in `target/hunt/`. `KNOWN_OPEN` must be empty.
 - `examples/jcheck.rs`: replays one file or one variant (`File.java:ownline12`,
   `File.java:comment3@40`, `File.java:delete7`).
 - `examples/jref.rs`: `jref <dir>` checks `format(F) == F` for every `.java`
