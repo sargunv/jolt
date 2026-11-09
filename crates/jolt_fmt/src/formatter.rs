@@ -288,15 +288,19 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// their own layouts, without the element's text: what remains of a token
     /// or node that a normalization removes. NIL when there are none.
     pub fn removed(&mut self, element: SyntaxElement<'a>) -> Doc {
-        self.removed_comments(element).0
+        self.removed_comments(element, false).0
     }
 
     /// `removed`, and whether the source has a blank line after the last
     /// comment. That comment (the head of its run, when it ends a run of doc
     /// line comments) prints no line after itself when it leads the element
     /// and starts its line (alone, or with the element after it): with the
-    /// element gone, the code that follows decides the line break.
-    fn removed_comments(&mut self, element: SyntaxElement<'a>) -> (Doc, bool) {
+    /// element gone, the code that follows decides the line break. In an
+    /// elided list `item`, which the list puts on lines of its own, any other
+    /// doc comment is laid out when it ends its output line: the next pass
+    /// reads it as a comment that leads the code after it and ends its line
+    /// (see [`lays_out_doc`](Self::lays_out_doc)).
+    fn removed_comments(&mut self, element: SyntaxElement<'a>, item: bool) -> (Doc, bool) {
         let mut indices: Vec<usize> = self
             .comments
             .attached(element, Side::Leading)
@@ -311,9 +315,9 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
         };
         let blank_after = self.comments.list[last].comment.lines_after >= 2;
         let last = self.run_head(last);
-        let docs: Vec<Doc> = indices
-            .into_iter()
-            .map(|index| {
+        let docs: Vec<Doc> = (0..indices.len())
+            .map(|position| {
+                let index = indices[position];
                 let placed = self.comments.list[index];
                 if index == last
                     && placed.side == Side::Leading
@@ -324,6 +328,11 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 {
                     let text = self.comment_doc(index, true);
                     cat![self; Doc::HARD_LINE, text]
+                } else if item && placed.comment.kind == CommentKind::Doc {
+                    let ends = indices
+                        .get(position + 1)
+                        .is_none_or(|&next| self.breaks_after(index) || self.breaks_before(next));
+                    self.attached_comment_as(index, ends)
                 } else {
                     self.attached_comment(index)
                 }
@@ -633,7 +642,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 let body = self.verbatim(node);
                 self.with_comments(SyntaxElement::Node(node), body)
             } else if elide {
-                let (doc, blank) = self.removed_comments(SyntaxElement::Node(node));
+                let (doc, blank) = self.removed_comments(SyntaxElement::Node(node), true);
                 if doc.is_nil() {
                     continue;
                 }
@@ -691,6 +700,12 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
     /// output already printed is skipped (see the formatter design's
     /// "Verbatim edges").
     fn attached_comment(&mut self, index: usize) -> Doc {
+        self.attached_comment_as(index, self.lays_out_doc(index))
+    }
+
+    /// [`attached_comment`](Self::attached_comment), laid out as a doc
+    /// comment when `lays_out`.
+    fn attached_comment_as(&mut self, index: usize, lays_out: bool) -> Doc {
         if self.by_verbatim[index] {
             return Doc::NIL;
         }
@@ -704,7 +719,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             Run::None => index,
         };
         let blank_after = self.comments.list[end].comment.lines_after >= 2;
-        let text = self.comment_doc(index, self.lays_out_doc(index));
+        let text = self.comment_doc(index, lays_out);
         match (placed.side, placed.layout) {
             (Side::Leading, CommentLayout::OwnLine) => {
                 let after = self.line_break(blank_after);
@@ -738,6 +753,27 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                 let after = self.space_after(index);
                 cat![self; before, text, after]
             }
+        }
+    }
+
+    /// Whether [`attached_comment`](Self::attached_comment) breaks the line
+    /// before the comment.
+    fn breaks_before(&self, index: usize) -> bool {
+        let placed = self.comments.list[index];
+        matches!(
+            (placed.side, placed.layout),
+            (Side::Leading, CommentLayout::StartOfLine) | (_, CommentLayout::OwnLine)
+        )
+    }
+
+    /// Whether [`attached_comment`](Self::attached_comment) breaks the line
+    /// after the comment.
+    fn breaks_after(&self, index: usize) -> bool {
+        let placed = self.comments.list[index];
+        match (placed.side, placed.layout) {
+            (_, CommentLayout::OwnLine) | (Side::Leading, CommentLayout::EndOfLine) => true,
+            (_, CommentLayout::EndOfLine) => placed.comment.kind == CommentKind::Line,
+            _ => false,
         }
     }
 

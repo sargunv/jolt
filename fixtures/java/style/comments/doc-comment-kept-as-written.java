@@ -120,4 +120,13 @@ class DocCommentKeptAsWritten {
 
   /** <div> {@snippet : */
   void unfinishedSnippetBeforeTheEnd() {}
+
+  /** {@snippet :
+   * {@code a  b} after a form feed that makes the snippet erroneous */
+  void formFeedAfterASnippetColon() {}
+
+  void docCommentAfterARemovedEmptyStatement() {
+    ; /** a doc comment  that the removed empty statements leave on its own line */ ;
+    int x;
+  }
 }

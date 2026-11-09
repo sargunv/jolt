@@ -971,8 +971,9 @@ whether the reference is valid, which Jolt doesn't check; and a comment with an
 escape only because of a line break before a tag's argument (`@param` with
 `x @@` on the next line); and a comment whose text starts with only whitespace
 that javadoc reads, such as a line of a form feed, which makes a `<p>` after it
-end the first sentence; and a comment that ends right after `{@snippet :` on the
-same line, which javadoc reads differently when a line break comes before `*/`.
+end the first sentence; and a comment with `{@snippet :` followed on its line by
+only the comment's end or a form feed, which javadoc reads differently from a
+line break there.
 
 A comment that Jolt lays out gets this style:
 

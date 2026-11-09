@@ -847,7 +847,10 @@ comment, so its layout can't change the code around it:
 - the first dangling comment of a node (the owning rule puts a line break before
   it), and a later one whose `lines_before` is not 0 (`own_lines` puts one with
   `lines_before == 0` on the line of the comment before it);
-- the last comment `removed` keeps, which leads on its own line.
+- the last comment `removed` keeps, which leads on its own line;
+- a doc block comment of an elided list item that ends its output line: the list
+  puts the item on lines of its own, and the next pass reads the comment as one
+  that leads the code after it and ends its line.
 
 The comment must also lie outside every formatter-ignore region (the Javadoc of
 an ignored member is printed as written), and its target must be recovery-free
@@ -1324,13 +1327,14 @@ came before a tag's argument on its line, which the layout joins onto the tag's
 line. So does a description that starts with text of only whitespace (a form
 feed, which javac doesn't skip): a `<p>` after it ends the first sentence, which
 as the first tree it doesn't, and the layout drops that text. So does a
-`{@snippet :` that the comment's end follows on its line: javac reads no content
-there, but an unterminated tag after a line break, which a layout on more than
-one line puts before `*/`. The Java hook also keeps file headers, and `jolt_fmt`
-keeps comments that share a line with code, lie in a formatter-ignore region, or
-have a target with recovery. Such a comment keeps all its trailing whitespace:
-its `<pre>` elements, code and tag bodies, where that whitespace is content,
-were not read.
+`{@snippet :` that the comment's end or a form feed follows on its line: javac
+reads an error there, but the snippet's body after a line break, which a layout
+on more than one line puts before `*/` and which stays where the layout drops
+the form feed. The Java hook also keeps file headers, and `jolt_fmt` keeps
+comments that share a line with code, lie in a formatter-ignore region, or have
+a target with recovery. Such a comment keeps all its trailing whitespace: its
+`<pre>` elements, code and tag bodies, where that whitespace is content, were
+not read.
 
 **HTML layout.** The tree of each part (the description, each block tag) is
 flattened, an inline tag's rich text in line between its head and its `}`. Then:
