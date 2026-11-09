@@ -209,10 +209,19 @@ fn is_file_header(target: SyntaxElement<'_>, file: DocFile) -> bool {
 /// types, a type that is not local, or a member), so that `before` is
 /// outside it. The innermost declaration around `after` is the one: a token
 /// inside a method body belongs to the method, which has printed tokens
-/// before it.
+/// before it. The walk up from `after` stops at the first node that holds
+/// `before`, since every declaration from there up holds it too: it visits
+/// only nodes that start after `before`, which start at `after` (or at
+/// tokens a normalization moved), so all runs together visit each node at
+/// most a bounded number of times.
 fn documents(before: Option<SyntaxToken<'_>>, after: SyntaxToken<'_>, file: DocFile) -> bool {
     let mut node = Some(after.parent());
     while let Some(declaration) = node {
+        if before
+            .is_some_and(|before| declaration.text_range().start() <= before.text_range().start())
+        {
+            return false;
+        }
         match node_kind(declaration) {
             K::ModuleDeclaration
             | K::PackageDeclaration
@@ -230,10 +239,7 @@ fn documents(before: Option<SyntaxToken<'_>>, after: SyntaxToken<'_>, file: DocF
                 let local = declaration
                     .parent()
                     .is_some_and(|parent| node_kind(parent) == K::LocalClassOrInterfaceDeclaration);
-                let range = declaration.text_range();
-                return !local
-                    && !is_file_header(SyntaxElement::Node(declaration), file)
-                    && before.is_none_or(|before| before.text_range().start() < range.start());
+                return !local && !is_file_header(SyntaxElement::Node(declaration), file);
             }
             K::LocalClassOrInterfaceDeclaration => return false,
             _ => node = declaration.parent(),

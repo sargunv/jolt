@@ -72,4 +72,7 @@ class DocCommentVerbatim {
    * </pre>
    */
   void spacesAtTheEndOfPreLines() {}
+
+  /** <pre>{@link */
+  void unfinishedLinkInAnUnclosedPre() {}
 }

@@ -102,4 +102,10 @@ class DocCommentJavacReading {
 
   /** {@snippet :<div>text</div>} where the block after the erroneous colon stays on its line. */
   void blockAfterAnErroneousSnippet() {}
+
+  /**
+   *
+   * A<p>Second, where a blank line before the first word puts the paragraph tag past offset 1.
+   */
+  void paragraphAfterALoneCharacterOnALaterLine() {}
 }

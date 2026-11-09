@@ -406,9 +406,17 @@ fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
             continue;
         };
         let end = element_end(pieces, index, name, pieces.len() - 1);
+        // An empty piece (an unfinished tag at the comment's end) doesn't
+        // move the region's end past the whitespace before it, which the
+        // frame prints.
+        let last = pieces[index..=end]
+            .iter()
+            .rev()
+            .find(|piece| piece.span.start != piece.span.end)
+            .unwrap_or(&piece);
         let span = Span {
             start: piece.span.start,
-            end: pieces[end].span.end,
+            end: last.span.end,
         };
         let kind = match name {
             Name::Raw(_) => PieceKind::Atom,
@@ -1194,7 +1202,10 @@ impl Html<'_, '_, '_, '_> {
                 .segment(token.span.end.line, 0, Some(token.span.end.off))
         };
         self.ends_sentence = last.ends_with(['.', '!', '?']);
+        // javadoc counts each line before the first word (line 0 is the
+        // first line it reads).
         self.lone_first = first
+            && token.span.start.line == 0
             && token.span.end.line == token.span.start.line
             && last.encode_utf16().count() == 1;
         self.attach = false;

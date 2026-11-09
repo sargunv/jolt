@@ -130,3 +130,17 @@ fn many_header_comments_before_many_imports() {
     let formatted = format_file_in_time(source);
     assert_eq!(formatted.matches("/** Header. */").count(), count);
 }
+
+/// Each `///` run in a long expression asks whether it documents a
+/// declaration, which the walk up from the token after it answers without
+/// visiting the expression's nesting each time.
+#[test]
+fn many_doc_line_comments_in_a_long_expression() {
+    let count = 40_000;
+    let source = format!(
+        "class C {{\n    int m() {{\n        return 1{};\n    }}\n}}\n",
+        "\n/// text\n+ 1".repeat(count),
+    );
+    let formatted = format_file_in_time(source);
+    assert_eq!(formatted.matches("/// text").count(), count);
+}
