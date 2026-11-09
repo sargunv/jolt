@@ -59,6 +59,30 @@ pub(crate) fn tokenize<'a>(lines: &[Line<'a>]) -> Option<Vec<Token<'a>>> {
     Some(tokens)
 }
 
+/// Whether the description of the block tag on a line whose text is
+/// `trimmed` starts with a word that starts a block: javadoc reads a block
+/// tag's description as Markdown of its own, so `@return # Title` is a
+/// heading. The description follows the tag, and the name for tags that
+/// have one.
+fn description_starts_structure(trimmed: &str) -> bool {
+    description(trimmed).is_some_and(|word| tags::starts_structure(word, true))
+}
+
+/// The first word of the description of the block tag on a line whose text
+/// is `trimmed`, if the line has one.
+fn description(trimmed: &str) -> Option<&str> {
+    let mut words = trimmed
+        .split([' ', '\t', '\x0c'])
+        .filter(|word| !word.is_empty());
+    let named = words
+        .next()
+        .is_some_and(|tag| matches!(tag, "@param" | "@throws" | "@exception"));
+    if named {
+        words.next();
+    }
+    words.next()
+}
+
 /// Whether line `index` ends in a hard break: it has text that ends in two
 /// spaces or `\`, and the next line has text. (Inside a paragraph that is a
 /// hard break; elsewhere it may not be, which only makes the rule coarser.)
@@ -123,6 +147,9 @@ impl<'p, 'a> Paragraph<'p, 'a> {
     }
 
     fn run(mut self, tokens: &mut Vec<Token<'a>>) -> Option<()> {
+        // After a block tag's line with no description on it: an indented
+        // line there starts code in javadoc's reading.
+        let mut awaiting_description = false;
         for &line in self.lines {
             let text = line.text;
             let trimmed = text.trim_start_matches([' ', '\t']);
@@ -133,12 +160,17 @@ impl<'p, 'a> Paragraph<'p, 'a> {
                 return None;
             }
             if tags::is_block_tag(trimmed) {
-                if line.offset < self.tag_end {
+                if line.offset < self.tag_end || description_starts_structure(trimmed) {
                     return None;
                 }
                 tokens.push(Token::new(Kind::BlockTag, "", Sep::Line));
                 self.block_arg = Arg::Name;
-            } else if first.is_some_and(|word| tags::starts_structure(word, true)) {
+                awaiting_description = description(trimmed).is_none();
+            } else if first.is_some_and(|word| tags::starts_structure(word, true))
+                || (std::mem::take(&mut awaiting_description)
+                    && line.offset >= self.tag_end
+                    && columns(text) >= 4)
+            {
                 return None;
             }
             let bytes = text.as_bytes();
@@ -196,6 +228,9 @@ impl<'p, 'a> Paragraph<'p, 'a> {
                 },
                 b'{' if bytes.get(at + 1) == Some(&b'@') && line.offset + at >= self.tag_end => {
                     self.tag_end = self.tags.end(line.offset + at)?;
+                    if self.tags.keeps_whitespace(line.offset + at) {
+                        return None;
+                    }
                     self.inline_arg = Arg::inline(tags::inline_tag_name(&text[at..]));
                     at += 2;
                 }

@@ -35,4 +35,16 @@ class DocCommentKeptAsWritten {
    * Braces balance: {@code "/{year:\d{1,4}}"} and {@code ${...}}.
    */
   void inlineTagsFirst() {}
+
+  /** A{@literal  b}C, where the second space is text javadoc keeps, with enough words to wrap the line. */
+  void literalLeadingSpace() {}
+
+  /**
+   * A {@code
+   * value} whose content starts after a line break, with enough words to wrap.
+   */
+  void codeAfterALineBreak() {}
+
+  /** A {@code value } whose content ends in a space, with enough words to wrap the line. */
+  void codeTrailingSpace() {}
 }

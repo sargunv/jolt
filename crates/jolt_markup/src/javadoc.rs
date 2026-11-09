@@ -241,6 +241,9 @@ impl<'a> Tokenizer<'_, 'a> {
             let opens_tag = !in_tag && text[pos..].starts_with("{@");
             if in_tag || opens_tag {
                 if let Some(end) = opens_tag.then(|| self.tags.end(offset)).flatten() {
+                    if self.tags.keeps_whitespace(offset) {
+                        return None;
+                    }
                     self.tag_end = end;
                     self.inline_arg = Arg::inline(tags::inline_tag_name(&text[pos..]));
                 }

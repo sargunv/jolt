@@ -101,4 +101,24 @@ class DocCommentMarkdownHardCases {
   /// public String toString() {}
   /// }
   void snippetAfterAClosingFence() {}
+
+  /// A method.
+  ///
+  /// @return # A heading in the description, with enough words to wrap the line past the width
+  int headingInATag() {
+    return 0;
+  }
+
+  /// A method.
+  ///
+  /// @param x # A heading after the name, with enough words to wrap the line past the width
+  void headingAfterATagName(int x) {}
+
+  /// A method.
+  ///
+  /// @return
+  ///     int answer = 42;
+  int indentedTagContinuation() {
+    return 42;
+  }
 }

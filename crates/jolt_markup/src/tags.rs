@@ -9,8 +9,12 @@ use crate::frame::Line;
 /// region. An inline tag runs from its `{@` to the `}` that balances it,
 /// counting every brace; a `{@` without one is an ordinary word.
 pub(crate) struct InlineTags {
-    /// `(start, end)` byte offsets in the comment, sorted by start.
-    tags: Vec<(usize, usize)>,
+    /// `(start, end, keeps_whitespace)`: byte offsets in the comment, sorted
+    /// by start, and whether the tag has whitespace that javadoc keeps but a
+    /// reflow would change: right before its `}`, or, in `{@code}` and
+    /// `{@literal}`, more than the one separator javadoc drops after the name
+    /// (or a line break there).
+    tags: Vec<(usize, usize, bool)>,
     /// The first tag that may start at or after the offset asked last.
     cursor: usize,
 }
@@ -19,7 +23,9 @@ impl InlineTags {
     /// Matches every brace of `lines` in one pass with a stack.
     pub(crate) fn new(lines: &[Line<'_>]) -> Self {
         let mut tags = Vec::new();
-        let mut open: Vec<(usize, bool)> = Vec::new();
+        // A brace's offset, whether it opens a tag, and whether that tag's
+        // opening already keeps whitespace as content.
+        let mut open: Vec<(usize, bool, bool)> = Vec::new();
         for line in lines {
             let bytes = line.text.as_bytes();
             if !bytes.contains(&b'{') && (open.is_empty() || !bytes.contains(&b'}')) {
@@ -27,10 +33,17 @@ impl InlineTags {
             }
             for (index, &byte) in bytes.iter().enumerate() {
                 match byte {
-                    b'{' => open.push((line.offset + index, bytes.get(index + 1) == Some(&b'@'))),
+                    b'{' => {
+                        let tag = bytes.get(index + 1) == Some(&b'@');
+                        let content = tag && literal_content_starts_with_space(&bytes[index..]);
+                        open.push((line.offset + index, tag, content));
+                    }
                     b'}' => {
-                        if let Some((start, true)) = open.pop() {
-                            tags.push((start, line.offset + index + 1));
+                        if let Some((start, true, content)) = open.pop() {
+                            let before = index.checked_sub(1).map(|before| bytes[before]);
+                            let keeps =
+                                content || before.is_none_or(|byte| byte == b' ' || byte == b'\t');
+                            tags.push((start, line.offset + index + 1, keeps));
                         }
                     }
                     _ => {}
@@ -65,6 +78,34 @@ impl InlineTags {
             .filter(|tag| tag.0 == offset)
             .map(|tag| tag.1)
     }
+
+    /// Whether the inline tag that starts at `offset`, which [`end`](Self::end)
+    /// was just asked for, has whitespace that javadoc keeps as text and a
+    /// reflow would change; its comment is then kept as written.
+    pub(crate) fn keeps_whitespace(&self, offset: usize) -> bool {
+        self.tags
+            .get(self.cursor)
+            .is_some_and(|tag| tag.0 == offset && tag.2)
+    }
+}
+
+/// Whether the `{@code}` or `{@literal}` tag at the start of `tag` (one
+/// line's bytes from its `{@`) keeps whitespace at the start of its content:
+/// javadoc drops one separator after the name, so a second one, or a line
+/// break right after the name, is text.
+fn literal_content_starts_with_space(tag: &[u8]) -> bool {
+    let name_len = tag[2..]
+        .iter()
+        .position(|&byte| byte.is_ascii_whitespace() || byte == b'}')
+        .unwrap_or(tag.len() - 2);
+    if !matches!(&tag[2..2 + name_len], b"code" | b"literal") {
+        return false;
+    }
+    let rest = &tag[2 + name_len..];
+    rest.is_empty()
+        || rest
+            .get(1)
+            .is_some_and(|&byte| byte == b' ' || byte == b'\t')
 }
 
 /// The name of an inline tag whose text starts at `text` (`{@name`).

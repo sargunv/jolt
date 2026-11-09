@@ -104,7 +104,7 @@ pub(crate) fn javadoc(text: &str) -> Option<String> {
                     &text[if line == index { at } else { 0 }..to]
                 })
                 .collect();
-            form.word.push_str(collapse(&tag.join(" ")).trim_end());
+            form.word.push_str(&inline_tag_form(&tag.join("\n")));
             (index, at) = (end_line, end);
             continue;
         }
@@ -333,10 +333,37 @@ pub(crate) fn markdown(run: &[&str], clean: bool) -> Option<String> {
     Some(
         parts
             .iter()
-            .map(|part| markdown_events(part))
+            .map(|part| tag_part_events(part))
             .collect::<Vec<_>>()
             .join("\n@@\n"),
     )
+}
+
+/// The events of one part of a run: the description, or a block tag. javadoc
+/// reads a block tag's description as Markdown of its own, after the tag and,
+/// for `@param`, `@throws` and `@exception`, the name: so `@return # Title`
+/// is a heading, and an indented line after `@return` alone is code.
+fn tag_part_events(part: &str) -> String {
+    let trimmed = part.trim_start_matches([' ', '\t']);
+    if !(trimmed.starts_with('@') && trimmed[1..].starts_with(|ch: char| ch.is_ascii_alphabetic()))
+    {
+        return markdown_events(part);
+    }
+    let word_end = |text: &str| text.find(char::is_whitespace).unwrap_or(text.len());
+    let tag_len = word_end(trimmed);
+    let tag = &trimmed[..tag_len];
+    let mut rest = &trimmed[tag_len..];
+    let mut head = tag.to_owned();
+    if matches!(tag, "@param" | "@throws" | "@exception") {
+        let after = rest.trim_start_matches([' ', '\t']);
+        let name_len = word_end(after);
+        head.push(' ');
+        head.push_str(&after[..name_len]);
+        rest = &after[name_len..];
+    }
+    // The separator after the tag (or name) is not part of the description.
+    let description = rest.trim_start_matches([' ', '\t']);
+    format!("Tag({head:?})\n{}", markdown_events(description))
 }
 
 /// The events of `markdown`, one per line. Adjacent texts are joined and
@@ -414,6 +441,35 @@ fn borrowed<'e>(event: &'e Event<'_>) -> Event<'e> {
         }),
         event => event.clone(),
     }
+}
+
+/// An inline tag's form: its text with each run of whitespace made one
+/// space, except in `{@code}` and `{@literal}`, whose whitespace at the start
+/// and end of their content is text in javadoc's reading (after the one
+/// separator javadoc drops after the name) and is kept exactly.
+fn inline_tag_form(tag: &str) -> String {
+    let name_end = tag[2..]
+        .find(|ch: char| ch.is_whitespace() || ch == '}')
+        .map_or(tag.len(), |len| 2 + len);
+    let name = &tag[..name_end];
+    if !matches!(name, "{@code" | "{@literal") {
+        return collapse(tag).trim_end().to_owned();
+    }
+    let mut body = tag[name_end..]
+        .strip_suffix('}')
+        .unwrap_or(&tag[name_end..]);
+    let mut chars = body.chars();
+    if chars.next().is_some_and(char::is_whitespace) {
+        body = chars.as_str();
+    }
+    let inner = body.trim();
+    let lead = &body[..body.len() - body.trim_start().len()];
+    let trail = if inner.is_empty() {
+        ""
+    } else {
+        &body[body.trim_end().len()..]
+    };
+    format!("{name} {lead:?}{}{trail:?}}}", collapse(inner))
 }
 
 /// `text` with each run of whitespace made one space.
