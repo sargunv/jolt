@@ -404,7 +404,10 @@ impl Parser<'_, '_> {
     }
 
     /// Fails the reading where it can't follow javac's: the comment is
-    /// printed as written. That is an inline tag nested too deeply, and a
+    /// printed as written. That is an escape (`@@`, `@*`) that doesn't
+    /// start its line, which javac reads as one only after a line break
+    /// before a tag's argument that the layout joins; an inline tag nested
+    /// too deeply; and a
     /// `{@value}` whose reference no `}` follows on its line: javac stops at
     /// an invalid reference, which `ReferenceParser` (not read by this port)
     /// decides, and for a valid one reads one more character, which can be
@@ -412,6 +415,34 @@ impl Parser<'_, '_> {
     /// before it still makes an `@` start a block tag.
     fn give_up(&mut self) {
         self.charge(self.budget + 1);
+    }
+
+    /// Reads an escape (`@@`, `@*`) at the reader, which is at a line start;
+    /// false when the reading gives up instead. An escape that doesn't start
+    /// its line is one because of a line break before a tag's argument
+    /// (`@param` and `x @@` on the next line), which the layout joins.
+    fn escape(&mut self, trees: &mut Vec<Node>) -> bool {
+        if !self.starts_line(self.cur.pos) {
+            self.give_up();
+            return false;
+        }
+        self.add_pending_text(trees, Some(self.cur.pos));
+        let at = self.cur.pos;
+        // A line break right after the escape keeps the reader at a line
+        // start.
+        self.newline = false;
+        self.next_char();
+        self.next_char();
+        trees.push(Node::Atom(self.span(at)));
+        self.text_start = Some(self.cur.pos);
+        true
+    }
+
+    /// Whether only spaces and tabs come before `pos` on its line.
+    fn starts_line(&self, pos: Pos) -> bool {
+        self.lines[pos.line as usize].text[..pos.off as usize]
+            .bytes()
+            .all(|byte| matches!(byte, b' ' | b'\t'))
     }
 
     /// Counts `count` steps of the reading. Past the budget the reading
@@ -652,13 +683,9 @@ impl Parser<'_, '_> {
                     if self.newline {
                         let peek = self.peek_char();
                         if peek == '@' || peek == '*' {
-                            self.add_pending_text(&mut trees, Some(self.cur.pos));
-                            let at = self.cur.pos;
-                            self.next_char();
-                            self.next_char();
-                            trees.push(Node::Atom(self.span(at)));
-                            self.newline = false;
-                            self.text_start = Some(self.cur.pos);
+                            if !self.escape(&mut trees) {
+                                break 'read;
+                            }
                             continue;
                         } else if phase == Phase::Body {
                             let end = self.last_non_white;

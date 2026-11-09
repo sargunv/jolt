@@ -1202,14 +1202,17 @@ impl Html<'_, '_, '_, '_> {
         // A pinned token keeps the separator before it: no line break, and
         // no wrap point.
         let glue = glue || token.pinned;
-        if token.pinned {
-            self.next_line = None;
+        if token.pinned && self.next_line.take().is_some() {
+            self.layout.hang(self.column());
         }
         let text = self
             .layout
             .segment(token.span.start.line, token.span.start.off, None);
         if let Some(why) = self.next_line.take() {
+            // A line break asked for and not taken still moves the wraps to
+            // the innermost open block's column.
             if why == Why::Block && self.keeps_line(token) {
+                self.layout.hang(self.column());
                 self.layout.word(token.span, Join::None, token.sticky);
             } else if !self.layout.at_start()
                 && token.sticky
@@ -1221,6 +1224,7 @@ impl Html<'_, '_, '_, '_> {
                 // starts a line with it. It joins that word as it would on
                 // the line, without a wrap point.
                 let join = self.join(token, true);
+                self.layout.hang(self.column());
                 self.layout.word(token.span, join, true);
             } else {
                 let column = self.column();

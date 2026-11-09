@@ -146,6 +146,13 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
         self.hang = hang;
     }
 
+    /// Makes the lines a wrap starts from here on start `hang` columns after
+    /// the frame, as [`line`](Self::line) does, when the line break asked for
+    /// before the next word is not taken.
+    pub(crate) const fn hang(&mut self, hang: u16) {
+        self.hang = hang;
+    }
+
     /// Keeps the comment off the one-line form (it has block tags, or its
     /// first word would lose a leading `*` on the opener's line).
     pub(crate) const fn multiline(&mut self) {
@@ -240,7 +247,9 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
             Flavour::Javadoc => {
                 let hard = self.docs.hard_line();
                 self.parts.push(hard);
-                let text = if to.is_none() && self.kept_end(pos.line) {
+                // A span's end is its content's end: whitespace before it
+                // is content (a form feed at the end of an unclosed `<pre>`).
+                let text = if to.is_some() || self.kept_end(pos.line) {
                     text
                 } else {
                     text.trim_end_matches(BLANK)

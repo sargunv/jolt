@@ -1317,11 +1317,13 @@ more than [linear time](#doc-comment-cost) or nest inline tags more than 32 deep
 reference, which the port doesn't read: after a `{@value}` reference that no `}`
 follows on its line, javac reads one more character only for a valid reference.
 That character can be the `{` of the next tag, or a `}` after a line break,
-after which an `@` still starts a block tag. The Java hook also keeps file
-headers, and `jolt_fmt` keeps comments that share a line with code, lie in a
-formatter-ignore region, or have a target with recovery. Such a comment keeps
-all its trailing whitespace: its `<pre>` elements, code and tag bodies, where
-that whitespace is content, were not read.
+after which an `@` still starts a block tag. An escape (`@@`, `@*`) that doesn't
+start its line gives up the reading too: javac reads it as one only when a line
+break came before a tag's argument on its line, which the layout joins onto the
+tag's line. The Java hook also keeps file headers, and `jolt_fmt` keeps comments
+that share a line with code, lie in a formatter-ignore region, or have a target
+with recovery. Such a comment keeps all its trailing whitespace: its `<pre>`
+elements, code and tag bodies, where that whitespace is content, were not read.
 
 **HTML layout.** The tree of each part (the description, each block tag) is
 flattened, an inline tag's rich text in line between its head and its `}`. Then:

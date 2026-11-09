@@ -146,4 +146,12 @@ class DocCommentJavacReading {
    * next
    */
   void paragraphAfterAnIndentedLoneCharacter() {}
+
+  /** @@
+   * @see java.util.List<p> where the escape at the end of a line leaves the next line's tag a tag */
+  void escapeAtTheEndOfALine() {}
+
+  /** <ul><li>Text that is long enough.</ul>@param {@code a long enough description that wraps
+   * second line} */
+  void wrapAfterAClosedList() {}
 }

@@ -101,4 +101,8 @@ class DocCommentKeptAsWritten {
   /** a doc comment  before an empty declaration */ ;
 
   int afterTheEmptyDeclaration;
+
+  /** @param
+   * x @@ text, an escape that the line break before the tag's argument makes */
+  void escapeAfterAnArgumentOnTheNextLine(int x) {}
 }
