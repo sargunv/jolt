@@ -26,48 +26,209 @@ use std::ops::Range;
 use pulldown_cmark::{BrokenLink, CowStr, Event, Options, Parser, Tag, TagEnd};
 
 use crate::frame::Line;
+use crate::html::Raw;
 use crate::layout::{Join, Layout};
 use crate::parser::{BlockTag, Comment, Inline, Node, Pos, Span, to_u32};
 use crate::words;
 
-/// An element whose content HTML doesn't collapse.
+/// Where a reader of a part's HTML is, between two pieces of it: what
+/// pulldown-cmark reports as HTML (inline HTML, or a line of an HTML block)
+/// may end inside a tag, an attribute value or a comment.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Keeps {
-    /// `<pre>`.
-    Pre,
-    /// A raw text element of HTML (`<script>`, `<style>`) or an escapable
-    /// raw text element (`<textarea>`, `<title>`), whose line ends keep
-    /// their whitespace too.
-    Raw,
+enum Lex {
+    Text,
+    /// In a tag of `element` (`None`: another element), after `=` when `eq`.
+    Tag {
+        element: Option<Element>,
+        closing: bool,
+        eq: bool,
+    },
+    /// In a tag's attribute value quoted by `quote`.
+    Value {
+        element: Option<Element>,
+        closing: bool,
+        quote: u8,
+    },
+    /// In a comment, to `-->`.
+    Comment,
+    /// In a declaration or processing instruction, to `>`.
+    Declaration,
 }
 
-/// The element that keeps whitespace open after the HTML `html`, when
-/// `open` before it.
-fn open_after(html: &str, mut open: Option<Keeps>) -> Option<Keeps> {
-    let lower = html.to_ascii_lowercase();
-    let mut rest = lower.as_str();
-    while let Some(at) = rest.find('<') {
-        rest = &rest[at + 1..];
-        let closing = rest.starts_with('/');
-        let name = rest.trim_start_matches('/');
-        let named = |tag: &str| {
-            name.strip_prefix(tag).is_some_and(|after| {
-                !after.starts_with(|ch: char| ch.is_ascii_alphanumeric() || ch == '-')
-            })
-        };
-        let keeps = if named("pre") {
-            Keeps::Pre
-        } else if ["script", "style", "textarea", "title"]
-            .into_iter()
-            .any(named)
-        {
-            Keeps::Raw
-        } else {
-            continue;
-        };
-        open = (!closing).then_some(keeps);
+/// An element whose content HTML doesn't collapse.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Element {
+    Pre,
+    Raw(Raw),
+}
+
+/// HTML's reading of a part's HTML pieces, as far as whitespace goes: the
+/// open `<pre>` elements and the open raw text element. A raw text
+/// element's content is text up to its own end tag (`</name` and then
+/// whitespace, `/` or `>`, in any case); elsewhere a tag ends at the first
+/// `>` outside a quoted attribute value.
+#[derive(Clone, Copy, Debug)]
+struct Reader {
+    pre: u32,
+    raw: Option<Raw>,
+    lex: Lex,
+}
+
+impl Reader {
+    const fn new() -> Self {
+        Self {
+            pre: 0,
+            raw: None,
+            lex: Lex::Text,
+        }
     }
-    open
+
+    /// Whether the text that follows keeps its whitespace.
+    const fn exact(&self) -> bool {
+        self.pre > 0 || self.raw.is_some()
+    }
+
+    /// Reads the next piece of HTML.
+    fn read(&mut self, html: &str) {
+        let bytes = html.as_bytes();
+        let mut at = 0;
+        while at < bytes.len() {
+            match self.lex {
+                Lex::Text => {
+                    let Some(found) = html[at..].find('<') else {
+                        return;
+                    };
+                    at = self.after_lt(html, at + found + 1);
+                }
+                Lex::Tag {
+                    element,
+                    closing,
+                    eq,
+                } => {
+                    let byte = bytes[at];
+                    at += 1;
+                    match byte {
+                        b'>' => {
+                            self.lex = Lex::Text;
+                            self.close_tag(element, closing);
+                        }
+                        b'"' | b'\'' if eq => {
+                            self.lex = Lex::Value {
+                                element,
+                                closing,
+                                quote: byte,
+                            };
+                        }
+                        b' ' | b'\t' | b'\n' | b'\r' | 0x0c => {}
+                        _ => {
+                            self.lex = Lex::Tag {
+                                element,
+                                closing,
+                                eq: byte == b'=',
+                            };
+                        }
+                    }
+                }
+                Lex::Value {
+                    element,
+                    closing,
+                    quote,
+                } => match bytes[at..].iter().position(|&byte| byte == quote) {
+                    Some(found) => {
+                        at += found + 1;
+                        self.lex = Lex::Tag {
+                            element,
+                            closing,
+                            eq: false,
+                        };
+                    }
+                    None => return,
+                },
+                Lex::Comment => match html[at..].find("-->") {
+                    Some(found) => {
+                        at += found + 3;
+                        self.lex = Lex::Text;
+                    }
+                    None => return,
+                },
+                Lex::Declaration => match html[at..].find('>') {
+                    Some(found) => {
+                        at += found + 1;
+                        self.lex = Lex::Text;
+                    }
+                    None => return,
+                },
+            }
+        }
+    }
+
+    /// Reads what follows a `<` at byte `at` of `html` in text: a tag's
+    /// name, the start of a comment or declaration, or nothing (in a raw
+    /// text element, anything but its end tag). Returns where reading goes
+    /// on.
+    fn after_lt(&mut self, html: &str, mut at: usize) -> usize {
+        let bytes = html.as_bytes();
+        let rest = &bytes[at..];
+        if let Some(raw) = self.raw {
+            let name = raw.name().as_bytes();
+            if rest.first() == Some(&b'/')
+                && rest.len() > name.len() + 1
+                && rest[1..=name.len()].eq_ignore_ascii_case(name)
+                && matches!(
+                    rest[name.len() + 1],
+                    b' ' | b'\t' | b'\n' | 0x0c | b'\r' | b'/' | b'>'
+                )
+            {
+                self.lex = Lex::Tag {
+                    element: Some(Element::Raw(raw)),
+                    closing: true,
+                    eq: false,
+                };
+                at += name.len() + 1;
+            }
+        } else if rest.starts_with(b"!--") {
+            self.lex = Lex::Comment;
+            at += 3;
+        } else if rest
+            .first()
+            .is_some_and(|&byte| byte == b'!' || byte == b'?')
+        {
+            self.lex = Lex::Declaration;
+        } else {
+            let closing = rest.first() == Some(&b'/');
+            let from = at + usize::from(closing);
+            if bytes.get(from).is_some_and(u8::is_ascii_alphabetic) {
+                let len = bytes[from..]
+                    .iter()
+                    .take_while(|&&byte| byte.is_ascii_alphanumeric() || byte == b'-')
+                    .count();
+                let name = &html[from..from + len];
+                let element = if name.eq_ignore_ascii_case("pre") {
+                    Some(Element::Pre)
+                } else {
+                    Raw::of(name).map(Element::Raw)
+                };
+                self.lex = Lex::Tag {
+                    element,
+                    closing,
+                    eq: false,
+                };
+                at = from + len;
+            }
+        }
+        at
+    }
+
+    /// A tag of `element` ended.
+    fn close_tag(&mut self, element: Option<Element>, closing: bool) {
+        match (element, closing) {
+            (Some(Element::Pre), false) => self.pre += 1,
+            (Some(Element::Pre), true) => self.pre = self.pre.saturating_sub(1),
+            (Some(Element::Raw(raw)), false) => self.raw = Some(raw),
+            (Some(Element::Raw(_)), true) => self.raw = None,
+            (None, _) => {}
+        }
+    }
 }
 
 /// Keeps the line ends inside the nodes whose whitespace javadoc reads:
@@ -329,8 +490,8 @@ impl Markdown<'_, '_, '_, '_> {
         };
         let mut kept = Vec::new();
         let blocks = Self::blocks(&text, &mut kept);
-        for span in kept {
-            self.layout.keep_ends(span);
+        for lines in kept {
+            self.layout.keep_line_ends(lines);
         }
         // Text on the tag's line that no block holds (a link reference
         // definition) follows the head as written.
@@ -472,16 +633,19 @@ impl Markdown<'_, '_, '_, '_> {
 
     /// The top-level blocks of a part's text. A paragraph inside an element
     /// that keeps whitespace (`<pre>`, opened by an HTML block before it) is
-    /// no paragraph to fill. Adds to `kept` each raw text element.
-    fn blocks(text: &Text, kept: &mut Vec<Span>) -> Vec<Block> {
+    /// no paragraph to fill. Adds to `kept` the lines whose trailing
+    /// whitespace is content: those that end inside a `<pre>` or raw text
+    /// element, and those of a code block.
+    fn blocks(text: &Text, kept: &mut Vec<Range<u32>>) -> Vec<Block> {
         let mut blocks: Vec<Block> = Vec::new();
         let mut depth = 0usize;
         let mut paragraph: Option<Paragraph> = None;
-        // The element that keeps whitespace that is open, where it opened in
-        // the paragraph being read, and where a raw text element opened.
-        let mut open: Option<Keeps> = None;
+        // HTML's reading so far, where the element that keeps whitespace
+        // opened in the paragraph being read, and where it opened in the
+        // part.
+        let mut reader = Reader::new();
         let mut exact_start: Option<usize> = None;
-        let mut raw_start: Option<usize> = None;
+        let mut kept_start: Option<usize> = None;
         // javadoc reads `[text][ref]` and `[ref]` as links to program
         // elements even without a definition: keep them whole.
         let links = |_: BrokenLink<'_>| Some((CowStr::from(""), CowStr::from("")));
@@ -491,8 +655,11 @@ impl Markdown<'_, '_, '_, '_> {
         for (event, range) in parser {
             match event {
                 Event::Start(tag) => {
+                    if matches!(tag, Tag::CodeBlock(_)) {
+                        kept.push(Self::block(text, &range).lines);
+                    }
                     if depth == 0 {
-                        if matches!(tag, Tag::Paragraph) && open.is_none() {
+                        if matches!(tag, Tag::Paragraph) && !reader.exact() {
                             paragraph = Some(Paragraph {
                                 range: range.clone(),
                                 atoms: Vec::new(),
@@ -531,20 +698,16 @@ impl Markdown<'_, '_, '_, '_> {
                     }
                 }
                 Event::Html(html) | Event::InlineHtml(html) => {
-                    let before = open.is_some();
-                    let was_raw = open == Some(Keeps::Raw);
-                    open = open_after(&html, open);
-                    let exact = open.is_some();
-                    if !was_raw && open == Some(Keeps::Raw) {
-                        raw_start = Some(range.start);
-                    } else if was_raw
-                        && open != Some(Keeps::Raw)
-                        && let Some(start) = raw_start.take()
+                    let before = reader.exact();
+                    reader.read(&html);
+                    let exact = reader.exact();
+                    if !before && exact {
+                        kept_start = Some(range.start);
+                    } else if before
+                        && !exact
+                        && let Some(start) = kept_start.take()
                     {
-                        kept.push(Span {
-                            start: text.pos(start),
-                            end: text.end(range.end),
-                        });
+                        kept.push(text.pos(start).line..text.end(range.end).line);
                     }
                     if depth == 0 {
                         blocks.push(Self::block(text, &range));
@@ -571,11 +734,8 @@ impl Markdown<'_, '_, '_, '_> {
                 _ => {}
             }
         }
-        if let Some(start) = raw_start {
-            kept.push(Span {
-                start: text.pos(start),
-                end: text.end(text.text.len()),
-            });
+        if let Some(start) = kept_start {
+            kept.push(text.pos(start).line..text.end(text.text.len()).line + 1);
         }
         blocks
     }
@@ -793,7 +953,8 @@ impl Markdown<'_, '_, '_, '_> {
                 0
             };
             let part = &text[from..];
-            part.ends_with("  ") || line > span.start.line && part.trim().is_empty()
+            part.ends_with("  ")
+                || line > span.start.line && part.trim_matches(crate::layout::BLANK).is_empty()
         })
     }
 

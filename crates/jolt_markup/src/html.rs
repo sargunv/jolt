@@ -11,9 +11,9 @@
 //! with its whitespace. An atom that spans lines keeps its line breaks, and
 //! the whitespace at the ends of its lines. `<pre>` and `<table>` elements
 //! are verbatim regions, and so is a paragraph of plain text whose lines are
-//! indented differently (ASCII art, a grammar, aligned text); their lines
-//! lose their trailing whitespace outside atoms, which a browser doesn't
-//! show even in `<pre>`.
+//! indented differently (ASCII art, a grammar, aligned text). The lines of a
+//! `<pre>` element keep their trailing whitespace, which is its text; the
+//! other lines lose theirs outside atoms, since HTML collapses it.
 
 use crate::frame::Line;
 use crate::layout::{Join, Layout};
@@ -41,9 +41,46 @@ enum Name {
     Table,
     /// A raw text element of HTML (`<script>`, `<style>`) or an escapable
     /// raw text element (`<textarea>`, `<title>`): HTML reads its content
-    /// as text with its whitespace, so the element, to its end tag, is an
-    /// atom.
-    Raw,
+    /// as text with its whitespace, up to its own end tag, so the element,
+    /// to that end tag, is an atom.
+    Raw(Raw),
+}
+
+/// The raw text elements of HTML, and its escapable raw text elements.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Raw {
+    Script,
+    Style,
+    Textarea,
+    Title,
+}
+
+impl Raw {
+    /// The element's name, in lower case.
+    pub(crate) const fn name(self) -> &'static str {
+        match self {
+            Self::Script => "script",
+            Self::Style => "style",
+            Self::Textarea => "textarea",
+            Self::Title => "title",
+        }
+    }
+
+    /// The element named `name`, without regard to case.
+    pub(crate) fn of(name: &str) -> Option<Self> {
+        let is = |candidate: &str| name.eq_ignore_ascii_case(candidate);
+        Some(if is("script") {
+            Self::Script
+        } else if is("style") {
+            Self::Style
+        } else if is("textarea") {
+            Self::Textarea
+        } else if is("title") {
+            Self::Title
+        } else {
+            return None;
+        })
+    }
 }
 
 impl Name {
@@ -61,8 +98,8 @@ impl Name {
             Self::Pre
         } else if is("table") {
             Self::Table
-        } else if is("script") || is("style") || is("textarea") || is("title") {
-            Self::Raw
+        } else if let Some(raw) = Raw::of(name) {
+            Self::Raw(raw)
         } else if name.len() == 2
             && name.as_bytes()[0].eq_ignore_ascii_case(&b'h')
             && matches!(name.as_bytes()[1], b'1'..=b'6')
@@ -327,69 +364,109 @@ pub(crate) fn head_parts(lines: &[Line<'_>], head: Span) -> Vec<Span> {
     joined.unwrap_or_else(|| vec![head])
 }
 
-/// Replaces each `<pre>` element (to its `</pre>`, or the section's end) and
-/// each `<table>` element (to the `</table>` that closes it) with a region,
-/// and each raw text element (to its end tag, or the section's end) with an
-/// atom. Adds to `kept` the pieces in a region whose whitespace javadoc
-/// reads.
+/// Replaces each `<pre>` element (to the `</pre>` that closes it, or the
+/// section's end) and each `<table>` element (likewise) with a region, and
+/// each raw text element (to its own end tag, or the section's end) with an
+/// atom. Adds to `kept` the spans whose line ends keep their whitespace:
+/// each `<pre>` element, and in a `<table>` the raw text elements, the
+/// `<pre>` elements and the pieces whose whitespace javadoc reads.
 fn regions(pieces: &mut Vec<Piece>, kept: &mut Vec<Span>) {
     let mut out = Vec::with_capacity(pieces.len());
     let mut index = 0;
     while index < pieces.len() {
         let piece = pieces[index];
-        let PieceKind::Element {
-            name: Some(name @ (Name::Pre | Name::Table | Name::Raw)),
-            closing: false,
-        } = piece.kind
-        else {
+        let Some(name) = opens_region(piece) else {
             out.push(piece);
             index += 1;
             continue;
         };
-        let mut depth = 0usize;
-        let mut end = pieces.len() - 1;
-        for (at, later) in pieces.iter().enumerate().skip(index) {
-            if let PieceKind::Element {
-                name: Some(found),
-                closing,
-            } = later.kind
-                && found == name
-            {
-                if closing {
-                    depth = depth.saturating_sub(1);
-                    if depth == 0 || name != Name::Table {
-                        end = at;
-                        break;
-                    }
-                } else if name == Name::Table || depth == 0 {
-                    depth += 1;
-                }
-            }
-        }
-        if name != Name::Raw {
-            kept.extend(
-                pieces[index..=end]
-                    .iter()
-                    .filter(|inner| inner.kind != PieceKind::Text)
-                    .map(|inner| inner.span),
-            );
-        }
-        out.push(Piece {
-            kind: if name == Name::Raw {
-                PieceKind::Atom
-            } else {
+        let end = element_end(pieces, index, name);
+        let span = Span {
+            start: piece.span.start,
+            end: pieces[end].span.end,
+        };
+        let kind = match name {
+            Name::Raw(_) => PieceKind::Atom,
+            Name::Pre => {
+                kept.push(span);
                 PieceKind::Region
-            },
-            span: Span {
-                start: piece.span.start,
-                end: pieces[end].span.end,
-            },
+            }
+            _ => {
+                let mut inner = index + 1;
+                while inner < end {
+                    let piece = pieces[inner];
+                    match opens_region(piece) {
+                        Some(name @ (Name::Pre | Name::Raw(_))) => {
+                            // The table's end tag closes what it holds.
+                            let last = element_end(pieces, inner, name).min(end);
+                            kept.push(Span {
+                                start: piece.span.start,
+                                end: pieces[last].span.end,
+                            });
+                            inner = last;
+                        }
+                        _ if piece.kind != PieceKind::Text => kept.push(piece.span),
+                        _ => {}
+                    }
+                    inner += 1;
+                }
+                PieceKind::Region
+            }
+        };
+        out.push(Piece {
+            kind,
+            span,
             glue: false,
             head: false,
         });
         index = end + 1;
     }
     *pieces = out;
+}
+
+/// The element (`<pre>`, `<table>` or a raw text element) that `piece`
+/// opens, if any.
+const fn opens_region(piece: Piece) -> Option<Name> {
+    match piece.kind {
+        PieceKind::Element {
+            name: Some(name @ (Name::Pre | Name::Table | Name::Raw(_))),
+            closing: false,
+        } => Some(name),
+        _ => None,
+    }
+}
+
+/// The index of the piece that ends the element `name` opened at
+/// `pieces[open]`: the end tag that closes it (counting nested elements of
+/// the same name, except for a raw text element, which holds no elements),
+/// or the last piece. A raw text element inside it is skipped to its own end
+/// tag, since HTML reads what it holds as text.
+fn element_end(pieces: &[Piece], open: usize, name: Name) -> usize {
+    let raw = matches!(name, Name::Raw(_));
+    let mut depth = 1usize;
+    let mut at = open + 1;
+    while at < pieces.len() {
+        if let PieceKind::Element {
+            name: Some(found),
+            closing,
+        } = pieces[at].kind
+        {
+            if found == name {
+                if closing {
+                    depth -= 1;
+                    if depth == 0 {
+                        return at;
+                    }
+                } else if !raw {
+                    depth += 1;
+                }
+            } else if !raw && !closing && matches!(found, Name::Raw(_)) {
+                at = element_end(pieces, at, found);
+            }
+        }
+        at += 1;
+    }
+    pieces.len() - 1
 }
 
 #[allow(
@@ -469,7 +546,9 @@ impl Tokens<'_, '_> {
             PieceKind::Element {
                 name: Some(name),
                 closing,
-            } if name != Name::Raw && (!matches!(name, Name::Pre | Name::Table) || closing) => {
+            } if !matches!(name, Name::Raw(_))
+                && (!matches!(name, Name::Pre | Name::Table) || closing) =>
+            {
                 let name = if matches!(name, Name::Pre | Name::Table) {
                     Name::Block
                 } else {
@@ -1078,7 +1157,7 @@ impl Html<'_, '_, '_, '_> {
                 }
             }
             // A raw text element is an atom, and a stray end tag a word.
-            (Name::Raw, _) => self.emit(token, false),
+            (Name::Raw(_), _) => self.emit(token, false),
             (Name::Br, _) => {
                 self.emit(token, true);
                 self.request(Why::Break);

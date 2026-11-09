@@ -63,7 +63,7 @@ class DocCommentVerbatim {
   void unclosed() {}
 
   /**
-   * A code tag in a pre keeps the spaces at the end of its lines, and pre text loses them:
+   * Pre text and a code tag in it keep the spaces at the end of their lines:
    * <pre>{@code
    * int a = 1;   
    * }</pre>

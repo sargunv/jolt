@@ -34,6 +34,11 @@ pub(crate) enum Join {
     None,
 }
 
+/// The whitespace that HTML and Markdown collapse at the end of a line:
+/// Java's space, tab and form feed. Any other character, U+00A0 included,
+/// is text.
+pub(crate) const BLANK: [char; 3] = [' ', '\t', '\u{c}'];
+
 /// The frame of a doc block comment line and the spaces of its indentation.
 const FRAME: &str = " *                                                                ";
 
@@ -103,15 +108,22 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
 
     /// Keeps the trailing whitespace of each line of `span` but its last:
     /// the line ends inside a node whose whitespace javadoc reads (an inline
-    /// tag's body, an attribute value, an HTML comment, a raw text element).
+    /// tag's body, an attribute value, an HTML comment, a `<pre>` element, a
+    /// raw text element).
     pub(crate) fn keep_ends(&mut self, span: Span) {
-        if span.end.line == span.start.line {
+        self.keep_line_ends(span.start.line..span.end.line);
+    }
+
+    /// Keeps the trailing whitespace of the lines `lines` (a Markdown code
+    /// block's, whose last line may end inside it).
+    pub(crate) fn keep_line_ends(&mut self, lines: std::ops::Range<u32>) {
+        if lines.is_empty() {
             return;
         }
         if self.kept_ends.is_empty() {
             self.kept_ends = vec![false; self.lines.len()];
         }
-        for line in span.start.line..span.end.line {
+        for line in lines {
             self.kept_ends[line as usize] = true;
         }
     }
@@ -166,7 +178,7 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
         let first_end = (span.end.line == span.start.line).then_some(span.end.off);
         let mut first = self.segment(span.start.line, span.start.off, first_end);
         if first_end.is_none() && !self.markdown() && !self.kept_end(span.start.line) {
-            first = first.trim_end();
+            first = first.trim_end_matches(BLANK);
         }
         self.push_word(first, join, sticky);
         for line in span.start.line + 1..=span.end.line {
@@ -231,7 +243,7 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
                 let text = if to.is_none() && self.kept_end(pos.line) {
                     text
                 } else {
-                    text.trim_end()
+                    text.trim_end_matches(BLANK)
                 };
                 if text.is_empty() {
                     self.push_text(&FRAME[..2]);
@@ -295,7 +307,7 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
                 self.parts.push(self.docs.hard_line());
             }
             let source = self.lines[line as usize];
-            let trimmed = source.raw.trim_end();
+            let trimmed = source.raw.trim_end_matches(BLANK);
             let hard_break = source.raw[trimmed.len()..].starts_with("  ")
                 && !source.is_blank()
                 && self
@@ -334,7 +346,7 @@ impl<'d, 'l, 'a> Layout<'d, 'l, 'a> {
     fn blank_line(&mut self) {
         let blank = match self.flavour {
             Flavour::Javadoc => &FRAME[..2],
-            Flavour::Markdown { frame } => frame.trim_end(),
+            Flavour::Markdown { frame } => frame.trim_end_matches(crate::java::is_whitespace),
         };
         self.parts.push(self.docs.hard_line());
         self.push_text(blank);

@@ -16,7 +16,11 @@
 //! Words are filled by the printer's fit check, so the layouts don't know
 //! the width or the comment's column. Whatever javadoc reads with its
 //! whitespace (code, `<pre>`, attribute values, references) is printed as
-//! written; only whitespace that HTML or Markdown collapses changes.
+//! written, the whitespace at the ends of its lines included; only
+//! whitespace that HTML or Markdown collapses changes, and only Java's
+//! whitespace (space, tab, form feed) counts. A comment that isn't laid out
+//! (`None`) is printed as written by `jolt_fmt`, all its trailing whitespace
+//! included, since where that whitespace is content wasn't read.
 //!
 //! The hunt checks what javadoc reads before and after against the JDK
 //! itself (`jolt_test_support`'s `doc_oracle`).
