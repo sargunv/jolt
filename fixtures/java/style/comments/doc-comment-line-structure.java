@@ -50,4 +50,10 @@ class DocCommentLineStructure {
    * text under the ruler
    */
   void rulerInATag(int x) {}
+
+  /**
+   *   indented text before a ruler with a space at its end
+   * ----- 
+   */
+  void rulerWithTrailingSpace() {}
 }

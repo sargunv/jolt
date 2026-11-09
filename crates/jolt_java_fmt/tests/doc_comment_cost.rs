@@ -17,7 +17,11 @@ const LIMIT: Duration = Duration::from_secs(20);
 /// indentation and line breaks), failing when that takes longer than
 /// [`LIMIT`].
 fn format_in_time(comment: &str) -> String {
-    let source = format!("class C {{\n{comment}\n    void m() {{}}\n}}\n");
+    format_file_in_time(format!("class C {{\n{comment}\n    void m() {{}}\n}}\n"))
+}
+
+/// Formats `source`, failing when that takes longer than [`LIMIT`].
+fn format_file_in_time(source: String) -> String {
     let (send, receive) = mpsc::channel();
     std::thread::spawn(move || {
         let _ = send.send(common::format(&source, FormatOptions::default()));
@@ -111,4 +115,18 @@ fn plain_text_after_a_spent_budget() {
         "b".repeat(n)
     ));
     assert!(formatted.contains("<!--"));
+}
+
+/// Each doc comment before `package` asks whether the file declares a type
+/// (which makes it a file header), and the answer is found once per file.
+#[test]
+fn many_header_comments_before_many_imports() {
+    let count = 20_000;
+    let source = format!(
+        "{}package p;\n{}class C {{}}\n",
+        "/** Header. */\n".repeat(count),
+        "import a.B;\n".repeat(count),
+    );
+    let formatted = format_file_in_time(source);
+    assert_eq!(formatted.matches("/** Header. */").count(), count);
 }

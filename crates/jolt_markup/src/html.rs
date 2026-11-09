@@ -604,8 +604,12 @@ impl Tokens<'_, '_> {
                 text.len()
             };
             let segment = &text[from..to];
+            // The parser's text ends before the line's trailing whitespace,
+            // which the layout drops.
             let ruler = from == 0
-                && to == text.len()
+                && text[to..]
+                    .bytes()
+                    .all(|byte| matches!(byte, b' ' | b'\t' | 0x0c))
                 && words::is_ruler(segment)
                 && span.start <= (Pos { line, off: 0 });
             if ruler {

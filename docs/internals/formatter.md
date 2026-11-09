@@ -347,7 +347,10 @@ A language provides `jolt_fmt::FormatLanguage`:
   formatter-ignore marker.
 - `DOC_LINE_COMMENT`, the opener of a doc line comment (Java: `///`), and
   `doc_comment`, the layout of a [doc comment](#doc-comments) that starts its
-  output line.
+  output line. `doc_file` finds once per file the facts that `doc_comment` needs
+  about the whole file (Java: whether it declares a type or a module, so that
+  the comment before `package` is a file header), so that no doc comment rescans
+  the file.
 
 ### Document IR
 

@@ -13,6 +13,14 @@ use jolt_syntax::{AstNode, RawSyntaxKind, SyntaxElement, SyntaxNode, SyntaxToken
 /// The Java formatter language.
 pub struct JavaFormat;
 
+/// What a doc comment's layout needs to know about its file.
+#[derive(Clone, Copy, Debug)]
+pub struct DocFile {
+    /// The file declares a type or a module, so the doc comment before its
+    /// `package` is a file header (see `is_file_header`).
+    declares_type: bool,
+}
+
 fn kind(token: SyntaxToken<'_>) -> K {
     K::from_raw(token.kind())
 }
@@ -38,16 +46,43 @@ impl FormatLanguage for JavaFormat {
     /// header (see `is_file_header`). A Markdown doc comment (a `///` run) is
     /// laid out only where JEP 467 makes it documentation: when it prints
     /// right before a declaration that javadoc documents (see `documents`).
-    fn doc_comment<'a>(docs: &mut DocBuilder<'a>, comment: &DocComment<'a, '_>) -> Option<Doc> {
+    type DocFile = DocFile;
+
+    fn doc_file(root: SyntaxNode<'_>) -> DocFile {
+        let declares_type = root
+            .children()
+            .filter_map(SyntaxElement::as_node)
+            .filter(|items| node_kind(*items) == K::CompilationUnitItemList)
+            .flat_map(SyntaxNode::children)
+            .filter_map(SyntaxElement::as_node)
+            .any(|item| {
+                matches!(
+                    node_kind(item),
+                    K::ClassDeclaration
+                        | K::InterfaceDeclaration
+                        | K::EnumDeclaration
+                        | K::RecordDeclaration
+                        | K::AnnotationInterfaceDeclaration
+                        | K::ModuleDeclaration
+                )
+            });
+        DocFile { declares_type }
+    }
+
+    fn doc_comment<'a>(
+        docs: &mut DocBuilder<'a>,
+        comment: &DocComment<'a, '_>,
+        file: DocFile,
+    ) -> Option<Doc> {
         match comment.source {
-            DocCommentSource::Block(text) if !is_file_header(comment.target) => {
+            DocCommentSource::Block(text) if !is_file_header(comment.target, file) => {
                 jolt_markup::javadoc(docs, text)
             }
             DocCommentSource::Lines {
                 lines,
                 before,
                 after: Some(after),
-            } if documents(before, after) => jolt_markup::markdown(docs, lines),
+            } if documents(before, after, file) => jolt_markup::markdown(docs, lines),
             DocCommentSource::Block(_) | DocCommentSource::Lines { .. } => None,
         }
     }
@@ -156,28 +191,14 @@ impl FormatLanguage for JavaFormat {
 /// module. javac doesn't read it as documentation, and it is usually a
 /// licence, which a header check compares as written. (In `package-info.java`
 /// the comment before `package` documents the package.)
-fn is_file_header(target: SyntaxElement<'_>) -> bool {
+fn is_file_header(target: SyntaxElement<'_>, file: DocFile) -> bool {
     let node = match target {
         SyntaxElement::Node(node) => node,
         SyntaxElement::Token(token) => token.parent(),
     };
     match node_kind(node) {
         K::ImportDeclaration => true,
-        K::PackageDeclaration => node.parent().is_some_and(|items| {
-            items.children().any(|item| {
-                item.as_node().is_some_and(|item| {
-                    matches!(
-                        node_kind(item),
-                        K::ClassDeclaration
-                            | K::InterfaceDeclaration
-                            | K::EnumDeclaration
-                            | K::RecordDeclaration
-                            | K::AnnotationInterfaceDeclaration
-                            | K::ModuleDeclaration
-                    )
-                })
-            })
-        }),
+        K::PackageDeclaration => file.declares_type,
         _ => false,
     }
 }
@@ -189,7 +210,7 @@ fn is_file_header(target: SyntaxElement<'_>) -> bool {
 /// outside it. The innermost declaration around `after` is the one: a token
 /// inside a method body belongs to the method, which has printed tokens
 /// before it.
-fn documents(before: Option<SyntaxToken<'_>>, after: SyntaxToken<'_>) -> bool {
+fn documents(before: Option<SyntaxToken<'_>>, after: SyntaxToken<'_>, file: DocFile) -> bool {
     let mut node = Some(after.parent());
     while let Some(declaration) = node {
         match node_kind(declaration) {
@@ -211,7 +232,7 @@ fn documents(before: Option<SyntaxToken<'_>>, after: SyntaxToken<'_>) -> bool {
                     .is_some_and(|parent| node_kind(parent) == K::LocalClassOrInterfaceDeclaration);
                 let range = declaration.text_range();
                 return !local
-                    && !is_file_header(SyntaxElement::Node(declaration))
+                    && !is_file_header(SyntaxElement::Node(declaration), file)
                     && before.is_none_or(|before| before.text_range().start() < range.start());
             }
             K::LocalClassOrInterfaceDeclaration => return false,

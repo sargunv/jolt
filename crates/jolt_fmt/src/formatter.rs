@@ -70,6 +70,7 @@ pub struct Formatter<'a, L: FormatLanguage> {
     last_token: Option<SyntaxToken<'a>>,
     /// A run of doc line comments whose layout waits for the token after it.
     pending: Option<PendingRun<'a>>,
+    doc_file: L::DocFile,
     language: PhantomData<L>,
 }
 
@@ -112,6 +113,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             by_verbatim: vec![false; count],
             last_token: None,
             pending: None,
+            doc_file: L::doc_file(root),
             language: PhantomData,
         }
     }
@@ -227,7 +229,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
             },
             target: self.comments.list[run.head].target,
         };
-        let doc = L::doc_comment(&mut self.builder, &comment)
+        let doc = L::doc_comment(&mut self.builder, &comment, self.doc_file)
             .unwrap_or_else(|| self.written_run(run.head, run.end));
         self.builder.fill(run.slot, doc);
     }
@@ -813,6 +815,7 @@ impl<'a, L: FormatLanguage> Formatter<'a, L> {
                     source: DocCommentSource::Block(comment.text),
                     target: placed.target,
                 },
+                self.doc_file,
             )
         {
             return doc;
